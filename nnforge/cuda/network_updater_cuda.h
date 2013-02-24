@@ -1,0 +1,100 @@
+/*
+ *  Copyright 2011-2013 Maxim Milakov
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+#pragma once
+
+#include "../network_updater.h"
+#include "cuda_running_configuration.h"
+#include "buffer_cuda_size_configuration.h"
+#include "cuda_stream.h"
+#include "layer_testing_schema.h"
+#include "layer_updater_schema.h"
+
+namespace nnforge
+{
+	namespace cuda
+	{
+		class network_updater_cuda : public network_updater
+		{
+		public:
+			network_updater_cuda(
+				network_schema_smart_ptr schema,
+				const_data_scale_params_smart_ptr scale_params,
+				cuda_running_configuration_const_smart_ptr cuda_config);
+
+			virtual ~network_updater_cuda();
+
+			virtual unsigned int get_max_batch_size() const;
+
+		protected:
+			// schema, data and reader are guaranteed to be compatible
+			virtual std::vector<testing_result_smart_ptr> actual_update(
+				supervised_data_reader_byte& reader,
+				const std::vector<network_data_smart_ptr>& training_speed_vector_list,
+				std::vector<network_data_smart_ptr>& data_list,
+				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
+				const std::vector<float>& random_uniform_list);
+
+			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
+			// The layer_config_list is guaranteed to be compatible with schema
+			virtual void layer_config_list_modified();
+
+		private:
+			network_updater_cuda(const network_updater_cuda&);
+			network_updater_cuda& operator =(const network_updater_cuda&);
+
+			void setup_network_cuda();
+
+			void update_buffers_configuration(
+				buffer_cuda_size_configuration& buffer_configuration,
+				unsigned int updater_entry_count) const;
+
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > enqueue_get_training_speed(
+				const std::vector<network_data_smart_ptr>& training_speed_list,
+				cudaStream_t stream_id) const;
+
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > enqueue_get_data(
+				const std::vector<network_data_smart_ptr>& data_list,
+				cudaStream_t stream_id) const;
+
+			void read_data(
+				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data_list,
+				std::vector<network_data_smart_ptr>& res,
+				cudaStream_t stream_id) const;
+
+			cuda_running_configuration_const_smart_ptr cuda_config;
+
+			cuda_stream_smart_ptr command_stream;
+			cuda_stream_smart_ptr data_stream;
+
+			unsigned int testing_layer_count;
+			const_layer_list::const_iterator start_layer_nonempty_weights_iterator;
+
+			const_cuda_linear_buffer_device_smart_ptr scale_addition;
+			const_cuda_linear_buffer_device_smart_ptr scale_multiplication;
+
+			const_layer_testing_schema_list testing_schemas;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > testing_schema_data;
+			std::vector<layer_tester_cuda_smart_ptr> tester_list;
+
+			const_layer_updater_schema_list updater_schemas;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > updater_schema_data;
+			std::vector<layer_updater_cuda_smart_ptr> updater_list;
+
+			static unsigned int max_entry_count_in_single_batch;
+		};
+	}
+}

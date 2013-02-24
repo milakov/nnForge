@@ -1,0 +1,48 @@
+ifeq ($(USE_NNFORGE),yes)
+ifeq ($(ENABLE_CUDA_BACKEND),yes)
+LDLIBSDEPEND+=-lnnforge_cuda
+CXXFLAGS+=-DNNFORGE_CUDA_BACKEND_ENABLED
+endif
+CXXFLAGS+=-I$(NNFORGE_PATH)
+LDLIBSDEPEND+=-lnnforge_plain -lnnforge
+VPATH+=$(NNFORGE_PATH)/lib
+LDFLAGS+=-L$(NNFORGE_PATH)/lib
+endif
+
+ifeq ($(USE_BOOST),yes)
+CXXFLAGS+=-I$(BOOST_PATH)/include/boost/tr1/tr1 -I$(BOOST_PATH)/include
+LDFLAGS+=-L$(BOOST_PATH)/lib $(BOOST_LIBS)
+endif
+
+ifeq ($(USE_CUDA),yes)
+CXXFLAGS+=-I$(CUDA_PATH)/include
+LDFLAGS+=-L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib -lcublas -lcudart
+endif
+
+ifeq ($(USE_OPENCV),yes)
+CXXFLAGS+=-I$(OPENCV_PATH)/include
+LDFLAGS+=-L$(OPENCV_PATH)/lib $(OPENCV_LIBS)
+endif
+
+ifeq ($(USE_OPENMP),yes)
+CXXFLAGS+=$(CPP_FLAGS_OPENMP)
+LDFLAGS+=$(LD_FLAGS_OPENMP)
+endif
+
+CXXFLAGS+=$(CPP_FLAGS_COMMON)
+ifeq ($(BUILD_MODE),debug)
+CXXFLAGS+=$(CPP_FLAGS_DEBUG_MODE)
+else
+CXXFLAGS+=$(CPP_FLAGS_RELEASE_MODE)
+endif
+
+NVCCFLAGS=$(CUDA_FLAGS_COMMON)
+ifeq ($(BUILD_MODE),debug)
+NVCCFLAGS+=$(CUDA_FLAGS_DEBUG_MODE)
+else
+NVCCFLAGS+=$(CUDA_FLAGS_RELEASE_MODE)
+endif
+NVCCFLAGS+=-Xcompiler="$(CXXFLAGS)"
+
+ARFLAGS=rcvus
+

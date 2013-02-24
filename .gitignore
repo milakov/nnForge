@@ -1,0 +1,7 @@
+.svn/
+/lib/
+/bin/
+*.[oa]
+*~
+*.sln
+*.vcxproj*
