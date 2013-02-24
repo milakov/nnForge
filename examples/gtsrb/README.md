@@ -42,7 +42,6 @@ Train
 	./gtsrv randomize_data
 	./gtsrb create
 	./gtsrb train_batch -N 10
-	./gtsrb validate_batch
 	
 Validate
 --------
