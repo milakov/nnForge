@@ -68,6 +68,16 @@ namespace nnforge
 			return (unsigned char *)(get_buf());
 		}
 
+		cuda_linear_buffer::operator uchar4 *()
+		{
+			return (uchar4 *)(get_buf());
+		}
+
+		cuda_linear_buffer::operator const uchar4 *() const
+		{
+			return (uchar4 *)(get_buf());
+		}
+
 		cuda_linear_buffer::operator unsigned int *()
 		{
 			return (unsigned int *)(get_buf());

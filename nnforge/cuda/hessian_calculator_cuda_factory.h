@@ -30,9 +30,7 @@ namespace nnforge
 
 			virtual ~hessian_calculator_cuda_factory();
 
-			virtual hessian_calculator_smart_ptr create(
-				network_schema_smart_ptr schema,
-				const_data_scale_params_smart_ptr scale_params) const;
+			virtual hessian_calculator_smart_ptr create(network_schema_smart_ptr schema) const;
 
 		protected:
 			cuda_running_configuration_const_smart_ptr cuda_config;

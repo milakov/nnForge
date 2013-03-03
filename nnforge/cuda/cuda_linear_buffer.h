@@ -45,6 +45,10 @@ namespace nnforge
 
 			operator const unsigned char *() const;
 
+			operator uchar4 *();
+
+			operator const uchar4 *() const;
+
 			operator unsigned int *();
 
 			operator const unsigned int *() const;

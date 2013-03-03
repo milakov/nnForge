@@ -30,9 +30,7 @@ namespace nnforge
 
 			virtual ~network_updater_plain_factory();
 
-			virtual network_updater_smart_ptr create(
-				network_schema_smart_ptr schema,
-				const_data_scale_params_smart_ptr scale_params) const;
+			virtual network_updater_smart_ptr create(network_schema_smart_ptr schema) const;
 
 		protected:
 			plain_running_configuration_const_smart_ptr plain_config;

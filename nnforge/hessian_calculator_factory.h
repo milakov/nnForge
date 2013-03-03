@@ -26,9 +26,7 @@ namespace nnforge
 	public:
 		virtual ~hessian_calculator_factory();
 
-		virtual hessian_calculator_smart_ptr create(
-			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params) const = 0;
+		virtual hessian_calculator_smart_ptr create(network_schema_smart_ptr schema) const = 0;
 
 	protected:
 		hessian_calculator_factory();

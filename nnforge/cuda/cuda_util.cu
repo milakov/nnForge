@@ -288,7 +288,7 @@ namespace nnforge
 			int total_thread_count,
 			int divisible)
 		{
-			int initial_threadblock_count = total_thread_count / 256;
+			int initial_threadblock_count = std::max<int>(total_thread_count / 256, 1);
 			int minimum_threadblock_count = cuda_config.multiprocessor_count * 8;
 
 			if (initial_threadblock_count >= minimum_threadblock_count)

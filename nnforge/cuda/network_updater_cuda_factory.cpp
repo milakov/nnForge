@@ -31,11 +31,9 @@ namespace nnforge
 		{
 		}
 
-		network_updater_smart_ptr network_updater_cuda_factory::create(
-			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params) const
+		network_updater_smart_ptr network_updater_cuda_factory::create(network_schema_smart_ptr schema) const
 		{
-			return network_updater_smart_ptr(new network_updater_cuda(schema, scale_params, cuda_config));
+			return network_updater_smart_ptr(new network_updater_cuda(schema, cuda_config));
 		}
 	}
 }

@@ -35,7 +35,7 @@ namespace nnforge
 
 		// If the layer is not in layer_to_dropout_rate_map then its droput rate is assumed to be 0.0F
 		void train(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			network_data_peeker& peeker,
 			network_data_pusher& progress_pusher,
 			network_data_pusher& pusher,
@@ -46,14 +46,14 @@ namespace nnforge
 	protected:
 		network_trainer(network_schema_smart_ptr schema);
 
-		virtual void initialize_train(supervised_data_reader_byte& reader) = 0;
+		virtual void initialize_train(supervised_data_reader& reader) = 0;
 
 		virtual unsigned int get_max_batch_size() const = 0;
 
 		// The method should add testing result to the training history of each element
 		// Size of random_uniform_list is a power of 2
 		virtual void train_step(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			std::vector<training_task_state>& task_list,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			const std::vector<float>& random_uniform_list) = 0;

@@ -14,31 +14,23 @@
  *  limitations under the License.
  */
 
-#pragma once
+#include "neuron_data_type.h"
 
-#include <vector>
-#include <ostream>
-#include <istream>
-#include <memory>
+#include "neural_network_exception.h"
+#include <boost/format.hpp>
 
 namespace nnforge
 {
-	class data_scale_params
+	size_t neuron_data_type::get_input_size(input_type t)
 	{
-	public:
-		data_scale_params();
+		switch(t)
+		{
+		case type_byte:
+			return sizeof(unsigned char);
+		case type_float:
+			return sizeof(float);
+		}
 
-		data_scale_params(unsigned int feature_map_count);
-
-		void write(std::ostream& output_stream) const;
-
-		void read(std::istream& input_stream);
-
-		unsigned int feature_map_count;
-		std::vector<float> addition_list;
-		std::vector<float> multiplication_list;
-	};
-
-	typedef std::tr1::shared_ptr<data_scale_params> data_scale_params_smart_ptr;
-	typedef std::tr1::shared_ptr<const data_scale_params> const_data_scale_params_smart_ptr;
+		throw neural_network_exception((boost::format("Unknown input type %1%") % t).str());
+	}
 }

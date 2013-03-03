@@ -32,7 +32,6 @@ namespace nnforge
 		public:
 			hessian_calculator_plain(
 				network_schema_smart_ptr schema,
-				const_data_scale_params_smart_ptr scale_params,
 				plain_running_configuration_const_smart_ptr plain_config);
 
 			~hessian_calculator_plain();
@@ -40,7 +39,7 @@ namespace nnforge
 		protected:
 			// schema, data and reader are guaranteed to be compatible
 			virtual network_data_smart_ptr actual_get_hessian(
-				supervised_data_reader_byte& reader,
+				supervised_data_reader& reader,
 				network_data_smart_ptr data,
 				unsigned int hessian_entry_to_process_count);
 

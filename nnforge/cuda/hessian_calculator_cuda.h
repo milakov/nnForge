@@ -32,7 +32,6 @@ namespace nnforge
 		public:
 			hessian_calculator_cuda(
 				network_schema_smart_ptr schema,
-				const_data_scale_params_smart_ptr scale_params,
 				cuda_running_configuration_const_smart_ptr cuda_config);
 
 			virtual ~hessian_calculator_cuda();
@@ -40,7 +39,7 @@ namespace nnforge
 		protected:
 			// schema, data and reader are guaranteed to be compatible
 			virtual network_data_smart_ptr actual_get_hessian(
-				supervised_data_reader_byte& reader,
+				supervised_data_reader& reader,
 				network_data_smart_ptr data,
 				unsigned int hessian_entry_to_process_count);
 
@@ -85,9 +84,6 @@ namespace nnforge
 
 			unsigned int testing_layer_count;
 			const_layer_list::const_iterator start_layer_nonempty_weights_iterator;
-
-			const_cuda_linear_buffer_device_smart_ptr scale_addition;
-			const_cuda_linear_buffer_device_smart_ptr scale_multiplication;
 
 			const_layer_testing_schema_list testing_schemas;
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > testing_schema_data;

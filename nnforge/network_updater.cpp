@@ -21,12 +21,9 @@
 
 namespace nnforge
 {
-	network_updater::network_updater(
-		network_schema_smart_ptr schema,
-		const_data_scale_params_smart_ptr scale_params)
+	network_updater::network_updater(network_schema_smart_ptr schema)
 		: schema(schema)
 		, profile_mode(false)
-		, scale_params(scale_params)
 	{
 	}
 
@@ -39,16 +36,6 @@ namespace nnforge
 		if ((layer_config_list.size() > 0) && (layer_config_list[0] == input_configuration_specific))
 			return;
 
-		if (scale_params == 0)
-			current_scale_params = const_data_scale_params_smart_ptr(new data_scale_params(input_configuration_specific.feature_map_count));
-		else
-		{
-			current_scale_params = scale_params;
-			if (current_scale_params->feature_map_count != input_configuration_specific.feature_map_count)
-				throw neural_network_exception((boost::format("Feature map counts for scaling and in input data don't match: %1% and %2%")
-					% current_scale_params->feature_map_count % input_configuration_specific.feature_map_count).str());
-		}
-
 		layer_config_list = schema->get_layer_configuration_specific_list(input_configuration_specific);
 
 		update_flops();
@@ -57,7 +44,7 @@ namespace nnforge
 	}
 
 	std::vector<testing_result_smart_ptr> network_updater::update(
-		supervised_data_reader_byte& reader,
+		supervised_data_reader& reader,
 		const std::vector<network_data_smart_ptr>& training_speed_vector_list,
 		std::vector<network_data_smart_ptr>& data_list,
 		const std::map<unsigned int, float>& layer_to_dropout_rate_map,

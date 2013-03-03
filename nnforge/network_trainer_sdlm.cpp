@@ -23,7 +23,7 @@
 
 namespace nnforge
 {
-	const unsigned int network_trainer_sdlm::min_hessian_entry_to_process_count = 50;
+	const unsigned int network_trainer_sdlm::min_hessian_entry_to_process_count = 10;
 
 	network_trainer_sdlm::network_trainer_sdlm(
 		network_schema_smart_ptr schema,
@@ -45,7 +45,7 @@ namespace nnforge
 	}
 
 	void network_trainer_sdlm::train_step(
-		supervised_data_reader_byte& reader,
+		supervised_data_reader& reader,
 		std::vector<training_task_state>& task_list,
 		const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 		const std::vector<float>& random_uniform_list)
@@ -229,7 +229,7 @@ namespace nnforge
 		return updater->get_max_batch_size();
 	}
 
-	void network_trainer_sdlm::initialize_train(supervised_data_reader_byte& reader)
+	void network_trainer_sdlm::initialize_train(supervised_data_reader& reader)
 	{
 		updater->set_input_configuration_specific(reader.get_input_configuration());
 	}

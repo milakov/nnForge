@@ -27,24 +27,20 @@
 #include <boost/format.hpp>
 
 __global__ void convert_compacted_to_raw_kernel(
-	const unsigned char * __restrict input,
-	float * __restrict output,
-	const float * __restrict scale_addition,
-	const float * __restrict scale_multiplication,
-	int elem_count_per_feature_map,
-	int feature_map_count,
-	int entry_count)
+	const uchar4 * __restrict input,
+	float4 * __restrict output,
+	int elem_count)
 {
-	int elem_id_inside_feature_map = blockIdx.x * blockDim.x + threadIdx.x;
-	int feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
-	int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
-	bool in_bounds = (entry_id < entry_count) && (elem_id_inside_feature_map < elem_count_per_feature_map) && (feature_map_id < feature_map_count);
-	if (in_bounds)
+	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+	if (elem_id < elem_count)
 	{
-		int offset = elem_count_per_feature_map * (entry_id * feature_map_count + feature_map_id) + elem_id_inside_feature_map;
-		unsigned char val = input[offset];
-		float converted_val = ((val * (1.0F / 255.0F)) + scale_addition[feature_map_id]) * scale_multiplication[feature_map_id];
-		output[offset] = converted_val;
+		uchar4 inp = input[elem_id];
+		float4 val;
+		val.x = inp.x * (1.0F / 255.0F);
+		val.y = inp.y * (1.0F / 255.0F);
+		val.z = inp.z * (1.0F / 255.0F);
+		val.w = inp.w * (1.0F / 255.0F);
+		output[elem_id] = val;
 	}
 }
 
@@ -54,9 +50,8 @@ namespace nnforge
 	{
 		network_tester_cuda::network_tester_cuda(
 			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params,
 			cuda_running_configuration_const_smart_ptr cuda_config)
-			: network_tester(schema, scale_params)
+			: network_tester(schema)
 			, cuda_config(cuda_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -118,14 +113,6 @@ namespace nnforge
 						*it_conf,
 						*(it_conf + 1)));
 			}
-
-			scale_multiplication = cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-				&(*current_scale_params->multiplication_list.begin()),
-				current_scale_params->multiplication_list.size() * sizeof(float)));
-
-			scale_addition = cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-				&(*current_scale_params->addition_list.begin()),
-				current_scale_params->addition_list.size() * sizeof(float)));
 		}
 
 		void network_tester_cuda::update_buffers_configuration_testing(buffer_cuda_size_configuration& buffer_configuration) const
@@ -133,8 +120,6 @@ namespace nnforge
 			for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::const_iterator it = net_data.begin(); it != net_data.end(); ++it)
 				for(std::vector<const_cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
 					buffer_configuration.add_constant_buffer((*it2)->get_size());
-			buffer_configuration.add_constant_buffer(scale_addition->get_size());
-			buffer_configuration.add_constant_buffer(scale_multiplication->get_size());
 
 			for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::const_iterator it = schema_data.begin(); it != schema_data.end(); ++it)
 				for(std::vector<const_cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
@@ -145,7 +130,7 @@ namespace nnforge
 		}
 
 		void network_tester_cuda::actual_test(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			testing_complete_result_set& result)
 		{
 			reader.reset();
@@ -156,17 +141,17 @@ namespace nnforge
 			unsigned int input_neuron_count = input_configuration.get_neuron_count();
 			unsigned int input_neuron_count_per_feature_map = input_configuration.get_neuron_count_per_feature_map();
 			unsigned int output_neuron_count = output_configuration.get_neuron_count();
-			unsigned int input_feature_map_count = input_configuration.feature_map_count;
-
 			unsigned int entry_count = reader.get_entry_count();
+			neuron_data_type::input_type type_code = reader.get_input_type();
+			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
 			result.mse = testing_result_smart_ptr(new testing_result(output_neuron_count));
 
 			buffer_cuda_size_configuration buffers_config;
 			update_buffers_configuration_testing(buffers_config);
 
-			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(unsigned char)); // input
-			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(unsigned char)); // input
+			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
+			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(float)); // converted input
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
@@ -175,8 +160,8 @@ namespace nnforge
 
 			cuda_linear_buffer_device_smart_ptr input_buf[2] = 
 			{
-				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * sizeof(unsigned char))),
-				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * sizeof(unsigned char))),
+				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * input_neuron_elem_size)),
+				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * input_neuron_elem_size)),
 			};
 
 			cuda_linear_buffer_device_smart_ptr output_buf[2] = 
@@ -196,7 +181,7 @@ namespace nnforge
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 			}
 
-			cuda_linear_buffer_host_smart_ptr input_host_buf(new cuda_linear_buffer_host(input_neuron_count * max_entry_count * sizeof(unsigned char)));
+			cuda_linear_buffer_host_smart_ptr input_host_buf(new cuda_linear_buffer_host(input_neuron_count * max_entry_count * input_neuron_elem_size));
 			unsigned char * input = *input_host_buf;
 			cuda_linear_buffer_host_smart_ptr output_predicted_host_buf(new cuda_linear_buffer_host(output_neuron_count * max_entry_count * sizeof(float)));
 			float * output_predicted = *output_predicted_host_buf;
@@ -220,21 +205,27 @@ namespace nnforge
 				if (entries_available_for_processing_count > 0)
 				{
 					// Convert input
+					if (type_code == neuron_data_type::type_byte)
 					{
-						std::pair<dim3, dim3> convert_compacted_to_raw_2d_surf_kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+						int elem_count = (input_neuron_count * entries_available_for_processing_count + 3) / 4;
+						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
-							input_neuron_count_per_feature_map,
-							input_feature_map_count,
-							entries_available_for_processing_count);
-						convert_compacted_to_raw_kernel<<<convert_compacted_to_raw_2d_surf_kernel_dims.first, convert_compacted_to_raw_2d_surf_kernel_dims.second, 0, *command_stream>>>(
+							elem_count);
+						convert_compacted_to_raw_kernel<<<kernel_dims.first, kernel_dims.second, 0, *command_stream>>>(
 							*input_buf[current_command_slot],
 							*input_converted_buf,
-							*scale_addition,
-							*scale_multiplication,
-							input_neuron_count_per_feature_map,
-							input_feature_map_count,
-							entries_available_for_processing_count);
+							elem_count);
 					}
+					else if (type_code == neuron_data_type::type_float)
+					{
+						cuda_safe_call(cudaMemcpyAsync(
+							*input_converted_buf,
+							*input_buf[current_command_slot],
+							input_neuron_count * entries_available_for_processing_count * sizeof(float),
+							cudaMemcpyDeviceToDevice,
+							*command_stream));
+					}
+					else throw neural_network_exception((boost::format("actual_run cannot handle input neurons of type %1%") % type_code).str());
 
 					// Run ann
 					{
@@ -312,7 +303,7 @@ namespace nnforge
 					while(entries_read_count < max_entry_count)
 					{
 						bool entry_read = reader.read(
-							input + (input_neuron_count * entries_read_count),
+							input + (input_neuron_count * entries_read_count * input_neuron_elem_size),
 							&(*output_actual[current_data_slot].begin()) + (output_neuron_count * entries_read_count));
 
 						if (!entry_read)
@@ -323,7 +314,7 @@ namespace nnforge
 					cuda_safe_call(cudaMemcpyAsync(
 						*(input_buf[current_data_slot]),
 						input,
-						entries_read_count * input_neuron_count * sizeof(unsigned char),
+						entries_read_count * input_neuron_count * input_neuron_elem_size,
 						cudaMemcpyHostToDevice,
 						*data_stream));
 				}
@@ -342,7 +333,7 @@ namespace nnforge
 			result.mse->entry_count = entries_processed_count;
 		}
 
-		output_neuron_value_set_smart_ptr network_tester_cuda::actual_run(unsupervised_data_reader_byte& reader)
+		output_neuron_value_set_smart_ptr network_tester_cuda::actual_run(unsupervised_data_reader& reader)
 		{
 			reader.reset();
 
@@ -350,18 +341,18 @@ namespace nnforge
 
 			unsigned int input_neuron_count = layer_config_list.begin()->get_neuron_count();
 			unsigned int input_neuron_count_per_feature_map = layer_config_list.begin()->get_neuron_count_per_feature_map();
-			unsigned int input_feature_map_count = layer_config_list.begin()->feature_map_count;
 			unsigned int output_neuron_count = layer_config_list.end()->get_neuron_count();
-
 			unsigned int entry_count = reader.get_entry_count();
+			neuron_data_type::input_type type_code = reader.get_input_type();
+			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
 			output_neuron_value_set_smart_ptr predicted_output_neuron_value_set(new output_neuron_value_set(entry_count, output_neuron_count));
 
 			buffer_cuda_size_configuration buffers_config;
 			update_buffers_configuration_testing(buffers_config);
 
-			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(unsigned char)); // input
-			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(unsigned char)); // input
+			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
+			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(float)); // converted input
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
@@ -370,8 +361,8 @@ namespace nnforge
 
 			cuda_linear_buffer_device_smart_ptr input_buf[2] = 
 			{
-				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * sizeof(unsigned char))),
-				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * sizeof(unsigned char))),
+				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * input_neuron_elem_size)),
+				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * input_neuron_elem_size)),
 			};
 
 			cuda_linear_buffer_device_smart_ptr output_buf[2] = 
@@ -391,7 +382,7 @@ namespace nnforge
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 			}
 
-			cuda_linear_buffer_host_smart_ptr input_host_buf(new cuda_linear_buffer_host(input_neuron_count * max_entry_count * sizeof(unsigned char)));
+			cuda_linear_buffer_host_smart_ptr input_host_buf(new cuda_linear_buffer_host(input_neuron_count * max_entry_count * input_neuron_elem_size));
 			unsigned char * input = *input_host_buf;
 			cuda_linear_buffer_host_smart_ptr output_predicted_host_buf(new cuda_linear_buffer_host(output_neuron_count * max_entry_count * sizeof(float)));
 			float * output_predicted = *output_predicted_host_buf;
@@ -410,21 +401,27 @@ namespace nnforge
 				if (entries_available_for_processing_count > 0)
 				{
 					// Convert input
+					if (type_code == neuron_data_type::type_byte)
 					{
-						std::pair<dim3, dim3> convert_compacted_to_raw_2d_surf_kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+						int elem_count = (input_neuron_count * entries_available_for_processing_count + 3) / 4;
+						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
-							input_neuron_count_per_feature_map,
-							input_feature_map_count,
-							entries_available_for_processing_count);
-						convert_compacted_to_raw_kernel<<<convert_compacted_to_raw_2d_surf_kernel_dims.first, convert_compacted_to_raw_2d_surf_kernel_dims.second, 0, *command_stream>>>(
+							elem_count);
+						convert_compacted_to_raw_kernel<<<kernel_dims.first, kernel_dims.second, 0, *command_stream>>>(
 							*input_buf[current_command_slot],
 							*input_converted_buf,
-							*scale_addition,
-							*scale_multiplication,
-							input_neuron_count_per_feature_map,
-							input_feature_map_count,
-							entries_available_for_processing_count);
+							elem_count);
 					}
+					else if (type_code == neuron_data_type::type_float)
+					{
+						cuda_safe_call(cudaMemcpyAsync(
+							*input_converted_buf,
+							*input_buf[current_command_slot],
+							input_neuron_count * entries_available_for_processing_count * sizeof(float),
+							cudaMemcpyDeviceToDevice,
+							*command_stream));
+					}
+					else throw neural_network_exception((boost::format("actual_run cannot handle input neurons of type %1%") % type_code).str());
 
 					// Run ann
 					{
@@ -487,7 +484,7 @@ namespace nnforge
 				{
 					while(entries_read_count < max_entry_count)
 					{
-						bool entry_read = reader.read(input + (input_neuron_count * entries_read_count));
+						bool entry_read = reader.read(input + (input_neuron_count * entries_read_count * input_neuron_elem_size));
 
 						if (!entry_read)
 							break;
@@ -497,7 +494,7 @@ namespace nnforge
 					cuda_safe_call(cudaMemcpyAsync(
 						*(input_buf[current_data_slot]),
 						input,
-						entries_read_count * input_neuron_count * sizeof(unsigned char),
+						entries_read_count * input_neuron_count * input_neuron_elem_size,
 						cudaMemcpyHostToDevice,
 						*data_stream));
 				}
@@ -517,16 +514,18 @@ namespace nnforge
 			return predicted_output_neuron_value_set;
 		}
 
-		std::vector<layer_configuration_specific_snapshot_smart_ptr> network_tester_cuda::actual_get_snapshot(std::vector<unsigned char>& input)
+		std::vector<layer_configuration_specific_snapshot_smart_ptr> network_tester_cuda::actual_get_snapshot(
+			const void * input,
+			neuron_data_type::input_type type_code)
 		{
 			std::vector<layer_configuration_specific_snapshot_smart_ptr> res;
 
 			unsigned int input_neuron_count = layer_config_list.begin()->get_neuron_count();
 			unsigned int input_neuron_count_per_feature_map = layer_config_list.begin()->get_neuron_count_per_feature_map();
-			unsigned int input_feature_map_count = layer_config_list.begin()->feature_map_count;
 			unsigned int output_neuron_count = (layer_config_list.end() - 1)->get_neuron_count();
+			size_t input_neuron_elem_size = neuron_data_type::get_input_size(type_code);
 
-			cuda_linear_buffer_device_smart_ptr input_buf(new cuda_linear_buffer_device(input_neuron_count * sizeof(unsigned char)));
+			cuda_linear_buffer_device_smart_ptr input_buf(new cuda_linear_buffer_device(input_neuron_count * input_neuron_elem_size));
 			cuda_linear_buffer_device_smart_ptr input_converted_buf(new cuda_linear_buffer_device(input_neuron_count * sizeof(float)));
 
 			cuda_linear_buffer_device_smart_ptr output_buffer = input_converted_buf;
@@ -541,35 +540,37 @@ namespace nnforge
 				output_buffer_list.push_back(output_buffer);
 			}
 
-			// Copy inout
+			// Copy input
 			{
 				cuda_safe_call(cudaMemcpyAsync(
 					*input_buf,
-					&(*input.begin()),
-					input_neuron_count * sizeof(unsigned char),
+					input,
+					input_neuron_count * input_neuron_elem_size,
 					cudaMemcpyHostToDevice,
 					*command_stream));
 			}
 
 			// Convert input
+			if (type_code == neuron_data_type::type_byte)
 			{
-				std::pair<dim3, dim3> convert_compacted_to_raw_2d_surf_kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				int elem_count = (input_neuron_count + 3) / 4;
+				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
-					input_neuron_count_per_feature_map,
-					input_feature_map_count,
-					1);
-				convert_compacted_to_raw_kernel<<<convert_compacted_to_raw_2d_surf_kernel_dims.first, convert_compacted_to_raw_2d_surf_kernel_dims.second, 0, *command_stream>>>(
+					elem_count);
+				convert_compacted_to_raw_kernel<<<kernel_dims.first, kernel_dims.second, 0, *command_stream>>>(
 					*input_buf,
 					*input_converted_buf,
-					*scale_addition,
-					*scale_multiplication,
-					input_neuron_count_per_feature_map,
-					input_feature_map_count,
-					1);
+					elem_count);
+			}
+			else if (type_code == neuron_data_type::type_float)
+			{
+				cuda_safe_call(cudaMemcpyAsync(*input_converted_buf, *input_buf, input_neuron_count * sizeof(float), cudaMemcpyDeviceToDevice, *command_stream));
+			}
+			else throw neural_network_exception((boost::format("actual_get_snapshot cannot handle input neurons of type %1%") % type_code).str());
 
+			{
 				layer_configuration_specific_snapshot_smart_ptr input_elem(new layer_configuration_specific_snapshot(layer_config_list[0]));
 				res.push_back(input_elem);
-
 				cuda_safe_call(cudaMemcpyAsync(
 					&(*(input_elem->data.begin())),
 					*output_buffer_list[0],
@@ -615,16 +616,18 @@ namespace nnforge
 			return res;
 		}
 
-		layer_configuration_specific_snapshot_smart_ptr network_tester_cuda::actual_run(std::vector<unsigned char>& input)
+		layer_configuration_specific_snapshot_smart_ptr network_tester_cuda::actual_run(
+			const void * input,
+			neuron_data_type::input_type type_code)
 		{
 			layer_configuration_specific_snapshot_smart_ptr res(new layer_configuration_specific_snapshot(layer_config_list[layer_config_list.size() - 1]));
 
 			unsigned int input_neuron_count = layer_config_list.begin()->get_neuron_count();
 			unsigned int input_neuron_count_per_feature_map = layer_config_list.begin()->get_neuron_count_per_feature_map();
-			unsigned int input_feature_map_count = layer_config_list.begin()->feature_map_count;
 			unsigned int output_neuron_count = (layer_config_list.end() - 1)->get_neuron_count();
+			size_t input_neuron_elem_size = neuron_data_type::get_input_size(type_code);
 
-			cuda_linear_buffer_device_smart_ptr input_buf(new cuda_linear_buffer_device(input_neuron_count * sizeof(unsigned char)));
+			cuda_linear_buffer_device_smart_ptr input_buf(new cuda_linear_buffer_device(input_neuron_count * input_neuron_elem_size));
 			cuda_linear_buffer_device_smart_ptr input_converted_buf(new cuda_linear_buffer_device(input_neuron_count * sizeof(float)));
 
 			cuda_linear_buffer_device_smart_ptr output_buffer = input_converted_buf;
@@ -636,32 +639,33 @@ namespace nnforge
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 			}
 
-			// Copy inout
+			// Copy input
 			{
 				cuda_safe_call(cudaMemcpyAsync(
 					*input_buf,
-					&(*input.begin()),
-					input_neuron_count * sizeof(unsigned char),
+					input,
+					input_neuron_count * input_neuron_elem_size,
 					cudaMemcpyHostToDevice,
 					*command_stream));
 			}
 
 			// Convert input
+			if (type_code == neuron_data_type::type_byte)
 			{
-				std::pair<dim3, dim3> convert_compacted_to_raw_2d_surf_kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				int elem_count = (input_neuron_count + 3) / 4;
+				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
-					input_neuron_count_per_feature_map,
-					input_feature_map_count,
-					1);
-				convert_compacted_to_raw_kernel<<<convert_compacted_to_raw_2d_surf_kernel_dims.first, convert_compacted_to_raw_2d_surf_kernel_dims.second, 0, *command_stream>>>(
+					elem_count);
+				convert_compacted_to_raw_kernel<<<kernel_dims.first, kernel_dims.second, 0, *command_stream>>>(
 					*input_buf,
 					*input_converted_buf,
-					*scale_addition,
-					*scale_multiplication,
-					input_neuron_count_per_feature_map,
-					input_feature_map_count,
-					1);
+					elem_count);
 			}
+			else if (type_code == neuron_data_type::type_float)
+			{
+				cuda_safe_call(cudaMemcpyAsync(*input_converted_buf, *input_buf, input_neuron_count * sizeof(float), cudaMemcpyDeviceToDevice, *command_stream));
+			}
+			else throw neural_network_exception((boost::format("actual_run cannot handle input neurons of type %1%") % type_code).str());
 
 			// Run ann
 			{

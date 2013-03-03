@@ -21,7 +21,6 @@
 
 #include "network_data_pusher.h"
 #include "testing_complete_result_set_visualizer.h"
-#include "data_scale_params.h"
 
 #include <boost/filesystem.hpp>
 #include <opencv2/core/core.hpp>
@@ -63,8 +62,6 @@ namespace nnforge
 
 		virtual void randomize_data();
 
-		virtual void normalize_data();
-
 		virtual void create();
 
 		virtual network_tester_smart_ptr get_tester();
@@ -99,8 +96,6 @@ namespace nnforge
 		virtual bool is_normalize_input() const;
 
 		virtual bool is_training_with_validation() const;
-
-		virtual const_data_scale_params_smart_ptr get_data_scale_params() const;
 
 		virtual testing_complete_result_set_visualizer_smart_ptr get_testing_visualizer() const;
 

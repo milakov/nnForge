@@ -5,8 +5,8 @@ OPENCV_PATH=/usr/local
 CUDA_PATH=/usr/local/cuda
 NVCC=nvcc
 NNFORGE_PATH=../..
-NNFORGE_INPUT_DATA_PATH=~/nnforge/input_data
-NNFORGE_WORKING_DATA_PATH=~/nnforge/working_data
+NNFORGE_INPUT_DATA_PATH=/home/max/nnforge/input_data
+NNFORGE_WORKING_DATA_PATH=/home/max/nnforge/working_data
 
 BOOST_LIBS=-lboost_regex-mt -lboost_chrono-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_random-mt -lboost_system-mt -lboost_date_time-mt
 OPENCV_LIBS=-lopencv_highgui -lopencv_imgproc -lopencv_core

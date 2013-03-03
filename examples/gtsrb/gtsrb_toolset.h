@@ -53,7 +53,7 @@ protected:
 	void prepare_validating_data();
 
 	void write_signle_entry(
-		nnforge::supervised_data_stream_writer_byte& writer,
+		nnforge::supervised_data_stream_writer& writer,
 		const boost::filesystem::path& absolute_file_path,
 		unsigned int class_id,
 		unsigned int roi_top_left_x,
@@ -68,7 +68,7 @@ protected:
 		float brightness_shift = 0.0F);
 
 	void write_folder(
-		nnforge::supervised_data_stream_writer_byte& writer,
+		nnforge::supervised_data_stream_writer& writer,
 		const boost::filesystem::path& relative_subfolder_path,
 		const char * annotation_file_name,
 		bool jitter);

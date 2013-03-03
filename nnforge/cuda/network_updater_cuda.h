@@ -32,7 +32,6 @@ namespace nnforge
 		public:
 			network_updater_cuda(
 				network_schema_smart_ptr schema,
-				const_data_scale_params_smart_ptr scale_params,
 				cuda_running_configuration_const_smart_ptr cuda_config);
 
 			virtual ~network_updater_cuda();
@@ -42,7 +41,7 @@ namespace nnforge
 		protected:
 			// schema, data and reader are guaranteed to be compatible
 			virtual std::vector<testing_result_smart_ptr> actual_update(
-				supervised_data_reader_byte& reader,
+				supervised_data_reader& reader,
 				const std::vector<network_data_smart_ptr>& training_speed_vector_list,
 				std::vector<network_data_smart_ptr>& data_list,
 				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
@@ -82,9 +81,6 @@ namespace nnforge
 
 			unsigned int testing_layer_count;
 			const_layer_list::const_iterator start_layer_nonempty_weights_iterator;
-
-			const_cuda_linear_buffer_device_smart_ptr scale_addition;
-			const_cuda_linear_buffer_device_smart_ptr scale_multiplication;
 
 			const_layer_testing_schema_list testing_schemas;
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > testing_schema_data;

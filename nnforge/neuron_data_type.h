@@ -16,24 +16,25 @@
 
 #pragma once
 
-#include "../network_tester_factory.h"
-#include "plain_running_configuration.h"
+#include <memory>
 
 namespace nnforge
 {
-	namespace plain
+	class neuron_data_type
 	{
-		class network_tester_plain_factory : public network_tester_factory
+	public:
+		enum input_type
 		{
-		public:
-			network_tester_plain_factory(plain_running_configuration_const_smart_ptr plain_config);
-
-			virtual ~network_tester_plain_factory();
-
-			virtual network_tester_smart_ptr create(network_schema_smart_ptr schema) const;
-
-		protected:
-			plain_running_configuration_const_smart_ptr plain_config;
+			type_unknown = 0,
+			type_byte = 1,
+			type_float = 2
 		};
-	}
+
+		static size_t get_input_size(input_type t);
+
+	private:
+		neuron_data_type();
+		neuron_data_type(const neuron_data_type&);
+		neuron_data_type& operator =(const neuron_data_type&);
+	};
 }

@@ -31,11 +31,9 @@ namespace nnforge
 		{
 		}
 
-		hessian_calculator_smart_ptr hessian_calculator_cuda_factory::create(
-			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params) const
+		hessian_calculator_smart_ptr hessian_calculator_cuda_factory::create(network_schema_smart_ptr schema) const
 		{
-			return hessian_calculator_smart_ptr(new hessian_calculator_cuda(schema, scale_params, cuda_config));
+			return hessian_calculator_smart_ptr(new hessian_calculator_cuda(schema, cuda_config));
 		}
 	}
 }

@@ -14,26 +14,22 @@
  *  limitations under the License.
  */
 
-#pragma once
+#include "unsupervised_data_reader.h"
 
-#include "../network_tester_factory.h"
-#include "plain_running_configuration.h"
+#include <vector>
 
 namespace nnforge
 {
-	namespace plain
+	unsupervised_data_reader::unsupervised_data_reader()
 	{
-		class network_tester_plain_factory : public network_tester_factory
-		{
-		public:
-			network_tester_plain_factory(plain_running_configuration_const_smart_ptr plain_config);
+	}
 
-			virtual ~network_tester_plain_factory();
+	unsupervised_data_reader::~unsupervised_data_reader()
+	{
+	}
 
-			virtual network_tester_smart_ptr create(network_schema_smart_ptr schema) const;
-
-		protected:
-			plain_running_configuration_const_smart_ptr plain_config;
-		};
+	size_t unsupervised_data_reader::get_input_neuron_elem_size() const
+	{
+		return neuron_data_type::get_input_size(get_input_type());
 	}
 }

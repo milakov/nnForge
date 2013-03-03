@@ -22,16 +22,12 @@ namespace nnforge
 {
 	class unsupervised_data_stream_schema
 	{
-	private:
-		unsupervised_data_stream_schema();
-
 	public:
 		static const boost::uuids::uuid unsupervised_data_stream_guid;
 
-		enum input_type
-		{
-			type_char = 1,
-			type_float = 2
-		};
+	private:
+		unsupervised_data_stream_schema();
+		unsupervised_data_stream_schema(const unsupervised_data_stream_schema&);
+		unsupervised_data_stream_schema& operator =(const unsupervised_data_stream_schema&);
 	};
 }

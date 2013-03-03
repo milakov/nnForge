@@ -21,7 +21,6 @@
 #include "layer_configuration_specific.h"
 #include "supervised_data_reader.h"
 #include "testing_result.h"
-#include "data_scale_params.h"
 
 #include <memory>
 
@@ -32,12 +31,12 @@ namespace nnforge
 	public:
 		virtual ~network_updater();
 
-		// You don't need to call this method before calling get_hessian with supervised_data_reader_byte
+		// You don't need to call this method before calling get_hessian with supervised_data_reader
 		void set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific);
 
 		// Size of random_uniform_list is a power of 2
 		std::vector<testing_result_smart_ptr> update(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
 			std::vector<network_data_smart_ptr>& data_list,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
@@ -53,13 +52,11 @@ namespace nnforge
 		unsigned int entry_count_updated_in_profile_mode;
 
 	protected:
-		network_updater(
-			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params);
+		network_updater(network_schema_smart_ptr schema);
 
 		// schema, data and reader are guaranteed to be compatible
 		virtual std::vector<testing_result_smart_ptr> actual_update(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
 			std::vector<network_data_smart_ptr>& data_list,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
@@ -74,15 +71,12 @@ namespace nnforge
 	protected:
 		network_schema_smart_ptr schema;
 		layer_configuration_specific_list layer_config_list;
-		const_data_scale_params_smart_ptr current_scale_params; // Defined in set_input_configuration_specific
 		float flops;
 
 	private:
 		network_updater();
 		network_updater(const network_updater&);
 		network_updater& operator =(const network_updater&);
-
-		const_data_scale_params_smart_ptr scale_params;
 	};
 
 	typedef std::tr1::shared_ptr<network_updater> network_updater_smart_ptr;

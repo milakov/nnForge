@@ -36,7 +36,7 @@ namespace nnforge
 	}
 
 	void network_trainer::train(
-		supervised_data_reader_byte& reader,
+		supervised_data_reader& reader,
 		network_data_peeker& peeker,
 		network_data_pusher& progress_pusher,
 		network_data_pusher& pusher,

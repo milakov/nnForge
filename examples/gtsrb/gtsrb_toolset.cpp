@@ -54,7 +54,10 @@ void gtsrb_toolset::prepare_data()
 
 void gtsrb_toolset::prepare_training_data()
 {
-	std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(get_working_data_folder() / training_data_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+	boost::filesystem::path file_path = get_working_data_folder() / training_data_filename;
+	std::cout << "Writing data to " << file_path.string() << std::endl;
+
+	std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 	nnforge::layer_configuration_specific input_configuration;
 	input_configuration.feature_map_count = is_color ? 3 : 1;
 	input_configuration.dimension_sizes.push_back(image_width);
@@ -63,7 +66,7 @@ void gtsrb_toolset::prepare_training_data()
 	output_configuration.feature_map_count = class_count;
 	output_configuration.dimension_sizes.push_back(1);
 	output_configuration.dimension_sizes.push_back(1);
-	nnforge::supervised_data_stream_writer_byte writer(
+	nnforge::supervised_data_stream_writer writer(
 		file_with_data,
 		input_configuration,
 		output_configuration);
@@ -83,7 +86,10 @@ void gtsrb_toolset::prepare_training_data()
 
 void gtsrb_toolset::prepare_validating_data()
 {
-	std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(get_working_data_folder() / validating_data_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+	boost::filesystem::path file_path = get_working_data_folder() / validating_data_filename;
+	std::cout << "Writing data to " << file_path.string() << std::endl;
+
+	std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 	nnforge::layer_configuration_specific input_configuration;
 	input_configuration.feature_map_count = is_color ? 3 : 1;
 	input_configuration.dimension_sizes.push_back(image_width);
@@ -92,7 +98,7 @@ void gtsrb_toolset::prepare_validating_data()
 	output_configuration.feature_map_count = class_count;
 	output_configuration.dimension_sizes.push_back(1);
 	output_configuration.dimension_sizes.push_back(1);
-	nnforge::supervised_data_stream_writer_byte writer(
+	nnforge::supervised_data_stream_writer writer(
 		file_with_data,
 		input_configuration,
 		output_configuration);
@@ -108,13 +114,15 @@ void gtsrb_toolset::prepare_validating_data()
 }
 
 void gtsrb_toolset::write_folder(
-	nnforge::supervised_data_stream_writer_byte& writer,
+	nnforge::supervised_data_stream_writer& writer,
 	const boost::filesystem::path& relative_subfolder_path,
 	const char * annotation_file_name,
 	bool jitter)
 {
 	boost::filesystem::path subfolder_path = get_input_data_folder() / relative_subfolder_path;
 	boost::filesystem::path annotation_file_path = subfolder_path / annotation_file_name;
+
+	std::cout << "Reading input data from " << subfolder_path.string() << std::endl;
 
 	boost::filesystem::ifstream file_input(annotation_file_path, std::ios_base::in);
 
@@ -188,7 +196,7 @@ void gtsrb_toolset::write_folder(
 }
 
 void gtsrb_toolset::write_signle_entry(
-		nnforge::supervised_data_stream_writer_byte& writer,
+		nnforge::supervised_data_stream_writer& writer,
 		const boost::filesystem::path& absolute_file_path,
 		unsigned int class_id,
 		unsigned int roi_top_left_x,

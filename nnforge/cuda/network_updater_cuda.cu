@@ -29,24 +29,20 @@
 #include <stack>
 
 __global__ void convert_compacted_to_raw_upd_kernel(
-	const unsigned char * __restrict input,
-	float * __restrict output,
-	const float * __restrict scale_addition,
-	const float * __restrict scale_multiplication,
-	int elem_count_per_feature_map,
-	int feature_map_count,
-	int entry_count)
+	const uchar4 * __restrict input,
+	float4 * __restrict output,
+	int elem_count)
 {
-	int elem_id_inside_feature_map = blockIdx.x * blockDim.x + threadIdx.x;
-	int feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
-	int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
-	bool in_bounds = (entry_id < entry_count) && (elem_id_inside_feature_map < elem_count_per_feature_map) && (feature_map_id < feature_map_count);
-	if (in_bounds)
+	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+	if (elem_id < elem_count)
 	{
-		int offset = elem_count_per_feature_map * (entry_id * feature_map_count + feature_map_id) + elem_id_inside_feature_map;
-		unsigned char val = input[offset];
-		float converted_val = ((val * (1.0F / 255.0F)) + scale_addition[feature_map_id]) * scale_multiplication[feature_map_id];
-		output[offset] = converted_val;
+		uchar4 inp = input[elem_id];
+		float4 val;
+		val.x = inp.x * (1.0F / 255.0F);
+		val.y = inp.y * (1.0F / 255.0F);
+		val.z = inp.z * (1.0F / 255.0F);
+		val.w = inp.w * (1.0F / 255.0F);
+		output[elem_id] = val;
 	}
 }
 
@@ -79,9 +75,8 @@ namespace nnforge
 
 		network_updater_cuda::network_updater_cuda(
 			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params,
 			cuda_running_configuration_const_smart_ptr cuda_config)
-			: network_updater(schema, scale_params)
+			: network_updater(schema)
 			, cuda_config(cuda_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -124,7 +119,7 @@ namespace nnforge
 		}
 
 		std::vector<testing_result_smart_ptr> network_updater_cuda::actual_update(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
 			std::vector<network_data_smart_ptr>& data_list,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
@@ -145,7 +140,8 @@ namespace nnforge
 			unsigned int input_neuron_count = input_configuration.get_neuron_count();
 			unsigned int output_neuron_count = output_configuration.get_neuron_count();
 			unsigned int input_neuron_count_per_feature_map = input_configuration.get_neuron_count_per_feature_map();
-			unsigned int input_feature_map_count = input_configuration.feature_map_count;
+			neuron_data_type::input_type type_code = reader.get_input_type();
+			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
 			unsigned int updater_entry_count = static_cast<unsigned int>(data_list.size());
 			if (updater_entry_count == 0)
@@ -160,8 +156,8 @@ namespace nnforge
 			buffer_cuda_size_configuration buffers_config;
 			update_buffers_configuration(buffers_config, updater_entry_count);
 
-			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(unsigned char)); // input
-			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(unsigned char)); // input
+			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
+			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(float)); // converted input
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
@@ -182,8 +178,8 @@ namespace nnforge
 
 			cuda_linear_buffer_device_smart_ptr input_buf[2] = 
 			{
-				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * sizeof(unsigned char))),
-				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * sizeof(unsigned char))),
+				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * input_neuron_elem_size)),
+				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * max_entry_count * input_neuron_elem_size)),
 			};
 
 			cuda_linear_buffer_device_smart_ptr output_buf[2] = 
@@ -232,7 +228,7 @@ namespace nnforge
 					output_errors = all_buffers.input_errors_buffer;
 			}
 
-			cuda_linear_buffer_host_smart_ptr input_host_buf(new cuda_linear_buffer_host(input_neuron_count * max_entry_count * sizeof(unsigned char)));
+			cuda_linear_buffer_host_smart_ptr input_host_buf(new cuda_linear_buffer_host(input_neuron_count * max_entry_count * input_neuron_elem_size));
 			unsigned char * input = *input_host_buf;
 			cuda_linear_buffer_host_smart_ptr output_host_buf(new cuda_linear_buffer_host(output_neuron_count * max_entry_count * sizeof(float)));
 			float * output = *output_host_buf;
@@ -265,21 +261,27 @@ namespace nnforge
 				if (entries_available_for_processing_count > 0)
 				{
 					// Convert input
+					if (type_code == neuron_data_type::type_byte)
 					{
-						std::pair<dim3, dim3> convert_compacted_to_raw_2d_surf_kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+						int elem_count = (input_neuron_count * entries_available_for_processing_count + 3) / 4;
+						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
-							input_neuron_count_per_feature_map,
-							input_feature_map_count,
-							entries_available_for_processing_count);
-						convert_compacted_to_raw_upd_kernel<<<convert_compacted_to_raw_2d_surf_kernel_dims.first, convert_compacted_to_raw_2d_surf_kernel_dims.second, 0, *command_stream>>>(
+							elem_count);
+						convert_compacted_to_raw_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, *command_stream>>>(
 							*input_buf[current_command_slot],
 							*input_converted_buf,
-							*scale_addition,
-							*scale_multiplication,
-							input_neuron_count_per_feature_map,
-							input_feature_map_count,
-							entries_available_for_processing_count);
+							elem_count);
 					}
+					else if (type_code == neuron_data_type::type_float)
+					{
+						cuda_safe_call(cudaMemcpyAsync(
+							*input_converted_buf,
+							*input_buf[current_command_slot],
+							input_neuron_count * entries_available_for_processing_count * sizeof(float),
+							cudaMemcpyDeviceToDevice,
+							*command_stream));
+					}
+					else throw neural_network_exception((boost::format("actual_update cannot handle input neurons of type %1%") % type_code).str());
 
 					// Run ann
 					{
@@ -435,7 +437,7 @@ namespace nnforge
 					while(entries_read_count < entries_to_read_count)
 					{
 						bool entry_read = reader.read(
-							input + (input_neuron_count * entries_read_count),
+							input + (input_neuron_count * entries_read_count * input_neuron_elem_size),
 							output + (output_neuron_count * entries_read_count));
 
 						if (!entry_read)
@@ -446,7 +448,7 @@ namespace nnforge
 					cuda_safe_call(cudaMemcpyAsync(
 						*(input_buf[current_data_slot]),
 						input,
-						entries_read_count * input_neuron_count * sizeof(unsigned char),
+						entries_read_count * input_neuron_count * input_neuron_elem_size,
 						cudaMemcpyHostToDevice,
 						*data_stream));
 					cuda_safe_call(cudaMemcpyAsync(
@@ -505,14 +507,6 @@ namespace nnforge
 						(it_conf > layer_config_list.begin() + testing_layer_count),
 						(it_conf > layer_config_list.begin() + testing_layer_count)));
 			}
-
-			scale_multiplication = cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-				&(*current_scale_params->multiplication_list.begin()),
-				current_scale_params->multiplication_list.size() * sizeof(float)));
-
-			scale_addition = cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-				&(*current_scale_params->addition_list.begin()),
-				current_scale_params->addition_list.size() * sizeof(float)));
 		}
 
 		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::enqueue_get_training_speed(
@@ -617,9 +611,6 @@ namespace nnforge
 			buffer_cuda_size_configuration& buffer_configuration,
 			unsigned int updater_entry_count) const
 		{
-			buffer_configuration.add_constant_buffer(scale_addition->get_size());
-			buffer_configuration.add_constant_buffer(scale_multiplication->get_size());
-
 			for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::const_iterator it = testing_schema_data.begin(); it != testing_schema_data.end(); ++it)
 				for(std::vector<const_cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
 					buffer_configuration.add_constant_buffer((*it2)->get_size());

@@ -47,12 +47,12 @@ namespace nnforge
 	protected:
 		// The method should add testing result to the training history of each element
 		virtual void train_step(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			std::vector<training_task_state>& task_list,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			const std::vector<float>& random_uniform_list);
 
-		virtual void initialize_train(supervised_data_reader_byte& reader);
+		virtual void initialize_train(supervised_data_reader& reader);
 
 		virtual unsigned int get_max_batch_size() const;
 

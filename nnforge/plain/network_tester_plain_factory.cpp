@@ -31,11 +31,9 @@ namespace nnforge
 		{
 		}
 
-		network_tester_smart_ptr network_tester_plain_factory::create(
-			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params) const
+		network_tester_smart_ptr network_tester_plain_factory::create(network_schema_smart_ptr schema) const
 		{
-			return network_tester_smart_ptr(new network_tester_plain(schema, scale_params, plain_config));
+			return network_tester_smart_ptr(new network_tester_plain(schema, plain_config));
 		}
 	}
 }

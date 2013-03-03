@@ -28,9 +28,8 @@ namespace nnforge
 	{
 		hessian_calculator_plain::hessian_calculator_plain(
 			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params,
 			plain_running_configuration_const_smart_ptr plain_config)
-			: hessian_calculator(schema, scale_params)
+			: hessian_calculator(schema)
 			, plain_config(plain_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -59,7 +58,7 @@ namespace nnforge
 		}
 
 		network_data_smart_ptr hessian_calculator_plain::actual_get_hessian(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			network_data_smart_ptr data,
 			unsigned int hessian_entry_to_process_count)
 		{
@@ -71,10 +70,12 @@ namespace nnforge
 			const unsigned int output_neuron_count = reader.get_output_configuration().get_neuron_count();
 			const unsigned int input_feature_map_count = reader.get_input_configuration().feature_map_count;
 			const unsigned int neuron_count_per_input_feature_map = reader.get_input_configuration().get_neuron_count_per_feature_map();
+			neuron_data_type::input_type type_code = reader.get_input_type();
+			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
 			buffer_plain_size_configuration buffers_config;
 			update_buffers_configuration(buffers_config);
-			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(unsigned char)); // input
+			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(float)); // converted input
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // initial error
 			for(std::vector<layer_data_smart_ptr>::const_iterator it = data->begin(); it != data->end(); ++it)
@@ -88,7 +89,7 @@ namespace nnforge
 
 			unsigned int max_entry_count = std::min<unsigned int>(plain_config->get_max_entry_count(buffers_config), hessian_entry_to_process_count);
 
-			std::vector<unsigned char> input_buf(max_entry_count * input_neuron_count);
+			std::vector<unsigned char> input_buf(max_entry_count * input_neuron_count * input_neuron_elem_size);
 			additional_buffer_smart_ptr initial_error_buf(new std::vector<float>(max_entry_count * output_neuron_count));
 			additional_buffer_smart_ptr input_converted_buf(new std::vector<float>(input_neuron_count * max_entry_count));
 
@@ -142,7 +143,7 @@ namespace nnforge
 				while((entries_available_for_processing_count < max_entry_count) && (entries_read_count < hessian_entry_to_process_count))
 				{
 					bool entry_read = reader.read(
-						&(*(input_buf.begin() + (input_neuron_count * entries_available_for_processing_count))),
+						&(*(input_buf.begin() + (input_neuron_count * entries_available_for_processing_count * input_neuron_elem_size))),
 						0);
 
 					if (!entry_read)
@@ -159,26 +160,24 @@ namespace nnforge
 
 				// Convert input
 				{
-					const int elem_count = static_cast<int>(const_entries_available_for_processing_count);
+					const int elem_count = static_cast<int>(entries_available_for_processing_count * input_neuron_count);
 					const std::vector<float>::iterator input_converted_buf_it_start = input_converted_buf->begin();
-					const std::vector<unsigned char>::const_iterator input_buf_it_start = input_buf.begin();
-					#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-					for(int i = 0; i < elem_count; ++i)
+					if (type_code == neuron_data_type::type_byte)
 					{
-						std::vector<float>::iterator input_converted_buf_it = input_converted_buf_it_start + (i * input_neuron_count);
-						std::vector<unsigned char>::const_iterator input_buf_it = input_buf_it_start + (i * input_neuron_count);
-						for(unsigned int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
-						{
-							float addition = current_scale_params->addition_list[feature_map_id];
-							float multiplication = current_scale_params->multiplication_list[feature_map_id];
-							for(unsigned int j = 0; j < neuron_count_per_input_feature_map; ++j)
-							{
-								*input_converted_buf_it = ((static_cast<float>(*input_buf_it) * (1.0F / 255.0F)) + addition) * multiplication;
-								input_converted_buf_it++;
-								input_buf_it++;
-							}
-						}
+						const unsigned char * const input_buf_it_start = &(*input_buf.begin());
+						#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+						for(int i = 0; i < elem_count; ++i)
+							*(input_converted_buf_it_start + i) = static_cast<float>(*(input_buf_it_start + i)) * (1.0F / 255.0F);
 					}
+					else if (type_code == neuron_data_type::type_float)
+					{
+						const float * const input_buf_it_start = reinterpret_cast<float *>(&(*input_buf.begin()));
+						#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+						for(int i = 0; i < elem_count; ++i)
+							*(input_converted_buf_it_start + i) = *(input_buf_it_start + i);
+					}
+					else
+						throw neural_network_exception((boost::format("actual_get_hessian cannot handle input neurons of type %1%") % type_code).str());
 				}
 
 				// Run ann

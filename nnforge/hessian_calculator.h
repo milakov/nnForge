@@ -20,7 +20,6 @@
 #include "network_data.h"
 #include "layer_configuration_specific.h"
 #include "supervised_data_reader.h"
-#include "data_scale_params.h"
 
 #include <memory>
 
@@ -31,11 +30,11 @@ namespace nnforge
 	public:
 		virtual ~hessian_calculator();
 
-		// You don't need to call this method before calling get_hessian with supervised_data_reader_byte
+		// You don't need to call this method before calling get_hessian with supervised_data_reader
 		void set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific);
 
 		network_data_smart_ptr get_hessian(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			network_data_smart_ptr data,
 			unsigned int hessian_entry_to_process_count);
 
@@ -43,13 +42,11 @@ namespace nnforge
 		float get_flops_for_single_entry() const;
 
 	protected:
-		hessian_calculator(
-			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params);
+		hessian_calculator(network_schema_smart_ptr schema);
 
 		// schema, data and reader are guaranteed to be compatible
 		virtual network_data_smart_ptr actual_get_hessian(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			network_data_smart_ptr data,
 			unsigned int hessian_entry_to_process_count) = 0;
 
@@ -62,15 +59,12 @@ namespace nnforge
 	protected:
 		network_schema_smart_ptr schema;
 		layer_configuration_specific_list layer_config_list;
-		const_data_scale_params_smart_ptr current_scale_params; // Defined in set_input_configuration_specific
 		float flops;
 
 	private:
 		hessian_calculator();
 		hessian_calculator(const hessian_calculator&);
 		hessian_calculator& operator =(const hessian_calculator&);
-
-		const_data_scale_params_smart_ptr scale_params;
 	};
 
 	typedef std::tr1::shared_ptr<hessian_calculator> hessian_calculator_smart_ptr;

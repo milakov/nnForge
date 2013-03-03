@@ -18,69 +18,55 @@
 
 #include "supervised_data_stream_schema.h"
 #include "layer_configuration_specific.h"
+#include "neuron_data_type.h"
 
 #include <memory>
 #include <vector>
 #include <ostream>
-#include <boost/uuid/uuid.hpp>
 
 namespace nnforge
 {
-	class supervised_data_stream_writer_base
+	class supervised_data_stream_writer
 	{
-	protected:
+	public:
+		// The constructor modifies output_stream to throw exceptions in case of failure
 		// The stream should be created with std::ios_base::binary flag
-		supervised_data_stream_writer_base(
+		supervised_data_stream_writer(
 			std::tr1::shared_ptr<std::ostream> output_stream,
 			const layer_configuration_specific& input_configuration,
-			const layer_configuration_specific& output_configuration,
-			unsigned int type_code);
+			const layer_configuration_specific& output_configuration);
 
-		virtual ~supervised_data_stream_writer_base();
+		virtual ~supervised_data_stream_writer();
 
-		void write_output(const float * output_elems);
+		void write(
+			neuron_data_type::input_type type_code,
+			const void * input_neurons,
+			const float * output_neurons);
 
+		void write(
+			const float * input_neurons,
+			const float * output_neurons);
+
+		void write(
+			const unsigned char * input_neurons,
+			const float * output_neurons);
+
+	private:
 		std::tr1::shared_ptr<std::ostream> out_stream;
 		unsigned int input_neuron_count;
 		unsigned int output_neuron_count;
 
-	private:
-		supervised_data_stream_writer_base();
+		std::ostream::pos_type type_code_pos;
+		neuron_data_type::input_type type_code;
+		size_t input_elem_size;
 
 		std::ostream::pos_type entry_count_pos;
 		unsigned int entry_count;
-	};
-
-	template <typename input_data_type, unsigned int data_type_code> class supervised_data_stream_writer : public supervised_data_stream_writer_base
-	{
-	public:
-		// The constructor modifies output_stream to throw exceptions in case of failure
-		supervised_data_stream_writer(
-			std::tr1::shared_ptr<std::ostream> output_stream,
-			const layer_configuration_specific& input_configuration,
-			const layer_configuration_specific& output_configuration)
-			: supervised_data_stream_writer_base(output_stream, input_configuration, output_configuration, data_type_code)
-		{
-		}
-
-		virtual ~supervised_data_stream_writer()
-		{
-		}
-
-		void write(
-			const input_data_type * input_neurons,
-			const float * output_neurons)
-		{
-			out_stream->write(reinterpret_cast<const char*>(input_neurons), sizeof(*input_neurons) * input_neuron_count);
-
-			supervised_data_stream_writer_base::write_output(output_neurons);
-		}
 
 	private:
 		supervised_data_stream_writer(const supervised_data_stream_writer&);
 		supervised_data_stream_writer& operator =(const supervised_data_stream_writer&);
 	};
 
-	typedef supervised_data_stream_writer<unsigned char, supervised_data_stream_schema::type_char> supervised_data_stream_writer_byte;
-	typedef supervised_data_stream_writer<float, supervised_data_stream_schema::type_float> supervised_data_stream_writer_float;
+	typedef std::tr1::shared_ptr<supervised_data_stream_writer> supervised_data_stream_writer_smart_ptr;
 }

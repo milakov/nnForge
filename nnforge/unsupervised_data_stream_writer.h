@@ -18,64 +18,48 @@
 
 #include "unsupervised_data_stream_schema.h"
 #include "layer_configuration_specific.h"
+#include "neuron_data_type.h"
 
 #include <memory>
 #include <vector>
 #include <ostream>
-#include <boost/uuid/uuid.hpp>
 
 namespace nnforge
 {
-	class unsupervised_data_stream_writer_base
-	{
-	protected:
-		// The stream should be created with std::ios_base::binary flag
-		unsupervised_data_stream_writer_base(
-			std::tr1::shared_ptr<std::ostream> output_stream,
-			const layer_configuration_specific& input_configuration,
-			unsigned int type_code);
-
-		virtual ~unsupervised_data_stream_writer_base();
-
-		void write_output();
-
-		std::tr1::shared_ptr<std::ostream> out_stream;
-		unsigned int input_neuron_count;
-
-	private:
-		unsupervised_data_stream_writer_base();
-
-		std::ostream::pos_type entry_count_pos;
-		unsigned int entry_count;
-	};
-
-	template <typename input_data_type, unsigned int data_type_code> class unsupervised_data_stream_writer : public unsupervised_data_stream_writer_base
+	class unsupervised_data_stream_writer
 	{
 	public:
 		// The constructor modifies output_stream to throw exceptions in case of failure
+		// The stream should be created with std::ios_base::binary flag
 		unsupervised_data_stream_writer(
 			std::tr1::shared_ptr<std::ostream> output_stream,
-			const layer_configuration_specific& input_configuration)
-			: unsupervised_data_stream_writer_base(output_stream, input_configuration, data_type_code)
-		{
-		}
+			const layer_configuration_specific& input_configuration);
 
-		virtual ~unsupervised_data_stream_writer()
-		{
-		}
+		virtual ~unsupervised_data_stream_writer();
 
-		void write(const input_data_type * input_neurons)
-		{
-			out_stream->write(reinterpret_cast<const char*>(input_neurons), sizeof(*input_neurons) * input_neuron_count);
+		void write(
+			neuron_data_type::input_type type_code,
+			const void * input_neurons);
 
-			unsupervised_data_stream_writer_base::write_output();
-		}
+		void write(const float * input_neurons);
+
+		void write(const unsigned char * input_neurons);
+
+	private:
+		std::tr1::shared_ptr<std::ostream> out_stream;
+		unsigned int input_neuron_count;
+
+		std::ostream::pos_type type_code_pos;
+		neuron_data_type::input_type type_code;
+		size_t input_elem_size;
+
+		std::ostream::pos_type entry_count_pos;
+		unsigned int entry_count;
 
 	private:
 		unsupervised_data_stream_writer(const unsupervised_data_stream_writer&);
 		unsupervised_data_stream_writer& operator =(const unsupervised_data_stream_writer&);
 	};
 
-	typedef unsupervised_data_stream_writer<unsigned char, unsupervised_data_stream_schema::type_char> unsupervised_data_stream_writer_byte;
-	typedef unsupervised_data_stream_writer<float, unsupervised_data_stream_schema::type_float> unsupervised_data_stream_writer_float;
+	typedef std::tr1::shared_ptr<unsupervised_data_stream_writer> unsupervised_data_stream_writer_smart_ptr;
 }

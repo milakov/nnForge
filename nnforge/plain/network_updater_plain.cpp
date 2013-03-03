@@ -32,9 +32,8 @@ namespace nnforge
 
 		network_updater_plain::network_updater_plain(
 			network_schema_smart_ptr schema,
-			const_data_scale_params_smart_ptr scale_params,
 			plain_running_configuration_const_smart_ptr plain_config)
-			: network_updater(schema, scale_params)
+			: network_updater(schema)
 			, plain_config(plain_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -63,7 +62,7 @@ namespace nnforge
 		}
 
 		std::vector<testing_result_smart_ptr> network_updater_plain::actual_update(
-			supervised_data_reader_byte& reader,
+			supervised_data_reader& reader,
 			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
 			std::vector<network_data_smart_ptr>& data_list,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
@@ -80,6 +79,8 @@ namespace nnforge
 			const unsigned int output_neuron_count = reader.get_output_configuration().get_neuron_count();
 			const unsigned int input_feature_map_count = reader.get_input_configuration().feature_map_count;
 			const unsigned int neuron_count_per_input_feature_map = reader.get_input_configuration().get_neuron_count_per_feature_map();
+			neuron_data_type::input_type type_code = reader.get_input_type();
+			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
 			unsigned int updater_entry_count = static_cast<unsigned int>(data_list.size());
 
@@ -91,7 +92,7 @@ namespace nnforge
 
 			buffer_plain_size_configuration buffers_config;
 			update_buffers_configuration(buffers_config, updater_entry_count);
-			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(unsigned char)); // input
+			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(float)); // converted input
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
 			buffers_config.add_constant_buffer(output_neuron_count * sizeof(float) * updater_entry_count); // temp_mse
@@ -120,7 +121,7 @@ namespace nnforge
 
 			unsigned int max_entry_count = std::min<unsigned int>(std::min<unsigned int>(plain_config->get_max_entry_count(buffers_config), reader.get_entry_count()), max_entry_count_in_single_batch);
 
-			std::vector<unsigned char> input_buf(max_entry_count * input_neuron_count);
+			std::vector<unsigned char> input_buf(max_entry_count * input_neuron_count * input_neuron_elem_size);
 			std::vector<float> actual_output_buf(max_entry_count * input_neuron_count);
 			additional_buffer_smart_ptr initial_error_buf(new std::vector<float>(updater_entry_count * output_neuron_count));
 			additional_buffer_smart_ptr temp_mse_buf(new std::vector<float>(updater_entry_count * output_neuron_count, 0.0F));
@@ -179,7 +180,7 @@ namespace nnforge
 				while(entries_available_for_processing_count < max_entry_count)
 				{
 					bool entry_read = reader.read(
-						&(*(input_buf.begin() + (input_neuron_count * entries_available_for_processing_count))),
+						&(*(input_buf.begin() + (input_neuron_count * entries_available_for_processing_count * input_neuron_elem_size))),
 						&(*(actual_output_buf.begin() + (output_neuron_count * entries_available_for_processing_count))));
 					if (!entry_read)
 					{
@@ -196,26 +197,24 @@ namespace nnforge
 
 				// Convert input
 				{
-					const int elem_count = static_cast<int>(const_entries_available_for_processing_count);
+					const int elem_count = static_cast<int>(entries_available_for_processing_count * input_neuron_count);
 					const std::vector<float>::iterator input_converted_buf_it_start = input_converted_buf->begin();
-					const std::vector<unsigned char>::const_iterator input_buf_it_start = input_buf.begin();
-					#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-					for(int i = 0; i < elem_count; ++i)
+					if (type_code == neuron_data_type::type_byte)
 					{
-						std::vector<float>::iterator input_converted_buf_it = input_converted_buf_it_start + (i * input_neuron_count);
-						std::vector<unsigned char>::const_iterator input_buf_it = input_buf_it_start + (i * input_neuron_count);
-						for(unsigned int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
-						{
-							float addition = current_scale_params->addition_list[feature_map_id];
-							float multiplication = current_scale_params->multiplication_list[feature_map_id];
-							for(unsigned int j = 0; j < neuron_count_per_input_feature_map; ++j)
-							{
-								*input_converted_buf_it = ((static_cast<float>(*input_buf_it) * (1.0F / 255.0F)) + addition) * multiplication;
-								input_converted_buf_it++;
-								input_buf_it++;
-							}
-						}
+						const unsigned char * const input_buf_it_start = &(*input_buf.begin());
+						#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+						for(int i = 0; i < elem_count; ++i)
+							*(input_converted_buf_it_start + i) = static_cast<float>(*(input_buf_it_start + i)) * (1.0F / 255.0F);
 					}
+					else if (type_code == neuron_data_type::type_float)
+					{
+						const float * const input_buf_it_start = reinterpret_cast<float *>(&(*input_buf.begin()));
+						#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+						for(int i = 0; i < elem_count; ++i)
+							*(input_converted_buf_it_start + i) = *(input_buf_it_start + i);
+					}
+					else
+						throw neural_network_exception((boost::format("actual_update cannot handle input neurons of type %1%") % type_code).str());
 				}
 
 				// Run testing layers

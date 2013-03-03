@@ -23,11 +23,9 @@
 
 namespace nnforge
 {
-	unsupervised_data_stream_reader_base::unsupervised_data_stream_reader_base(
-		std::tr1::shared_ptr<std::istream> input_stream,
-		size_t input_elem_size,
-		unsigned int type_code)
-		: in_stream(input_stream), input_elem_size(input_elem_size), entry_read_count(0)
+	unsupervised_data_stream_reader::unsupervised_data_stream_reader(std::tr1::shared_ptr<std::istream> input_stream)
+		: in_stream(input_stream)
+		, entry_read_count(0)
 	{
 		in_stream->exceptions(std::ostream::eofbit | std::ostream::failbit | std::ostream::badbit);
 
@@ -42,32 +40,42 @@ namespace nnforge
 
 		unsigned int type_code_read;
 		in_stream->read(reinterpret_cast<char*>(&type_code_read), sizeof(type_code_read));
-		if (type_code_read != type_code)
-			throw neural_network_exception((boost::format("Unexpected type code encountered in input stream: %1%") % type_code_read).str());
+		type_code = static_cast<neuron_data_type::input_type>(type_code_read);
 
 		in_stream->read(reinterpret_cast<char*>(&entry_count), sizeof(entry_count));
 
 		reset_pos = in_stream->tellg();
 	}
 
-	unsupervised_data_stream_reader_base::~unsupervised_data_stream_reader_base()
+	unsupervised_data_stream_reader::~unsupervised_data_stream_reader()
 	{
 	}
 
-	void unsupervised_data_stream_reader_base::reset()
+	void unsupervised_data_stream_reader::reset()
 	{
 		in_stream->seekg(reset_pos);
 
 		entry_read_count = 0;
 	}
 
-	bool unsupervised_data_stream_reader_base::entry_available()
+	bool unsupervised_data_stream_reader::read(void * input_neurons)
+	{
+		if (!entry_available())
+			return false;
+
+		if (input_neurons)
+			in_stream->read(reinterpret_cast<char*>(input_neurons), get_input_neuron_elem_size() * input_neuron_count);
+		else
+			in_stream->seekg(get_input_neuron_elem_size() * input_neuron_count, std::ios_base::cur);
+
+		entry_read_count++;
+
+		return true;
+	}
+
+	bool unsupervised_data_stream_reader::entry_available()
 	{
 		return (entry_read_count < entry_count);
 	}
 
-	void unsupervised_data_stream_reader_base::notify_read()
-	{
-		entry_read_count++;
-	}
 }

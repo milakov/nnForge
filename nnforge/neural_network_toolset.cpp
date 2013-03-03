@@ -93,10 +93,6 @@ namespace nnforge
 		{
 			randomize_data();
 		}
-		else if (!action.compare("normalize_data"))
-		{
-			normalize_data();
-		}
 		else if (!action.compare("validate"))
 		{
 			validate(true, false);
@@ -163,7 +159,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_data, normalize_data, randomize_data, test, test_batch, validate, validate_batch, validate_infinite, train, train_batch, snapshot, snapshot_invalid, profile_updater, profile_hessian)")
+			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_data, randomize_data, test, test_batch, validate, validate_batch, validate_infinite, train, train_batch, snapshot, snapshot_invalid, profile_updater, profile_hessian)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -374,66 +370,12 @@ namespace nnforge
 		return dst;
 	}
 
-	void neural_network_toolset::normalize_data()
-	{
-		if (!is_normalize_input())
-			throw std::runtime_error("This configuration doesn't assume input data to be normalized");
-
-		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader_byte reader(in);
-
-		std::vector<float> avg = reader.get_feature_map_average();
-		std::vector<std::pair<float, float> > min_max = reader.get_feature_map_min_max();
-		std::vector<float> std_dev = reader.get_feature_map_std_dev(avg);
-
-		data_scale_params scale_params(static_cast<unsigned int>(avg.size()));
-
-		std::cout << "Data distribution in training data:" << std::endl;
-		for(unsigned int i = 0; i < avg.size(); ++i)
-		{
-			std::cout << (boost::format("Feature map %1%: Avg %|2$.5f|, StdDev %|3$.5f|") % (i + 1) % avg[i] % std_dev[i]);
-			if (std_dev[i] > 0.0F)
-			{
-				float suggested_mult = 1.0F / std_dev[i];
-
-				std::cout << (boost::format(", Suggested scale %|1$.1f|") % suggested_mult).str();
-				float actual_mult;
-				float max_mult = max_val_after_normalization / std::max<float>(min_max[i].second - avg[i], avg[i] - min_max[i].first);
-				if (suggested_mult > max_mult)
-				{
-					std::cout << (boost::format(", Clipped to %|1$.1f|") % max_mult).str();
-					actual_mult = max_mult;
-				}
-				else
-					actual_mult = suggested_mult;
-				std::cout << std::endl;
-
-				scale_params.addition_list[i] = -avg[i];
-				scale_params.multiplication_list[i] = actual_mult;
-			}
-			else
-			{
-				std::cout << ", Set to 0" << std::endl;
-
-				scale_params.addition_list[i] = 0.0F;
-				scale_params.multiplication_list[i] = 0.0F;
-			}
-		}
-
-		boost::filesystem::path dest_path = get_working_data_folder() / scaling_params_filename;
-		{
-			std::tr1::shared_ptr<std::ostream> out(new boost::filesystem::ofstream(dest_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
-			scale_params.write(*out);
-		}
-		std::cout << "Scale params dumped to " << dest_path << std::endl;
-	}
-
 	void neural_network_toolset::randomize_data()
 	{
 		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
 		std::tr1::shared_ptr<std::ostream> out(new boost::filesystem::ofstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 
-		supervised_data_stream_reader_byte reader(in);
+		supervised_data_stream_reader reader(in);
 
 		std::cout << "Randomizing " << reader.get_entry_count() << " entries" << std::endl;
 
@@ -479,7 +421,7 @@ namespace nnforge
 			schema->read(in);
 		}
 
-		return tester_factory->create(schema, get_data_scale_params());
+		return tester_factory->create(schema);
 	}
 
 	void neural_network_toolset::validate(
@@ -497,7 +439,7 @@ namespace nnforge
 		tester->set_data(data);
 
 		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / (is_validate ? validating_data_filename : testing_data_filename), std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader_byte reader(in);
+		supervised_data_stream_reader reader(in);
 
 		output_neuron_value_set_smart_ptr actual_neuron_value_set = reader.get_output_neuron_value_set();
 
@@ -522,7 +464,7 @@ namespace nnforge
 		boost::filesystem::path batch_folder = get_working_data_folder() / batch_subfolder_name;
 
 		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / (is_validate ? validating_data_filename : testing_data_filename), std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader_byte reader(in);
+		supervised_data_stream_reader reader(in);
 
 		output_neuron_value_set_smart_ptr actual_neuron_value_set = reader.get_output_neuron_value_set();
 		output_neuron_class_set actual_cs(*actual_neuron_value_set);
@@ -631,14 +573,14 @@ namespace nnforge
 		tester->set_data(data);
 
 		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / validating_data_filename, std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader_byte reader(in);
+		supervised_data_stream_reader reader(in);
 
 		reader.reset();
 
 		tester->set_input_configuration_specific(reader.get_input_configuration());
 
 		unsigned int image_count = std::min<unsigned int>(snapshot_count, reader.get_entry_count());
-		std::vector<unsigned char> input(reader.get_input_configuration().get_neuron_count());
+		std::vector<unsigned char> input(reader.get_input_configuration().get_neuron_count() * reader.get_input_neuron_elem_size());
 		for(unsigned int image_id = 0; image_id < image_count; ++image_id)
 		{
 			if (!reader.read(&(*input.begin()), 0))
@@ -646,7 +588,10 @@ namespace nnforge
 
 			std::string snapshot_filename = (boost::format("%|1$03d|") % image_id).str();
 
-			std::vector<layer_configuration_specific_snapshot_smart_ptr> data_res = tester->get_snapshot(input);
+			std::vector<layer_configuration_specific_snapshot_smart_ptr> data_res = tester->get_snapshot(
+				&(*input.begin()),
+				reader.get_input_type(),
+				reader.get_input_configuration().get_neuron_count());
 
 			save_snapshot(snapshot_filename, data_res);
 		}
@@ -691,7 +636,7 @@ namespace nnforge
 		tester->set_data(data);
 
 		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / validating_data_filename, std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader_byte reader(in);
+		supervised_data_stream_reader reader(in);
 
 		output_neuron_value_set_smart_ptr actual_neuron_value_set = reader.get_output_neuron_value_set();
 
@@ -710,7 +655,7 @@ namespace nnforge
 
 		tester->set_input_configuration_specific(reader.get_input_configuration());
 
-		std::vector<unsigned char> input(reader.get_input_configuration().get_neuron_count());
+		std::vector<unsigned char> input(reader.get_input_configuration().get_neuron_count() * reader.get_input_neuron_elem_size());
 		unsigned int entry_id = 0;
 		for(std::vector<std::pair<unsigned int, unsigned int> >::const_iterator it = cr.predicted_and_actual_class_pair_id_list.begin();
 			it != cr.predicted_and_actual_class_pair_id_list.end();
@@ -729,7 +674,10 @@ namespace nnforge
 				std::string snapshot_filename = (boost::format("actual_%|1$s|_predicted_%|2$s|_entry_%|3$03d|") %
 					get_class_name_by_id(actual_class_id) % get_class_name_by_id(predicted_class_id) % entry_id).str();
 
-				std::vector<layer_configuration_specific_snapshot_smart_ptr> res = tester->get_snapshot(input);
+				std::vector<layer_configuration_specific_snapshot_smart_ptr> res = tester->get_snapshot(
+					&(*input.begin()),
+					reader.get_input_type(),
+					reader.get_input_configuration().get_neuron_count());
 
 				save_snapshot(snapshot_filename, res);
 			}
@@ -767,8 +715,8 @@ namespace nnforge
 		if (is_training_with_validation())
 		{
 			std::tr1::shared_ptr<std::istream> validating_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / validating_data_filename, std::ios_base::in | std::ios_base::binary));
-			supervised_data_reader_byte_smart_ptr validating_data_reader(new supervised_data_stream_reader_byte(validating_data_stream));
-			res.push_back(network_data_pusher_smart_ptr(new validate_progress_network_data_pusher(tester_factory->create(schema, get_data_scale_params()), validating_data_reader, get_testing_visualizer())));
+			supervised_data_reader_smart_ptr validating_data_reader(new supervised_data_stream_reader(validating_data_stream));
+			res.push_back(network_data_pusher_smart_ptr(new validate_progress_network_data_pusher(tester_factory->create(schema), validating_data_reader, get_testing_visualizer())));
 		}
 
 		return res;
@@ -782,9 +730,9 @@ namespace nnforge
 			schema->read(in);
 		}
 
-		hessian_calculator_smart_ptr hessian = hessian_factory->create(schema, get_data_scale_params());
+		hessian_calculator_smart_ptr hessian = hessian_factory->create(schema);
 
-		network_updater_smart_ptr updater = updater_factory->create(schema, get_data_scale_params());
+		network_updater_smart_ptr updater = updater_factory->create(schema);
 
 		network_trainer_sdlm trainer(
 			schema,
@@ -797,7 +745,7 @@ namespace nnforge
 		trainer.mu_increase_factor = mu_increase_factor;
 
 		std::tr1::shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader_byte training_data_reader(training_data_stream);
+		supervised_data_stream_reader training_data_reader(training_data_stream);
 
 		std::tr1::shared_ptr<network_data_peeker> peeker;
 		boost::filesystem::path batch_folder;
@@ -854,10 +802,10 @@ namespace nnforge
 			schema->read(in);
 		}
 
-		network_updater_smart_ptr updater = updater_factory->create(schema, get_data_scale_params());
+		network_updater_smart_ptr updater = updater_factory->create(schema);
 
 		std::tr1::shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader_byte training_data_reader(training_data_stream);
+		supervised_data_stream_reader training_data_reader(training_data_stream);
 
 		std::vector<network_data_smart_ptr> training_speed;
 		std::vector<network_data_smart_ptr> data;
@@ -910,10 +858,10 @@ namespace nnforge
 			schema->read(in);
 		}
 
-		hessian_calculator_smart_ptr hessian = hessian_factory->create(schema, get_data_scale_params());
+		hessian_calculator_smart_ptr hessian = hessian_factory->create(schema);
 
 		std::tr1::shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader_byte training_data_reader(training_data_stream);
+		supervised_data_stream_reader training_data_reader(training_data_stream);
 
 		network_data_smart_ptr data(new network_data(*schema));
 		{
@@ -950,21 +898,6 @@ namespace nnforge
 		return is_classifier()
 			? testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_classifier_visualizer())
 			: testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_visualizer());
-	}
-
-	const_data_scale_params_smart_ptr neural_network_toolset::get_data_scale_params() const
-	{
-		if (is_normalize_input())
-		{
-			data_scale_params_smart_ptr res(new data_scale_params());
-
-			std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / scaling_params_filename, std::ios_base::in | std::ios_base::binary));
-			res->read(*in);
-
-			return res;
-		}
-		else
-			return const_data_scale_params_smart_ptr();
 	}
 
 	bool neural_network_toolset::is_normalize_input() const

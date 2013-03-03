@@ -30,7 +30,6 @@ namespace nnforge
 		public:
 			network_tester_plain(
 				network_schema_smart_ptr schema,
-				const_data_scale_params_smart_ptr scale_params,
 				plain_running_configuration_const_smart_ptr plain_config);
 
 			virtual ~network_tester_plain();
@@ -38,20 +37,24 @@ namespace nnforge
 		protected:
 			// schema, data and reader are guaranteed to be compatible
 			virtual void actual_test(
-				supervised_data_reader_byte& reader,
+				supervised_data_reader& reader,
 				testing_complete_result_set& result);
 
 			// schema, data and reader are guaranteed to be compatible
-			virtual output_neuron_value_set_smart_ptr actual_run(unsupervised_data_reader_byte& reader);
+			virtual output_neuron_value_set_smart_ptr actual_run(unsupervised_data_reader& reader);
 
 			// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
 			virtual void actual_set_data(network_data_smart_ptr data);
 
 			// The method is called when client calls get_snapshot. The data is guaranteed to be compatible with schema
-			virtual std::vector<layer_configuration_specific_snapshot_smart_ptr> actual_get_snapshot(std::vector<unsigned char>& input);
+			virtual std::vector<layer_configuration_specific_snapshot_smart_ptr> actual_get_snapshot(
+				const void * input,
+				neuron_data_type::input_type type_code);
 
 			// The method is called when client calls get_snapshot. The data is guaranteed to be compatible with schema
-			virtual layer_configuration_specific_snapshot_smart_ptr actual_run(std::vector<unsigned char>& input);
+			virtual layer_configuration_specific_snapshot_smart_ptr actual_run(
+				const void * input,
+				neuron_data_type::input_type type_code);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 			// The layer_config_list is guaranteed to be compatible with schema
