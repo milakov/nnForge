@@ -1,7 +1,7 @@
 .svn/
 /lib/
 /bin/
-/apps/
+/apps/*/
 *.[oa]
 *~
 *.sln
