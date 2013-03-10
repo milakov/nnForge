@@ -1,8 +1,8 @@
 APP_NAME=$(shell basename `pwd`)
 TARGET=../../bin/$(APP_NAME)
 CONFIG_FILE=$(TARGET).cfg
-SOURCES=$(wildcard *.cpp)
-OBJECTS=$(SOURCES:%.cpp=%.o)
+SOURCES+=$(wildcard *.cpp)
+OBJECTS+=$(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
 all: $(TARGET) $(CONFIG_FILE)
 
