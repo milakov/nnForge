@@ -52,7 +52,7 @@ protected:
 
 	void prepare_validating_data();
 
-	void write_signle_entry(
+	void write_single_entry(
 		nnforge::supervised_data_stream_writer& writer,
 		const boost::filesystem::path& absolute_file_path,
 		unsigned int class_id,

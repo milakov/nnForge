@@ -18,9 +18,9 @@
 
 #include "factory_generator.h"
 #include "config_options.h"
-
 #include "network_data_pusher.h"
 #include "testing_complete_result_set_visualizer.h"
+#include "network_output_type.h"
 
 #include <boost/filesystem.hpp>
 #include <opencv2/core/core.hpp>
@@ -91,9 +91,7 @@ namespace nnforge
 
 		virtual void profile_hessian();
 
-		virtual bool is_classifier() const;
-
-		virtual bool is_normalize_input() const;
+		virtual network_output_type::output_type get_network_output_type() const;
 
 		virtual bool is_training_with_validation() const;
 

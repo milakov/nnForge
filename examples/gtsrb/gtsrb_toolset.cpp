@@ -165,7 +165,7 @@ void gtsrb_toolset::write_folder(
 				float shift_y = shift_distribution(generator);
 				float contrast = contrast_distribution(generator);
 				float brightness_shift = brightness_shift_distribution(generator);
-				write_signle_entry(
+				write_single_entry(
 					writer,
 					absolute_file_path,
 					class_id,
@@ -183,7 +183,7 @@ void gtsrb_toolset::write_folder(
 		}
 		else
 		{
-			write_signle_entry(
+			write_single_entry(
 				writer,
 				absolute_file_path,
 				class_id,
@@ -195,7 +195,7 @@ void gtsrb_toolset::write_folder(
 	}
 }
 
-void gtsrb_toolset::write_signle_entry(
+void gtsrb_toolset::write_single_entry(
 		nnforge::supervised_data_stream_writer& writer,
 		const boost::filesystem::path& absolute_file_path,
 		unsigned int class_id,

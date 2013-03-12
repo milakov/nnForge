@@ -39,6 +39,7 @@
 #include "report_progress_network_data_pusher.h"
 #include "complex_network_data_pusher.h"
 #include "testing_complete_result_set_classifier_visualizer.h"
+#include "testing_complete_result_set_roc_visualizer.h"
 #include "network_trainer_sdlm.h"
 #include "summarize_network_data_pusher.h"
 
@@ -379,13 +380,15 @@ namespace nnforge
 
 		std::cout << "Randomizing " << reader.get_entry_count() << " entries" << std::endl;
 
-		if (is_classifier())
+		switch(get_network_output_type())
 		{
+		case network_output_type::type_classifier:
+		case network_output_type::type_roc:
 			reader.write_randomized_classifier(out);
-		}
-		else
-		{
+			break;
+		default:
 			reader.write_randomized(out);
+			break;
 		}
 	}
 
@@ -502,7 +505,7 @@ namespace nnforge
 				std::cout << std::endl;
 
 				predicted_neuron_value_set_list.push_back(testing_res.predicted_output_neuron_value_set);
-				if (is_classifier())
+				if (get_network_output_type() == network_output_type::type_classifier)
 				{
 					output_neuron_class_set_smart_ptr predicted_cs(new output_neuron_class_set(*testing_res.predicted_output_neuron_value_set));
 					predicted_neuron_class_set_list.push_back(predicted_cs);
@@ -531,7 +534,7 @@ namespace nnforge
 			}
 		}
 
-		if (is_classifier())
+		if (get_network_output_type() == network_output_type::type_classifier)
 		{
 			{
 				unsigned int count = static_cast<unsigned int>(invalid_ratio_list.size());
@@ -888,21 +891,22 @@ namespace nnforge
 		std::cout << hessian_data->get_stat() << std::endl;
 	}
 
-	bool neural_network_toolset::is_classifier() const
+	network_output_type::output_type neural_network_toolset::get_network_output_type() const
 	{
-		return true;
+		return network_output_type::type_classifier;
 	}
 
 	testing_complete_result_set_visualizer_smart_ptr neural_network_toolset::get_testing_visualizer() const
 	{
-		return is_classifier()
-			? testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_classifier_visualizer())
-			: testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_visualizer());
-	}
-
-	bool neural_network_toolset::is_normalize_input() const
-	{
-		return false;
+		switch (get_network_output_type())
+		{
+		case network_output_type::type_classifier:
+			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_classifier_visualizer());
+		case network_output_type::type_roc:
+			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_roc_visualizer());
+		default:
+			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_visualizer());
+		}
 	}
 
 	bool neural_network_toolset::is_training_with_validation() const
