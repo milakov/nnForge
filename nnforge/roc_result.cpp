@@ -73,9 +73,54 @@ namespace nnforge
 		return static_cast<float>(true_positive + true_negative) / static_cast<float>(actual_positive_elem_count + actual_negative_elem_count);
 	}
 
+	float roc_result::get_auc() const
+	{
+		std::vector<float> true_positive_rates;
+		{
+			unsigned int current_positive_elems_count = 0;
+			float mult = 1.0F / static_cast<float>(actual_positive_elem_count);
+			for(std::vector<unsigned int>::const_reverse_iterator it = values_for_positive_elems.rbegin(); it != values_for_positive_elems.rend(); ++it)
+			{
+				current_positive_elems_count += *it;
+				true_positive_rates.push_back(mult * static_cast<float>(current_positive_elems_count));
+			}
+		}
+		true_positive_rates.push_back(1.0F);
+
+		std::vector<float> false_positive_rates;
+		{
+			unsigned int current_negative_elems_count = 0;
+			float mult = 1.0F / static_cast<float>(actual_negative_elem_count);
+			for(std::vector<unsigned int>::const_reverse_iterator it = values_for_negative_elems.rbegin(); it != values_for_negative_elems.rend(); ++it)
+			{
+				current_negative_elems_count += *it;
+				false_positive_rates.push_back(mult * static_cast<float>(current_negative_elems_count));
+			}
+		}
+		false_positive_rates.push_back(1.0F);
+
+		float sum = 0.0F;
+		float previous_fpr = 0.0F;
+		float previous_tpr = 0.0F;
+		std::vector<float>::const_iterator tpr_it = true_positive_rates.begin();
+		for(std::vector<float>::const_iterator fpr_it = false_positive_rates.begin(); fpr_it != false_positive_rates.end(); ++fpr_it, ++tpr_it)
+		{
+			float current_fpr = *fpr_it;
+			float current_tpr = *tpr_it;
+
+			if (current_fpr != previous_fpr)
+				sum += (current_fpr - previous_fpr) * (previous_tpr + current_tpr) * 0.5F;
+
+			previous_fpr = current_fpr;
+			previous_tpr = current_tpr;
+		}
+
+		return sum;
+	}
+
 	std::ostream& operator<< (std::ostream& out, const roc_result& val)
 	{
-		out << (boost::format("Accuracy %|1$.2f|%%") % (val.get_accuracy(0.0F) * 100.0F)).str();
+		out << (boost::format("AUC %|1$.5f|, accuracy at middle point %|2$.2f|%%") % val.get_auc() % (val.get_accuracy(0.0F) * 100.0F)).str();
 
 		return out;
 	}

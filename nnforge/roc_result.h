@@ -35,6 +35,8 @@ namespace nnforge
 
 		float get_accuracy(float threshold) const;
 
+		float get_auc() const;
+
 		unsigned int segment_count;
 
 		std::vector<unsigned int> values_for_positive_elems;
