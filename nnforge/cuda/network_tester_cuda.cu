@@ -341,7 +341,7 @@ namespace nnforge
 
 			unsigned int input_neuron_count = layer_config_list.begin()->get_neuron_count();
 			unsigned int input_neuron_count_per_feature_map = layer_config_list.begin()->get_neuron_count_per_feature_map();
-			unsigned int output_neuron_count = layer_config_list.end()->get_neuron_count();
+			unsigned int output_neuron_count = (layer_config_list.end() - 1)->get_neuron_count();
 			unsigned int entry_count = reader.get_entry_count();
 			neuron_data_type::input_type type_code = reader.get_input_type();
 			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();

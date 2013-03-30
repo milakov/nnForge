@@ -31,6 +31,7 @@
 #include "output_neuron_class_set.h"
 #include "classifier_result.h"
 #include "supervised_data_stream_reader.h"
+#include "unsupervised_data_stream_reader.h"
 #include "validate_progress_network_data_pusher.h"
 #include "network_data_peeker.h"
 #include "network_data_peeker_random.h"
@@ -460,24 +461,19 @@ namespace nnforge
 		while (infinite);
 	}
 
-	void neural_network_toolset::validate_batch(bool is_validate)
+	std::vector<output_neuron_value_set_smart_ptr> neural_network_toolset::run_batch(
+		supervised_data_reader& reader,
+		output_neuron_value_set_smart_ptr actual_neuron_value_set)
 	{
 		network_tester_smart_ptr tester = get_tester();
 
 		boost::filesystem::path batch_folder = get_working_data_folder() / batch_subfolder_name;
-
-		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / (is_validate ? validating_data_filename : testing_data_filename), std::ios_base::in | std::ios_base::binary));
-		supervised_data_stream_reader reader(in);
-
-		output_neuron_value_set_smart_ptr actual_neuron_value_set = reader.get_output_neuron_value_set();
-		output_neuron_class_set actual_cs(*actual_neuron_value_set);
 
 		std::tr1::regex expression(trained_ann_index_extractor_pattern);
 		std::tr1::cmatch what;
 
 		std::vector<float> invalid_ratio_list;
 		std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list;
-		std::vector<output_neuron_class_set_smart_ptr> predicted_neuron_class_set_list;
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(batch_folder); it != boost::filesystem::directory_iterator(); ++it)
 		{
 			boost::filesystem::path file_path = it->path();
@@ -505,18 +501,63 @@ namespace nnforge
 				std::cout << std::endl;
 
 				predicted_neuron_value_set_list.push_back(testing_res.predicted_output_neuron_value_set);
-				if (get_network_output_type() == network_output_type::type_classifier)
-				{
-					output_neuron_class_set_smart_ptr predicted_cs(new output_neuron_class_set(*testing_res.predicted_output_neuron_value_set));
-					predicted_neuron_class_set_list.push_back(predicted_cs);
-
-					classifier_result cr(*predicted_cs, actual_cs);
-					invalid_ratio_list.push_back(cr.get_invalid_ratio());
-				}
 			}
 		}
 
+		return predicted_neuron_value_set_list;
+	}
+
+	std::vector<output_neuron_value_set_smart_ptr> neural_network_toolset::run_batch(unsupervised_data_reader& reader)
+	{
+		network_tester_smart_ptr tester = get_tester();
+
+		boost::filesystem::path batch_folder = get_working_data_folder() / batch_subfolder_name;
+
+		std::tr1::regex expression(trained_ann_index_extractor_pattern);
+		std::tr1::cmatch what;
+
+		std::vector<float> invalid_ratio_list;
+		std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list;
+		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(batch_folder); it != boost::filesystem::directory_iterator(); ++it)
 		{
+			boost::filesystem::path file_path = it->path();
+			std::string file_name = file_path.filename().string();
+
+			if (std::tr1::regex_search(file_name.c_str(), what, expression))
+			{
+				unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
+				network_data_smart_ptr data(new network_data());
+				{
+					boost::filesystem::ifstream in(file_path, std::ios_base::in | std::ios_base::binary);
+					data->read(in);
+				}
+
+				tester->set_data(data);
+
+				boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
+				output_neuron_value_set_smart_ptr new_res = tester->run(reader);
+				boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
+				std::cout << "# " << index;
+				std::cout << std::endl;
+
+				predicted_neuron_value_set_list.push_back(new_res);
+			}
+		}
+
+		return predicted_neuron_value_set_list;
+	}
+
+	void neural_network_toolset::validate_batch(bool is_validate)
+	{
+		if (is_validate || boost::filesystem::exists(get_working_data_folder() / testing_data_filename))
+		{
+			std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / (is_validate ? validating_data_filename : testing_data_filename), std::ios_base::in | std::ios_base::binary));
+			supervised_data_stream_reader reader(in);
+
+			output_neuron_value_set_smart_ptr actual_neuron_value_set = reader.get_output_neuron_value_set();
+
+			std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(reader, actual_neuron_value_set);
+
 			testing_complete_result_set complete_result_set_avg(actual_neuron_value_set);
 			{
 				complete_result_set_avg.predicted_output_neuron_value_set = output_neuron_value_set_smart_ptr(new output_neuron_value_set(predicted_neuron_value_set_list, output_neuron_value_set::merge_average));
@@ -525,42 +566,22 @@ namespace nnforge
 				get_testing_visualizer()->dump(std::cout, complete_result_set_avg);
 				std::cout << std::endl;
 			}
-			{
-				complete_result_set_avg.predicted_output_neuron_value_set = output_neuron_value_set_smart_ptr(new output_neuron_value_set(predicted_neuron_value_set_list, output_neuron_value_set::merge_median));
-				complete_result_set_avg.recalculate_mse();
-				std::cout << "Merged (median), ";
-				get_testing_visualizer()->dump(std::cout, complete_result_set_avg);
-				std::cout << std::endl;
-			}
 		}
-
-		if (get_network_output_type() == network_output_type::type_classifier)
+		else if (boost::filesystem::exists(get_working_data_folder() / testing_unsupervised_data_filename))
 		{
-			{
-				unsigned int count = static_cast<unsigned int>(invalid_ratio_list.size());
-				float min = *std::min_element(invalid_ratio_list.begin(), invalid_ratio_list.end());
-				float max = *std::max_element(invalid_ratio_list.begin(), invalid_ratio_list.end());
-				float average = std::accumulate(invalid_ratio_list.begin(), invalid_ratio_list.end(), 0.0F) / static_cast<float>(count);
+			std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / testing_unsupervised_data_filename, std::ios_base::in | std::ios_base::binary));
+			unsupervised_data_stream_reader reader(in);
 
-				std::vector<float> temp(invalid_ratio_list.size());
-				std::transform(invalid_ratio_list.begin(), invalid_ratio_list.end(), temp.begin(), std_dev_helper(average));
-				float std_dev = sqrtf(std::accumulate(temp.begin(), temp.end(), 0.0F) / static_cast<float>(count));
+			std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(reader);
 
-				std::cout << count << " ANNs"
-					<< ", Invalid ratios:"
-					<< (boost::format(" Avg %|1$.2f|%%") % (average * 100.0F) )
-					<< (boost::format(", Min %|1$.2f|%%") % (min * 100.0F) )
-					<< (boost::format(", Max %|1$.2f|%%") % (max * 100.0F) )
-					<< (boost::format(", StdDev %|1$.2f|%%") % (std_dev * 100.0F) )
-					<< std::endl;
-			}
-
-			{
-				output_neuron_class_set merged_winner(predicted_neuron_class_set_list);
-				classifier_result cr_winner(merged_winner, actual_cs);
-				std::cout << "Merged (winner), " << cr_winner << std::endl;
-			}
+			run_test_with_unsupervised_data(predicted_neuron_value_set_list);
 		}
+		else throw neural_network_exception((boost::format("File %1% doesn't exist - nothing to test") % (get_working_data_folder() / testing_unsupervised_data_filename).string()).str());
+	}
+
+	void neural_network_toolset::run_test_with_unsupervised_data(std::vector<output_neuron_value_set_smart_ptr>& predicted_neuron_value_set_list)
+	{
+		throw neural_network_exception("Running test with unsupervised data is not implemented by derived toolset");
 	}
 
 	void neural_network_toolset::snapshot()

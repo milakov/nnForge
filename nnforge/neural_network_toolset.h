@@ -21,6 +21,8 @@
 #include "network_data_pusher.h"
 #include "testing_complete_result_set_visualizer.h"
 #include "network_output_type.h"
+#include "unsupervised_data_reader.h"
+#include "output_neuron_value_set.h"
 
 #include <boost/filesystem.hpp>
 #include <opencv2/core/core.hpp>
@@ -97,6 +99,8 @@ namespace nnforge
 
 		virtual testing_complete_result_set_visualizer_smart_ptr get_testing_visualizer() const;
 
+		virtual void run_test_with_unsupervised_data(std::vector<output_neuron_value_set_smart_ptr>& predicted_neuron_value_set_list);
+
 		static cv::Mat rotate_scale_shift(
 			cv::Mat image,
 			cv::Point2f rotation_center,
@@ -154,6 +158,13 @@ namespace nnforge
 		};
 
 		static const float max_val_after_normalization;
+
+	protected:
+		std::vector<output_neuron_value_set_smart_ptr> run_batch(
+			supervised_data_reader& reader,
+			output_neuron_value_set_smart_ptr actual_neuron_value_set);
+
+		std::vector<output_neuron_value_set_smart_ptr> run_batch(unsupervised_data_reader& reader);
 
 	private:
 		factory_generator_smart_ptr factory;

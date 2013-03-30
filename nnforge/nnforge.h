@@ -29,6 +29,8 @@
 #include "neural_network_toolset.h"
 #include "supervised_data_stream_reader.h"
 #include "supervised_data_stream_writer.h"
+#include "unsupervised_data_stream_reader.h"
+#include "unsupervised_data_stream_writer.h"
 #include "rnd.h"
 
 namespace nnforge

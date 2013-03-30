@@ -195,7 +195,7 @@ namespace nnforge
 			reader.reset();
 
 			const unsigned int input_neuron_count = reader.get_input_configuration().get_neuron_count();
-			const unsigned int output_neuron_count = layer_config_list[layer_config_list.size() - 1].get_neuron_count();
+			const unsigned int output_neuron_count = (layer_config_list.end() - 1)->get_neuron_count();
 			const unsigned int entry_count = reader.get_entry_count();
 			const unsigned int input_feature_map_count = reader.get_input_configuration().feature_map_count;
 			const unsigned int neuron_count_per_input_feature_map = reader.get_input_configuration().get_neuron_count_per_feature_map();
