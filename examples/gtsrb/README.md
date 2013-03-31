@@ -39,7 +39,7 @@ Train
 -----
 
 	./gtsrb prepare_data
-	./gtsrv randomize_data
+	./gtsrb randomize_data
 	./gtsrb create
 	./gtsrb train_batch -N 10
 	
