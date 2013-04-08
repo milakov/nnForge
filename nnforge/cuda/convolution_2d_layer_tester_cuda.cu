@@ -256,10 +256,10 @@ namespace nnforge
 			}
 		}
 
-		int convolution_2d_layer_tester_cuda::get_block_size(int window_width)
+		int convolution_2d_layer_tester_cuda::get_block_size(int output_width)
 		{
-			int block_count = (window_width + MAX_BLOCK_SIZE - 1) / MAX_BLOCK_SIZE;
-			int block_size = (window_width + block_count - 1) / block_count;
+			int block_count = (output_width + MAX_BLOCK_SIZE - 1) / MAX_BLOCK_SIZE;
+			int block_size = (output_width + block_count - 1) / block_count;
 			return block_size;
 		}
 

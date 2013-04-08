@@ -18,6 +18,7 @@
 
 #include "../convolution_layer.h"
 #include "../neural_network_exception.h"
+#include "convolution_1d_layer_tester_cuda.h"
 #include "convolution_2d_layer_tester_cuda.h"
 #include "fully_connected_layer_tester_cuda.h"
 
@@ -59,6 +60,9 @@ namespace nnforge
 			{
 				switch (output_configuration_specific.dimension_sizes.size())
 				{
+				case 1:
+					res = layer_tester_cuda_smart_ptr(new convolution_1d_layer_tester_cuda());
+					break;
 				case 2:
 					res = layer_tester_cuda_smart_ptr(new convolution_2d_layer_tester_cuda());
 					break;

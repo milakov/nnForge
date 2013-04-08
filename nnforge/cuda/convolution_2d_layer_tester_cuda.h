@@ -51,7 +51,7 @@ namespace nnforge
 			std::vector<int> window_sizes;
 
 		private:
-			static int get_block_size(int window_width);
+			static int get_block_size(int output_width);
 		};
 	}
 }
