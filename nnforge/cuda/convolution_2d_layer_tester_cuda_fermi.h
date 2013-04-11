@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class convolution_2d_layer_tester_cuda : public layer_tester_cuda
+		class convolution_2d_layer_tester_cuda_fermi : public layer_tester_cuda
 		{
 		public:
-			convolution_2d_layer_tester_cuda();
+			convolution_2d_layer_tester_cuda_fermi();
 
-			virtual ~convolution_2d_layer_tester_cuda();
+			virtual ~convolution_2d_layer_tester_cuda_fermi();
 
 			virtual void enqueue_test(
 				cudaStream_t stream_id,
