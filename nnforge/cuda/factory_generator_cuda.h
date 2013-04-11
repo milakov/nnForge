@@ -42,7 +42,10 @@ namespace nnforge
 
 			virtual std::vector<float_option> get_float_options();
 
+			virtual std::vector<int_option> get_int_options();
+
 		protected:
+			int cuda_device_id;
 			float cuda_max_global_memory_usage_ratio;
 
 			cuda_running_configuration_const_smart_ptr cuda_config;

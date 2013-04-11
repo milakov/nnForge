@@ -30,7 +30,9 @@ namespace nnforge
 		class cuda_running_configuration
 		{
 		public:
-			cuda_running_configuration(float max_global_memory_usage_ratio);
+			cuda_running_configuration(
+				int device_id,
+				float max_global_memory_usage_ratio);
 
 			~cuda_running_configuration();
 
@@ -41,6 +43,11 @@ namespace nnforge
 			cublasHandle_t get_cublas_handle() const;
 
 			bool is_flush_required() const;
+
+			int get_compute_capability() const
+			{
+				return compute_capability_major * 100 + compute_capability_minor;
+			}
 
 		public:
 			float max_global_memory_usage_ratio;

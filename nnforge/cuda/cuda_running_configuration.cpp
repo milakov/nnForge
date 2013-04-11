@@ -31,8 +31,11 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		cuda_running_configuration::cuda_running_configuration(float max_global_memory_usage_ratio)
-			: max_global_memory_usage_ratio(max_global_memory_usage_ratio)
+		cuda_running_configuration::cuda_running_configuration(
+			int device_id,
+			float max_global_memory_usage_ratio)
+			: device_id(device_id)
+			, max_global_memory_usage_ratio(max_global_memory_usage_ratio)
 			, cublas_handle(0)
 		{
 			update_parameters();
@@ -54,7 +57,9 @@ namespace nnforge
 		    cuda_safe_call(cudaGetDeviceCount(&device_count));
 			if (device_count <= 0)
 				throw neural_network_exception("No CUDA capable devices are found");
-			device_id = 0;
+
+			if (device_id >= device_count)
+				throw neural_network_exception((boost::format("Device ID %1% specified while %2% devices are available") % device_id % device_count).str());
 
 			cudaDeviceProp device_prop;
 			cuda_safe_call(cudaGetDeviceProperties(&device_prop, device_id));

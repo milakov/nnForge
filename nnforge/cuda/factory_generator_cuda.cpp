@@ -36,7 +36,7 @@ namespace nnforge
 
 		void factory_generator_cuda::initialize()
 		{
-			cuda_config = cuda_running_configuration_const_smart_ptr(new cuda_running_configuration(cuda_max_global_memory_usage_ratio));
+			cuda_config = cuda_running_configuration_const_smart_ptr(new cuda_running_configuration(cuda_device_id, cuda_max_global_memory_usage_ratio));
 		}
 
 		network_tester_factory_smart_ptr factory_generator_cuda::create_tester_factory() const
@@ -58,7 +58,16 @@ namespace nnforge
 		{
 			std::vector<float_option> res;
 
-			res.push_back(float_option("cuda_max_global_memory_usage_ratio,G", &cuda_max_global_memory_usage_ratio, 0.9F, "part of the global memory to be used by single CUDA configuration."));
+			res.push_back(float_option("cuda_max_global_memory_usage_ratio,G", &cuda_max_global_memory_usage_ratio, 0.9F, "part of the global memory to be used by a single CUDA configuration."));
+
+			return res;
+		}
+
+		std::vector<int_option> factory_generator_cuda::get_int_options()
+		{
+			std::vector<int_option> res;
+
+			res.push_back(int_option("cuda_device_id,D", &cuda_device_id, 0, "CUDA device ID."));
 
 			return res;
 		}
