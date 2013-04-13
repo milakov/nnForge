@@ -54,18 +54,18 @@ __global__ void convolution_1d_tex_blocked_kernel_fermi(
 		float bias_list[FEATURE_MAP_BLOCK_SIZE];
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-		{
 			if (i < output_feature_map_count - output_feature_map_id)
 				bias_list[i] = biases[output_feature_map_id + i];
-			else
-				bias_list[i] = 0.0F;
-		}
 		float sums[BLOCK_SIZE * FEATURE_MAP_BLOCK_SIZE];
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 			#pragma unroll
 			for(int j = 0; j < BLOCK_SIZE; ++j)
 				sums[i * BLOCK_SIZE + j] = bias_list[i];
+		int weight_offsets[FEATURE_MAP_BLOCK_SIZE];
+		#pragma unroll
+		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+			weight_offsets[i] = (i < output_feature_map_count - output_feature_map_id) ? weight_count_per_output_feature_map * i : 0;
 
 		for(int input_layer_id = 0; input_layer_id < input_feature_map_count; ++input_layer_id)
 		{
@@ -73,8 +73,9 @@ __global__ void convolution_1d_tex_blocked_kernel_fermi(
 			for(int input_x = 0; input_x < window_width; ++input_x)
 			{
 				float weight_list[FEATURE_MAP_BLOCK_SIZE];
+				#pragma unroll
 				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-					weight_list[i] = current_weights[weight_count_per_output_feature_map * i];
+					weight_list[i] = current_weights[weight_offsets[i]];
 				#pragma unroll
 				for(int j = 0; j < BLOCK_SIZE; ++j)
 				{
@@ -131,18 +132,18 @@ __global__ void convolution_1d_tex_exact_blocked_kernel_fermi(
 		float bias_list[FEATURE_MAP_BLOCK_SIZE];
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-		{
 			if (i < output_feature_map_count - output_feature_map_id)
 				bias_list[i] = biases[output_feature_map_id + i];
-			else
-				bias_list[i] = 0.0F;
-		}
 		float sums[BLOCK_SIZE * FEATURE_MAP_BLOCK_SIZE];
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 			#pragma unroll
 			for(int j = 0; j < BLOCK_SIZE; ++j)
 				sums[i * BLOCK_SIZE + j] = bias_list[i];
+		int weight_offsets[FEATURE_MAP_BLOCK_SIZE];
+		#pragma unroll
+		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+			weight_offsets[i] = (i < output_feature_map_count - output_feature_map_id) ? weight_count_per_output_feature_map * i : 0;
 
 		for(int input_layer_id = 0; input_layer_id < input_feature_map_count; ++input_layer_id)
 		{
@@ -150,8 +151,9 @@ __global__ void convolution_1d_tex_exact_blocked_kernel_fermi(
 			for(int input_x = 0; input_x < WINDOW_WIDTH; ++input_x)
 			{
 				float weight_list[FEATURE_MAP_BLOCK_SIZE];
+				#pragma unroll
 				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-					weight_list[i] = current_weights[weight_count_per_output_feature_map * i];
+					weight_list[i] = current_weights[weight_offsets[i]];
 				#pragma unroll
 				for(int j = 0; j < BLOCK_SIZE; ++j)
 				{
@@ -292,26 +294,19 @@ namespace nnforge
 			cudaChannelFormatDesc desc = cudaCreateChannelDesc<float>();
 			cuda_safe_call(cudaBindTexture(0, input_tex_ref, *input_buffer, desc, input_elem_count_per_entry * entry_count * sizeof(float)));
 
+			int block_size = get_block_size(output_configuration_specific.dimension_sizes[0]);
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_2d_access(
+				*cuda_config,
+				(output_configuration_specific.dimension_sizes[0] + block_size - 1) / block_size,
+				((output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE),
+				entry_count);
+
 			if (window_sizes[0] <= MAX_WINDOW_WIDTH)
 			{
-				int block_size = get_block_size(output_configuration_specific.dimension_sizes[0]);
-				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_2d_access(
-					*cuda_config,
-					(output_configuration_specific.dimension_sizes[0] + block_size - 1) / block_size,
-					((output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE),
-					entry_count);
-
 				launch_exact_kernel(window_sizes[0], block_size);
 			}
 			else
 			{
-				int block_size = get_block_size(output_configuration_specific.dimension_sizes[0]);
-				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_2d_access(
-					*cuda_config,
-					(output_configuration_specific.dimension_sizes[0] + block_size - 1) / block_size,
-					((output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE),
-					entry_count);
-
 				launch_kernel(block_size);
 			}
 		}

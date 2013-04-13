@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class convolution_2d_layer_hessian_cuda : public layer_hessian_cuda
+		class convolution_1d_layer_hessian_cuda_kepler : public layer_hessian_cuda
 		{
 		public:
-			convolution_2d_layer_hessian_cuda();
+			convolution_1d_layer_hessian_cuda_kepler();
 
-			virtual ~convolution_2d_layer_hessian_cuda();
+			virtual ~convolution_1d_layer_hessian_cuda_kepler();
 
 			virtual void enqueue_test(
 				cudaStream_t stream_id,
@@ -72,6 +72,8 @@ namespace nnforge
 			static int get_block_size(int width);
 
 			static int get_bias_update_block_size(int entry_count);
+
+			static int get_weights_update_block_size(int entry_count);
 		};
 	}
 }
