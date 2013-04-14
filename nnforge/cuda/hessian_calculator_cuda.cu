@@ -20,7 +20,7 @@
 #include "layer_testing_schema_factory.h"
 #include "cuda_linear_buffer_device.h"
 #include "cuda_linear_buffer_host.h"
-#include "cuda_util.h"
+#include "util_cuda.h"
 #include "cuda_event.h"
 
 #include "layer_hessian_schema_factory.h"

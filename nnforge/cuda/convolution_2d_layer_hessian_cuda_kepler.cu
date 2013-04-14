@@ -20,7 +20,7 @@
 
 #include <boost/format.hpp>
 
-#include "cuda_util.h"
+#include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
 #include "cuda_texture.h"
 #include "../convolution_layer.h"

@@ -16,7 +16,7 @@
 
 #include "layer_hessian_cuda.h"
 
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 namespace nnforge
 {

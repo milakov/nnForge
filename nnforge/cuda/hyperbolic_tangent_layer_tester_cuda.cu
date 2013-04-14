@@ -18,7 +18,7 @@
 
 #include <cuda_runtime.h>
 
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 #include "../hyperbolic_tangent_layer.h"
 

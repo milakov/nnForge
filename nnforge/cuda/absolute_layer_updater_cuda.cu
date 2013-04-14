@@ -19,7 +19,7 @@
 #include <cuda_runtime.h>
 
 #include "../neural_network_exception.h"
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 
 __global__ void absolute_upd_kernel(

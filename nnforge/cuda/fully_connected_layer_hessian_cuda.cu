@@ -18,7 +18,7 @@
 
 #include <cuda_runtime.h>
 
-#include "cuda_util.h"
+#include "util_cuda.h"
 #include "neural_network_cublas_exception.h"
 #include "../convolution_layer.h"
 

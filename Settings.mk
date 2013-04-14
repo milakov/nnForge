@@ -18,7 +18,9 @@ CPP_FLAGS_RELEASE_MODE=-O3
 CPP_FLAGS_OPENMP=-fopenmp
 LD_FLAGS_OPENMP=-fopenmp
 
-CUDA_FLAGS_COMMON=-use_fast_math -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+CUDA_FLAGS_COMMON=-use_fast_math
+CUDA_FLAGS_ARCH_FERMI=-gencode=arch=compute_20,code=sm_20
+CUDA_FLAGS_ARCH_KEPLER=-gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_35,code=\"sm_35,compute_35\"
 CUDA_FLAGS_DEBUG_MODE=-g -G -lineinfo
 CUDA_FLAGS_RELEASE_MODE=-O3
 

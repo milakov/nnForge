@@ -18,7 +18,7 @@
 
 #include "../local_contrast_subtractive_layer.h"
 
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 __global__ void local_contrast_blur_horizontal_kernel(
 	const float * __restrict input,

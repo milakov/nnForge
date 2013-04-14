@@ -20,7 +20,7 @@
 
 #include "../hyperbolic_tangent_layer.h"
 #include "../neural_network_exception.h"
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 static __forceinline__ __device__ float hyperbolic_tangent(
 	float x,

@@ -17,7 +17,7 @@
 #include "cuda_linear_buffer_device.h"
 
 #include "neural_network_cuda_exception.h"
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 #include <cuda_runtime.h>
 

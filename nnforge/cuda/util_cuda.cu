@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 __global__ void set_with_value_util_kernel(
 	float4 * __restrict buf,

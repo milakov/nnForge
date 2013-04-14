@@ -16,7 +16,7 @@
 
 #include "layer_updater_cuda.h"
 
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 __global__ void dropout_kernel(
 	float * __restrict neurons,

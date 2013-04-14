@@ -18,7 +18,7 @@
 
 #include <cuda_runtime.h>
 
-#include "cuda_util.h"
+#include "util_cuda.h"
 
 
 __global__ void absolute_hess_kernel(
