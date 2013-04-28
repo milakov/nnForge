@@ -18,6 +18,9 @@
 
 #include <cuda_runtime.h>
 #include <utility>
+#include <vector>
+#include <stack>
+
 #include "cuda_running_configuration.h"
 
 namespace nnforge
@@ -81,16 +84,46 @@ namespace nnforge
 				int elem_count,
 				cudaStream_t cuda_stream);
 
+			static void copy_buffer(
+				const cuda_running_configuration& cuda_config,
+				const float * input_buf_with_aligned_size,
+				float * output_with_aligned_size,
+				int elem_count,
+				cudaStream_t cuda_stream);
+
 			static int get_group_count(
 				const cuda_running_configuration& cuda_config,
 				int total_thread_count,
-				int divisible);
+				int divisible,
+				bool more_threadblocks = false);
+
+			static void fill_tiling_pattern(
+				int size_x,
+				int size_y,
+				std::vector<std::pair<int, int> >& pair_list);
 
 		private:
 			cuda_util();
 			cuda_util(const cuda_util&);
 			cuda_util& operator =(const cuda_util&);
 			~cuda_util();
+
+			struct tile
+			{
+				tile(int left_x, int right_x, int top_y, int bottom_y);
+
+				bool is_point() const;
+
+				void split_to_stack(
+					std::stack<tile>& st,
+					int start_x,
+					int start_y) const;
+
+				int left_x;
+				int right_x;
+				int top_y;
+				int bottom_y;
+			};
 
 			static const unsigned int preferred_width_2d_access;
 			static const unsigned int preferred_height_2d_access;

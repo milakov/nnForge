@@ -18,6 +18,7 @@
 
 #include "cuda_memobject.h"
 #include "cuda_linear_buffer_device.h"
+#include "cuda_running_configuration.h"
 
 #include <cuda_runtime.h>
 
@@ -30,15 +31,27 @@ namespace nnforge
 		public:
 			cuda_texture(const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr);
 
+			cuda_texture(
+				const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr,
+				int elem_offset,
+				int elem_count,
+				const cuda_running_configuration& cuda_config);
+
 			virtual ~cuda_texture();
 
 			operator cudaTextureObject_t () const;
 
 			virtual size_t get_size() const;
 
+			int get_texture_offset_elems() const;
+
 		protected:
 			cudaTextureObject_t tex;
 			const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr;
+			int texture_offset_elems;
 		};
+
+		typedef std::tr1::shared_ptr<cuda_texture> cuda_texture_smart_ptr;
+		typedef std::tr1::shared_ptr<const cuda_texture> const_cuda_texture_smart_ptr;
 	}
 }

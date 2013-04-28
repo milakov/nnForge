@@ -72,6 +72,7 @@ namespace nnforge
 			int max_threads_dim[3];
 			int max_grid_size[3];
 			int max_texture_1d_linear;
+			int texture_alignment; // in bytes
 			int pci_bus_id;
 			int pci_device_id;
 

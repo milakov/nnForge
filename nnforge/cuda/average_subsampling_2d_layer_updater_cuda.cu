@@ -339,6 +339,7 @@ namespace nnforge
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			cudaChannelFormatDesc desc = cudaCreateChannelDesc<float>();
@@ -380,6 +381,7 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			int output_elem_count_per_feature_map_aligned = cuda_util::get_power2_aligned_size(output_configuration_specific.dimension_sizes[0]) * output_configuration_specific.dimension_sizes[1];

@@ -26,6 +26,8 @@ namespace nnforge
 	{
 		cuda_texture::cuda_texture(const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr)
 			: tex(0)
+			, texture_offset_elems(0)
+			, dev_smart_ptr(dev_smart_ptr)
 		{
 			struct cudaResourceDesc res_desc;
 			memset(&res_desc, 0, sizeof(res_desc));
@@ -33,6 +35,35 @@ namespace nnforge
 			res_desc.res.linear.devPtr = const_cast<void *>((const void *)(*dev_smart_ptr));
 			res_desc.res.linear.desc = cudaCreateChannelDesc<float>();
 			res_desc.res.linear.sizeInBytes = dev_smart_ptr->get_size();
+
+			struct cudaTextureDesc tex_desc;
+			memset(&tex_desc, 0, sizeof(tex_desc));
+			tex_desc.addressMode[0] = cudaAddressModeBorder;
+			tex_desc.readMode = cudaReadModeElementType;
+			tex_desc.normalizedCoords = 0;
+
+			cuda_safe_call(cudaCreateTextureObject(&tex, &res_desc, &tex_desc, 0));
+		}
+
+		cuda_texture::cuda_texture(
+			const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr,
+			int elem_offset,
+			int elem_count,
+			const cuda_running_configuration& cuda_config)
+			: tex(0)
+			, texture_offset_elems(0)
+			, dev_smart_ptr(dev_smart_ptr)
+		{
+			int texture_alignment_in_elems = cuda_config.texture_alignment / sizeof(float);
+			int elem_offset_aligned = (elem_offset / texture_alignment_in_elems) * texture_alignment_in_elems;
+			this->texture_offset_elems = elem_offset - elem_offset_aligned;
+
+			struct cudaResourceDesc res_desc;
+			memset(&res_desc, 0, sizeof(res_desc));
+			res_desc.resType = cudaResourceTypeLinear;
+			res_desc.res.linear.devPtr = const_cast<float *>(((const float *)(*dev_smart_ptr)) + elem_offset_aligned);
+			res_desc.res.linear.desc = cudaCreateChannelDesc<float>();
+			res_desc.res.linear.sizeInBytes = (elem_count + (this->texture_offset_elems)) * sizeof(float);
 
 			struct cudaTextureDesc tex_desc;
 			memset(&tex_desc, 0, sizeof(tex_desc));
@@ -60,6 +91,11 @@ namespace nnforge
 			cuda_safe_call(cudaGetTextureObjectResourceDesc(&res_desc, tex));
 
 			return res_desc.res.linear.sizeInBytes;
+		}
+
+		int cuda_texture::get_texture_offset_elems() const
+		{
+			return texture_offset_elems;
 		}
 	}
 }

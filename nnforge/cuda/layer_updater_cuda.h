@@ -39,6 +39,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer;
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer;
 				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers;
+				// dynamic memobject list is intendent to store shallow, lighweight objects, for example, texture objects
+				std::vector<cuda_memobject_smart_ptr> dynamic_memobjects;
 			};
 
 			virtual ~layer_updater_cuda();
@@ -51,7 +53,7 @@ namespace nnforge
 				bool backprop_required,
 				bool different_input);
 
-			buffer_set allocate_all_buffers(unsigned int max_entry_count) const;
+			buffer_set allocate_all_buffers(unsigned int max_entry_count);
 
 			void update_buffer_configuration(buffer_cuda_size_configuration& buffer_configuration) const;
 
@@ -67,6 +69,7 @@ namespace nnforge
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count) = 0;
 
 			// input_errors_buffer is null if is_in_place_backprop() is true
@@ -79,6 +82,7 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count) = 0;
 
 			virtual void enqueue_update_weights(
@@ -90,6 +94,7 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count);
 
 			void enqueue_forward_dropout(
@@ -118,7 +123,15 @@ namespace nnforge
 
 			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
 
+			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const;
+
+			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const;
+
+			virtual void set_max_entry_count(unsigned int max_entry_count);
+
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
+
+			virtual int get_dynamic_memobject_count() const;
 
 			virtual bool is_in_place_backprop() const = 0;
 

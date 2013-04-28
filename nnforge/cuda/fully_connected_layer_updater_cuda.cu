@@ -23,13 +23,12 @@
 #include "neural_network_cuda_exception.h"
 #include "../convolution_layer.h"
 
-extern __shared__ float arr[];
+extern __shared__ float arr_sh[];
 
 __global__ void fully_connected_upd_kernel(
-	float * __restrict output,
+	float * output,
 	const float * __restrict input,
-	const float * __restrict weights,
-	const float * __restrict biases,
+	const float * weights,
 	int input_neuron_count,
 	int output_neuron_count,
 	int min_iteration_count)
@@ -50,29 +49,32 @@ __global__ void fully_connected_upd_kernel(
 	}
 	if (current_input_neuron_id < input_neuron_count)
 		sum += current_input[current_input_neuron_id] * current_weights[current_input_neuron_id];
-	arr[thread_id] = sum;
-	__syncthreads();
 
-	int output_offset = entry_id * output_neuron_count + output_neuron_id;
-	float bias;
-	if (thread_id == 0)
-		bias = biases[output_offset];
+	int lane_id = thread_id & 31;
 
-	int t_add_elems = threadblock_size >> 1;
-	int t_working_elems = (threadblock_size + 1) >> 1;
-	while (t_add_elems > 0)
+#if __CUDA_ARCH__ >= 300
+	#pragma unroll
+	for(int tx = 16; tx > 0; tx >>= 1)
 	{
-		if (thread_id < t_add_elems)
-			arr[thread_id] += arr[thread_id + t_working_elems];
-		t_add_elems = t_working_elems >> 1;
-		t_working_elems = (t_working_elems + 1) >> 1;
-		__syncthreads();
+		sum += __shfl_down(sum, tx);
 	}
+#else
+	volatile float * arr = arr_sh;
+	arr[thread_id] = sum;
+	#pragma unroll
+	for(int tx = 16; tx > 0; tx >>= 1)
+	{
+		if (lane_id < tx)
+			arr[thread_id] += arr[thread_id + tx];
+	}
+	sum = arr[thread_id];
+#endif
 
-	if (thread_id == 0)
-		output[output_offset] = arr[0] + bias;
+	if (lane_id == 0)
+		atomicAdd(output + entry_id * output_neuron_count + output_neuron_id, sum);
 }
 
+template<bool single_output_group_count>
 __global__ void fully_connected_deriviative_upd_kernel(
 	float * __restrict input_errors,
 	const float * __restrict output_errors,
@@ -89,22 +91,27 @@ __global__ void fully_connected_deriviative_upd_kernel(
 	bool in_bounds = (input_neuron_id < input_neuron_count) && (output_group_id < output_group_count) && (entry_id < entry_count);
 	if (in_bounds)
 	{
-		const float * current_output = output_errors + (int)(entry_id * output_neuron_count + output_group_id);
-		const float * current_weights = weights + (int)((entry_id * output_neuron_count + output_group_id) * input_neuron_count + input_neuron_id);
-		int iteration_count = (max_iteration_count * output_group_count + output_group_id < output_neuron_count) ? max_iteration_count : max_iteration_count - 1;
+		int output_offset = entry_id * output_neuron_count + output_group_id;
+		int weights_offset = (entry_id * output_neuron_count + output_group_id) * input_neuron_count + input_neuron_id;
+		int iteration_count = ((max_iteration_count - 1) * output_group_count + output_group_id < output_neuron_count) ? max_iteration_count : max_iteration_count - 1;
 		float sum = 0.0F;
+		#pragma unroll 4
 		for(int i = 0; i < iteration_count; ++i)
 		{
-			sum += *current_output * *current_weights;
-			current_weights += input_neuron_count * output_group_count;
-			current_output += output_group_count;
+			sum += output_errors[output_offset] * weights[weights_offset];
+			weights_offset += input_neuron_count * output_group_count;
+			output_offset += output_group_count;
 		}
 
 		float * current_input = input_errors + entry_id * input_neuron_count + input_neuron_id;
-		if (output_group_count == 1)
+		if (single_output_group_count)
+		{
 			*current_input = sum;
+		}
 		else
+		{
 			atomicAdd(current_input, sum);
+		}
 	}
 }
 
@@ -169,21 +176,28 @@ namespace nnforge
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			if (different_input)
 			{
+				cuda_util::copy_buffer(
+					*cuda_config,
+					*data[1],
+					*output_neurons_buffer,
+					output_elem_count_per_entry * entry_count,
+					stream_id);
+
 				int threadblock_size = get_threadblock_size_forward(input_elem_count_per_entry);
 				dim3 grid_size(1, output_elem_count_per_entry, entry_count);
 				dim3 block_size(threadblock_size, 1, 1);
-				int smem_size = threadblock_size * sizeof(float);
+				int smem_size = (cuda_config->get_compute_capability() >= 300) ? 0 : (threadblock_size * sizeof(float));
 				int min_iteration_count = input_elem_count_per_entry / threadblock_size;
 
 				fully_connected_upd_kernel<<<grid_size, block_size, smem_size, stream_id>>>(
 					*output_neurons_buffer,
 					*input_neurons_buffer,
 					*data[0],
-					*data[1],
 					input_elem_count_per_entry,
 					output_elem_count_per_entry,
 					min_iteration_count);
@@ -218,15 +232,17 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			if (!different_input)
 				throw neural_network_exception("fully_connected_layer_updater_cuda is not able to backprop to the same input");
 
 			int output_group_count = cuda_util::get_group_count(
-				*cuda_config,
-				input_elem_count_per_entry * entry_count,
-				output_elem_count_per_entry);
+					*cuda_config,
+					input_elem_count_per_entry * entry_count,
+					output_elem_count_per_entry,
+					true);
 			int max_iteration_count = (output_elem_count_per_entry + output_group_count - 1) / output_group_count;
 
 			if (output_group_count > 1)
@@ -242,15 +258,27 @@ namespace nnforge
 				input_elem_count_per_entry,
 				output_group_count,
 				entry_count);
-			fully_connected_deriviative_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-				*input_errors_buffer,
-				*output_errors_buffer,
-				*data[0],
-				input_elem_count_per_entry,
-				output_elem_count_per_entry,
-				output_group_count,
-				max_iteration_count,
-				entry_count);
+
+			if (output_group_count == 1)
+				fully_connected_deriviative_upd_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_errors_buffer,
+					*output_errors_buffer,
+					*data[0],
+					input_elem_count_per_entry,
+					output_elem_count_per_entry,
+					output_group_count,
+					max_iteration_count,
+					entry_count);
+			else
+				fully_connected_deriviative_upd_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_errors_buffer,
+					*output_errors_buffer,
+					*data[0],
+					input_elem_count_per_entry,
+					output_elem_count_per_entry,
+					output_group_count,
+					max_iteration_count,
+					entry_count);
 		}
 
 		void fully_connected_layer_updater_cuda::enqueue_update_weights(
@@ -262,6 +290,7 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			// Update biases
@@ -315,12 +344,18 @@ namespace nnforge
 
 		int fully_connected_layer_updater_cuda::get_threadblock_size_forward(int input_neuron_count)
 		{
-			if (input_neuron_count < 128)
-				return input_neuron_count;
+			int threadblock_size;
 
-			int threadblock_count = (input_neuron_count + 128 - 1) / 128;
-			int threadblock_size = (input_neuron_count + threadblock_count - 1) / threadblock_count;
-			threadblock_size = (threadblock_size + 32 - 1) / 32 * 32;
+			if (input_neuron_count < 128)
+			{
+				threadblock_size = (input_neuron_count + 32 - 1) / 32 * 32;
+			}
+			else
+			{
+				int threadblock_count = (input_neuron_count + 128 - 1) / 128;
+				threadblock_size = (input_neuron_count + threadblock_count - 1) / threadblock_count;
+				threadblock_size = (threadblock_size + 32 - 1) / 32 * 32;
+			}
 
 			return threadblock_size;
 		}

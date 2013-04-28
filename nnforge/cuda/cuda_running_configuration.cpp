@@ -81,6 +81,7 @@ namespace nnforge
 			for(int i = 0; i < sizeof(max_grid_size) / sizeof(max_grid_size[0]); ++i)
 				max_grid_size[i] = device_prop.maxGridSize[i];
 			max_texture_1d_linear = device_prop.maxTexture1DLinear;
+			texture_alignment = device_prop.textureAlignment;
 			pci_bus_id = device_prop.pciBusID;
 			pci_device_id = device_prop.pciDeviceID;
 		#ifdef WIN32
@@ -131,6 +132,7 @@ namespace nnforge
 				<< running_configuration.max_grid_size[1] << " x "
 				<< running_configuration.max_grid_size[2] << std::endl;
 			out << "Maximum size of 1D texture bound to linear memory = " << running_configuration.max_texture_1d_linear << std::endl;
+			out << "Texture alignment = " << running_configuration.texture_alignment << " bytes" << std::endl;
 			out << "PCI Bus ID = " << running_configuration.pci_bus_id << std::endl;
 			out << "PCI Location ID = " << running_configuration.pci_device_id << std::endl;
 			#ifdef WIN32

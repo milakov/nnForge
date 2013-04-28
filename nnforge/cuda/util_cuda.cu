@@ -15,6 +15,7 @@
  */
 
 #include "util_cuda.h"
+#include "../neural_network_exception.h"
 
 __global__ void set_with_value_util_kernel(
 	float4 * __restrict buf,
@@ -65,6 +66,16 @@ __global__ void multiply_by_itself_training_util_kernel(
 		val.w *= val.w;
 		output_buf[elem_id] = val;
 	}
+}
+
+__global__ void copy_buffer_util_kernel(
+	const float4 * __restrict input_buf,
+	float4 * __restrict output_buf,
+	int elem_count)
+{
+	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+	if (elem_id < elem_count)
+		output_buf[elem_id] = input_buf[elem_id];
 }
 
 namespace nnforge
@@ -283,22 +294,109 @@ namespace nnforge
 			multiply_by_itself_training_util_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((const float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, new_elem_count);
 		}
 
+		void cuda_util::copy_buffer(
+			const cuda_running_configuration& cuda_config,
+			const float * input_buf_with_aligned_size,
+			float * output_buf_with_aligned_size,
+			int elem_count,
+			cudaStream_t cuda_stream)
+		{
+			int new_elem_count = (elem_count + 3) / 4;
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				new_elem_count);
+			copy_buffer_util_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((const float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, new_elem_count);
+		}
+
 		int cuda_util::get_group_count(
 			const cuda_running_configuration& cuda_config,
 			int total_thread_count,
-			int divisible)
+			int divisible,
+			bool more_threadblocks)
 		{
 			int initial_threadblock_count = std::max<int>(total_thread_count / 256, 1);
-			int minimum_threadblock_count = cuda_config.multiprocessor_count * 8;
+			int minimum_threadblock_count = cuda_config.multiprocessor_count * 4 * (more_threadblocks ? 4 : 1);
 
 			if (initial_threadblock_count >= minimum_threadblock_count)
 				return 1;
 
-			int group_count = std::min<int>(minimum_threadblock_count / initial_threadblock_count, static_cast<int>(sqrtf(static_cast<float>(divisible))));
+			int group_count = std::min<int>(minimum_threadblock_count / initial_threadblock_count, static_cast<int>(powf(static_cast<float>(divisible), 2.0F/3.0F)));
 			int iteration_count = (divisible + group_count - 1) / group_count;
 			group_count = (divisible + iteration_count - 1) / iteration_count;
 
 			return group_count;
+		}
+
+		void cuda_util::fill_tiling_pattern(
+			int size_x,
+			int size_y,
+			std::vector<std::pair<int, int> >& pair_list)
+		{
+			pair_list.clear();
+
+			std::stack<tile> work_set;
+
+			int size_max = std::max<int>(size_x, size_y);
+			int size_aligned = 1;
+			while (size_aligned < size_max)
+				size_aligned <<= 1;
+
+			work_set.push(tile(0, size_aligned, 0, size_aligned));
+			int start_x = size_aligned - size_x;
+			int start_y = size_aligned - size_y;
+
+			while (!work_set.empty())
+			{
+				tile cur_tile = work_set.top();
+				work_set.pop();
+
+				if (cur_tile.is_point())
+				{
+					int x = cur_tile.left_x - start_x;
+					int y = cur_tile.top_y - start_y;
+
+					if ((x >= 0) && (y >= 0))
+						pair_list.push_back(std::make_pair<int, int>(x, y));
+				}
+				else
+					cur_tile.split_to_stack(work_set, start_x, start_y);
+			}
+
+			if (pair_list.size() != size_x * size_y)
+				throw neural_network_exception("Internal error when generating tiling pattern");
+		}
+
+		cuda_util::tile::tile(int left_x, int right_x, int top_y, int bottom_y)
+			: left_x(left_x)
+			, right_x(right_x)
+			, top_y(top_y)
+			, bottom_y(bottom_y)
+		{
+		}
+
+		bool cuda_util::tile::is_point() const
+		{
+			return ((right_x - left_x) == 1) && ((bottom_y - top_y) == 1);
+		}
+
+		void cuda_util::tile::split_to_stack(
+			std::stack<tile>& st,
+			int start_x,
+			int start_y) const
+		{
+			int middle_x = (left_x + right_x) >> 1;
+			int middle_y = (top_y + bottom_y) >> 1;
+
+			st.push(tile(middle_x, right_x, middle_y, bottom_y));
+
+			if (middle_x > start_x)
+				st.push(tile(left_x, middle_x, middle_y, bottom_y));
+
+			if (middle_y > start_y)
+				st.push(tile(middle_x, right_x, top_y, middle_y));
+
+			if ((middle_x > start_x) && (middle_y > start_y))
+				st.push(tile(left_x, middle_x, top_y, middle_y));
 		}
 	}
 }

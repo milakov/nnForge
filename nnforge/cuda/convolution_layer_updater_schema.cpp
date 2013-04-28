@@ -18,7 +18,8 @@
 
 #include "../convolution_layer.h"
 #include "../neural_network_exception.h"
-#include "convolution_2d_layer_updater_cuda.h"
+#include "convolution_2d_layer_updater_cuda_fermi.h"
+#include "convolution_2d_layer_updater_cuda_kepler.h"
 #include "fully_connected_layer_updater_cuda.h"
 
 #include <boost/format.hpp>
@@ -60,7 +61,10 @@ namespace nnforge
 				switch (output_configuration_specific.dimension_sizes.size())
 				{
 				case 2:
-					res = layer_updater_cuda_smart_ptr(new convolution_2d_layer_updater_cuda());
+					if (cuda_config->get_compute_capability() >= 300)
+						res = layer_updater_cuda_smart_ptr(new convolution_2d_layer_updater_cuda_kepler());
+					else
+						res = layer_updater_cuda_smart_ptr(new convolution_2d_layer_updater_cuda_fermi());
 					break;
 				default:
 					throw neural_network_exception((boost::format("No CUDA updater for the convolution layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());

@@ -103,6 +103,7 @@ namespace nnforge
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			int elem_count = (input_elem_count_per_entry * entry_count + 3) / 4;
@@ -126,6 +127,7 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			int elem_count = (input_elem_count_per_entry * entry_count + 3) / 4;

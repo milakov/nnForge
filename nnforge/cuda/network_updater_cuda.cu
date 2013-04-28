@@ -337,6 +337,7 @@ namespace nnforge
 									input_and_all_buffers_pack_it->first,
 									input_and_all_buffers_pack_it->second.output_neurons_buffer,
 									input_and_all_buffers_pack_it->second.additional_buffers,
+									input_and_all_buffers_pack_it->second.dynamic_memobjects,
 									updater_entry_count);
 							}
 						}
@@ -379,6 +380,7 @@ namespace nnforge
 										*output_errors_it,
 										input_and_all_buffers_pack_it->second.input_errors_buffer,
 										input_and_all_buffers_pack_it->second.additional_buffers,
+										input_and_all_buffers_pack_it->second.dynamic_memobjects,
 										updater_entry_count);
 
 									std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(reverse_layer_id);
@@ -406,6 +408,7 @@ namespace nnforge
 									*output_errors_it,
 									input_and_all_buffers_pack_it->first,
 									input_and_all_buffers_pack_it->second.additional_buffers,
+									input_and_all_buffers_pack_it->second.dynamic_memobjects,
 									updater_entry_count);
 							}
 						}
