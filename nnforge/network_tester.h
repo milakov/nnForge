@@ -44,7 +44,9 @@ namespace nnforge
 			supervised_data_reader& reader,
 			testing_complete_result_set& result);
 
-		output_neuron_value_set_smart_ptr run(unsupervised_data_reader& reader);
+		output_neuron_value_set_smart_ptr run(
+			unsupervised_data_reader& reader,
+			unsigned int sample_count);
 
 		// You need to call set_input_configuration_specific before you call this method for the 1st time
 		std::vector<layer_configuration_specific_snapshot_smart_ptr> get_snapshot(
@@ -77,9 +79,7 @@ namespace nnforge
 		network_tester(network_schema_smart_ptr schema);
 
 		// schema, data and reader are guaranteed to be compatible
-		virtual void actual_test(
-			supervised_data_reader& reader,
-			testing_complete_result_set& result) = 0;
+		virtual output_neuron_value_set_smart_ptr actual_test(supervised_data_reader& reader) = 0;
 
 		// schema, data and reader are guaranteed to be compatible
 		virtual output_neuron_value_set_smart_ptr actual_run(unsupervised_data_reader& reader) = 0;

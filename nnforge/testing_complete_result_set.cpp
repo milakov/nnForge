@@ -27,8 +27,13 @@ namespace nnforge
 		, predicted_output_neuron_value_set(
 			new output_neuron_value_set(
 				static_cast<unsigned int>(actual_output_neuron_value_set->neuron_value_list.size()),
-				static_cast<unsigned int>(actual_output_neuron_value_set->neuron_value_list[0].size())))
+				static_cast<unsigned int>(actual_output_neuron_value_set->neuron_value_list.begin()->size())))
 	{
+	}
+
+	void testing_complete_result_set::resize_predicted_output_neuron_value_set(unsigned int entry_count)
+	{
+		predicted_output_neuron_value_set->neuron_value_list.resize(entry_count, std::vector<float>(actual_output_neuron_value_set->neuron_value_list.begin()->size()));
 	}
 
 	void testing_complete_result_set::recalculate_mse()

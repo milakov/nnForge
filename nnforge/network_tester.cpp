@@ -62,19 +62,36 @@ namespace nnforge
 		// Check schema-reader consistency
 		layer_config_list[layer_config_list.size() - 1].check_equality(reader.get_output_configuration());
 
-		actual_test(reader, result);
+		result.predicted_output_neuron_value_set = actual_test(reader);
 
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 
-		result.mse->flops = static_cast<float>(result.mse->entry_count) * flops;
+		int actual_entry_count = result.actual_output_neuron_value_set->neuron_value_list.size();
+		int predicted_entry_count = result.predicted_output_neuron_value_set->neuron_value_list.size();
+		int mod = predicted_entry_count % actual_entry_count;
+		if (mod != 0)
+			throw nnforge::neural_network_exception("Predicted entry count is not evenly divisible by actual entry count");
+		unsigned int sample_count = predicted_entry_count / actual_entry_count;
+
+		size_t original_entry_count = result.predicted_output_neuron_value_set->neuron_value_list.size();
+		result.predicted_output_neuron_value_set->compact(sample_count);
+		result.recalculate_mse();
+
+		result.mse->flops = static_cast<float>(original_entry_count) * flops;
 		result.mse->time_to_complete_seconds = sec.count();
 	}
 
-	output_neuron_value_set_smart_ptr network_tester::run(unsupervised_data_reader& reader)
+	output_neuron_value_set_smart_ptr network_tester::run(
+		unsupervised_data_reader& reader,
+		unsigned int sample_count)
 	{
 		set_input_configuration_specific(reader.get_input_configuration());
 
-		return actual_run(reader);
+		output_neuron_value_set_smart_ptr result = actual_run(reader);
+
+		result->compact(sample_count);
+
+		return result;
 	}
 
 	std::vector<layer_configuration_specific_snapshot_smart_ptr> network_tester::get_snapshot(

@@ -44,6 +44,8 @@ namespace nnforge
 			float min_val,
 			float max_val);
 
+		void compact(unsigned int sample_count);
+
 		std::vector<std::vector<float> > neuron_value_list;
 	};
 

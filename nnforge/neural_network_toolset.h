@@ -23,6 +23,7 @@
 #include "network_output_type.h"
 #include "unsupervised_data_reader.h"
 #include "output_neuron_value_set.h"
+#include "output_neuron_class_set.h"
 
 #include <boost/filesystem.hpp>
 #include <opencv2/core/core.hpp>
@@ -54,7 +55,7 @@ namespace nnforge
 
 		virtual network_schema_smart_ptr get_schema() = 0;
 
-		virtual std::map<unsigned int, float> get_dropout_rate_map();
+		virtual std::map<unsigned int, float> get_dropout_rate_map() const;
 
 		virtual boost::filesystem::path get_input_data_folder() const;
 
@@ -100,6 +101,12 @@ namespace nnforge
 		virtual testing_complete_result_set_visualizer_smart_ptr get_testing_visualizer() const;
 
 		virtual void run_test_with_unsupervised_data(std::vector<output_neuron_value_set_smart_ptr>& predicted_neuron_value_set_list);
+
+		virtual unsigned int get_testing_sample_count() const;
+
+		virtual unsigned int get_validating_sample_count() const;
+
+		virtual unsigned int get_training_sample_count() const;
 
 		static cv::Mat rotate_scale_shift(
 			cv::Mat image,

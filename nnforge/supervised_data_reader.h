@@ -45,7 +45,7 @@ namespace nnforge
 
 		size_t get_input_neuron_elem_size() const;
 
-		output_neuron_value_set_smart_ptr get_output_neuron_value_set();
+		output_neuron_value_set_smart_ptr get_output_neuron_value_set(unsigned int sample_count);
 
 	protected:
 		supervised_data_reader();

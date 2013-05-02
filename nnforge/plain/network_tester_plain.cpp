@@ -40,9 +40,7 @@ namespace nnforge
 		{
 		}
 
-		void network_tester_plain::actual_test(
-			supervised_data_reader& reader,
-			testing_complete_result_set& result)
+		output_neuron_value_set_smart_ptr network_tester_plain::actual_test(supervised_data_reader& reader)
 		{
 			reader.reset();
 
@@ -53,7 +51,8 @@ namespace nnforge
 			const unsigned int neuron_count_per_input_feature_map = reader.get_input_configuration().get_neuron_count_per_feature_map();
 			neuron_data_type::input_type type_code = reader.get_input_type();
 			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
-			result.mse = testing_result_smart_ptr(new testing_result(output_neuron_count));
+
+			output_neuron_value_set_smart_ptr predicted_output_neuron_value_set(new output_neuron_value_set(entry_count, output_neuron_count));
 
 			buffer_plain_size_configuration buffers_config;
 			update_buffers_configuration_testing(buffers_config);
@@ -66,7 +65,6 @@ namespace nnforge
 			std::vector<unsigned char> input_buf(input_neuron_count * max_entry_count * input_neuron_elem_size);
 			std::vector<float> actual_output_buf(output_neuron_count * max_entry_count);
 			additional_buffer_smart_ptr input_converted_buf(new std::vector<float>(input_neuron_count * max_entry_count));
-			std::vector<float>& mse_buf = result.mse->cumulative_mse_list;
 
 			additional_buffer_smart_ptr output_buffer = input_converted_buf;
 			std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> > input_buffer_and_additional_buffers_pack;
@@ -88,6 +86,7 @@ namespace nnforge
 			}
 
 			bool entries_remained_for_loading = true;
+			int entries_processed_count = 0;
 			while (entries_remained_for_loading)
 			{
 				unsigned int entries_available_for_processing_count = 0;
@@ -150,33 +149,11 @@ namespace nnforge
 					}
 				}
 
-				// Compute MSE
-				{
-					const int total_workload = static_cast<int>(output_neuron_count);
-					const std::vector<float>::iterator mse_buf_it = mse_buf.begin();
-					const std::vector<float>::const_iterator actual_output_buf_it = actual_output_buf.begin();
-					const std::vector<float>::const_iterator output_buffer_it = output_buffer->begin();
-					const int const_entries_available_for_processing_count = entries_available_for_processing_count;
-					#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-					for(int i = 0; i < total_workload; ++i)
-					{
-						float mse_local2 = 0.0F;
-						unsigned int elem_id = i;
-						for(unsigned int j = 0; j < const_entries_available_for_processing_count; ++j)
-						{
-							float diff = *(actual_output_buf_it + elem_id) - *(output_buffer_it + elem_id);
-							mse_local2 += diff * diff;
-							elem_id += total_workload;
-						}
-						*(mse_buf_it + i) += mse_local2 * 0.5F;
-					}
-				}
-
 				// Copy predicted values
 				{
 					const int total_workload = static_cast<int>(entries_available_for_processing_count);
 					const std::vector<float>::const_iterator output_buffer_it = output_buffer->begin();
-					const std::vector<std::vector<float> >::iterator neuron_value_list_it = result.predicted_output_neuron_value_set->neuron_value_list.begin() + result.mse->entry_count;
+					const std::vector<std::vector<float> >::iterator neuron_value_list_it = predicted_output_neuron_value_set->neuron_value_list.begin() + entries_processed_count;
 					#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 					for(int i = 0; i < total_workload; ++i)
 					{
@@ -186,8 +163,10 @@ namespace nnforge
 					}
 				}
 
-				result.mse->entry_count += entries_available_for_processing_count;
+				entries_processed_count += entries_available_for_processing_count;
 			}
+
+			return predicted_output_neuron_value_set;
 		}
 
 		output_neuron_value_set_smart_ptr network_tester_plain::actual_run(unsupervised_data_reader& reader)

@@ -31,6 +31,8 @@ namespace nnforge
 
         void recalculate_mse();
 
+		void resize_predicted_output_neuron_value_set(unsigned int entry_count);
+
 		testing_result_smart_ptr mse;
 		output_neuron_value_set_smart_ptr predicted_output_neuron_value_set;
 		output_neuron_value_set_smart_ptr actual_output_neuron_value_set;

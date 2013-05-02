@@ -21,6 +21,8 @@
 #include <map>
 #include <boost/filesystem.hpp>
 
+#include <nnforge/neural_network_toolset.h>
+
 template<unsigned int index_id> class vector_element_extractor
 {
 public:
@@ -46,7 +48,7 @@ protected:
 
 	virtual nnforge::network_schema_smart_ptr get_schema();
 
-	virtual std::map<unsigned int, float> get_dropout_rate_map();
+	virtual std::map<unsigned int, float> get_dropout_rate_map() const;
 
 	void prepare_training_data();
 

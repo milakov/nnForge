@@ -280,7 +280,7 @@ void gtsrb_toolset::write_single_entry(
 	writer.write(&(*inp.begin()), &(*output.begin()));
 }
 
-std::map<unsigned int, float> gtsrb_toolset::get_dropout_rate_map()
+std::map<unsigned int, float> gtsrb_toolset::get_dropout_rate_map() const
 {
 	std::map<unsigned int, float> res;
 

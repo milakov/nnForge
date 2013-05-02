@@ -24,12 +24,13 @@ namespace nnforge
 	validate_progress_network_data_pusher::validate_progress_network_data_pusher(
 		network_tester_smart_ptr tester,
 		supervised_data_reader_smart_ptr reader,
-		testing_complete_result_set_visualizer_smart_ptr visualizer)
+		testing_complete_result_set_visualizer_smart_ptr visualizer,
+		unsigned int sample_count)
 		: tester(tester)
 		, reader(reader)
 		, visualizer(visualizer)
 	{
-		actual_output_neuron_value_set = reader->get_output_neuron_value_set();
+		actual_output_neuron_value_set = reader->get_output_neuron_value_set(sample_count);
 	}
 
 	validate_progress_network_data_pusher::~validate_progress_network_data_pusher()

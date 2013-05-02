@@ -129,9 +129,7 @@ namespace nnforge
 				(*it)->update_buffer_configuration(buffer_configuration);
 		}
 
-		void network_tester_cuda::actual_test(
-			supervised_data_reader& reader,
-			testing_complete_result_set& result)
+		output_neuron_value_set_smart_ptr network_tester_cuda::actual_test(supervised_data_reader& reader)
 		{
 			reader.reset();
 
@@ -145,7 +143,7 @@ namespace nnforge
 			neuron_data_type::input_type type_code = reader.get_input_type();
 			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
-			result.mse = testing_result_smart_ptr(new testing_result(output_neuron_count));
+			output_neuron_value_set_smart_ptr predicted_output_neuron_value_set(new output_neuron_value_set(entry_count, output_neuron_count));
 
 			buffer_cuda_size_configuration buffers_config;
 			update_buffers_configuration_testing(buffers_config);
@@ -272,26 +270,14 @@ namespace nnforge
 					cuda_safe_call(cudaStreamSynchronize(*data_stream));
 
 					const float * predicted_it = output_predicted;
-					std::vector<float>::const_iterator actual_it = output_actual[current_data_slot].begin();
-					const std::vector<float>::iterator mse_it_begin = result.mse->cumulative_mse_list.begin();
 
-					for(std::vector<std::vector<float> >::iterator it = result.predicted_output_neuron_value_set->neuron_value_list.begin() + entries_processed_count;
-						it != result.predicted_output_neuron_value_set->neuron_value_list.begin() + entries_processed_count + entries_available_for_copy_out_count;
+					for(std::vector<std::vector<float> >::iterator it = predicted_output_neuron_value_set->neuron_value_list.begin() + entries_processed_count;
+						it != predicted_output_neuron_value_set->neuron_value_list.begin() + entries_processed_count + entries_available_for_copy_out_count;
 						++it)
 					{
 						std::vector<float>& value_list = *it;
 						std::copy(predicted_it, predicted_it + output_neuron_count, value_list.begin());
-
-						std::vector<float>::const_iterator actual_itt = actual_it;
-						const float * predicted_itt = predicted_it;
-						for(std::vector<float>::iterator itt = mse_it_begin; itt != mse_it_begin + output_neuron_count; ++itt, ++actual_itt, ++predicted_itt)
-						{
-							float diff = *actual_itt - *predicted_itt;
-							*itt += diff * diff * 0.5F;
-						}
-
 						predicted_it += output_neuron_count;
-						actual_it += output_neuron_count;
 					}
 					
 					entries_processed_count += entries_available_for_copy_out_count;
@@ -330,7 +316,7 @@ namespace nnforge
 				current_command_slot = 1 - current_command_slot;
 			}
 
-			result.mse->entry_count = entries_processed_count;
+			return predicted_output_neuron_value_set;
 		}
 
 		output_neuron_value_set_smart_ptr network_tester_cuda::actual_run(unsupervised_data_reader& reader)
@@ -509,7 +495,6 @@ namespace nnforge
 				current_data_slot = 1 - current_data_slot;
 				current_command_slot = 1 - current_command_slot;
 			}
-
 
 			return predicted_output_neuron_value_set;
 		}
