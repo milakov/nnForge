@@ -76,6 +76,10 @@ namespace nnforge
 			for(std::vector<size_t>::const_iterator it = sizes.begin(); it != sizes.end(); ++it)
 				buffer_configuration.add_per_entry_buffer(*it);
 
+			std::vector<size_t> fixed_sized = get_sizes_of_additional_buffers_fixed();
+			for(std::vector<size_t>::const_iterator it = fixed_sized.begin(); it != fixed_sized.end(); ++it)
+				buffer_configuration.add_constant_buffer(*it);
+
 			std::vector<unsigned int> tex_per_entry = get_linear_addressing_through_texture_per_entry();
 			for(std::vector<unsigned int>::const_iterator it = tex_per_entry.begin(); it != tex_per_entry.end(); ++it)
 				buffer_configuration.add_per_entry_linear_addressing_through_texture(*it);
@@ -86,15 +90,30 @@ namespace nnforge
 			std::vector<cuda_linear_buffer_device_smart_ptr> res;
 
 			std::vector<size_t> sizes = get_sizes_of_additional_buffers_per_entry();
-
 			for(std::vector<size_t>::const_iterator it = sizes.begin(); it != sizes.end(); ++it)
 			{
-				// Allow safe float4 accesses
 				size_t sz = *it * max_entry_count;
 				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(sz)));
 			}
 
+			std::vector<size_t> fixed_sizes = get_sizes_of_additional_buffers_fixed();
+			for(std::vector<size_t>::const_iterator it = fixed_sizes.begin(); it != fixed_sizes.end(); ++it)
+			{
+				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(*it)));
+			}
+
+			fill_additional_buffers(res);
+
 			return res;
+		}
+
+		std::vector<size_t> layer_tester_cuda::get_sizes_of_additional_buffers_fixed() const
+		{
+			return std::vector<size_t>();
+		}
+
+		void layer_tester_cuda::fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const
+		{
 		}
 	}
 }

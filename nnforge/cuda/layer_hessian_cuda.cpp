@@ -71,6 +71,10 @@ namespace nnforge
 			for(std::vector<size_t>::const_iterator it = sizes.begin(); it != sizes.end(); ++it)
 				buffer_configuration.add_per_entry_buffer(*it);
 
+			std::vector<size_t> fixed_sized = get_sizes_of_additional_buffers_fixed();
+			for(std::vector<size_t>::const_iterator it = fixed_sized.begin(); it != fixed_sized.end(); ++it)
+				buffer_configuration.add_constant_buffer(*it);
+
 			buffer_configuration.add_per_entry_buffer(output_elem_count_per_entry * sizeof(float));
 
 			if (backprop_required && !is_in_place_backprop())
@@ -86,12 +90,16 @@ namespace nnforge
 			buffer_set res;
 
 			std::vector<size_t> sizes = get_sizes_of_additional_buffers_per_entry();
-
 			for(std::vector<size_t>::const_iterator it = sizes.begin(); it != sizes.end(); ++it)
 			{
-				// Allow safe float4 accesses
 				size_t sz = *it * max_entry_count;
 				res.additional_buffers.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(sz)));
+			}
+
+			std::vector<size_t> fixed_sizes = get_sizes_of_additional_buffers_fixed();
+			for(std::vector<size_t>::const_iterator it = fixed_sizes.begin(); it != fixed_sizes.end(); ++it)
+			{
+				res.additional_buffers.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(*it)));
 			}
 
 			{
@@ -105,6 +113,8 @@ namespace nnforge
 				res.input_errors_buffer = cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(sz));
 			}
 
+			fill_additional_buffers(res.additional_buffers);
+
 			return res;
 		}
 
@@ -116,6 +126,15 @@ namespace nnforge
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			unsigned int entry_count)
+		{
+		}
+
+		std::vector<size_t> layer_hessian_cuda::get_sizes_of_additional_buffers_fixed() const
+		{
+			return std::vector<size_t>();
+		}
+
+		void layer_hessian_cuda::fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const
 		{
 		}
 	}

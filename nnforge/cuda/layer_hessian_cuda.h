@@ -91,6 +91,10 @@ namespace nnforge
 
 			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
 
+			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const;
+
+			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const;
+
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
 
 			virtual bool is_in_place_backprop() const = 0;

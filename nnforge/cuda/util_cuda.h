@@ -46,7 +46,8 @@ namespace nnforge
 				const cuda_running_configuration& cuda_config,
 				unsigned int x,
 				unsigned int y,
-				unsigned int z);
+				unsigned int z,
+				unsigned int threadblock_size_x_evenly_divisible = 1);
 
 			static std::pair<dim3, dim3> get_grid_and_threadblock_sizes_sequential_access(
 				const cuda_running_configuration& cuda_config,

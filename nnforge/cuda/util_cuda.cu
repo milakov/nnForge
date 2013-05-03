@@ -17,6 +17,8 @@
 #include "util_cuda.h"
 #include "../neural_network_exception.h"
 
+#include <boost/format.hpp>
+
 __global__ void set_with_value_util_kernel(
 	float4 * __restrict buf,
 	float v,
@@ -186,13 +188,27 @@ namespace nnforge
 			const cuda_running_configuration& cuda_config,
 			unsigned int x,
 			unsigned int y,
-			unsigned int z)
+			unsigned int z,
+			unsigned int threadblock_size_x_evenly_divisible)
 		{
 			dim3 threadblock_size(1, 1, 1);
 
+			int max_threads_dim_x = cuda_config.max_threads_dim[0];
+
 			unsigned int preferred_threadblock_size_remained = preferred_threadblocksize_sequential_access;
 
-			threadblock_size.x = std::min<unsigned int>(std::min<unsigned int>(x, preferred_threadblock_size_remained), cuda_config.max_threads_dim[0]);
+			preferred_threadblock_size_remained /= threadblock_size_x_evenly_divisible;
+			if (preferred_threadblock_size_remained == 0)
+			{
+				if (threadblock_size_x_evenly_divisible <= cuda_config.max_threads_dim[0])
+					preferred_threadblock_size_remained = 1;
+				else
+					throw neural_network_exception((boost::format("Too large threadblock_size_x_evenly_divisible %1%, unable to compose threabblock") % threadblock_size_x_evenly_divisible).str());
+			}
+			x = (x + threadblock_size_x_evenly_divisible - 1) / threadblock_size_x_evenly_divisible;
+			max_threads_dim_x = max_threads_dim_x / threadblock_size_x_evenly_divisible;
+
+			threadblock_size.x = std::min<unsigned int>(std::min<unsigned int>(x, preferred_threadblock_size_remained), max_threads_dim_x);
 			unsigned int threadblocks_to_cover_x = (x + threadblock_size.x - 1) / threadblock_size.x;
 			threadblock_size.x = (x + threadblocks_to_cover_x - 1) / threadblocks_to_cover_x;
 
@@ -212,6 +228,8 @@ namespace nnforge
 				(x + threadblock_size.x - 1) / threadblock_size.x,
 				(y + threadblock_size.y - 1) / threadblock_size.y,
 				(z + threadblock_size.z - 1) / threadblock_size.z);
+
+			threadblock_size.x *= threadblock_size_x_evenly_divisible;
 
 			return std::make_pair<dim3, dim3>(grid_size, threadblock_size);
 		}
