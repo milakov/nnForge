@@ -123,6 +123,11 @@ namespace nnforge
 			float contrast,
 			float brightness);
 
+		static cv::Mat flip(
+			cv::Mat image,
+			bool flip_around_x_axis,
+			bool flip_around_y_axis);
+
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
 		static const char * validating_data_filename;

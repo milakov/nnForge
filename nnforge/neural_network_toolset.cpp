@@ -372,6 +372,34 @@ namespace nnforge
 		return dst;
 	}
 
+	cv::Mat neural_network_toolset::flip(
+		cv::Mat image,
+		bool flip_around_x_axis,
+		bool flip_around_y_axis)
+	{
+		int flip_code;
+		if (flip_around_x_axis)
+		{
+			if (flip_around_y_axis)
+				flip_code = -1;
+			else
+				flip_code = 0;
+		}
+		else
+		{
+			if (flip_around_y_axis)
+				flip_code = 1;
+			else
+				return image;
+		}
+		
+		cv::Mat dst;
+
+		cv::flip(image, dst, flip_code);
+
+		return dst;
+	}
+
 	void neural_network_toolset::randomize_data()
 	{
 		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
@@ -614,7 +642,7 @@ namespace nnforge
 		tester->set_data(data);
 
 		int sample_count = get_training_sample_count();
-		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / validating_data_filename, std::ios_base::in | std::ios_base::binary));
+		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
 		supervised_data_stream_reader reader(in);
 
 		reader.reset();
