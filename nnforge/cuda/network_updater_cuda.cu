@@ -391,7 +391,7 @@ namespace nnforge
 										(*it)->enqueue_backward_dropout(
 											*command_stream,
 											random_uniform_buf,
-											input_and_all_buffers_pack_it->second.input_errors_buffer,
+											(input_and_all_buffers_pack_it->second.input_errors_buffer == 0) ? *output_errors_it : input_and_all_buffers_pack_it->second.input_errors_buffer,
 											dropout_it->second,
 											mask,
 											updater_entry_count,
