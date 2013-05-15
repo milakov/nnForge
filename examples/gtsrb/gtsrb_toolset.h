@@ -44,15 +44,11 @@ public:
 	virtual ~gtsrb_toolset();
 
 protected:
-	virtual void prepare_data();
-
 	virtual nnforge::network_schema_smart_ptr get_schema();
 
 	virtual std::map<unsigned int, float> get_dropout_rate_map() const;
 
-	void prepare_training_data();
-
-	void prepare_validating_data();
+	virtual void prepare_training_data();
 
 	void write_single_entry(
 		nnforge::supervised_data_stream_writer& writer,

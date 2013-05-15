@@ -51,7 +51,9 @@ namespace nnforge
 
 		virtual std::vector<int_option> get_int_options();
 
-		virtual void prepare_data() = 0;
+		virtual void prepare_training_data() = 0;
+
+		virtual void prepare_testing_data();
 
 		virtual network_schema_smart_ptr get_schema() = 0;
 

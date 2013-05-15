@@ -87,9 +87,13 @@ namespace nnforge
 		{
 			create();
 		}
-		else if (!action.compare("prepare_data"))
+		else if (!action.compare("prepare_training_data"))
 		{
-			prepare_data();
+			prepare_training_data();
+		}
+		else if (!action.compare("prepare_testing_data"))
+		{
+			prepare_testing_data();
 		}
 		else if (!action.compare("randomize_data"))
 		{
@@ -149,6 +153,11 @@ namespace nnforge
 		}
 	}
 
+	void neural_network_toolset::prepare_testing_data()
+	{
+		throw std::runtime_error("This toolset doesn't implement preparing testing data");
+	}
+	
 	bool neural_network_toolset::parse(int argc, char* argv[])
 	{
 		boost::filesystem::path config_file;
@@ -161,7 +170,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_data, randomize_data, test, test_batch, validate, validate_batch, validate_infinite, train, train_batch, snapshot, snapshot_invalid, profile_updater, profile_hessian)")
+			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, test, test_batch, validate, validate_batch, validate_infinite, train, train_batch, snapshot, snapshot_invalid, profile_updater, profile_hessian)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 

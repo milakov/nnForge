@@ -38,7 +38,7 @@ GT-final_test.csv in Final_Test should be the one with class IDs, from _Extended
 Train
 -----
 
-	./gtsrb prepare_data
+	./gtsrb prepare_training_data
 	./gtsrb randomize_data
 	./gtsrb create
 	./gtsrb train_batch -N 10

@@ -45,72 +45,66 @@ gtsrb_toolset::~gtsrb_toolset()
 {
 }
 
-void gtsrb_toolset::prepare_data()
-{
-	prepare_training_data();
-
-	prepare_validating_data();
-}
-
 void gtsrb_toolset::prepare_training_data()
 {
-	boost::filesystem::path file_path = get_working_data_folder() / training_data_filename;
-	std::cout << "Writing data to " << file_path.string() << std::endl;
-
-	std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
-	nnforge::layer_configuration_specific input_configuration;
-	input_configuration.feature_map_count = is_color ? 3 : 1;
-	input_configuration.dimension_sizes.push_back(image_width);
-	input_configuration.dimension_sizes.push_back(image_height);
-	nnforge::layer_configuration_specific output_configuration;
-	output_configuration.feature_map_count = class_count;
-	output_configuration.dimension_sizes.push_back(1);
-	output_configuration.dimension_sizes.push_back(1);
-	nnforge::supervised_data_stream_writer writer(
-		file_with_data,
-		input_configuration,
-		output_configuration);
-
-	for(unsigned int folder_id = 0; folder_id < class_count; ++folder_id)
 	{
-		boost::filesystem::path subfolder_name = boost::filesystem::path("Final_Training") / "Images" / (boost::format("%|1$05d|") % folder_id).str();
-		std::string annotation_file_name = (boost::format("GT-%|1$05d|.csv") % folder_id).str();
+		boost::filesystem::path file_path = get_working_data_folder() / training_data_filename;
+		std::cout << "Writing data to " << file_path.string() << std::endl;
+
+		std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge::layer_configuration_specific input_configuration;
+		input_configuration.feature_map_count = is_color ? 3 : 1;
+		input_configuration.dimension_sizes.push_back(image_width);
+		input_configuration.dimension_sizes.push_back(image_height);
+		nnforge::layer_configuration_specific output_configuration;
+		output_configuration.feature_map_count = class_count;
+		output_configuration.dimension_sizes.push_back(1);
+		output_configuration.dimension_sizes.push_back(1);
+		nnforge::supervised_data_stream_writer writer(
+			file_with_data,
+			input_configuration,
+			output_configuration);
+
+		for(unsigned int folder_id = 0; folder_id < class_count; ++folder_id)
+		{
+			boost::filesystem::path subfolder_name = boost::filesystem::path("Final_Training") / "Images" / (boost::format("%|1$05d|") % folder_id).str();
+			std::string annotation_file_name = (boost::format("GT-%|1$05d|.csv") % folder_id).str();
+
+			write_folder(
+				writer,
+				subfolder_name,
+				annotation_file_name.c_str(),
+				true);
+		}
+	}
+	
+	{
+		boost::filesystem::path file_path = get_working_data_folder() / validating_data_filename;
+		std::cout << "Writing data to " << file_path.string() << std::endl;
+
+		std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge::layer_configuration_specific input_configuration;
+		input_configuration.feature_map_count = is_color ? 3 : 1;
+		input_configuration.dimension_sizes.push_back(image_width);
+		input_configuration.dimension_sizes.push_back(image_height);
+		nnforge::layer_configuration_specific output_configuration;
+		output_configuration.feature_map_count = class_count;
+		output_configuration.dimension_sizes.push_back(1);
+		output_configuration.dimension_sizes.push_back(1);
+		nnforge::supervised_data_stream_writer writer(
+			file_with_data,
+			input_configuration,
+			output_configuration);
+
+		boost::filesystem::path subfolder_name = boost::filesystem::path("Final_Test") / "Images";
+		std::string annotation_file_name = "GT-final_test.csv";
 
 		write_folder(
 			writer,
 			subfolder_name,
 			annotation_file_name.c_str(),
-			true);
+			false);
 	}
-}
-
-void gtsrb_toolset::prepare_validating_data()
-{
-	boost::filesystem::path file_path = get_working_data_folder() / validating_data_filename;
-	std::cout << "Writing data to " << file_path.string() << std::endl;
-
-	std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
-	nnforge::layer_configuration_specific input_configuration;
-	input_configuration.feature_map_count = is_color ? 3 : 1;
-	input_configuration.dimension_sizes.push_back(image_width);
-	input_configuration.dimension_sizes.push_back(image_height);
-	nnforge::layer_configuration_specific output_configuration;
-	output_configuration.feature_map_count = class_count;
-	output_configuration.dimension_sizes.push_back(1);
-	output_configuration.dimension_sizes.push_back(1);
-	nnforge::supervised_data_stream_writer writer(
-		file_with_data,
-		input_configuration,
-		output_configuration);
-
-	boost::filesystem::path subfolder_name = boost::filesystem::path("Final_Test") / "Images";
-	std::string annotation_file_name = "GT-final_test.csv";
-
-	write_folder(
-		writer,
-		subfolder_name,
-		annotation_file_name.c_str(),
-		false);
 }
 
 void gtsrb_toolset::write_folder(
