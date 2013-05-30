@@ -127,6 +127,8 @@ namespace nnforge
 		{
 			std::vector<testing_result_smart_ptr> res;
 
+			entry_count_updated_in_profile_mode = 0;
+
 			unsigned int min_dropout_layer_id = testing_layer_count + 1;
 			for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it)
 				if (it->first < min_dropout_layer_id)
@@ -250,7 +252,7 @@ namespace nnforge
 			if (cuda_config->is_flush_required())
 			{
 				cuda_safe_call(cudaEventRecord(data_processed_event, *command_stream));
-				cudaEventQuery(data_processed_event);
+				cuda_safe_call(cudaEventQuery(data_processed_event));
 			}
 			std::tr1::variate_generator<random_generator, std::tr1::uniform_int<unsigned int> > gen_random_offset(
 				rnd::get_random_generator(),
@@ -416,12 +418,12 @@ namespace nnforge
 						if (((input_entry_id % 16) == 1) && cuda_config->is_flush_required())
 						{
 							cuda_safe_call(cudaEventRecord(data_processed_event, *command_stream));
-							cudaEventQuery(data_processed_event);
+							cuda_safe_call(cudaEventQuery(data_processed_event));
 						}
 					} // for(unsigned int input_entry_id
 
 					if (profile_mode)
-						entry_count_updated_in_profile_mode = entries_available_for_processing_count;
+						entry_count_updated_in_profile_mode += entries_available_for_processing_count;
 
 					for(std::vector<testing_result_smart_ptr>::iterator it = res.begin(); it != res.end(); ++it)
 						(*it)->entry_count += entries_available_for_processing_count;
@@ -429,7 +431,7 @@ namespace nnforge
 					if (cuda_config->is_flush_required())
 					{
 						cuda_safe_call(cudaEventRecord(data_processed_event, *command_stream));
-						cudaEventQuery(data_processed_event);
+						cuda_safe_call(cudaEventQuery(data_processed_event));
 					}
 				} // if (entries_available_for_processing_count > 0)
 

@@ -930,7 +930,7 @@ namespace nnforge
 			std::cout << (boost::format("%|1$.1f| GFLOPs, %|2$.2f| seconds") % gflops % time_to_complete_seconds) << std::endl;
 		}
 
-		std::cout << data[0]->get_stat() << std::endl;
+		std::cout << data[data.size()-1]->get_stat() << std::endl;
 	}
 
 	void neural_network_toolset::profile_hessian()
