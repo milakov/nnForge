@@ -105,4 +105,9 @@ namespace nnforge
 	{
 		return dropout_layer_config();
 	}
+
+	layer_data_configuration_list layer::get_layer_data_configuration_list() const
+	{
+		return layer_data_configuration_list();
+	}
 }

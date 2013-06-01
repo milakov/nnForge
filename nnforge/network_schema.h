@@ -19,6 +19,7 @@
 #include "layer.h"
 #include "layer_configuration.h"
 #include "layer_configuration_specific.h"
+#include "layer_data_configuration.h"
 
 #include <vector>
 #include <ostream>
@@ -48,6 +49,8 @@ namespace nnforge
 
 		// The result includes input configuration
 		layer_configuration_specific_list get_layer_configuration_specific_list(const layer_configuration_specific& input_layer_configuration_specific) const;
+
+		std::vector<layer_data_configuration_list> get_layer_data_configuration_list_list() const;
 
 		operator const const_layer_list&() const;
 

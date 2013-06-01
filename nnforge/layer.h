@@ -21,6 +21,7 @@
 #include "layer_data.h"
 #include "rnd.h"
 #include "dropout_layer_config.h"
+#include "layer_data_configuration.h"
 
 #include <memory>
 #include <boost/uuid/uuid.hpp>
@@ -41,6 +42,8 @@ namespace nnforge
 		virtual layer_configuration get_layer_configuration(const layer_configuration& input_configuration) const = 0;
 
 		virtual layer_configuration_specific get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const = 0;
+
+		virtual layer_data_configuration_list get_layer_data_configuration_list() const;
 
 		virtual float get_forward_flops(const layer_configuration_specific& input_configuration_specific) const = 0;
 

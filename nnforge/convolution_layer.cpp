@@ -209,4 +209,13 @@ namespace nnforge
 
 		return res;
 	}
+
+	layer_data_configuration_list convolution_layer::get_layer_data_configuration_list() const
+	{
+		layer_data_configuration_list res;
+		res.push_back(layer_data_configuration(input_feature_map_count, output_feature_map_count, window_sizes));
+		res.push_back(layer_data_configuration(1, output_feature_map_count, std::vector<unsigned int>()));
+
+		return res;
+	}
 }

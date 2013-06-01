@@ -17,6 +17,8 @@
 #pragma once
 
 #include "layer_configuration_specific_snapshot.h"
+#include "layer_data.h"
+#include "layer_data_configuration.h"
 
 #include <vector>
 #include <opencv2/core/core.hpp>
@@ -34,6 +36,11 @@ namespace nnforge
 			const std::vector<layer_configuration_specific_snapshot_smart_ptr>& snapshot,
 			const char * file_path,
 			unsigned int fps);
+
+		static void save_ann_snapshot(
+			const layer_data_list& data,
+			const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list,
+			const char * file_path);
 
 	private:
 		struct normalize_pixel_helper

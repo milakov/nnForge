@@ -24,6 +24,7 @@
 #include "unsupervised_data_reader.h"
 #include "output_neuron_value_set.h"
 #include "output_neuron_class_set.h"
+#include "layer_data_configuration.h"
 
 #include <boost/filesystem.hpp>
 #include <opencv2/core/core.hpp>
@@ -81,10 +82,17 @@ namespace nnforge
 
 		virtual void snapshot_invalid();
 
+		virtual void ann_snapshot();
+
 		virtual void save_snapshot(
 			const std::string& name,
 			const std::vector<layer_configuration_specific_snapshot_smart_ptr>& data,
 			bool folder_for_invalid = false);
+
+		virtual void save_ann_snapshot(
+			const std::string& name,
+			const network_data& data,
+			const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list);
 
 		virtual std::vector<network_data_pusher_smart_ptr> get_validators_for_training(network_schema_smart_ptr schema);
 
@@ -140,6 +148,7 @@ namespace nnforge
 		static const char * data_filename;
 		static const char * data_trained_filename;
 		static const char * snapshot_subfolder_name;
+		static const char * ann_snapshot_subfolder_name;
 		static const char * snapshot_invalid_subfolder_name;
 		static const char * batch_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
@@ -150,6 +159,7 @@ namespace nnforge
 
 		std::string action;
 		std::string snapshot_extension;
+		std::string ann_snapshot_extension;
 		unsigned int ann_count;
 		unsigned int training_iteration_count;
 		unsigned int snapshot_count;

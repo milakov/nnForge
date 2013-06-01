@@ -82,6 +82,16 @@ namespace nnforge
 		binary_stream_to_write_to.flush();
 	}
 
+	std::vector<layer_data_configuration_list> network_schema::get_layer_data_configuration_list_list() const
+	{
+		std::vector<layer_data_configuration_list> res;
+
+		for(const_layer_list::const_iterator it = layers.begin(); it != layers.end(); ++it)
+			res.push_back((*it)->get_layer_data_configuration_list());
+
+		return res;
+	}
+
 	void network_schema::read(std::istream& binary_stream_to_read_from)
 	{
 		clear();

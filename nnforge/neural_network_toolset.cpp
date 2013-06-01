@@ -56,6 +56,7 @@ namespace nnforge
 	const char * neural_network_toolset::data_filename = "ann.data";
 	const char * neural_network_toolset::data_trained_filename = "ann_trained.data";
 	const char * neural_network_toolset::snapshot_subfolder_name = "snapshot";
+	const char * neural_network_toolset::ann_snapshot_subfolder_name = "ann_snapshot";
 	const char * neural_network_toolset::snapshot_invalid_subfolder_name = "invalid";
 	const char * neural_network_toolset::batch_subfolder_name = "batch";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
@@ -147,6 +148,10 @@ namespace nnforge
 		{
 			snapshot_invalid();
 		}
+		else if (!action.compare("ann_snapshot"))
+		{
+			ann_snapshot();
+		}
 		else
 		{
 			throw std::runtime_error((boost::format("Unknown action: %1%") % action).str());
@@ -170,7 +175,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, test, test_batch, validate, validate_batch, validate_infinite, train, train_batch, snapshot, snapshot_invalid, profile_updater, profile_hessian)")
+			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, test, test_batch, validate, validate_batch, validate_infinite, train, train_batch, snapshot, snapshot_invalid, ann_snapshot, profile_updater, profile_hessian)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -183,10 +188,11 @@ namespace nnforge
 			("working_data_folder,W", boost::program_options::value<boost::filesystem::path>(&working_data_folder)->default_value(""), "path to the folder where data are processed.")
 			("ann_count,N", boost::program_options::value<unsigned int>(&ann_count)->default_value(1), "amount of networks to be processed.")
 			("training_iteration_count,T", boost::program_options::value<unsigned int>(&training_iteration_count)->default_value(50), "amount of iterations to perform during single ANN training.")
-			("snapshot_count,S", boost::program_options::value<unsigned int>(&snapshot_count)->default_value(100), "amount of snapshots to generate.")
-			("snapshot_extension,E", boost::program_options::value<std::string>(&snapshot_extension)->default_value("jpg"), "Extension (type) of the files for snapshots.")
-			("snapshot_mode", boost::program_options::value<std::string>(&snapshot_mode)->default_value("image"), "Type of the snapshot to generate (image, video).")
+			("snapshot_count", boost::program_options::value<unsigned int>(&snapshot_count)->default_value(100), "amount of snapshots to generate.")
+			("snapshot_extension", boost::program_options::value<std::string>(&snapshot_extension)->default_value("jpg"), "Extension (type) of the files for neuron values snapshots.")
+			("snapshot_mode", boost::program_options::value<std::string>(&snapshot_mode)->default_value("image"), "Type of the neuron values snapshot to generate (image, video).")
 			("snapshot_video_fps", boost::program_options::value<unsigned int>(&snapshot_video_fps)->default_value(5), "Frames per second when saving video snapshot.")
+			("ann_snapshot_extension", boost::program_options::value<std::string>(&ann_snapshot_extension)->default_value("jpg"), "Extension (type) of the files for network weights snapshots.")
 			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.3F), "Mu increases by this ratio each iteration.")
 			("max_mu", boost::program_options::value<float>(&max_mu)->default_value(5.0e-4F), "Maximum Mu during training.")
 			("training_speed", boost::program_options::value<float>(&training_speed)->default_value(0.02F), "Eta/Mu ratio.")
@@ -674,6 +680,38 @@ namespace nnforge
 
 			save_snapshot(snapshot_filename, data_res);
 		}
+	}
+
+	void neural_network_toolset::ann_snapshot()
+	{
+		network_schema_smart_ptr schema(new network_schema());
+		{
+			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
+			schema->read(in);
+		}
+		std::vector<layer_data_configuration_list> layer_data_configuration_list_list = schema->get_layer_data_configuration_list_list();
+
+		network_data_smart_ptr data(new network_data());
+		{
+			boost::filesystem::ifstream in(get_working_data_folder() / data_trained_filename, std::ios_base::in | std::ios_base::binary);
+			data->read(in);
+		}
+
+		std::string ann_snapshot_filename = "trained";
+		save_ann_snapshot(ann_snapshot_filename, *data, layer_data_configuration_list_list);
+	}
+
+	void neural_network_toolset::save_ann_snapshot(
+		const std::string& name,
+		const network_data& data,
+		const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list)
+	{
+		boost::filesystem::path ann_snapshot_folder = get_working_data_folder() / ann_snapshot_subfolder_name;
+		boost::filesystem::create_directories(ann_snapshot_folder);
+
+		boost::filesystem::path ann_snapshot_file_path = ann_snapshot_folder / (std::string("ann_snapshot_") + name + "." + ann_snapshot_extension);
+
+		snapshot_visualizer::save_ann_snapshot(data, layer_data_configuration_list_list, ann_snapshot_file_path.string().c_str());
 	}
 
 	void neural_network_toolset::save_snapshot(

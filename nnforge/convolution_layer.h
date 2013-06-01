@@ -36,6 +36,8 @@ namespace nnforge
 
 		virtual layer_configuration_specific get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
 
+		virtual layer_data_configuration_list get_layer_data_configuration_list() const;
+
 		virtual float get_forward_flops(const layer_configuration_specific& input_configuration_specific) const;
 
 		virtual float get_backward_flops(const layer_configuration_specific& input_configuration_specific) const;
