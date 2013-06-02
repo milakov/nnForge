@@ -16,33 +16,26 @@
 
 #pragma once
 
-#include "neural_network_exception.h"
-
-#include "convolution_layer.h"
-#include "hyperbolic_tangent_layer.h"
-#include "average_subsampling_layer.h"
-#include "max_subsampling_layer.h"
-#include "absolute_layer.h"
-#include "local_contrast_subtractive_layer.h"
-#include "rgb_to_yuv_convert_layer.h"
-#include "rectified_linear_layer.h"
-
-#include "neural_network_toolset.h"
-#include "supervised_data_stream_reader.h"
-#include "supervised_data_stream_writer.h"
-#include "unsupervised_data_stream_reader.h"
-#include "unsupervised_data_stream_writer.h"
-#include "rnd.h"
+#include "layer_tester_cuda.h"
 
 namespace nnforge
 {
-	class nnforge
+	namespace cuda
 	{
-	public:
-		static void init();
+		class rectified_linear_layer_tester_cuda : public layer_tester_cuda
+		{
+		public:
+			rectified_linear_layer_tester_cuda();
 
-	private:
-		nnforge();
-		~nnforge();
-	};
+			virtual ~rectified_linear_layer_tester_cuda();
+
+			virtual void enqueue_test(
+				cudaStream_t stream_id,
+				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
+				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
+				cuda_linear_buffer_device_smart_ptr input_buffer,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				unsigned int entry_count);
+		};
+	}
 }

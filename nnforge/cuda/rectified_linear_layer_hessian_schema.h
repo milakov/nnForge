@@ -16,33 +16,29 @@
 
 #pragma once
 
-#include "neural_network_exception.h"
+#include "layer_hessian_schema.h"
 
-#include "convolution_layer.h"
-#include "hyperbolic_tangent_layer.h"
-#include "average_subsampling_layer.h"
-#include "max_subsampling_layer.h"
-#include "absolute_layer.h"
-#include "local_contrast_subtractive_layer.h"
-#include "rgb_to_yuv_convert_layer.h"
-#include "rectified_linear_layer.h"
-
-#include "neural_network_toolset.h"
-#include "supervised_data_stream_reader.h"
-#include "supervised_data_stream_writer.h"
-#include "unsupervised_data_stream_reader.h"
-#include "unsupervised_data_stream_writer.h"
-#include "rnd.h"
+#include <memory>
 
 namespace nnforge
 {
-	class nnforge
+	namespace cuda
 	{
-	public:
-		static void init();
+		class rectified_linear_layer_hessian_schema : public layer_hessian_schema
+		{
+		public:
+			rectified_linear_layer_hessian_schema();
 
-	private:
-		nnforge();
-		~nnforge();
-	};
+			virtual ~rectified_linear_layer_hessian_schema();
+
+			virtual const boost::uuids::uuid& get_uuid() const;
+
+		protected:
+			virtual std::tr1::shared_ptr<layer_hessian_schema> create_specific() const;
+
+			virtual layer_hessian_cuda_smart_ptr create_hessian_specific(
+				const layer_configuration_specific& input_configuration_specific,
+				const layer_configuration_specific& output_configuration_specific) const;
+		};
+	}
 }

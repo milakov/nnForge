@@ -59,7 +59,7 @@ static __forceinline__ __device__ float hyperbolic_tangent_deriviative(
 	return hyperbolic_tangent_steepness3 * (1.0F - (normalized_value * normalized_value));
 }
 
-__global__ void hyperbolic_tangent_square_deriviative_upd_kernel(
+__global__ void hyperbolic_tangent_deriviative_upd_kernel(
 	float4 * __restrict errors,
 	const float4 * __restrict output_neurons,
 	float hyperbolic_tangent_major_multiplier_reverted,
@@ -134,7 +134,7 @@ namespace nnforge
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
 				elem_count);
-			hyperbolic_tangent_square_deriviative_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+			hyperbolic_tangent_deriviative_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 				*output_errors_buffer,
 				*output_neurons_buffer,
 				hyperbolic_tangent_major_multiplier_reverted,

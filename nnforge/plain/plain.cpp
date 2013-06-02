@@ -24,6 +24,7 @@
 #include "max_subsampling_layer_tester_plain.h"
 #include "local_contrast_subtractive_layer_tester_plain.h"
 #include "convolution_layer_tester_plain.h"
+#include "rectified_linear_layer_tester_plain.h"
 
 #include "layer_hessian_plain_factory.h"
 #include "layer_updater_plain_factory.h"
@@ -33,12 +34,14 @@
 #include "average_subsampling_layer_hessian_plain.h"
 #include "max_subsampling_layer_hessian_plain.h"
 #include "convolution_layer_hessian_plain.h"
+#include "rectified_linear_layer_hessian_plain.h"
 
 #include "absolute_layer_updater_plain.h"
 #include "hyperbolic_tangent_layer_updater_plain.h"
 #include "average_subsampling_layer_updater_plain.h"
 #include "max_subsampling_layer_updater_plain.h"
 #include "convolution_layer_updater_plain.h"
+#include "rectified_linear_layer_updater_plain.h"
 
 namespace nnforge
 {
@@ -54,18 +57,21 @@ namespace nnforge
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new max_subsampling_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new local_contrast_subtractive_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new convolution_layer_tester_plain()));
+			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new rectified_linear_layer_tester_plain()));
 
 			single_layer_hessian_plain_factory::get_mutable_instance().register_layer_hessian_plain(layer_hessian_plain_smart_ptr(new absolute_layer_hessian_plain()));
 			single_layer_hessian_plain_factory::get_mutable_instance().register_layer_hessian_plain(layer_hessian_plain_smart_ptr(new hyperbolic_tangent_layer_hessian_plain()));
 			single_layer_hessian_plain_factory::get_mutable_instance().register_layer_hessian_plain(layer_hessian_plain_smart_ptr(new average_subsampling_layer_hessian_plain()));
 			single_layer_hessian_plain_factory::get_mutable_instance().register_layer_hessian_plain(layer_hessian_plain_smart_ptr(new max_subsampling_layer_hessian_plain()));
 			single_layer_hessian_plain_factory::get_mutable_instance().register_layer_hessian_plain(layer_hessian_plain_smart_ptr(new convolution_layer_hessian_plain()));
+			single_layer_hessian_plain_factory::get_mutable_instance().register_layer_hessian_plain(layer_hessian_plain_smart_ptr(new rectified_linear_layer_hessian_plain()));
 
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new absolute_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new hyperbolic_tangent_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new average_subsampling_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new max_subsampling_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new convolution_layer_updater_plain()));
+			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new rectified_linear_layer_updater_plain()));
 		}
 	}
 }
