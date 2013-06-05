@@ -25,6 +25,7 @@
 #include "convolution_layer_testing_schema.h"
 #include "max_subsampling_layer_testing_schema.h"
 #include "rectified_linear_layer_testing_schema.h"
+#include "soft_rectified_linear_layer_testing_schema.h"
 
 #include "layer_hessian_schema_factory.h"
 #include "absolute_layer_hessian_schema.h"
@@ -33,6 +34,7 @@
 #include "convolution_layer_hessian_schema.h"
 #include "max_subsampling_layer_hessian_schema.h"
 #include "rectified_linear_layer_hessian_schema.h"
+#include "soft_rectified_linear_layer_hessian_schema.h"
 
 #include "layer_updater_schema_factory.h"
 #include "absolute_layer_updater_schema.h"
@@ -41,6 +43,7 @@
 #include "convolution_layer_updater_schema.h"
 #include "max_subsampling_layer_updater_schema.h"
 #include "rectified_linear_layer_updater_schema.h"
+#include "soft_rectified_linear_layer_updater_schema.h"
 
 namespace nnforge
 {
@@ -57,6 +60,7 @@ namespace nnforge
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new convolution_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new max_subsampling_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new rectified_linear_layer_testing_schema()));
+			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new soft_rectified_linear_layer_testing_schema()));
 
 			single_layer_hessian_schema_factory::get_mutable_instance().register_layer_hessian_schema(layer_hessian_schema_smart_ptr(new absolute_layer_hessian_schema()));
 			single_layer_hessian_schema_factory::get_mutable_instance().register_layer_hessian_schema(layer_hessian_schema_smart_ptr(new hyperbolic_tangent_layer_hessian_schema()));
@@ -64,6 +68,7 @@ namespace nnforge
 			single_layer_hessian_schema_factory::get_mutable_instance().register_layer_hessian_schema(layer_hessian_schema_smart_ptr(new convolution_layer_hessian_schema()));
 			single_layer_hessian_schema_factory::get_mutable_instance().register_layer_hessian_schema(layer_hessian_schema_smart_ptr(new max_subsampling_layer_hessian_schema()));
 			single_layer_hessian_schema_factory::get_mutable_instance().register_layer_hessian_schema(layer_hessian_schema_smart_ptr(new rectified_linear_layer_hessian_schema()));
+			single_layer_hessian_schema_factory::get_mutable_instance().register_layer_hessian_schema(layer_hessian_schema_smart_ptr(new soft_rectified_linear_layer_hessian_schema()));
 
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new absolute_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new hyperbolic_tangent_layer_updater_schema()));
@@ -71,6 +76,7 @@ namespace nnforge
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new convolution_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new max_subsampling_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new rectified_linear_layer_updater_schema()));
+			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new soft_rectified_linear_layer_updater_schema()));
 		}
 	}
 }

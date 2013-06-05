@@ -14,28 +14,28 @@
  *  limitations under the License.
  */
 
-#include "hyperbolic_tangent_layer_tester_plain.h"
+#include "soft_rectified_linear_layer_tester_plain.h"
 
-#include "../hyperbolic_tangent_layer.h"
+#include "../soft_rectified_linear_layer.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		hyperbolic_tangent_layer_tester_plain::hyperbolic_tangent_layer_tester_plain()
+		soft_rectified_linear_layer_tester_plain::soft_rectified_linear_layer_tester_plain()
 		{
 		}
 
-		hyperbolic_tangent_layer_tester_plain::~hyperbolic_tangent_layer_tester_plain()
+		soft_rectified_linear_layer_tester_plain::~soft_rectified_linear_layer_tester_plain()
 		{
 		}
 
-		const boost::uuids::uuid& hyperbolic_tangent_layer_tester_plain::get_uuid() const
+		const boost::uuids::uuid& soft_rectified_linear_layer_tester_plain::get_uuid() const
 		{
-			return hyperbolic_tangent_layer::layer_guid;
+			return soft_rectified_linear_layer::layer_guid;
 		}
 
-		void hyperbolic_tangent_layer_tester_plain::test(
+		void soft_rectified_linear_layer_tester_plain::test(
 			additional_buffer_smart_ptr input_buffer,
 			additional_buffer_set& additional_buffers,
 			plain_running_configuration_const_smart_ptr plain_config,
@@ -48,18 +48,9 @@ namespace nnforge
 			const int elem_count = static_cast<int>(entry_count * input_configuration_specific.get_neuron_count());
 			const std::vector<float>::iterator in_it = input_buffer->begin();
 
-			std::tr1::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::tr1::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
-			const float hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
-			const float hyperbolic_tangent_major_multiplier = layer_derived->major_multiplier;
-
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 			for(int i = 0; i < elem_count; ++i)
-			{
-				float inp = *(in_it + i);
-				float inp2 = expf(inp * hyperbolic_tangent_steepness2);
-				float res = (inp2 - 1.0F) / (inp2 + 1.0F) * hyperbolic_tangent_major_multiplier;
-				*(in_it + i) = res;
-			}
+				*(in_it + i) = logf(expf(*(in_it + i)) + 1.0F);
 		}
 	}
 }

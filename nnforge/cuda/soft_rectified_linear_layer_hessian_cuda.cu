@@ -14,14 +14,13 @@
  *  limitations under the License.
  */
 
-#include "rectified_linear_layer_updater_cuda.h"
+#include "soft_rectified_linear_layer_hessian_cuda.h"
 
 #include <cuda_runtime.h>
 
-#include "../neural_network_exception.h"
 #include "util_cuda.h"
 
-__global__ void rectified_linear_upd_kernel(
+__global__ void soft_rectified_linear_hess_kernel(
 	const float4 * __restrict input,
 	float4 * __restrict output,
 	int elem_count)
@@ -30,15 +29,21 @@ __global__ void rectified_linear_upd_kernel(
 	if (elem_id < elem_count)
 	{
 		float4 val = input[elem_id];
-		val.x = max(0.0F, val.x);
-		val.y = max(0.0F, val.y);
-		val.z = max(0.0F, val.z);
-		val.w = max(0.0F, val.w);
+		val.x = __logf(__expf(val.x) + 1.0F);
+		val.y = __logf(__expf(val.y) + 1.0F);
+		val.z = __logf(__expf(val.z) + 1.0F);
+		val.w = __logf(__expf(val.w) + 1.0F);
 		output[elem_id] = val;
 	}
 }
 
-__global__ void rectified_linear_deriviative_upd_kernel(
+static __forceinline__ __device__ float soft_rectified_linear_deriviative(float x)
+{
+	float val2 = __expf(x);
+	return __fdividef((val2 - 1.0F), val2);
+}
+
+__global__ void soft_rectified_linear_square_deriviative_hess_kernel(
 	float4 * __restrict errors,
 	const float4 * __restrict output_neurons,
 	int elem_count)
@@ -48,14 +53,14 @@ __global__ void rectified_linear_deriviative_upd_kernel(
 	{
 		float4 val = output_neurons[elem_id];
 		float4 current_error = errors[elem_id];
-		if (val.x == 0.0F)
-			current_error.x = 0.0F;
-		if (val.y == 0.0F)
-			current_error.y = 0.0F;
-		if (val.z == 0.0F)
-			current_error.z = 0.0F;
-		if (val.w == 0.0F)
-			current_error.w = 0.0F;
+		val.x = soft_rectified_linear_deriviative(val.x);
+		val.y = soft_rectified_linear_deriviative(val.y);
+		val.z = soft_rectified_linear_deriviative(val.z);
+		val.w = soft_rectified_linear_deriviative(val.w);
+		current_error.x *= val.x * val.x;
+		current_error.y *= val.y * val.y;
+		current_error.z *= val.z * val.z;
+		current_error.w *= val.w * val.w;
 		errors[elem_id] = current_error;
 	}
 }
@@ -64,66 +69,56 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		rectified_linear_layer_updater_cuda::rectified_linear_layer_updater_cuda()
+		soft_rectified_linear_layer_hessian_cuda::soft_rectified_linear_layer_hessian_cuda()
 		{
 		}
 
-		rectified_linear_layer_updater_cuda::~rectified_linear_layer_updater_cuda()
+		soft_rectified_linear_layer_hessian_cuda::~soft_rectified_linear_layer_hessian_cuda()
 		{
 		}
 
-		void rectified_linear_layer_updater_cuda::enqueue_test(
-			unsigned int offset_input_entry_id,
+		void soft_rectified_linear_layer_hessian_cuda::enqueue_test(
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			int elem_count = (input_elem_count_per_entry * entry_count + 3) / 4;
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
 				elem_count);
-			rectified_linear_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+			soft_rectified_linear_hess_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 				*input_neurons_buffer,
 				*output_neurons_buffer,
 				elem_count);
 		}
 
-		void rectified_linear_layer_updater_cuda::enqueue_backprop(
+		void soft_rectified_linear_layer_hessian_cuda::enqueue_backprop(
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
 			const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
 			int elem_count = (input_elem_count_per_entry * entry_count + 3) / 4;
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
 				elem_count);
-			rectified_linear_deriviative_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+			soft_rectified_linear_square_deriviative_hess_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 				*output_errors_buffer,
 				*output_neurons_buffer,
 				elem_count);
 		}
 
-		bool rectified_linear_layer_updater_cuda::is_in_place_backprop() const
+		bool soft_rectified_linear_layer_hessian_cuda::is_in_place_backprop() const
 		{
 			return true;
-		}
-
-		void rectified_linear_layer_updater_cuda::updater_configured()
-		{
-			if (!different_input)
-				throw neural_network_exception("rectified_linear_layer_updater_cuda is not able to run using the same input");
 		}
 	}
 }

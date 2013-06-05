@@ -14,28 +14,28 @@
  *  limitations under the License.
  */
 
-#include "hyperbolic_tangent_layer_hessian_plain.h"
+#include "soft_rectified_linear_layer_hessian_plain.h"
 
-#include "../hyperbolic_tangent_layer.h"
+#include "../soft_rectified_linear_layer.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		hyperbolic_tangent_layer_hessian_plain::hyperbolic_tangent_layer_hessian_plain()
+		soft_rectified_linear_layer_hessian_plain::soft_rectified_linear_layer_hessian_plain()
 		{
 		}
 
-		hyperbolic_tangent_layer_hessian_plain::~hyperbolic_tangent_layer_hessian_plain()
+		soft_rectified_linear_layer_hessian_plain::~soft_rectified_linear_layer_hessian_plain()
 		{
 		}
 
-		const boost::uuids::uuid& hyperbolic_tangent_layer_hessian_plain::get_uuid() const
+		const boost::uuids::uuid& soft_rectified_linear_layer_hessian_plain::get_uuid() const
 		{
-			return hyperbolic_tangent_layer::layer_guid;
+			return soft_rectified_linear_layer::layer_guid;
 		}
 
-		void hyperbolic_tangent_layer_hessian_plain::test(
+		void soft_rectified_linear_layer_hessian_plain::test(
 			const_additional_buffer_smart_ptr input_buffer,
 			additional_buffer_smart_ptr output_buffer,
 			std::vector<additional_buffer_smart_ptr>& additional_buffers,
@@ -50,21 +50,12 @@ namespace nnforge
 			const std::vector<float>::const_iterator in_it = input_buffer->begin();
 			const std::vector<float>::iterator out_it = output_buffer->begin();
 
-			std::tr1::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::tr1::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
-			const float hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
-			const float hyperbolic_tangent_major_multiplier = layer_derived->major_multiplier;
-
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 			for(int i = 0; i < elem_count; ++i)
-			{
-				float inp = *(in_it + i);
-				float inp2 = expf(inp * hyperbolic_tangent_steepness2);
-				float res = (inp2 - 1.0F) / (inp2 + 1.0F) * hyperbolic_tangent_major_multiplier;
-				*(out_it + i) = res;
-			}
+				*(out_it + i) = logf(expf(*(in_it + i)) + 1.0F);
 		}
 
-		void hyperbolic_tangent_layer_hessian_plain::backprop(
+		void soft_rectified_linear_layer_hessian_plain::backprop(
 			additional_buffer_smart_ptr input_errors,
 			const_additional_buffer_smart_ptr output_errors,
 			const_additional_buffer_smart_ptr output_neurons,
@@ -80,20 +71,17 @@ namespace nnforge
 			const std::vector<float>::iterator in_err_it = input_errors->begin();
 			const std::vector<float>::const_iterator out_it = output_neurons->begin();
 
-			std::tr1::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::tr1::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
-			const float hyperbolic_tangent_major_multiplier_reverse = 1.0F / layer_derived->major_multiplier;
-			const float hyperbolic_tangent_steepness3 = layer_derived->steepness * layer_derived->major_multiplier;
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 			for(int i = 0; i < elem_count; ++i)
 			{
 				float out_neuron = *(out_it + i);
-				float normalized_value = out_neuron * hyperbolic_tangent_major_multiplier_reverse;
-				float der1st = hyperbolic_tangent_steepness3 * (1.0F - (normalized_value * normalized_value));
-				*(in_err_it + i) *= (der1st * der1st);
+				float val = expf(out_neuron);
+				float der1st = (val - 1.0F) / val;
+				*(in_err_it + i) *= der1st * der1st;
 			}
 		}
 
-		bool hyperbolic_tangent_layer_hessian_plain::is_in_place_backprop() const
+		bool soft_rectified_linear_layer_hessian_plain::is_in_place_backprop() const
 		{
 			return true;
 		}
