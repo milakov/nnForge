@@ -23,6 +23,15 @@
 
 #include "cuda_running_configuration.h"
 
+static __forceinline__ __device__ float __load_nc(const float * ptr)
+{
+#if __CUDA_ARCH__ >= 350
+	return __ldg(ptr);
+#else
+	return *ptr;
+#endif
+}
+
 namespace nnforge
 {
 	namespace cuda

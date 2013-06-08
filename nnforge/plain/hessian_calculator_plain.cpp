@@ -87,7 +87,7 @@ namespace nnforge
 				}
 			}
 
-			unsigned int max_entry_count = std::min<unsigned int>(plain_config->get_max_entry_count(buffers_config), hessian_entry_to_process_count);
+			unsigned int max_entry_count = std::min<unsigned int>(plain_config->get_max_entry_count(buffers_config), 5/*hessian_entry_to_process_count*/);
 
 			std::vector<unsigned char> input_buf(max_entry_count * input_neuron_count * input_neuron_elem_size);
 			additional_buffer_smart_ptr initial_error_buf(new std::vector<float>(max_entry_count * output_neuron_count));

@@ -27,6 +27,7 @@
 #include "rgb_to_yuv_convert_layer.h"
 #include "rectified_linear_layer.h"
 #include "soft_rectified_linear_layer.h"
+#include "softmax_layer.h"
 
 #include "neural_network_toolset.h"
 #include "supervised_data_stream_reader.h"
