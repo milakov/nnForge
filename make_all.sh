@@ -7,8 +7,25 @@ cd plain
 make $@
 cd ../cuda
 make $@
-cd ../../examples
-cd gtsrb
-make $@
 cd ../..
+cd examples
+for i in ./*
+do
+	if [ -d "$i" ];then
+		cd $i
+		make $@
+		cd ..
+	fi
+done
+cd ..
+cd apps
+for i in ./*
+do
+	if [ -d "$i" ];then
+		cd $i
+		make $@
+		cd ..
+	fi
+done
+cd ..
 
