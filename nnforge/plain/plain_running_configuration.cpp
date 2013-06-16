@@ -51,7 +51,7 @@ namespace nnforge
 			#ifdef _OPENMP
 			out << "Max OpenMP thread count = " << omp_get_max_threads() << std::endl;
 			#else
-			out << "Compiled without OpenMP support"
+			out << "Built without OpenMP support" << std::endl;
 			#endif
 
 			out << "--- Settings ---" << std::endl;
