@@ -42,6 +42,12 @@ namespace nnforge
 		network_data_pusher& pusher,
 		const std::map<unsigned int, float>& layer_to_dropout_rate_map)
 	{
+		const const_layer_list& layer_list = *schema;
+		unsigned int layer_count = layer_list.size();
+		for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it)
+			if (it->first >= layer_count)
+				throw neural_network_exception("Dropout is specified for the layer which doesn't exist in the schema");
+		
 		initialize_train(reader);
 		unsigned int max_batch_size = get_max_batch_size();
 
