@@ -75,14 +75,14 @@ namespace nnforge
 					const std::vector<float>::iterator in_it = input_buffer_it + (entry_id * input_neuron_count) + neuron_id;
 
 					float sum = 0.0F;
-					for(int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 					{
 						float val = expf(*(in_it + (feature_map_id * input_neuron_count_per_feature_map)));
 						sum += val;
 						local_additional_buffer[feature_map_id] = val;
 					}
 					float mult = 1.0F / sum;
-					for(int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 						*(in_it + (feature_map_id * input_neuron_count_per_feature_map)) = local_additional_buffer[feature_map_id] * mult;
 				} // for(int workload_id
 			} // #pragma parallel

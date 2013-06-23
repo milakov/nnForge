@@ -108,14 +108,14 @@ namespace nnforge
 		if (neuron_value_list.size() % sample_count != 0)
 			throw nnforge::neural_network_exception("Size of neuron value list is not evenly divisible by sample_count");
 
-		int new_size = neuron_value_list.size() / sample_count;
+		int new_size = static_cast<int>(neuron_value_list.size() / sample_count);
 		float mult = 1.0F / static_cast<float>(sample_count);
 		std::vector<std::vector<float> >::const_iterator src_it = neuron_value_list.begin();
 		for(std::vector<std::vector<float> >::iterator dst_it = neuron_value_list.begin(); dst_it != neuron_value_list.begin() + new_size; ++dst_it)
 		{
 			std::copy(src_it->begin(), src_it->end(), dst_it->begin());
 			src_it++;
-			for(int i = 1; i < sample_count; ++i, ++src_it)
+			for(int i = 1; i < static_cast<int>(sample_count); ++i, ++src_it)
 				std::transform(dst_it->begin(), dst_it->end(), src_it->begin(), dst_it->begin(), std::plus<float>());
 			for(std::vector<float>::iterator it = dst_it->begin(); it != dst_it->end(); ++it)
 				*it *= mult;

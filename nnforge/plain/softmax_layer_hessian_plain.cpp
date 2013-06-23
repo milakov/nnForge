@@ -79,14 +79,14 @@ namespace nnforge
 					const std::vector<float>::iterator out_it = output_buffer_it + (entry_id * input_neuron_count) + neuron_id;
 
 					float sum = 0.0F;
-					for(int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 					{
 						float val = expf(*(in_it + (feature_map_id * input_neuron_count_per_feature_map)));
 						sum += val;
 						local_additional_buffer[feature_map_id] = val;
 					}
 					float mult = 1.0F / sum;
-					for(int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 						*(out_it + (feature_map_id * input_neuron_count_per_feature_map)) = local_additional_buffer[feature_map_id] * mult;
 				} // for(int workload_id
 			} // #pragma parallel
@@ -133,14 +133,14 @@ namespace nnforge
 					const std::vector<float>::const_iterator out_neurons_it = output_neurons_it + (entry_id * input_neuron_count) + neuron_id;
 
 					float sum = 0.0F;
-					for(int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 					{
 						unsigned int offset = feature_map_id * input_neuron_count_per_feature_map;
 						float val = (*(out_neurons_it + offset));
 						sum += val * val * (*(out_errors_it + offset));
 					}
 
-					for(int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 					{
 						unsigned int offset = feature_map_id * input_neuron_count_per_feature_map;
 						float y = *(out_neurons_it + offset);
