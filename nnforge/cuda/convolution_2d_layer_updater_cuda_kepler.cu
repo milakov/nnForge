@@ -319,7 +319,6 @@ __global__ void convolution_2d_tex_exact_upd_kernel_kepler(
 	}
 }
 
-extern __shared__ float arr_sh[];
 __global__ void convolution_2d_update_biases_upd_kernel_kepler(
 	float * __restrict biases,
 	const float * __restrict output_errors,
@@ -344,16 +343,12 @@ __global__ void convolution_2d_update_biases_upd_kernel_kepler(
 	if (current_output_neuron_id < output_elem_count_per_feature_map)
 		sum += current_error[current_output_neuron_id];
 
-	volatile float * arr = arr_sh;
-	arr[thread_id] = sum;
 	int lane_id = thread_id & 31;
 	#pragma unroll
 	for(int tx = 16; tx > 0; tx >>= 1)
 	{
-		if (lane_id < tx)
-			arr[thread_id] += arr[thread_id + tx];
+		sum += __shfl_down(sum, tx);
 	}
-	sum = arr[thread_id];
 
 	if (lane_id == 0)
 	{
@@ -1246,10 +1241,9 @@ namespace nnforge
 				int threadblock_size = get_threadblock_size_biases(output_elem_count_per_feature_map);
 				dim3 grid_size(1, output_configuration_specific.feature_map_count, entry_count);
 				dim3 block_size(threadblock_size, 1, 1);
-				int smem_size = threadblock_size * sizeof(float);
 				int min_iteration_count = output_elem_count_per_feature_map / threadblock_size;
 
-				convolution_2d_update_biases_upd_kernel_kepler<<<grid_size, block_size, smem_size, stream_id>>>(
+				convolution_2d_update_biases_upd_kernel_kepler<<<grid_size, block_size, 0, stream_id>>>(
 					*data[1],
 					*output_errors_buffer,
 					*training_speed[1],
