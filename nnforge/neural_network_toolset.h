@@ -25,9 +25,10 @@
 #include "output_neuron_value_set.h"
 #include "output_neuron_class_set.h"
 #include "layer_data_configuration.h"
+#include "data_transformer.h"
+#include "data_transformer_util.h"
 
 #include <boost/filesystem.hpp>
-#include <opencv2/core/core.hpp>
 
 namespace nnforge
 {
@@ -116,27 +117,7 @@ namespace nnforge
 
 		virtual unsigned int get_validating_sample_count() const;
 
-		virtual unsigned int get_training_sample_count() const;
-
-		static cv::Mat rotate_scale_shift(
-			cv::Mat image,
-			cv::Point2f rotation_center,
-			float angle_in_degrees,
-			float scale,
-			float shift_x,
-			float shift_y);
-
-		// contrast: relative multiplication, about 1.0
-		// brightness: change in luminocity for the middle lightness
-		static cv::Mat change_brightness_and_contrast(
-			cv::Mat image,
-			float contrast,
-			float brightness);
-
-		static cv::Mat flip(
-			cv::Mat image,
-			bool flip_around_x_axis,
-			bool flip_around_y_axis);
+		virtual std::vector<data_transformer_smart_ptr> get_data_transformer_list_for_training() const;
 
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
@@ -189,6 +170,8 @@ namespace nnforge
 			output_neuron_value_set_smart_ptr actual_neuron_value_set);
 
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(unsupervised_data_reader& reader);
+
+		supervised_data_reader_smart_ptr get_data_reader_for_training() const;
 
 	private:
 		factory_generator_smart_ptr factory;

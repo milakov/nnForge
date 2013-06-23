@@ -209,24 +209,18 @@ void gtsrb_toolset::write_single_entry(
 	{
 		cv::Mat3b image = cv::imread(absolute_file_path.string());
 
-		if ((contrast != 1.0F) || (brightness_shift != 0.0F))
-		{
-			image = change_brightness_and_contrast(
-				image,
-				contrast,
-				brightness_shift);
-		}
+		nnforge::data_transformer_util::change_brightness_and_contrast(
+			image,
+			contrast,
+			brightness_shift);
 
-		if ((rotation_angle_in_degrees != 0.0F) || (scale_factor != 1.0F) || (shift_x != 0.0F) || (shift_y != 0.0F))
-		{
-			image = rotate_scale_shift(
-				image,
-				cv::Point2f(static_cast<float>(roi_top_left_x + roi_bottom_right_x) * 0.5F, static_cast<float>(roi_top_left_y + roi_bottom_right_y) * 0.5F),
-				rotation_angle_in_degrees,
-				scale_factor,
-				shift_x,
-				shift_y);
-		}
+		nnforge::data_transformer_util::rotate_scale_shift(
+			image,
+			cv::Point2f(static_cast<float>(roi_top_left_x + roi_bottom_right_x) * 0.5F, static_cast<float>(roi_top_left_y + roi_bottom_right_y) * 0.5F),
+			rotation_angle_in_degrees,
+			scale_factor,
+			shift_x,
+			shift_y);
 
 		if (use_roi)
 			image = image.rowRange(roi_top_left_y, roi_bottom_right_y).colRange(roi_top_left_x, roi_bottom_right_x);

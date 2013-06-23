@@ -36,6 +36,10 @@
 #include "unsupervised_data_stream_writer.h"
 #include "rnd.h"
 
+#include "data_transformer_util.h"
+#include "distort_2d_data_transformer.h"
+#include "extract_2d_data_transformer.h"
+
 namespace nnforge
 {
 	class nnforge
