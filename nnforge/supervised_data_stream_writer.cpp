@@ -53,7 +53,7 @@ namespace nnforge
 		// write type code
 		out_stream->seekp(type_code_pos);
 		if (type_code == neuron_data_type::type_unknown)
-			type_code == neuron_data_type::type_byte;
+			type_code = neuron_data_type::type_byte;
 		unsigned int t = static_cast<unsigned int>(type_code);
 		out_stream->write(reinterpret_cast<const char*>(&t), sizeof(t));
 
