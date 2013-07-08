@@ -41,25 +41,32 @@ namespace nnforge
 		std::vector<std::vector<float> >::const_iterator predicted_it = predicted_value_set.neuron_value_list.begin();
 		for(std::vector<std::vector<float> >::const_iterator actual_it = actual_value_set.neuron_value_list.begin();
 			actual_it != actual_value_set.neuron_value_list.end();
-			actual_it++)
+			actual_it++, predicted_it++)
 		{
-			float actual_value = (*actual_it)[0];
-			float predicted_value = (*predicted_it)[0];
+			const std::vector<float>& actual_value_list = *actual_it;
+			const std::vector<float>& predicted_value_list = *predicted_it;
 
-			unsigned int bucket_id = std::min<unsigned int>(static_cast<unsigned int>(std::max<float>(std::min<float>((predicted_value - min_val) * mult, 1.0F), 0.0F) * segment_count_f), (segment_count - 1));
-
-			if (actual_value > 0.0F)
+			std::vector<float>::const_iterator predicted_value_it = predicted_value_list.begin();
+			for(std::vector<float>::const_iterator actual_value_it = actual_value_list.begin();
+				actual_value_it != actual_value_list.end();
+				actual_value_it++, predicted_value_it++)
 			{
-				values_for_positive_elems[bucket_id]++;
-				actual_positive_elem_count++;
-			}
-			else
-			{
-				values_for_negative_elems[bucket_id]++;
-				actual_negative_elem_count++;
-			}
+				float actual_value = *actual_value_it;
+				float predicted_value = *predicted_value_it;
 
-			predicted_it++;
+				unsigned int bucket_id = std::min<unsigned int>(static_cast<unsigned int>(std::max<float>(std::min<float>((predicted_value - min_val) * mult, 1.0F), 0.0F) * segment_count_f), (segment_count - 1));
+
+				if (actual_value > 0.0F)
+				{
+					values_for_positive_elems[bucket_id]++;
+					actual_positive_elem_count++;
+				}
+				else
+				{
+					values_for_negative_elems[bucket_id]++;
+					actual_negative_elem_count++;
+				}
+			}
 		}
 	}
 
@@ -120,7 +127,7 @@ namespace nnforge
 
 	std::ostream& operator<< (std::ostream& out, const roc_result& val)
 	{
-		out << (boost::format("AUC %|1$.5f|, accuracy at middle point %|2$.2f|%%") % val.get_auc() % (val.get_accuracy(0.0F) * 100.0F)).str();
+		out << (boost::format("AUC %|1$.5f|") % val.get_auc()).str();
 
 		return out;
 	}
