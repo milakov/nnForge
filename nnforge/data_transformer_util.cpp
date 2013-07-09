@@ -88,4 +88,17 @@ namespace nnforge
 		
 		cv::flip(image, image, flip_code);
 	}
+
+	void data_transformer_util::rotate_band(
+		cv::Mat image,
+		int shift_x_to_left)
+	{
+		unsigned int real_shift = (shift_x_to_left % image.cols);
+		if (real_shift == 0)
+			return;
+
+		cv::Mat cloned_image = image.clone();
+		cloned_image.colRange(real_shift, image.cols).copyTo(image.colRange(0, image.cols - real_shift));
+		cloned_image.colRange(0, real_shift).copyTo(image.colRange(image.cols - real_shift, image.cols));
+	}
 }

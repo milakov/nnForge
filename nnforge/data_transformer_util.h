@@ -43,6 +43,10 @@ namespace nnforge
 			bool flip_around_x_axis,
 			bool flip_around_y_axis);
 
+		static void rotate_band(
+			cv::Mat image,
+			int shift_x_to_left);
+
 	private:
 		data_transformer_util();
 		~data_transformer_util();
