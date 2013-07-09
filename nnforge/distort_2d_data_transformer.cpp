@@ -25,7 +25,7 @@
 namespace nnforge
 {
 	distort_2d_data_transformer::distort_2d_data_transformer(
-		bool is_deterministic,
+		bool is_same_sequence_from_reset,
 		float max_absolute_rotation_angle_in_degrees,
 		float max_scale_factor,
 		float max_absolute_shift_x,
@@ -42,7 +42,7 @@ namespace nnforge
 		rotate_angle_distribution = std::tr1::uniform_real<float>(-max_absolute_rotation_angle_in_degrees, max_absolute_rotation_angle_in_degrees);
 		scale_distribution = std::tr1::uniform_real<float>(1.0F / max_scale_factor, max_scale_factor);
 		shift_x_distribution = std::tr1::uniform_real<float>(-max_absolute_shift_x, max_absolute_shift_x);
-		shift_y_distribution = std::tr1::uniform_real<float>(-max_absolute_shift_x, max_absolute_shift_x);
+		shift_y_distribution = std::tr1::uniform_real<float>(-max_absolute_shift_y, max_absolute_shift_y);
 		contrast_distribution = std::tr1::uniform_real<float>(1.0F / max_contrast_factor, max_contrast_factor);
 		brightness_shift_distribution = std::tr1::uniform_real<float>(-max_absolute_brightness_shift, max_absolute_brightness_shift);
 		flip_around_x_distribution = std::tr1::uniform_int<int>(0, flip_around_x_axis_allowed ? 1 : 0);
