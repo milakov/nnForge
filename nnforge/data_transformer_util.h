@@ -45,7 +45,8 @@ namespace nnforge
 
 		static void rotate_band(
 			cv::Mat image,
-			int shift_x_to_left);
+			int shift_x_to_left,
+			int shift_y_to_top);
 
 	private:
 		data_transformer_util();

@@ -39,6 +39,7 @@
 #include "data_transformer_util.h"
 #include "distort_2d_data_transformer.h"
 #include "extract_2d_data_transformer.h"
+#include "rotate_band_2d_data_transformer.h"
 
 namespace nnforge
 {

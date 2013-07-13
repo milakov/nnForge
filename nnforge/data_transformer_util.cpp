@@ -91,14 +91,36 @@ namespace nnforge
 
 	void data_transformer_util::rotate_band(
 		cv::Mat image,
-		int shift_x_to_left)
+		int shift_x_to_left,
+		int shift_y_to_top)
 	{
-		unsigned int real_shift = (shift_x_to_left % image.cols);
-		if (real_shift == 0)
+		int actual_shift_x = (shift_x_to_left % image.cols);
+		if (actual_shift_x < 0)
+			actual_shift_x += image.cols;
+		int actual_shift_y = (shift_y_to_top % image.rows);
+		if (actual_shift_y < 0)
+			actual_shift_y += image.rows;
+		if ((actual_shift_x == 0) && (actual_shift_y == 0))
 			return;
 
 		cv::Mat cloned_image = image.clone();
-		cloned_image.colRange(real_shift, image.cols).copyTo(image.colRange(0, image.cols - real_shift));
-		cloned_image.colRange(0, real_shift).copyTo(image.colRange(image.cols - real_shift, image.cols));
+
+		if (actual_shift_y == 0)
+		{
+			cloned_image.colRange(actual_shift_x, image.cols).copyTo(image.colRange(0, image.cols - actual_shift_x));
+			cloned_image.colRange(0, actual_shift_x).copyTo(image.colRange(image.cols - actual_shift_x, image.cols));
+		}
+		else if (actual_shift_x == 0)
+		{
+			cloned_image.rowRange(actual_shift_y, image.rows).copyTo(image.rowRange(0, image.rows - actual_shift_y));
+			cloned_image.rowRange(0, actual_shift_y).copyTo(image.rowRange(image.rows - actual_shift_y, image.rows));
+		}
+		else
+		{
+			cloned_image.colRange(actual_shift_x, image.cols).rowRange(actual_shift_y, image.rows).copyTo(image.colRange(0, image.cols - actual_shift_x).rowRange(0, image.rows - actual_shift_y));
+			cloned_image.colRange(0, actual_shift_x).rowRange(actual_shift_y, image.rows).copyTo(image.colRange(image.cols - actual_shift_x, image.cols).rowRange(0, image.rows - actual_shift_y));
+			cloned_image.colRange(actual_shift_x, image.cols).rowRange(0, actual_shift_y).copyTo(image.colRange(0, image.cols - actual_shift_x).rowRange(image.rows - actual_shift_y, image.rows));
+			cloned_image.colRange(0, actual_shift_x).rowRange(0, actual_shift_y).copyTo(image.colRange(image.cols - actual_shift_x, image.cols).rowRange(image.rows - actual_shift_y, image.rows));
+		}
 	}
 }
