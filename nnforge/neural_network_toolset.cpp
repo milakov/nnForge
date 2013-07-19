@@ -700,7 +700,7 @@ namespace nnforge
 		{
 			if (!reader.read(&(*input.begin()), 0))
 				throw std::runtime_error("Not enough entries");
-			for(int i = 1; i < sample_count; ++i)
+			for(unsigned int i = 1; i < sample_count; ++i)
 				if (!reader.read(0, 0))
 					throw std::runtime_error("Not enough entries");
 

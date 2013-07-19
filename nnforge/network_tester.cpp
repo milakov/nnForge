@@ -66,9 +66,9 @@ namespace nnforge
 
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 
-		int actual_entry_count = result.actual_output_neuron_value_set->neuron_value_list.size();
-		int predicted_entry_count = result.predicted_output_neuron_value_set->neuron_value_list.size();
-		int mod = predicted_entry_count % actual_entry_count;
+		unsigned int actual_entry_count = static_cast<unsigned int>(result.actual_output_neuron_value_set->neuron_value_list.size());
+		unsigned int predicted_entry_count = static_cast<unsigned int>(result.predicted_output_neuron_value_set->neuron_value_list.size());
+		unsigned int mod = predicted_entry_count % actual_entry_count;
 		if (mod != 0)
 			throw nnforge::neural_network_exception("Predicted entry count is not evenly divisible by actual entry count");
 		unsigned int sample_count = predicted_entry_count / actual_entry_count;

@@ -43,7 +43,7 @@ namespace nnforge
 		const std::map<unsigned int, float>& layer_to_dropout_rate_map)
 	{
 		const const_layer_list& layer_list = *schema;
-		unsigned int layer_count = layer_list.size();
+		unsigned int layer_count = static_cast<unsigned int>(layer_list.size());
 		for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it)
 			if (it->first >= layer_count)
 				throw neural_network_exception("Dropout is specified for the layer which doesn't exist in the schema");
