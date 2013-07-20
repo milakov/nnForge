@@ -31,9 +31,11 @@ namespace nnforge
 		{
 		}
 
-		network_updater_smart_ptr network_updater_cuda_factory::create(network_schema_smart_ptr schema) const
+		network_updater_smart_ptr network_updater_cuda_factory::create(
+			network_schema_smart_ptr schema,
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map) const
 		{
-			return network_updater_smart_ptr(new network_updater_cuda(schema, cuda_config));
+			return network_updater_smart_ptr(new network_updater_cuda(schema, layer_to_dropout_rate_map, cuda_config));
 		}
 	}
 }

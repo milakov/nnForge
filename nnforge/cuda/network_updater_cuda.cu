@@ -75,8 +75,9 @@ namespace nnforge
 
 		network_updater_cuda::network_updater_cuda(
 			network_schema_smart_ptr schema,
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			cuda_running_configuration_const_smart_ptr cuda_config)
-			: network_updater(schema)
+			: network_updater(schema, layer_to_dropout_rate_map)
 			, cuda_config(cuda_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -121,9 +122,7 @@ namespace nnforge
 		std::vector<testing_result_smart_ptr> network_updater_cuda::actual_update(
 			supervised_data_reader& reader,
 			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
-			std::vector<network_data_smart_ptr>& data_list,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::vector<float>& random_uniform_list)
+			std::vector<network_data_smart_ptr>& data_list)
 		{
 			std::vector<testing_result_smart_ptr> res;
 

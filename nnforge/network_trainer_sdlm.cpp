@@ -46,9 +46,7 @@ namespace nnforge
 
 	void network_trainer_sdlm::train_step(
 		supervised_data_reader& reader,
-		std::vector<training_task_state>& task_list,
-		const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-		const std::vector<float>& random_uniform_list)
+		std::vector<training_task_state>& task_list)
 	{
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 
@@ -71,39 +69,14 @@ namespace nnforge
 			task_list[i].comments.push_back(comment);
 		}
 
-		std::map<unsigned int, dropout_layer_config> layer_id_to_dropout_config_map;
-		std::vector<const_layer_smart_ptr>::const_iterator layer_it = schema->get_layers().begin();
-		for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it, ++layer_it)
-		{
-			float dropout_rate = it->second;
-
-			if ((dropout_rate < 0.0F) || (dropout_rate >= 1.0F))
-				throw neural_network_exception((boost::format("Illegal dropout rate: %1%") % dropout_rate).str());
-
-			if (dropout_rate > 0.0F)
-			{
-				dropout_layer_config mult = (schema->get_layers()[it->first])->get_dropout_layer_config(dropout_rate);
-				layer_id_to_dropout_config_map.insert(std::make_pair<unsigned int, dropout_layer_config>(it->first, mult));
-			}
-		}
-
 		std::vector<network_data_smart_ptr> data_list;
 		for(std::vector<training_task_state>::iterator it = task_list.begin(); it != task_list.end(); ++it)
-		{
-			network_data_smart_ptr data = it->data;
-			data->apply_dropout_layer_config(layer_id_to_dropout_config_map, false);
-			data_list.push_back(data);
-		}
+			data_list.push_back(it->data);
 
 		std::vector<testing_result_smart_ptr> train_result = updater->update(
 			reader,
 			training_speed_vector_list,
-			data_list,
-			layer_to_dropout_rate_map,
-			random_uniform_list);
-
-		for(std::vector<network_data_smart_ptr>::iterator it = data_list.begin(); it != data_list.end(); ++it)
-			(*it)->apply_dropout_layer_config(layer_id_to_dropout_config_map, true);
+			data_list);
 
 		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start) / task_list.size();
 

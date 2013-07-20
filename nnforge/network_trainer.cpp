@@ -19,12 +19,9 @@
 #include <vector>
 
 #include "neural_network_exception.h"
-#include "rnd.h"
 
 namespace nnforge
 {
-	const unsigned int network_trainer::random_list_bits = 10;
-
 	network_trainer::network_trainer(network_schema_smart_ptr schema)
 		: schema(schema)
 		, iteration_count(50)
@@ -39,15 +36,8 @@ namespace nnforge
 		supervised_data_reader& reader,
 		network_data_peeker& peeker,
 		network_data_pusher& progress_pusher,
-		network_data_pusher& pusher,
-		const std::map<unsigned int, float>& layer_to_dropout_rate_map)
+		network_data_pusher& pusher)
 	{
-		const const_layer_list& layer_list = *schema;
-		unsigned int layer_count = static_cast<unsigned int>(layer_list.size());
-		for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it)
-			if (it->first >= layer_count)
-				throw neural_network_exception("Dropout is specified for the layer which doesn't exist in the schema");
-		
 		initialize_train(reader);
 		unsigned int max_batch_size = get_max_batch_size();
 
@@ -55,12 +45,6 @@ namespace nnforge
 			throw neural_network_exception("The trainer is unable to train even a single network");
 
 		std::vector<training_task_state> task_list;
-
-		std::vector<float> random_uniform_list(1 << random_list_bits);
-
-		std::tr1::variate_generator<random_generator, std::tr1::uniform_real<float> > gen_random(
-			rnd::get_random_generator(),
-			std::tr1::uniform_real<float>(0.0F, 1.0F));
 
 		while(true)
 		{
@@ -79,13 +63,9 @@ namespace nnforge
 			if (task_list.size() == 0)
 				break; // Nothing is left to be trained
 
-			std::generate(random_uniform_list.begin(), random_uniform_list.end(), gen_random);
-
 			train_step(
 				reader,
-				task_list,
-				layer_to_dropout_rate_map,
-				random_uniform_list);
+				task_list);
 
 			for(int i = 0; i < task_list.size(); ++i)
 				progress_pusher.push(task_list[i]);

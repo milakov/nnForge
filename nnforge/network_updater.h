@@ -21,8 +21,10 @@
 #include "layer_configuration_specific.h"
 #include "supervised_data_reader.h"
 #include "testing_result.h"
+#include "dropout_layer_config.h"
 
 #include <memory>
+#include <map>
 
 namespace nnforge
 {
@@ -38,9 +40,7 @@ namespace nnforge
 		std::vector<testing_result_smart_ptr> update(
 			supervised_data_reader& reader,
 			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
-			std::vector<network_data_smart_ptr>& data_list,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::vector<float>& random_uniform_list);
+			std::vector<network_data_smart_ptr>& data_list);
 
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
 		virtual unsigned int get_max_batch_size() const = 0;
@@ -52,15 +52,15 @@ namespace nnforge
 		unsigned int entry_count_updated_in_profile_mode;
 
 	protected:
-		network_updater(network_schema_smart_ptr schema);
+		network_updater(
+			network_schema_smart_ptr schema,
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map);
 
 		// schema, data and reader are guaranteed to be compatible
 		virtual std::vector<testing_result_smart_ptr> actual_update(
 			supervised_data_reader& reader,
 			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
-			std::vector<network_data_smart_ptr>& data_list,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::vector<float>& random_uniform_list) = 0;
+			std::vector<network_data_smart_ptr>& data_list) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 		// The layer_config_list is guaranteed to be compatible with schema
@@ -70,13 +70,19 @@ namespace nnforge
 
 	protected:
 		network_schema_smart_ptr schema;
+		std::map<unsigned int, float> layer_to_dropout_rate_map;
 		layer_configuration_specific_list layer_config_list;
+		std::vector<float> random_uniform_list;
+		std::map<unsigned int, dropout_layer_config> layer_id_to_dropout_config_map;
 		float flops;
 
 	private:
 		network_updater();
 		network_updater(const network_updater&);
 		network_updater& operator =(const network_updater&);
+
+		random_generator gen;
+		static const unsigned int random_list_bits;
 	};
 
 	typedef std::tr1::shared_ptr<network_updater> network_updater_smart_ptr;

@@ -38,8 +38,7 @@ namespace nnforge
 			supervised_data_reader& reader,
 			network_data_peeker& peeker,
 			network_data_pusher& progress_pusher,
-			network_data_pusher& pusher,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map = std::map<unsigned int, float>());
+			network_data_pusher& pusher);
 
 		unsigned int iteration_count;
 
@@ -54,16 +53,12 @@ namespace nnforge
 		// Size of random_uniform_list is a power of 2
 		virtual void train_step(
 			supervised_data_reader& reader,
-			std::vector<training_task_state>& task_list,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::vector<float>& random_uniform_list) = 0;
+			std::vector<training_task_state>& task_list) = 0;
 
 		network_schema_smart_ptr schema;
 
 	private:
 		bool is_last_iteration(const training_task_state& state) const;
-
-		static const unsigned int random_list_bits;
 
 	private:
 		network_trainer(const network_trainer&);

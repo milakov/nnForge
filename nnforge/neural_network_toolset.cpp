@@ -785,7 +785,7 @@ namespace nnforge
 
 		hessian_calculator_smart_ptr hessian = hessian_factory->create(schema);
 
-		network_updater_smart_ptr updater = updater_factory->create(schema);
+		network_updater_smart_ptr updater = updater_factory->create(schema, get_dropout_rate_map());
 
 		network_trainer_sdlm trainer(
 			schema,
@@ -832,8 +832,7 @@ namespace nnforge
 			*training_data_reader,
 			*peeker,
 			progress,
-			res,
-			get_dropout_rate_map());
+			res);
 
 		if (batch)
 		{
@@ -854,7 +853,7 @@ namespace nnforge
 			schema->read(in);
 		}
 
-		network_updater_smart_ptr updater = updater_factory->create(schema);
+		network_updater_smart_ptr updater = updater_factory->create(schema, get_dropout_rate_map());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
 
@@ -885,9 +884,7 @@ namespace nnforge
 		updater->update(
 			*training_data_reader,
 			training_speed,
-			data,
-			get_dropout_rate_map(),
-			random_uniform_list);
+			data);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		float time_to_complete_seconds = sec.count();
 

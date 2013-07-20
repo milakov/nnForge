@@ -26,7 +26,9 @@ namespace nnforge
 	public:
 		virtual ~network_updater_factory();
 
-		virtual network_updater_smart_ptr create(network_schema_smart_ptr schema) const = 0;
+		virtual network_updater_smart_ptr create(
+			network_schema_smart_ptr schema,
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map) const = 0;
 
 	protected:
 		network_updater_factory();

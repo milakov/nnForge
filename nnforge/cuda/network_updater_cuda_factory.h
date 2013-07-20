@@ -30,7 +30,9 @@ namespace nnforge
 
 			virtual ~network_updater_cuda_factory();
 
-			virtual network_updater_smart_ptr create(network_schema_smart_ptr schema) const;
+			virtual network_updater_smart_ptr create(
+				network_schema_smart_ptr schema,
+				const std::map<unsigned int, float>& layer_to_dropout_rate_map) const;
 
 		protected:
 			cuda_running_configuration_const_smart_ptr cuda_config;
