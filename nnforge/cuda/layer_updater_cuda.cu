@@ -24,20 +24,14 @@ __global__ void dropout_kernel(
 	float dropout_rate,
 	int offset,
 	unsigned int mask,
-	int elem_count_per_feature_map,
-	int feature_map_count,
-	int entry_count)
+	int elem_count)
 {
-	int internal_elem_id = blockIdx.x * blockDim.x + threadIdx.x;
-	int feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
-	int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
-	bool in_bounds = (entry_id < entry_count) && (feature_map_id < feature_map_count) && (internal_elem_id < elem_count_per_feature_map);
-	if (in_bounds)
+	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+	if (elem_id < elem_count)
 	{
-		unsigned int total_feature_map_id = entry_id * feature_map_count + feature_map_id;
-		unsigned int random_elem_id = (total_feature_map_id + offset) & mask;
+		unsigned int random_elem_id = (elem_id + offset) & mask;
 		if (random_buf[random_elem_id] < dropout_rate)
-			neurons[total_feature_map_id * elem_count_per_feature_map + internal_elem_id] = 0.0F;
+			neurons[elem_id] = 0.0F;
 	}
 }
 
@@ -183,20 +177,17 @@ namespace nnforge
 			unsigned int entry_count,
 			unsigned int offset_in_random_list)
 		{
+			unsigned int elem_count = input_elem_count_per_entry * entry_count;
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
-				input_elem_count_per_feature_map,
-				input_configuration_specific.feature_map_count,
-				entry_count);
+				elem_count);
 			dropout_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 				*input_neurons_buffer,
 				*random_buffer,
 				dropout_rate,
 				offset_in_random_list,
 				mask,
-				input_elem_count_per_feature_map,
-				input_configuration_specific.feature_map_count,
-				entry_count);
+				elem_count);
 		}
 
 		void layer_updater_cuda::enqueue_backward_dropout(
@@ -208,20 +199,17 @@ namespace nnforge
 			unsigned int entry_count,
 			unsigned int offset_in_random_list)
 		{
+			unsigned int elem_count = input_elem_count_per_entry * entry_count;
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
-				input_elem_count_per_feature_map,
-				input_configuration_specific.feature_map_count,
-				entry_count);
+				elem_count);
 			dropout_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 				*input_errors_buffer,
 				*random_buffer,
 				dropout_rate,
 				offset_in_random_list,
 				mask,
-				input_elem_count_per_feature_map,
-				input_configuration_specific.feature_map_count,
-				entry_count);
+				elem_count);
 		}
 
 		void layer_updater_cuda::fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const

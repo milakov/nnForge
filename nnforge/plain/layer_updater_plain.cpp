@@ -150,8 +150,7 @@ namespace nnforge
 			const unsigned int updater_count,
 			const unsigned int offset_in_random_list) const
 		{
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
-			const int elem_count = static_cast<int>(updater_count * input_configuration_specific.feature_map_count);
+			const int elem_count = static_cast<int>(updater_count * input_configuration_specific.get_neuron_count());
 			const std::vector<float>::const_iterator rnd_it = random_buffer.begin();
 			const std::vector<float>::iterator in_it = input_neurons_buffer->begin();
 
@@ -160,7 +159,7 @@ namespace nnforge
 			{
 				unsigned int random_elem_id = (i + offset_in_random_list) & mask;
 				if (*(rnd_it + random_elem_id) < dropout_rate)
-					std::fill_n(in_it + i * input_neuron_count_per_feature_map, input_neuron_count_per_feature_map, 0.0F);
+					*(in_it + i) = 0.0F;
 			}
 		}
 
@@ -174,8 +173,7 @@ namespace nnforge
 			const unsigned int updater_count,
 			const unsigned int offset_in_random_list) const
 		{
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
-			const int elem_count = static_cast<int>(updater_count * input_configuration_specific.feature_map_count);
+			const int elem_count = static_cast<int>(updater_count * input_configuration_specific.get_neuron_count());
 			const std::vector<float>::const_iterator rnd_it = random_buffer.begin();
 			const std::vector<float>::iterator in_it = input_errors_buffer->begin();
 
@@ -184,7 +182,7 @@ namespace nnforge
 			{
 				unsigned int random_elem_id = (i + offset_in_random_list) & mask;
 				if (*(rnd_it + random_elem_id) < dropout_rate)
-					std::fill_n(in_it + i * input_neuron_count_per_feature_map, input_neuron_count_per_feature_map, 0.0F);
+					*(in_it + i) = 0.0F;
 			}
 		}
 	}
