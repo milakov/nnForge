@@ -54,13 +54,13 @@ namespace nnforge
 		const layer_configuration_specific& original_config)
 	{
 		if (type != neuron_data_type::type_byte)
-			throw neural_network_exception("distort_2d_data_transformer is implemented for data stored as bytes only");
+			throw neural_network_exception("rotate_band_2d_data_transformer is implemented for data stored as bytes only");
 
 		if (original_config.dimension_sizes.size() != 2)
-			throw neural_network_exception((boost::format("distort_2d_data_transformer is processing 2d data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
+			throw neural_network_exception((boost::format("rotate_band_2d_data_transformer is processing 2d data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
 
 		if (original_config.feature_map_count != 1)
-			throw neural_network_exception("distort_2d_data_transformer is implemented for 1 feature map data only");
+			throw neural_network_exception("rotate_band_2d_data_transformer is implemented for 1 feature map data only");
 
 		cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(output_data));
 
