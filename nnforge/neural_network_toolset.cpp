@@ -785,7 +785,10 @@ namespace nnforge
 
 		hessian_calculator_smart_ptr hessian = hessian_factory->create(schema);
 
-		network_updater_smart_ptr updater = updater_factory->create(schema, get_dropout_rate_map());
+		network_updater_smart_ptr updater = updater_factory->create(
+			schema,
+			get_dropout_rate_map(),
+			get_weight_vector_bound_map());
 
 		network_trainer_sdlm trainer(
 			schema,
@@ -853,7 +856,10 @@ namespace nnforge
 			schema->read(in);
 		}
 
-		network_updater_smart_ptr updater = updater_factory->create(schema, get_dropout_rate_map());
+		network_updater_smart_ptr updater = updater_factory->create(
+			schema,
+			get_dropout_rate_map(),
+			get_weight_vector_bound_map());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
 
@@ -962,6 +968,11 @@ namespace nnforge
 	std::map<unsigned int, float> neural_network_toolset::get_dropout_rate_map() const
 	{
 		return std::map<unsigned int, float>();
+	}
+
+	std::map<unsigned int, weight_vector_bound> neural_network_toolset::get_weight_vector_bound_map() const
+	{
+		return std::map<unsigned int, weight_vector_bound>();
 	}
 
 	std::vector<data_transformer_smart_ptr> neural_network_toolset::get_data_transformer_list_for_training() const

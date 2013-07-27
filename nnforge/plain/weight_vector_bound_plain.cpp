@@ -14,29 +14,18 @@
  *  limitations under the License.
  */
 
-#pragma once
-
-#include "../network_updater_factory.h"
-#include "plain_running_configuration.h"
+#include "weight_vector_bound_plain.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		class network_updater_plain_factory : public network_updater_factory
+		weight_vector_bound_plain::weight_vector_bound_plain()
 		{
-		public:
-			network_updater_plain_factory(plain_running_configuration_const_smart_ptr opencl_config);
+		}
 
-			virtual ~network_updater_plain_factory();
-
-			virtual network_updater_smart_ptr create(
-				network_schema_smart_ptr schema,
-				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map) const;
-
-		protected:
-			plain_running_configuration_const_smart_ptr plain_config;
-		};
+		weight_vector_bound_plain::~weight_vector_bound_plain()
+		{
+		}
 	}
 }

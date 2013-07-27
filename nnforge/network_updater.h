@@ -22,6 +22,7 @@
 #include "supervised_data_reader.h"
 #include "testing_result.h"
 #include "dropout_layer_config.h"
+#include "weight_vector_bound.h"
 
 #include <memory>
 #include <map>
@@ -54,7 +55,8 @@ namespace nnforge
 	protected:
 		network_updater(
 			network_schema_smart_ptr schema,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map);
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
+			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map);
 
 		// schema, data and reader are guaranteed to be compatible
 		virtual std::vector<testing_result_smart_ptr> actual_update(
@@ -73,8 +75,8 @@ namespace nnforge
 		std::map<unsigned int, float> layer_to_dropout_rate_map;
 		layer_configuration_specific_list layer_config_list;
 		std::vector<float> random_uniform_list;
-		std::map<unsigned int, dropout_layer_config> layer_id_to_dropout_config_map;
 		float flops;
+		std::map<unsigned int, weight_vector_bound> layer_to_weight_vector_bound_map;
 
 	private:
 		network_updater();
@@ -83,6 +85,8 @@ namespace nnforge
 
 		random_generator gen;
 		static const unsigned int random_list_bits;
+
+		std::map<unsigned int, dropout_layer_config> layer_id_to_dropout_config_map;
 	};
 
 	typedef std::tr1::shared_ptr<network_updater> network_updater_smart_ptr;

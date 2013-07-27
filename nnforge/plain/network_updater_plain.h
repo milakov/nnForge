@@ -22,6 +22,7 @@
 #include "plain_running_configuration.h"
 #include "buffer_plain_size_configuration.h"
 #include "layer_tester_plain.h"
+#include "weight_vector_bound_plain.h"
 
 namespace nnforge
 {
@@ -33,6 +34,7 @@ namespace nnforge
 			network_updater_plain(
 				network_schema_smart_ptr schema,
 				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
+				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 				plain_running_configuration_const_smart_ptr plain_config);
 
 			~network_updater_plain();
@@ -65,6 +67,7 @@ namespace nnforge
 
 			const_layer_tester_plain_list tester_list;
 			const_layer_updater_plain_list updater_list;
+			weight_vector_bound_map weight_vector_bounds;
 
 			static unsigned int max_entry_count_in_single_batch;
 		};

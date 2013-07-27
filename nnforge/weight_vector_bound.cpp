@@ -14,28 +14,16 @@
  *  limitations under the License.
  */
 
-#pragma once
-
-#include "network_updater.h"
 #include "weight_vector_bound.h"
-
-#include <memory>
 
 namespace nnforge
 {
-	class network_updater_factory
+	weight_vector_bound::weight_vector_bound(float max_l2_norm)
+		: max_l2_norm(max_l2_norm)
 	{
-	public:
-		virtual ~network_updater_factory();
+	}
 
-		virtual network_updater_smart_ptr create(
-			network_schema_smart_ptr schema,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map) const = 0;
-
-	protected:
-		network_updater_factory();
-	};
-
-	typedef std::tr1::shared_ptr<network_updater_factory> network_updater_factory_smart_ptr;
+	weight_vector_bound::~weight_vector_bound()
+	{
+	}
 }

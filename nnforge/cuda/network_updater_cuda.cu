@@ -23,6 +23,7 @@
 #include "util_cuda.h"
 #include "cuda_event.h"
 #include "layer_updater_schema_factory.h"
+#include "weight_vector_bound_cuda_factory.h"
 
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
@@ -76,8 +77,9 @@ namespace nnforge
 		network_updater_cuda::network_updater_cuda(
 			network_schema_smart_ptr schema,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
+			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 			cuda_running_configuration_const_smart_ptr cuda_config)
-			: network_updater(schema, layer_to_dropout_rate_map)
+			: network_updater(schema, layer_to_dropout_rate_map, layer_to_weight_vector_bound_map)
 			, cuda_config(cuda_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -99,6 +101,15 @@ namespace nnforge
 
 			for(const_layer_list::const_iterator it = start_layer_nonempty_weights_iterator; it != layer_list.end(); ++it)
 				updater_schemas.push_back(single_layer_updater_schema_factory::get_const_instance().create_updater_schema_layer(*it, cuda_config));
+
+			for(std::map<unsigned int, weight_vector_bound>::const_iterator it = this->layer_to_weight_vector_bound_map.begin(); it != this->layer_to_weight_vector_bound_map.end(); ++it)
+			{
+				unsigned int layer_id = it->first;
+				if (layer_id < testing_layer_count)
+					throw neural_network_exception((boost::format("Weight vector bound is specified fo layer %1% while it is in testing part (consisting of %2% layers) of the updater") % layer_id  % testing_layer_count).str());
+
+				weight_vector_bounds.insert(std::make_pair<unsigned int, weight_vector_bound_cuda_smart_ptr>(layer_id, single_weight_vector_bound_factory::get_const_instance().create_weight_vector_bound(layer_list[layer_id], cuda_config)));
+			}
 
 			setup_network_cuda();
 
@@ -228,6 +239,10 @@ namespace nnforge
 				if (all_buffers.input_errors_buffer != 0)
 					output_errors = all_buffers.input_errors_buffer;
 			}
+
+			std::map<unsigned int, std::vector<cuda_linear_buffer_device_smart_ptr> > weight_vector_bound_buffers;
+			for(std::map<unsigned int, weight_vector_bound_cuda_smart_ptr>::const_iterator it = weight_vector_bounds.begin(); it != weight_vector_bounds.end(); ++it)
+				weight_vector_bound_buffers.insert(std::make_pair(it->first, it->second->allocate_additional_buffers(max_entry_count)));
 
 			cuda_linear_buffer_host_smart_ptr input_host_buf(new cuda_linear_buffer_host(input_neuron_count * max_entry_count * input_neuron_elem_size));
 			unsigned char * input = *input_host_buf;
@@ -411,6 +426,19 @@ namespace nnforge
 									input_and_all_buffers_pack_it->second.additional_buffers,
 									input_and_all_buffers_pack_it->second.dynamic_memobjects,
 									updater_entry_count);
+
+								weight_vector_bound_map::iterator bound_it = weight_vector_bounds.find(reverse_layer_id);
+								if (bound_it != weight_vector_bounds.end())
+								{
+									const weight_vector_bound& bound = layer_to_weight_vector_bound_map.find(reverse_layer_id)->second;
+									const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers = weight_vector_bound_buffers.find(reverse_layer_id)->second;
+									bound_it->second->enqueue_normalize_weights(
+										*command_stream,
+										bound,
+										*net_data_it,
+										additional_buffers,
+										updater_entry_count);
+								}
 							}
 						}
 
@@ -628,6 +656,9 @@ namespace nnforge
 
 			for(std::vector<layer_updater_cuda_smart_ptr>::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it)
 				(*it)->update_buffer_configuration(buffer_configuration, updater_entry_count);
+
+			for(std::map<unsigned int, weight_vector_bound_cuda_smart_ptr>::const_iterator it = weight_vector_bounds.begin(); it != weight_vector_bounds.end(); ++it)
+				it->second->update_buffer_configuration(buffer_configuration, updater_entry_count);
 		}
 
 		unsigned int network_updater_cuda::get_max_batch_size() const
@@ -636,6 +667,9 @@ namespace nnforge
 
 			for(std::vector<layer_updater_cuda_smart_ptr>::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it)
 				(*it)->update_buffer_configuration(buffer_configuration);
+
+			for(std::map<unsigned int, weight_vector_bound_cuda_smart_ptr>::const_iterator it = weight_vector_bounds.begin(); it != weight_vector_bounds.end(); ++it)
+				it->second->update_buffer_configuration(buffer_configuration);
 
 			return cuda_config->get_max_entry_count(buffer_configuration, 0.5F);
 		}

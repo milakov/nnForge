@@ -22,6 +22,7 @@
 #include "cuda_stream.h"
 #include "layer_testing_schema.h"
 #include "layer_updater_schema.h"
+#include "weight_vector_bound_cuda.h"
 
 namespace nnforge
 {
@@ -33,6 +34,7 @@ namespace nnforge
 			network_updater_cuda(
 				network_schema_smart_ptr schema,
 				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
+				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 				cuda_running_configuration_const_smart_ptr cuda_config);
 
 			virtual ~network_updater_cuda();
@@ -88,6 +90,8 @@ namespace nnforge
 			const_layer_updater_schema_list updater_schemas;
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > updater_schema_data;
 			std::vector<layer_updater_cuda_smart_ptr> updater_list;
+
+			weight_vector_bound_map weight_vector_bounds;
 
 			static unsigned int max_entry_count_in_single_batch;
 		};

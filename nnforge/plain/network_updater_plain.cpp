@@ -22,19 +22,21 @@
 
 #include "layer_tester_plain_factory.h"
 #include "layer_updater_plain_factory.h"
+#include "weight_vector_bound_plain_factory.h"
 #include "../neural_network_exception.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		unsigned int network_updater_plain::max_entry_count_in_single_batch = 1024;
+		unsigned int network_updater_plain::max_entry_count_in_single_batch = 5;//1024;
 
 		network_updater_plain::network_updater_plain(
 			network_schema_smart_ptr schema,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
+			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 			plain_running_configuration_const_smart_ptr plain_config)
-			: network_updater(schema, layer_to_dropout_rate_map)
+			: network_updater(schema, layer_to_dropout_rate_map, layer_to_weight_vector_bound_map)
 			, plain_config(plain_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -56,6 +58,15 @@ namespace nnforge
 
 			for(const_layer_list::const_iterator it = start_layer_nonempty_weights_iterator; it != layer_list.end(); ++it)
 				updater_list.push_back(single_layer_updater_plain_factory::get_const_instance().get_updater_plain_layer((*it)->get_uuid()));
+
+			for(std::map<unsigned int, weight_vector_bound>::const_iterator it = this->layer_to_weight_vector_bound_map.begin(); it != this->layer_to_weight_vector_bound_map.end(); ++it)
+			{
+				unsigned int layer_id = it->first;
+				if (layer_id < testing_layer_count)
+					throw neural_network_exception((boost::format("Weight vector bound is specified fo layer %1% while it is in testing part (consisting of %2% layers) of the updater") % layer_id  % testing_layer_count).str());
+
+				weight_vector_bounds.insert(std::make_pair<unsigned int, const_weight_vector_bound_plain_smart_ptr>(layer_id, single_weight_vector_bound_factory::get_const_instance().get_updater_plain_layer(layer_list[layer_id]->get_uuid())));
+			}
 		}
 
 		network_updater_plain::~network_updater_plain()
@@ -354,6 +365,18 @@ namespace nnforge
 								*input_config_it,
 								updater_entry_count,
 								(it == updater_list.rend() - 1) ? input_entry_id : -1);
+
+							weight_vector_bound_map::iterator bound_it = weight_vector_bounds.find(reverse_layer_id);
+							if (bound_it != weight_vector_bounds.end())
+							{
+								const weight_vector_bound& bound = layer_to_weight_vector_bound_map.find(reverse_layer_id)->second;
+								bound_it->second->normalize_weights(
+									bound,
+									*data_it,
+									plain_config,
+									*layer_it,
+									updater_entry_count);
+							}
 
 							output_errors = updater_buffers_it->second.input_errors_buffer;
 						}

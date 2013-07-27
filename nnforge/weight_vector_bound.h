@@ -16,27 +16,15 @@
 
 #pragma once
 
-#include "../network_updater_factory.h"
-#include "plain_running_configuration.h"
-
 namespace nnforge
 {
-	namespace plain
+	class weight_vector_bound
 	{
-		class network_updater_plain_factory : public network_updater_factory
-		{
-		public:
-			network_updater_plain_factory(plain_running_configuration_const_smart_ptr opencl_config);
+	public:
+		weight_vector_bound(float max_l2_norm);
 
-			virtual ~network_updater_plain_factory();
+		~weight_vector_bound();
 
-			virtual network_updater_smart_ptr create(
-				network_schema_smart_ptr schema,
-				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map) const;
-
-		protected:
-			plain_running_configuration_const_smart_ptr plain_config;
-		};
-	}
+		float max_l2_norm;
+	};
 }

@@ -27,22 +27,24 @@ namespace nnforge
 
 	network_updater::network_updater(
 		network_schema_smart_ptr schema,
-		const std::map<unsigned int, float>& layer_to_dropout_rate_map)
+		const std::map<unsigned int, float>& layer_to_dropout_rate_map,
+		const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map)
 		: schema(schema)
 		, layer_to_dropout_rate_map(layer_to_dropout_rate_map)
 		, random_uniform_list(1 << random_list_bits)
+		, layer_to_weight_vector_bound_map(layer_to_weight_vector_bound_map)
 		, profile_mode(false)
 		, gen(rnd::get_random_generator())
 	{
 		const const_layer_list& layer_list = *schema;
 		unsigned int layer_count = static_cast<unsigned int>(layer_list.size());
-		for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it)
-			if (it->first >= layer_count)
-				throw neural_network_exception("Dropout is specified for the layer which doesn't exist in the schema");
 
 		std::vector<const_layer_smart_ptr>::const_iterator layer_it = schema->get_layers().begin();
 		for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it, ++layer_it)
 		{
+			if (it->first >= layer_count)
+				throw neural_network_exception("Dropout is specified for the layer which doesn't exist in the schema");
+
 			float dropout_rate = it->second;
 
 			if ((dropout_rate < 0.0F) || (dropout_rate >= 1.0F))
@@ -52,6 +54,21 @@ namespace nnforge
 			{
 				dropout_layer_config mult = (schema->get_layers()[it->first])->get_dropout_layer_config(dropout_rate);
 				layer_id_to_dropout_config_map.insert(std::make_pair<unsigned int, dropout_layer_config>(it->first, mult));
+			}
+		}
+
+		for(std::map<unsigned int, weight_vector_bound>::iterator it = this->layer_to_weight_vector_bound_map.begin(); it != this->layer_to_weight_vector_bound_map.end(); ++it)
+		{
+			if (it->first >= layer_count)
+				throw neural_network_exception("Weight bound is specified for the layer which doesn't exist in the schema");
+
+			std::map<unsigned int, dropout_layer_config>::const_iterator it2 = layer_id_to_dropout_config_map.find(it->first);
+			if (it2 != layer_id_to_dropout_config_map.end())
+			{
+				float val = 1.0F;
+				for(std::map<unsigned int, float>::const_iterator it3 = it2->second.weight_part_to_dropout_direct_multiplier_map.begin(); it3 != it2->second.weight_part_to_dropout_direct_multiplier_map.end(); ++it3)
+					val = std::min<float>(val, it3->second);
+				it->second.max_l2_norm = it->second.max_l2_norm / val;
 			}
 		}
 	}

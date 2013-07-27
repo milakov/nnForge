@@ -48,6 +48,9 @@
 #include "soft_rectified_linear_layer_updater_schema.h"
 #include "softmax_layer_updater_schema.h"
 
+#include "weight_vector_bound_cuda_factory.h"
+#include "convolution_weight_vector_bound_cuda.h"
+
 namespace nnforge
 {
 	namespace cuda
@@ -83,6 +86,8 @@ namespace nnforge
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new rectified_linear_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new soft_rectified_linear_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new softmax_layer_updater_schema()));
+
+			single_weight_vector_bound_factory::get_mutable_instance().register_weight_vector_bound(weight_vector_bound_cuda_smart_ptr(new convolution_weight_vector_bound_cuda()));
 		}
 	}
 }

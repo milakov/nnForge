@@ -27,6 +27,7 @@
 #include "layer_data_configuration.h"
 #include "data_transformer.h"
 #include "data_transformer_util.h"
+#include "weight_vector_bound.h"
 
 #include <boost/filesystem.hpp>
 
@@ -60,6 +61,8 @@ namespace nnforge
 		virtual network_schema_smart_ptr get_schema() = 0;
 
 		virtual std::map<unsigned int, float> get_dropout_rate_map() const;
+
+		virtual std::map<unsigned int, weight_vector_bound> get_weight_vector_bound_map() const;
 
 		virtual boost::filesystem::path get_input_data_folder() const;
 
