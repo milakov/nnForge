@@ -97,7 +97,7 @@ namespace nnforge
 			std::vector<std::pair<unsigned int, bool> > res;
 
 			for(int i = 0; i < plain_config->openmp_thread_count; ++i)
-				res.push_back(std::make_pair<unsigned int, bool>(input_configuration_specific.feature_map_count, false));
+				res.push_back(std::make_pair(input_configuration_specific.feature_map_count, false));
 
 			return res;
 		}

@@ -19,6 +19,8 @@
 
 #include <boost/format.hpp>
 
+#include <utility>
+
 __global__ void set_with_value_util_kernel(
 	float4 * __restrict buf,
 	float v,
@@ -134,7 +136,7 @@ namespace nnforge
 				(y + threadblock_size.y - 1) / threadblock_size.y,
 				(z + threadblock_size.z - 1) / threadblock_size.z);
 
-			return std::make_pair<dim3, dim3>(grid_size, threadblock_size);
+			return std::make_pair(grid_size, threadblock_size);
 		}
 
 		std::pair<dim3, dim3> cuda_util::get_grid_and_threadblock_sizes_2d_access_x_aligned(
@@ -181,7 +183,7 @@ namespace nnforge
 				(y + threadblock_size.y - 1) / threadblock_size.y,
 				(z + threadblock_size.z - 1) / threadblock_size.z);
 
-			return std::make_pair<dim3, dim3>(grid_size, threadblock_size);
+			return std::make_pair(grid_size, threadblock_size);
 		}
 
 		std::pair<dim3, dim3> cuda_util::get_grid_and_threadblock_sizes_sequential_access(
@@ -231,7 +233,7 @@ namespace nnforge
 
 			threadblock_size.x *= threadblock_size_x_evenly_divisible;
 
-			return std::make_pair<dim3, dim3>(grid_size, threadblock_size);
+			return std::make_pair(grid_size, threadblock_size);
 		}
 
 		std::pair<dim3, dim3> cuda_util::get_grid_and_threadblock_sizes_sequential_access(
@@ -251,7 +253,7 @@ namespace nnforge
 				grid_size.x = (threadblocks + grid_size.y - 1) / grid_size.y;
 			}
 
-			return std::make_pair<dim3, dim3>(grid_size, threadblock_size);
+			return std::make_pair(grid_size, threadblock_size);
 		}
 
 		int cuda_util::get_power2_aligned_size(int original_size)
@@ -374,7 +376,7 @@ namespace nnforge
 					int y = cur_tile.top_y - start_y;
 
 					if ((x >= 0) && (y >= 0))
-						pair_list.push_back(std::make_pair<int, int>(x, y));
+						pair_list.push_back(std::make_pair(x, y));
 				}
 				else
 					cur_tile.split_to_stack(work_set, start_x, start_y);

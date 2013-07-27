@@ -80,7 +80,7 @@ namespace nnforge
 						*input_config_it,
 						*(input_config_it + 1),
 						plain_config);
-					input_buffer_and_additional_buffers_pack.push_back(std::make_pair<additional_buffer_smart_ptr, additional_buffer_set>(output_buffer, additional_buffers));
+					input_buffer_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 					output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 				}
 			}
@@ -207,7 +207,7 @@ namespace nnforge
 						*input_config_it,
 						*(input_config_it + 1),
 						plain_config);
-					input_buffer_and_additional_buffers_pack.push_back(std::make_pair<additional_buffer_smart_ptr, additional_buffer_set>(output_buffer, additional_buffers));
+					input_buffer_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 					output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 				}
 			}
@@ -325,7 +325,7 @@ namespace nnforge
 						*input_config_it,
 						*(input_config_it + 1),
 						plain_config);
-					input_buffer_and_additional_buffers_pack.push_back(std::make_pair<additional_buffer_smart_ptr, additional_buffer_set>(output_buffer, additional_buffers));
+					input_buffer_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 					output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 					output_buffer_list.push_back(output_buffer);
 					++layer_it;
@@ -429,7 +429,7 @@ namespace nnforge
 						*input_config_it,
 						*(input_config_it + 1),
 						plain_config);
-					input_buffer_and_additional_buffers_pack.push_back(std::make_pair<additional_buffer_smart_ptr, additional_buffer_set>(output_buffer, additional_buffers));
+					input_buffer_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 					output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 					++layer_it;
 					++input_config_it;

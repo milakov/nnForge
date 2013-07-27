@@ -108,7 +108,7 @@ namespace nnforge
 				if (layer_id < testing_layer_count)
 					throw neural_network_exception((boost::format("Weight vector bound is specified fo layer %1% while it is in testing part (consisting of %2% layers) of the updater") % layer_id  % testing_layer_count).str());
 
-				weight_vector_bounds.insert(std::make_pair<unsigned int, weight_vector_bound_cuda_smart_ptr>(layer_id, single_weight_vector_bound_factory::get_const_instance().create_weight_vector_bound(layer_list[layer_id], cuda_config)));
+				weight_vector_bounds.insert(std::make_pair(layer_id, single_weight_vector_bound_factory::get_const_instance().create_weight_vector_bound(layer_list[layer_id], cuda_config)));
 			}
 
 			setup_network_cuda();
@@ -218,14 +218,14 @@ namespace nnforge
 			for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it)
 			{
 				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers = (*it)->allocate_additional_buffers(max_entry_count);
-				testing_input_and_additional_buffers_pack.push_back(std::make_pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> >(output_buffer, additional_buffers));
+				testing_input_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 			}
 			std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, layer_updater_cuda::buffer_set> > updater_input_and_all_buffers_pack;
 			for(std::vector<layer_updater_cuda_smart_ptr>::iterator it = updater_list.begin(); it != updater_list.end(); ++it)
 			{
 				layer_updater_cuda::buffer_set all_buffers = (*it)->allocate_all_buffers(updater_entry_count);
-				updater_input_and_all_buffers_pack.push_back(std::make_pair<cuda_linear_buffer_device_smart_ptr, layer_updater_cuda::buffer_set>(output_buffer, all_buffers));
+				updater_input_and_all_buffers_pack.push_back(std::make_pair(output_buffer, all_buffers));
 				output_buffer = all_buffers.output_neurons_buffer;
 			}
 
@@ -268,9 +268,9 @@ namespace nnforge
 				cuda_safe_call(cudaEventRecord(data_processed_event, *command_stream));
 				cuda_safe_call(cudaEventQuery(data_processed_event));
 			}
-			std::tr1::variate_generator<random_generator, std::tr1::uniform_int<unsigned int> > gen_random_offset(
-				rnd::get_random_generator(),
-				std::tr1::uniform_int<unsigned int>(0, static_cast<unsigned int>(random_uniform_list.size() - 1)));
+
+			random_generator gen = rnd::get_random_generator();
+			std::tr1::uniform_int<unsigned int> dist(0, static_cast<unsigned int>(random_uniform_list.size() - 1));
 			unsigned int mask = static_cast<unsigned int>(random_uniform_list.size() - 1);
 			while((entries_available_for_copy_in_count > 0) || (entries_available_for_processing_count > 0))
 			{
@@ -332,7 +332,7 @@ namespace nnforge
 									std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(layer_id);
 									if (dropout_it != layer_to_dropout_rate_map.end())
 									{
-										unsigned int offset = gen_random_offset();
+										unsigned int offset = dist(gen);
 										offset_list.push(offset);
 										(*it)->enqueue_forward_dropout(
 											*command_stream,

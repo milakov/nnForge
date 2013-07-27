@@ -160,10 +160,10 @@ namespace nnforge
 			unsigned int elem_count_per_intermediate_elem = static_cast<unsigned int>(layer_derived->feature_maps_affected.size() * output_configuration_specific.get_neuron_count_per_feature_map());
 
 			for(int i = 0; i < plain_config->openmp_thread_count; ++i)
-				res.push_back(std::make_pair<unsigned int, bool>(elem_count_per_intermediate_elem, false));
+				res.push_back(std::make_pair(elem_count_per_intermediate_elem, false));
 			if (input_configuration_specific.dimension_sizes.size() > 1)
 				for(int i = 0; i < plain_config->openmp_thread_count; ++i)
-					res.push_back(std::make_pair<unsigned int, bool>(elem_count_per_intermediate_elem, false));
+					res.push_back(std::make_pair(elem_count_per_intermediate_elem, false));
 
 			return res;
 		}

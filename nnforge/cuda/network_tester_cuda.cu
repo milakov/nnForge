@@ -175,7 +175,7 @@ namespace nnforge
 			for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it)
 			{
 				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers = (*it)->allocate_additional_buffers(max_entry_count);
-				input_and_additional_buffers_pack.push_back(std::make_pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> >(output_buffer, additional_buffers));
+				input_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 			}
 
@@ -364,7 +364,7 @@ namespace nnforge
 			for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it)
 			{
 				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers = (*it)->allocate_additional_buffers(max_entry_count);
-				input_and_additional_buffers_pack.push_back(std::make_pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> >(output_buffer, additional_buffers));
+				input_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 			}
 
@@ -520,7 +520,7 @@ namespace nnforge
 			for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it)
 			{
 				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers = (*it)->allocate_additional_buffers(1);
-				input_and_additional_buffers_pack.push_back(std::make_pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> >(output_buffer, additional_buffers));
+				input_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 				output_buffer_list.push_back(output_buffer);
 			}
@@ -620,7 +620,7 @@ namespace nnforge
 			for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it)
 			{
 				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers = (*it)->allocate_additional_buffers(1);
-				input_and_additional_buffers_pack.push_back(std::make_pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> >(output_buffer, additional_buffers));
+				input_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 			}
 

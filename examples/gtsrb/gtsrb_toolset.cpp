@@ -23,6 +23,7 @@
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/format.hpp>
 
 const unsigned int gtsrb_toolset::image_width = 32;
 const unsigned int gtsrb_toolset::image_height = 32;

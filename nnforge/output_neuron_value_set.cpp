@@ -19,6 +19,7 @@
 #include "neural_network_exception.h"
 
 #include <algorithm>
+#include <functional>
 
 namespace nnforge
 {

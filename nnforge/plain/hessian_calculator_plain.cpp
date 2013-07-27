@@ -108,7 +108,7 @@ namespace nnforge
 						*input_config_it,
 						*(input_config_it + 1),
 						plain_config);
-					input_buffer_and_additional_testing_buffers_pack.push_back(std::make_pair<additional_buffer_smart_ptr, additional_buffer_set>(output_buffer, additional_buffers));
+					input_buffer_and_additional_testing_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 					output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 				}
 				for(const_layer_hessian_plain_list::const_iterator it = hessian_list.begin(); it != hessian_list.end(); ++it, ++layer_it, ++input_config_it)
@@ -120,7 +120,7 @@ namespace nnforge
 						*(input_config_it + 1),
 						plain_config,
 						(it != hessian_list.begin()));
-					input_buffer_and_additional_hessian_buffers_pack.push_back(std::make_pair<additional_buffer_smart_ptr, hessian_additional_buffer_set>(output_buffer, additional_buffers));
+					input_buffer_and_additional_hessian_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 					output_buffer = additional_buffers.output_neurons_buffer;
 				}
 			}

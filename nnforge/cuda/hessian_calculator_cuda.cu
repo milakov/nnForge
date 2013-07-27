@@ -164,14 +164,14 @@ namespace nnforge
 			for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it)
 			{
 				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers = (*it)->allocate_additional_buffers(max_entry_count);
-				testing_input_and_additional_buffers_pack.push_back(std::make_pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> >(output_buffer, additional_buffers));
+				testing_input_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 			}
 			std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, layer_hessian_cuda::buffer_set> > hessian_input_and_all_buffers_pack;
 			for(std::vector<layer_hessian_cuda_smart_ptr>::iterator it = hessian_list.begin(); it != hessian_list.end(); ++it)
 			{
 				layer_hessian_cuda::buffer_set all_buffers = (*it)->allocate_all_buffers(max_entry_count);
-				hessian_input_and_all_buffers_pack.push_back(std::make_pair<cuda_linear_buffer_device_smart_ptr, layer_hessian_cuda::buffer_set>(output_buffer, all_buffers));
+				hessian_input_and_all_buffers_pack.push_back(std::make_pair(output_buffer, all_buffers));
 				output_buffer = all_buffers.output_neurons_buffer;
 			}
 

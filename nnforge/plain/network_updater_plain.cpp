@@ -65,7 +65,7 @@ namespace nnforge
 				if (layer_id < testing_layer_count)
 					throw neural_network_exception((boost::format("Weight vector bound is specified fo layer %1% while it is in testing part (consisting of %2% layers) of the updater") % layer_id  % testing_layer_count).str());
 
-				weight_vector_bounds.insert(std::make_pair<unsigned int, const_weight_vector_bound_plain_smart_ptr>(layer_id, single_weight_vector_bound_factory::get_const_instance().get_updater_plain_layer(layer_list[layer_id]->get_uuid())));
+				weight_vector_bounds.insert(std::make_pair(layer_id, single_weight_vector_bound_factory::get_const_instance().get_updater_plain_layer(layer_list[layer_id]->get_uuid())));
 			}
 		}
 
@@ -152,7 +152,7 @@ namespace nnforge
 						*input_config_it,
 						*(input_config_it + 1),
 						plain_config);
-					input_buffer_and_additional_testing_buffers_pack.push_back(std::make_pair<additional_buffer_smart_ptr, additional_buffer_set>(output_buffer, additional_buffers));
+					input_buffer_and_additional_testing_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 					output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
 				}
 				for(const_layer_updater_plain_list::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++layer_it, ++input_config_it)
@@ -164,7 +164,7 @@ namespace nnforge
 						*(input_config_it + 1),
 						plain_config,
 						(it != updater_list.begin()));
-					input_buffer_and_additional_updater_buffers_pack.push_back(std::make_pair<additional_buffer_smart_ptr, updater_additional_buffer_set>(output_buffer, additional_buffers));
+					input_buffer_and_additional_updater_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
 					output_buffer = additional_buffers.output_neurons_buffer;
 				}
 			}
@@ -179,9 +179,8 @@ namespace nnforge
 				}
 			}
 
-			std::tr1::variate_generator<random_generator, std::tr1::uniform_int<unsigned int> > gen_random_offset(
-				rnd::get_random_generator(),
-				std::tr1::uniform_int<unsigned int>(0, static_cast<unsigned int>(random_uniform_list.size() - 1)));
+			random_generator gen = rnd::get_random_generator();
+			std::tr1::uniform_int<unsigned int> dist(0, static_cast<unsigned int>(random_uniform_list.size() - 1));
 			unsigned int mask = static_cast<unsigned int>(random_uniform_list.size() - 1);
 			bool entries_remained_for_loading = true;
 			while (entries_remained_for_loading)
@@ -265,7 +264,7 @@ namespace nnforge
 								std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(layer_id);
 								if (dropout_it != layer_to_dropout_rate_map.end())
 								{
-									unsigned int offset = gen_random_offset();
+									unsigned int offset = dist(gen);
 									offset_list.push(offset);
 									(*it)->forward_dropout(
 										random_uniform_list,

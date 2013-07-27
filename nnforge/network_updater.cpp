@@ -53,7 +53,7 @@ namespace nnforge
 			if (dropout_rate > 0.0F)
 			{
 				dropout_layer_config mult = (schema->get_layers()[it->first])->get_dropout_layer_config(dropout_rate);
-				layer_id_to_dropout_config_map.insert(std::make_pair<unsigned int, dropout_layer_config>(it->first, mult));
+					layer_id_to_dropout_config_map.insert(std::make_pair(it->first, mult));
 			}
 		}
 
