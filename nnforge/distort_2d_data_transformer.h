@@ -31,8 +31,10 @@ namespace nnforge
 			bool is_same_sequence_from_reset,
 			float max_absolute_rotation_angle_in_degrees,
 			float max_scale_factor, // >=1
-			float max_absolute_shift_x, // in pixels
-			float max_absolute_shift_y, // in pixels
+			float min_shift_right_x, // in pixels
+			float max_shift_right_x, // in pixels
+			float min_shift_down_y, // in pixels
+			float max_shift_down_y, // in pixels
 			float max_contrast_factor, // >=1
 			float max_absolute_brightness_shift, // in [0,1]
 			bool flip_around_x_axis_allowed,
