@@ -75,6 +75,15 @@ namespace nnforge
 				std::vector<network_data_smart_ptr>& res,
 				cudaStream_t stream_id) const;
 
+			void enqueue_dropout(
+				cudaStream_t stream_id,
+				const_cuda_linear_buffer_device_smart_ptr random_buffer,
+				cuda_linear_buffer_device_smart_ptr target_buffer,
+				float dropout_rate,
+				unsigned int mask,
+				unsigned int elem_count,
+				unsigned int offset_in_random_list);
+
 			cuda_running_configuration_const_smart_ptr cuda_config;
 
 			cuda_stream_smart_ptr command_stream;

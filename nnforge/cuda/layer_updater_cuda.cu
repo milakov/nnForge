@@ -18,23 +18,6 @@
 
 #include "util_cuda.h"
 
-__global__ void dropout_kernel(
-	float * __restrict neurons,
-	const float * __restrict random_buf,
-	float dropout_rate,
-	int offset,
-	unsigned int mask,
-	int elem_count)
-{
-	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
-	if (elem_id < elem_count)
-	{
-		unsigned int random_elem_id = (elem_id + offset) & mask;
-		if (random_buf[random_elem_id] < dropout_rate)
-			neurons[elem_id] = 0.0F;
-	}
-}
-
 namespace nnforge
 {
 	namespace cuda
@@ -166,50 +149,6 @@ namespace nnforge
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
-		}
-
-		void layer_updater_cuda::enqueue_forward_dropout(
-			cudaStream_t stream_id,
-			const_cuda_linear_buffer_device_smart_ptr random_buffer,
-			cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			float dropout_rate,
-			unsigned int mask,
-			unsigned int entry_count,
-			unsigned int offset_in_random_list)
-		{
-			unsigned int elem_count = input_elem_count_per_entry * entry_count;
-			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
-				*cuda_config,
-				elem_count);
-			dropout_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-				*input_neurons_buffer,
-				*random_buffer,
-				dropout_rate,
-				offset_in_random_list,
-				mask,
-				elem_count);
-		}
-
-		void layer_updater_cuda::enqueue_backward_dropout(
-			cudaStream_t stream_id,
-			const_cuda_linear_buffer_device_smart_ptr random_buffer,
-			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-			float dropout_rate,
-			unsigned int mask,
-			unsigned int entry_count,
-			unsigned int offset_in_random_list)
-		{
-			unsigned int elem_count = input_elem_count_per_entry * entry_count;
-			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
-				*cuda_config,
-				elem_count);
-			dropout_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-				*input_errors_buffer,
-				*random_buffer,
-				dropout_rate,
-				offset_in_random_list,
-				mask,
-				elem_count);
 		}
 
 		void layer_updater_cuda::fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const

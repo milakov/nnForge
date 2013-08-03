@@ -60,6 +60,13 @@ namespace nnforge
 				buffer_plain_size_configuration& buffer_configuration,
 				unsigned int updater_entry_count) const;
 
+			void apply_dropout(
+				additional_buffer_smart_ptr target_buffer,
+				const float dropout_rate,
+				const unsigned int mask,
+				const unsigned int updater_count,
+				const unsigned int offset_in_random_list) const;
+
 			plain_running_configuration_const_smart_ptr plain_config;
 
 			unsigned int testing_layer_count;

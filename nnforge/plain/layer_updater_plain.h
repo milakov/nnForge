@@ -106,26 +106,6 @@ namespace nnforge
 				unsigned int updater_count,
 				int offset_input_entry_id) const;
 
-			void forward_dropout(
-				const std::vector<float>& random_buffer,
-				additional_buffer_smart_ptr input_neurons_buffer,
-				const layer_configuration_specific& input_configuration_specific,
-				plain_running_configuration_const_smart_ptr plain_config,
-				const float dropout_rate,
-				const unsigned int mask,
-				const unsigned int updater_count,
-				const unsigned int offset_in_random_list) const;
-
-			void backward_dropout(
-				const std::vector<float>& random_buffer,
-				additional_buffer_smart_ptr input_errors_buffer,
-				const layer_configuration_specific& input_configuration_specific,
-				plain_running_configuration_const_smart_ptr plain_config,
-				const float dropout_rate,
-				const unsigned int mask,
-				const unsigned int updater_count,
-				const unsigned int offset_in_random_list) const;
-
 		protected:
 			layer_updater_plain();
 

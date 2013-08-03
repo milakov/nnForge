@@ -97,24 +97,6 @@ namespace nnforge
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count);
 
-			void enqueue_forward_dropout(
-				cudaStream_t stream_id,
-				const_cuda_linear_buffer_device_smart_ptr random_buffer,
-				cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				float dropout_rate,
-				unsigned int mask,
-				unsigned int entry_count,
-				unsigned int offset_in_random_list);
-
-			void enqueue_backward_dropout(
-				cudaStream_t stream_id,
-				const_cuda_linear_buffer_device_smart_ptr random_buffer,
-				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-				float dropout_rate,
-				unsigned int mask,
-				unsigned int entry_count,
-				unsigned int offset_in_random_list);
-
 		protected:
 			layer_updater_cuda();
 

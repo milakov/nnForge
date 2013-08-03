@@ -29,7 +29,7 @@ namespace nnforge
 {
 	namespace plain
 	{
-		unsigned int network_updater_plain::max_entry_count_in_single_batch = 5;//1024;
+		unsigned int network_updater_plain::max_entry_count_in_single_batch = 3;//1024;
 
 		network_updater_plain::network_updater_plain(
 			network_schema_smart_ptr schema,
@@ -79,11 +79,6 @@ namespace nnforge
 			std::vector<network_data_smart_ptr>& data_list)
 		{
 			std::vector<testing_result_smart_ptr> res;
-
-			unsigned int min_dropout_layer_id = testing_layer_count + 1;
-			for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it)
-				if (it->first < min_dropout_layer_id)
-					throw neural_network_exception((boost::format("Unable to apply dropout to layer %1%") % it->first).str());
 
 			const unsigned int input_neuron_count = reader.get_input_configuration().get_neuron_count();
 			const unsigned int output_neuron_count = reader.get_output_configuration().get_neuron_count();
@@ -230,10 +225,23 @@ namespace nnforge
 				const const_layer_list& layer_list = *schema;
 				{
 					const_layer_list::const_iterator layer_it = layer_list.begin();
+					unsigned int layer_id = 0;
 					layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
 					std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> >::iterator buffers_it = input_buffer_and_additional_testing_buffers_pack.begin();
-					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it)
+					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++layer_id)
 					{
+						std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(layer_id);
+						if (dropout_it != layer_to_dropout_rate_map.end())
+						{
+							unsigned int offset = dist(gen);
+							apply_dropout(
+								buffers_it->first,
+								dropout_it->second,
+								mask,
+								entries_available_for_processing_count * layer_config_list[layer_id].get_neuron_count(),
+								offset);
+						}
+
 						(*it)->test(
 							buffers_it->first,
 							buffers_it->second,
@@ -243,6 +251,21 @@ namespace nnforge
 							*input_config_it,
 							*(input_config_it + 1),
 							entries_available_for_processing_count);
+					}
+				}
+
+				// Apply dropout to the input of the first updater layer
+				{
+					std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(testing_layer_count);
+					if (dropout_it != layer_to_dropout_rate_map.end())
+					{
+						unsigned int offset = dist(gen);
+						apply_dropout(
+							input_buffer_and_additional_updater_buffers_pack[0].first,
+							dropout_it->second,
+							mask,
+							entries_available_for_processing_count * layer_config_list[testing_layer_count].get_neuron_count(),
+							offset);
 					}
 				}
 
@@ -266,14 +289,11 @@ namespace nnforge
 								{
 									unsigned int offset = dist(gen);
 									offset_list.push(offset);
-									(*it)->forward_dropout(
-										random_uniform_list,
+									apply_dropout(
 										updater_buffers_it->first,
-										*input_config_it,
-										plain_config,
 										dropout_it->second,
 										mask,
-										updater_entry_count,
+										updater_entry_count * layer_config_list[layer_id].get_neuron_count(),
 										offset);
 								}
 							}
@@ -340,14 +360,11 @@ namespace nnforge
 								{
 									unsigned int offset = offset_list.top();
 									offset_list.pop();
-									(*it)->backward_dropout(
-										random_uniform_list,
+									apply_dropout(
 										updater_buffers_it->second.input_errors_buffer,
-										*input_config_it,
-										plain_config,
 										dropout_it->second,
 										mask,
-										updater_entry_count,
+										updater_entry_count * layer_config_list[reverse_layer_id].get_neuron_count(),
 										offset);
 								}
 							}
@@ -461,6 +478,25 @@ namespace nnforge
 					plain_config,
 					(it != updater_list.begin()),
 					updater_entry_count);
+			}
+		}
+
+		void network_updater_plain::apply_dropout(
+			additional_buffer_smart_ptr target_buffer,
+			const float dropout_rate,
+			const unsigned int mask,
+			const unsigned int elem_count,
+			const unsigned int offset_in_random_list) const
+		{
+			const std::vector<float>::const_iterator rnd_it = random_uniform_list.begin();
+			const std::vector<float>::iterator in_it = target_buffer->begin();
+
+			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+			for(int i = 0; i < elem_count; ++i)
+			{
+				unsigned int random_elem_id = (i + offset_in_random_list) & mask;
+				if (*(rnd_it + random_elem_id) < dropout_rate)
+					*(in_it + i) = 0.0F;
 			}
 		}
 	}

@@ -68,6 +68,23 @@ __global__ void compute_error_upd_kernel(
 	}
 }
 
+__global__ void dropout_kernel(
+	float * __restrict neurons,
+	const float * __restrict random_buf,
+	float dropout_rate,
+	int offset,
+	unsigned int mask,
+	int elem_count)
+{
+	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+	if (elem_id < elem_count)
+	{
+		unsigned int random_elem_id = (elem_id + offset) & mask;
+		if (random_buf[random_elem_id] < dropout_rate)
+			neurons[elem_id] = 0.0F;
+	}
+}
+
 namespace nnforge
 {
 	namespace cuda
@@ -138,11 +155,6 @@ namespace nnforge
 			std::vector<testing_result_smart_ptr> res;
 
 			entry_count_updated_in_profile_mode = 0;
-
-			unsigned int min_dropout_layer_id = testing_layer_count + 1;
-			for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it)
-				if (it->first < min_dropout_layer_id)
-					throw neural_network_exception((boost::format("Unable to apply dropout to layer %1%") % it->first).str());
 
 			reader.reset();
 
@@ -303,8 +315,24 @@ namespace nnforge
 					{
 						std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> > >::iterator input_and_additional_buffers_pack_it = testing_input_and_additional_buffers_pack.begin();
 						std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = testing_schema_data.begin();
-						for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++input_and_additional_buffers_pack_it, ++schema_data_it)
+						unsigned int layer_id = 0;
+						layer_configuration_specific_list::const_iterator layer_config_it = layer_config_list.begin();
+						for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++input_and_additional_buffers_pack_it, ++schema_data_it, ++layer_id, ++layer_config_it)
 						{
+							std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(layer_id);
+							if (dropout_it != layer_to_dropout_rate_map.end())
+							{
+								unsigned int offset = dist(gen);
+								enqueue_dropout(
+									*command_stream,
+									random_uniform_buf,
+									input_and_additional_buffers_pack_it->first,
+									dropout_it->second,
+									mask,
+									entries_available_for_processing_count * layer_config_it->get_neuron_count(),
+									offset);
+							}
+
 							(*it)->enqueue_test(
 								*command_stream,
 								*schema_data_it,
@@ -312,6 +340,23 @@ namespace nnforge
 								input_and_additional_buffers_pack_it->first,
 								input_and_additional_buffers_pack_it->second,
 								entries_available_for_processing_count);
+						}
+					}
+
+					// Apply dropout to the input of the first updater layer
+					{
+						std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(testing_layer_count);
+						if (dropout_it != layer_to_dropout_rate_map.end())
+						{
+							unsigned int offset = dist(gen);
+							enqueue_dropout(
+								*command_stream,
+								random_uniform_buf,
+								updater_input_and_all_buffers_pack[0].first,
+								dropout_it->second,
+								mask,
+								entries_available_for_processing_count * layer_config_list[testing_layer_count].get_neuron_count(),
+								offset);
 						}
 					}
 
@@ -325,7 +370,8 @@ namespace nnforge
 							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator net_data_it = net_data.begin();
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = updater_schema_data.begin();
 							unsigned int layer_id = testing_layer_count;
-							for(std::vector<layer_updater_cuda_smart_ptr>::iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++net_data_it, ++layer_id)
+							layer_configuration_specific_list::const_iterator layer_config_it = layer_config_list.begin() + testing_layer_count;
+							for(std::vector<layer_updater_cuda_smart_ptr>::iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++net_data_it, ++layer_id, ++layer_config_it)
 							{
 								if (it != updater_list.begin())
 								{
@@ -334,13 +380,13 @@ namespace nnforge
 									{
 										unsigned int offset = dist(gen);
 										offset_list.push(offset);
-										(*it)->enqueue_forward_dropout(
+										enqueue_dropout(
 											*command_stream,
 											random_uniform_buf,
 											input_and_all_buffers_pack_it->first,
 											dropout_it->second,
 											mask,
-											updater_entry_count,
+											updater_entry_count * layer_config_it->get_neuron_count(),
 											offset);
 									}
 								}
@@ -383,7 +429,8 @@ namespace nnforge
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator training_speed_data_it = training_speed_data.rbegin();
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator schema_data_it = updater_schema_data.rbegin();
 							unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1;
-							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++training_speed_data_it, ++output_errors_it, ++net_data_it, --reverse_layer_id)
+							layer_configuration_specific_list::const_reverse_iterator layer_config_it = layer_config_list.rbegin() + 1;
+							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++training_speed_data_it, ++output_errors_it, ++net_data_it, --reverse_layer_id, ++layer_config_it)
 							{
 								if (it != (updater_list.rend() - 1))
 								{
@@ -404,13 +451,13 @@ namespace nnforge
 									{
 										unsigned int offset = offset_list.top();
 										offset_list.pop();
-										(*it)->enqueue_backward_dropout(
+										enqueue_dropout(
 											*command_stream,
 											random_uniform_buf,
 											(input_and_all_buffers_pack_it->second.input_errors_buffer == 0) ? *output_errors_it : input_and_all_buffers_pack_it->second.input_errors_buffer,
 											dropout_it->second,
 											mask,
-											updater_entry_count,
+											updater_entry_count * layer_config_it->get_neuron_count(),
 											offset);
 									}
 								}
@@ -672,6 +719,27 @@ namespace nnforge
 				it->second->update_buffer_configuration(buffer_configuration);
 
 			return cuda_config->get_max_entry_count(buffer_configuration, 0.5F);
+		}
+
+		void network_updater_cuda::enqueue_dropout(
+			cudaStream_t stream_id,
+			const_cuda_linear_buffer_device_smart_ptr random_buffer,
+			cuda_linear_buffer_device_smart_ptr target_buffer,
+			float dropout_rate,
+			unsigned int mask,
+			unsigned int elem_count,
+			unsigned int offset_in_random_list)
+		{
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				*cuda_config,
+				elem_count);
+			dropout_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+				*target_buffer,
+				*random_buffer,
+				dropout_rate,
+				offset_in_random_list,
+				mask,
+				elem_count);
 		}
 	}
 }
