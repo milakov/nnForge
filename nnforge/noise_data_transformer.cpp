@@ -23,25 +23,15 @@
 
 namespace nnforge
 {
-	noise_data_transformer::noise_data_transformer(
-		bool is_same_sequence_from_reset,
-		unsigned int max_noise)
-		: is_same_sequence_from_reset(is_same_sequence_from_reset)
+	noise_data_transformer::noise_data_transformer(unsigned int max_noise)
 	{
-		if (!is_same_sequence_from_reset)
-			generator = rnd::get_random_generator();
+		generator = rnd::get_random_generator();
 
 		max_noise_distribution = std::tr1::uniform_int<int>(-static_cast<int>(max_noise), static_cast<int>(max_noise));
 	}
 
 	noise_data_transformer::~noise_data_transformer()
 	{
-	}
-
-	void noise_data_transformer::reset()
-	{
-		if (is_same_sequence_from_reset)
-			generator = rnd::get_random_generator(48576435);
 	}
 
 	void noise_data_transformer::transform(

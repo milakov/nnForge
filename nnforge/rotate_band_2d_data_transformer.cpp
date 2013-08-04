@@ -25,13 +25,10 @@
 namespace nnforge
 {
 	rotate_band_2d_data_transformer::rotate_band_2d_data_transformer(
-		bool is_same_sequence_from_reset,
 		unsigned int max_absolute_band_rotation_x,
 		unsigned int max_absolute_band_rotation_y)
-		: is_same_sequence_from_reset(is_same_sequence_from_reset)
 	{
-		if (!is_same_sequence_from_reset)
-			generator = rnd::get_random_generator();
+		generator = rnd::get_random_generator();
 
 		rotate_band_x_distribution = std::tr1::uniform_int<int>(-static_cast<int>(max_absolute_band_rotation_x), static_cast<int>(max_absolute_band_rotation_x));
 		rotate_band_y_distribution = std::tr1::uniform_int<int>(-static_cast<int>(max_absolute_band_rotation_y), static_cast<int>(max_absolute_band_rotation_y));
@@ -39,12 +36,6 @@ namespace nnforge
 
 	rotate_band_2d_data_transformer::~rotate_band_2d_data_transformer()
 	{
-	}
-
-	void rotate_band_2d_data_transformer::reset()
-	{
-		if (is_same_sequence_from_reset)
-			generator = rnd::get_random_generator(48576435);
 	}
 
 	void rotate_band_2d_data_transformer::transform(

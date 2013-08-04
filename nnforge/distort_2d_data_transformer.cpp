@@ -25,7 +25,6 @@
 namespace nnforge
 {
 	distort_2d_data_transformer::distort_2d_data_transformer(
-		bool is_same_sequence_from_reset,
 		float max_absolute_rotation_angle_in_degrees,
 		float max_scale_factor,
 		float min_shift_right_x,
@@ -36,10 +35,8 @@ namespace nnforge
 		float max_absolute_brightness_shift,
 		bool flip_around_x_axis_allowed,
 		bool flip_around_y_axis_allowed)
-		: is_same_sequence_from_reset(is_same_sequence_from_reset)
 	{
-		if (!is_same_sequence_from_reset)
-			generator = rnd::get_random_generator();
+		generator = rnd::get_random_generator();
 
 		rotate_angle_distribution = std::tr1::uniform_real<float>(-max_absolute_rotation_angle_in_degrees, max_absolute_rotation_angle_in_degrees);
 		scale_distribution = std::tr1::uniform_real<float>(1.0F / max_scale_factor, max_scale_factor);
@@ -53,12 +50,6 @@ namespace nnforge
 
 	distort_2d_data_transformer::~distort_2d_data_transformer()
 	{
-	}
-
-	void distort_2d_data_transformer::reset()
-	{
-		if (is_same_sequence_from_reset)
-			generator = rnd::get_random_generator(48576435);
 	}
 
 	void distort_2d_data_transformer::transform(

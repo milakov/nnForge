@@ -27,9 +27,7 @@ namespace nnforge
 	class noise_data_transformer : public data_transformer
 	{
 	public:
-		noise_data_transformer(
-			bool is_same_sequence_from_reset,
-			unsigned int max_noise);
+		noise_data_transformer(unsigned int max_noise);
 
 		virtual ~noise_data_transformer();
 
@@ -39,8 +37,6 @@ namespace nnforge
 			neuron_data_type::input_type type,
 			const layer_configuration_specific& original_config);
 			
-		virtual void reset();
-
 	protected:
 		bool is_same_sequence_from_reset;
 		random_generator generator;

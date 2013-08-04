@@ -28,7 +28,6 @@ namespace nnforge
 	{
 	public:
 		rotate_band_2d_data_transformer(
-			bool is_same_sequence_from_reset,
 			unsigned int max_absolute_band_rotation_x,
 			unsigned int max_absolute_band_rotation_y);
 
@@ -40,10 +39,7 @@ namespace nnforge
 			neuron_data_type::input_type type,
 			const layer_configuration_specific& original_config);
 			
-		virtual void reset();
-
 	protected:
-		bool is_same_sequence_from_reset;
 		random_generator generator;
 
 		std::tr1::uniform_int<int> rotate_band_x_distribution;
