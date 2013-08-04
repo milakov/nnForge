@@ -29,7 +29,7 @@ namespace nnforge
 {
 	namespace plain
 	{
-		unsigned int network_updater_plain::max_entry_count_in_single_batch = 3;//1024;
+		unsigned int network_updater_plain::max_entry_count_in_single_batch = 1024;
 
 		network_updater_plain::network_updater_plain(
 			network_schema_smart_ptr schema,
