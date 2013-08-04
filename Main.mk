@@ -14,6 +14,14 @@ CXXFLAGS+=-I$(BOOST_PATH)/include/boost/tr1/tr1 -I$(BOOST_PATH)/include
 LDFLAGS+=-L$(BOOST_PATH)/lib $(BOOST_LIBS)
 endif
 
+ifeq ($(USE_NETCDF),yes)
+ifneq ($(NETCDF_PATH),)
+CXXFLAGS+=-I$(NETCDF_PATH)/include
+LDFLAGS+=-L$(NETCDF_PATH)/lib
+endif
+LDFLAGS+=$(NETCDF_LIBS)
+endif
+
 ifeq ($(USE_CUDA),yes)
 CXXFLAGS+=-I$(CUDA_PATH)/include
 LDFLAGS+=-L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib -lcublas -lcudart
