@@ -72,6 +72,13 @@ namespace nnforge
 
 			for(int i = static_cast<int>(task_list.size()) - 1; i >= 0; --i)
 			{
+				if (is_broken(task_list[i]))
+				{
+					std::cout << "# " << task_list[i].index_peeked << " - broken weights while training, discarding it." << std::endl;
+					task_list.erase(task_list.begin() + i);
+					continue;
+				}
+
 				if (is_last_iteration(task_list[i]))
 				{
 					pusher.push(task_list[i]);
@@ -84,5 +91,12 @@ namespace nnforge
 	bool network_trainer::is_last_iteration(const training_task_state& state) const
 	{
 		return (state.history.size() >= iteration_count);
+	}
+
+	bool network_trainer::is_broken(const training_task_state& state) const
+	{
+		float mse = state.history.back()->get_mse();
+		bool sanity_check = (mse < 1.0e+10F) && (-mse > -1.0E+10F) && !(-mse < -1.0E+10F);
+		return !sanity_check;
 	}
 }

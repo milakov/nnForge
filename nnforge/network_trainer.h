@@ -60,6 +60,8 @@ namespace nnforge
 	private:
 		bool is_last_iteration(const training_task_state& state) const;
 
+		bool is_broken(const training_task_state& state) const;
+
 	private:
 		network_trainer(const network_trainer&);
 		network_trainer& operator =(const network_trainer&);
