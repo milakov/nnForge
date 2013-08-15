@@ -59,8 +59,8 @@ namespace nnforge
 			const unsigned int dimension_count = static_cast<unsigned int>(window_weights_list.size());
 			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
 			input_slices[0] = 1;
-			for(unsigned int i = 1; i < dimension_count; ++i)
-				input_slices[i] = input_slices[i-1] * input_configuration_specific.dimension_sizes[i];
+			for(unsigned int i = 0; i < dimension_count - 1; ++i)
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
 
 			const std::vector<unsigned int>::const_iterator dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
 			const unsigned int feature_maps_affected_acount = static_cast<unsigned int>(feature_maps_affected.size());

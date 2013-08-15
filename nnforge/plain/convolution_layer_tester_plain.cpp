@@ -59,8 +59,8 @@ namespace nnforge
 			const unsigned int dimension_count = static_cast<unsigned int>(window_sizes.size());
 			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
 			input_slices[0] = 1;
-			for(unsigned int i = 1; i < dimension_count; ++i)
-				input_slices[i] = input_slices[i-1] * input_configuration_specific.dimension_sizes[i];
+			for(unsigned int i = 0; i < dimension_count - 1; ++i)
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
 			unsigned int window_elem_count = 1;
 			for(unsigned int i = 0; i < dimension_count; ++i)
 				window_elem_count *= window_sizes[i];
