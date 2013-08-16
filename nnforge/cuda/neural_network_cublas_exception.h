@@ -27,9 +27,12 @@ namespace nnforge
 		class neural_network_cublas_exception : public neural_network_exception
 		{
 		public:
-			neural_network_cublas_exception(cublasStatus_t error_code);
+			neural_network_cublas_exception(
+				cublasStatus_t error_code,
+				const char * filename,
+				int line_number);
 		};
 	}
 }
 
-#define cublas_safe_call(callstr) {cublasStatus_t error_code = callstr; if (error_code != CUBLAS_STATUS_SUCCESS) throw nnforge::cuda::neural_network_cublas_exception(error_code);}
+#define cublas_safe_call(callstr) {cublasStatus_t error_code = callstr; if (error_code != CUBLAS_STATUS_SUCCESS) throw nnforge::cuda::neural_network_cublas_exception(error_code, __FILE__, __LINE__);}

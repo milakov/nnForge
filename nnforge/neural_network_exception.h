@@ -24,6 +24,12 @@ namespace nnforge
 	{
 	public:
 		neural_network_exception(const char * message);
+
 		neural_network_exception(const std::string& message);
+
+		neural_network_exception(
+			const std::string& message,
+			const char * filename,
+			int line_number);
 	};
 }

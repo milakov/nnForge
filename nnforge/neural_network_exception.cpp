@@ -16,6 +16,8 @@
 
 #include "neural_network_exception.h"
 
+#include <boost/format.hpp>
+
 namespace nnforge
 {
 	neural_network_exception::neural_network_exception(const char * message)
@@ -25,6 +27,14 @@ namespace nnforge
 
 	neural_network_exception::neural_network_exception(const std::string& message)
 		: std::runtime_error(message)
+	{
+	}
+
+	neural_network_exception::neural_network_exception(
+		const std::string& message,
+		const char * filename,
+		int line_number)
+		: std::runtime_error((boost::format("%1% in %2%:%3%") % message % filename % line_number).str())
 	{
 	}
 }

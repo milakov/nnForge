@@ -21,8 +21,11 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		neural_network_cuda_exception::neural_network_cuda_exception(cudaError_t error_code)
-			: neural_network_exception((boost::format("CUDA error: %1%") % cudaGetErrorString(error_code)).str())
+		neural_network_cuda_exception::neural_network_cuda_exception(
+			cudaError_t error_code,
+			const char * filename,
+			int line_number)
+			: neural_network_exception((boost::format("CUDA error: %1%") % cudaGetErrorString(error_code)).str(), filename, line_number)
 		{
 		}
 	}
