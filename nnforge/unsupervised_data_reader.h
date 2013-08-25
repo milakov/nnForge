@@ -28,7 +28,6 @@ namespace nnforge
 		virtual ~unsupervised_data_reader();
 
 		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
-		// If any parameter is null the method should just discard corresponding data
 		virtual bool read(void * input_elems) = 0;
 
 		virtual void reset() = 0;

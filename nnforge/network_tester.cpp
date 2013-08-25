@@ -62,7 +62,7 @@ namespace nnforge
 		// Check schema-reader consistency
 		layer_config_list[layer_config_list.size() - 1].check_equality(reader.get_output_configuration());
 
-		result.predicted_output_neuron_value_set = actual_test(reader);
+		result.predicted_output_neuron_value_set = actual_run(reader);
 
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 

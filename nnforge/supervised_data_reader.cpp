@@ -28,11 +28,6 @@ namespace nnforge
 	{
 	}
 
-	size_t supervised_data_reader::get_input_neuron_elem_size() const
-	{
-		return neuron_data_type::get_input_size(get_input_type());
-	}
-
 	output_neuron_value_set_smart_ptr supervised_data_reader::get_output_neuron_value_set(unsigned int sample_count)
 	{
 		reset();
@@ -52,5 +47,10 @@ namespace nnforge
 		res->compact(sample_count);
 
 		return res;
+	}
+
+	bool supervised_data_reader::read(void * input_elems)
+	{
+		return read(input_elems, 0);
 	}
 }

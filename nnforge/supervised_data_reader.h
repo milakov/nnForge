@@ -19,10 +19,11 @@
 #include "layer_configuration_specific.h"
 #include "output_neuron_value_set.h"
 #include "neuron_data_type.h"
+#include "unsupervised_data_reader.h"
 
 namespace nnforge
 {
-	class supervised_data_reader
+	class supervised_data_reader : public unsupervised_data_reader
 	{
 	public:
 		virtual ~supervised_data_reader();
@@ -33,17 +34,9 @@ namespace nnforge
 			void * input_elems,
 			float * output_elems) = 0;
 
-		virtual void reset() = 0;
-
-		virtual layer_configuration_specific get_input_configuration() const = 0;
+		virtual bool read(void * input_elems);
 
 		virtual layer_configuration_specific get_output_configuration() const = 0;
-
-		virtual unsigned int get_entry_count() const = 0;
-
-		virtual neuron_data_type::input_type get_input_type() const = 0;
-
-		size_t get_input_neuron_elem_size() const;
 
 		output_neuron_value_set_smart_ptr get_output_neuron_value_set(unsigned int sample_count);
 

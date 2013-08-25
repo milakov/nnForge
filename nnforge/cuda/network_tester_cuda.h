@@ -42,9 +42,6 @@ namespace nnforge
 
 		protected:
 			// schema, data and reader are guaranteed to be compatible
-			virtual output_neuron_value_set_smart_ptr actual_test(supervised_data_reader& reader);
-
-			// schema, data and reader are guaranteed to be compatible
 			virtual output_neuron_value_set_smart_ptr actual_run(unsupervised_data_reader& reader);
 
 			// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
