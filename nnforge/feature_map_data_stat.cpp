@@ -14,33 +14,18 @@
  *  limitations under the License.
  */
 
-#pragma once
-
-#include "data_transformer.h"
-
-#include "rnd.h"
-
-#include <memory>
+#include "feature_map_data_stat.h"
 
 namespace nnforge
 {
-	class noise_data_transformer : public data_transformer
+	feature_map_data_stat::feature_map_data_stat()
 	{
-	public:
-		noise_data_transformer(unsigned int max_noise);
+	}
 
-		virtual ~noise_data_transformer();
+	std::ostream& operator<< (std::ostream& out, const feature_map_data_stat& val)
+	{
+		out << "Average " << val.average << ", StdDev " << val.std_dev << ", Min " << val.min << ", Max " << val.max;
 
-		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
-			const layer_configuration_specific& original_config);
-			
-	protected:
-		bool is_same_sequence_from_reset;
-		random_generator generator;
-
-		std::tr1::uniform_int<int> max_noise_distribution;
-	};
+		return out;
+	}
 }

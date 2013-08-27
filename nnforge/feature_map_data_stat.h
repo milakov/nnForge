@@ -16,31 +16,20 @@
 
 #pragma once
 
-#include "data_transformer.h"
-
-#include "rnd.h"
-
-#include <memory>
+#include <ostream>
 
 namespace nnforge
 {
-	class noise_data_transformer : public data_transformer
+	class feature_map_data_stat
 	{
 	public:
-		noise_data_transformer(unsigned int max_noise);
+		feature_map_data_stat();
 
-		virtual ~noise_data_transformer();
-
-		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
-			const layer_configuration_specific& original_config);
-			
-	protected:
-		bool is_same_sequence_from_reset;
-		random_generator generator;
-
-		std::tr1::uniform_int<int> max_noise_distribution;
+		float min;
+		float max;
+		float average;
+		float std_dev;
 	};
+
+	std::ostream& operator<< (std::ostream& out, const feature_map_data_stat& val);
 }

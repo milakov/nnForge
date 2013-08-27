@@ -53,8 +53,8 @@ namespace nnforge
 	}
 
 	void distort_2d_data_transformer::transform(
-		const void * input_data,
-		void * output_data,
+		const void * data,
+		void * data_transformed,
 		neuron_data_type::input_type type,
 		const layer_configuration_specific& original_config)
 	{
@@ -67,7 +67,7 @@ namespace nnforge
 		if (original_config.feature_map_count != 1)
 			throw neural_network_exception("distort_2d_data_transformer is implemented for 1 feature map data only");
 
-		cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(output_data));
+		cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed));
 
 		float rotation_angle = rotate_angle_distribution(generator);
 		float scale = scale_distribution(generator);

@@ -35,18 +35,18 @@ namespace nnforge
 	}
 
 	void noise_data_transformer::transform(
-		const void * input_data,
-		void * output_data,
+		const void * data,
+		void * data_transformed,
 		neuron_data_type::input_type type,
 		const layer_configuration_specific& original_config)
 	{
 		if (type != neuron_data_type::type_byte)
 			throw neural_network_exception("noise_data_transformer is implemented for data stored as bytes only");
 
-		unsigned char * data = static_cast<unsigned char *>(output_data);
+		unsigned char * dt = static_cast<unsigned char *>(data_transformed);
 		unsigned int elem_count = original_config.get_neuron_count();
 
-		for(unsigned char * data_it = data; data_it != (data + elem_count); data_it++)
+		for(unsigned char * data_it = dt; data_it != (dt + elem_count); data_it++)
 		{
 			int shift = max_noise_distribution(generator);
 			*data_it = static_cast<unsigned char>(std::min<int>(std::max<int>((shift + static_cast<int>(*data_it)), 0), 255));

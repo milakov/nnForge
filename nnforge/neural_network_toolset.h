@@ -74,6 +74,8 @@ namespace nnforge
 
 		virtual void create();
 
+		virtual void generate_input_normalizer();
+
 		virtual network_tester_smart_ptr get_tester();
 
 		virtual void validate(
@@ -120,7 +122,9 @@ namespace nnforge
 
 		virtual unsigned int get_validating_sample_count() const;
 
-		virtual std::vector<data_transformer_smart_ptr> get_data_transformer_list_for_training() const;
+		virtual std::vector<data_transformer_smart_ptr> get_input_data_transformer_list_for_training() const;
+
+		virtual std::vector<data_transformer_smart_ptr> get_output_data_transformer_list_for_training() const;
 
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;

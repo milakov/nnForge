@@ -41,7 +41,8 @@
 #include "testing_complete_result_set_roc_visualizer.h"
 #include "network_trainer_sdlm.h"
 #include "summarize_network_data_pusher.h"
-#include "supervised_transformed_data_reader.h"
+#include "supervised_transformed_input_data_reader.h"
+#include "supervised_transformed_output_data_reader.h"
 
 namespace nnforge
 {
@@ -98,6 +99,10 @@ namespace nnforge
 		else if (!action.compare("randomize_data"))
 		{
 			randomize_data();
+		}
+		else if (!action.compare("generate_input_normalizer"))
+		{
+			generate_input_normalizer();
 		}
 		else if (!action.compare("validate"))
 		{
@@ -562,7 +567,12 @@ namespace nnforge
 
 	void neural_network_toolset::run_test_with_unsupervised_data(std::vector<output_neuron_value_set_smart_ptr>& predicted_neuron_value_set_list)
 	{
-		throw neural_network_exception("Running test with unsupervised data is not implemented by derived toolset");
+		throw neural_network_exception("Running test with unsupervised data is not implemented by the derived toolset");
+	}
+
+	void neural_network_toolset::generate_input_normalizer()
+	{
+		throw neural_network_exception("Input normalizer generator is not implemented by the derived toolset");
 	}
 
 	void neural_network_toolset::snapshot()
@@ -766,11 +776,21 @@ namespace nnforge
 	{
 		std::tr1::shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::in | std::ios_base::binary));
 		supervised_data_reader_smart_ptr current_reader(new supervised_data_stream_reader(training_data_stream));
-		std::vector<data_transformer_smart_ptr> data_transformer_list = get_data_transformer_list_for_training();
-		for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
 		{
-			supervised_data_reader_smart_ptr new_reader(new supervised_transformed_data_reader(current_reader, *it));
-			current_reader = new_reader;
+			std::vector<data_transformer_smart_ptr> data_transformer_list = get_input_data_transformer_list_for_training();
+			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
+			{
+				supervised_data_reader_smart_ptr new_reader(new supervised_transformed_input_data_reader(current_reader, *it));
+				current_reader = new_reader;
+			}
+		}
+		{
+			std::vector<data_transformer_smart_ptr> data_transformer_list = get_output_data_transformer_list_for_training();
+			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
+			{
+				supervised_data_reader_smart_ptr new_reader(new supervised_transformed_output_data_reader(current_reader, *it));
+				current_reader = new_reader;
+			}
 		}
 		return current_reader;
 	}
@@ -975,7 +995,12 @@ namespace nnforge
 		return std::map<unsigned int, weight_vector_bound>();
 	}
 
-	std::vector<data_transformer_smart_ptr> neural_network_toolset::get_data_transformer_list_for_training() const
+	std::vector<data_transformer_smart_ptr> neural_network_toolset::get_input_data_transformer_list_for_training() const
+	{
+		return std::vector<data_transformer_smart_ptr>();
+	}
+
+	std::vector<data_transformer_smart_ptr> neural_network_toolset::get_output_data_transformer_list_for_training() const
 	{
 		return std::vector<data_transformer_smart_ptr>();
 	}

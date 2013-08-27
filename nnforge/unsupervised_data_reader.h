@@ -19,6 +19,9 @@
 #include "layer_configuration_specific.h"
 #include "output_neuron_value_set.h"
 #include "neuron_data_type.h"
+#include "feature_map_data_stat.h"
+
+#include <vector>
 
 namespace nnforge
 {
@@ -39,6 +42,8 @@ namespace nnforge
 		virtual neuron_data_type::input_type get_input_type() const = 0;
 
 		size_t get_input_neuron_elem_size() const;
+
+		std::vector<feature_map_data_stat> get_feature_map_data_stat_list();
 
 	protected:
 		unsupervised_data_reader();

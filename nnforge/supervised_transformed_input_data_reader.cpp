@@ -14,10 +14,11 @@
  *  limitations under the License.
  */
 
-#include "supervised_transformed_data_reader.h"
+#include "supervised_transformed_input_data_reader.h"
 
-namespace nnforge{
-	supervised_transformed_data_reader::supervised_transformed_data_reader(
+namespace nnforge
+{
+	supervised_transformed_input_data_reader::supervised_transformed_input_data_reader(
 		supervised_data_reader_smart_ptr original_reader,
 		data_transformer_smart_ptr transformer)
 		: original_reader(original_reader)
@@ -31,15 +32,15 @@ namespace nnforge{
 		}
 	}
 
-	supervised_transformed_data_reader::supervised_transformed_data_reader()
+	supervised_transformed_input_data_reader::supervised_transformed_input_data_reader()
 	{
 	}
 
-	supervised_transformed_data_reader::~supervised_transformed_data_reader()
+	supervised_transformed_input_data_reader::~supervised_transformed_input_data_reader()
 	{
 	}
 
-	bool supervised_transformed_data_reader::read(
+	bool supervised_transformed_input_data_reader::read(
 		void * input_elems,
 		float * output_elems)
 	{
@@ -60,28 +61,28 @@ namespace nnforge{
 		return true;
 	}
 
-	void supervised_transformed_data_reader::reset()
+	void supervised_transformed_input_data_reader::reset()
 	{
 		transformer->reset();
 		original_reader->reset();
 	}
 
-	layer_configuration_specific supervised_transformed_data_reader::get_input_configuration() const
+	layer_configuration_specific supervised_transformed_input_data_reader::get_input_configuration() const
 	{
 		return transformer->get_transformed_configuration(original_reader->get_input_configuration());
 	}
 
-	layer_configuration_specific supervised_transformed_data_reader::get_output_configuration() const
+	layer_configuration_specific supervised_transformed_input_data_reader::get_output_configuration() const
 	{
 		return original_reader->get_output_configuration();
 	}
 
-	unsigned int supervised_transformed_data_reader::get_entry_count() const
+	unsigned int supervised_transformed_input_data_reader::get_entry_count() const
 	{
 		return original_reader->get_entry_count();
 	}
 
-	neuron_data_type::input_type supervised_transformed_data_reader::get_input_type() const
+	neuron_data_type::input_type supervised_transformed_input_data_reader::get_input_type() const
 	{
 		return original_reader->get_input_type();
 	}

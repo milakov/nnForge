@@ -23,14 +23,14 @@
 
 namespace nnforge
 {
-	class supervised_transformed_data_reader : public supervised_data_reader
+	class supervised_transformed_output_data_reader : public supervised_data_reader
 	{
 	public:
-		supervised_transformed_data_reader(
+		supervised_transformed_output_data_reader(
 			supervised_data_reader_smart_ptr original_reader,
 			data_transformer_smart_ptr transformer);
 
-		virtual ~supervised_transformed_data_reader();
+		virtual ~supervised_transformed_output_data_reader();
 
 		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
 		// If any parameter is null the method should just discard corresponding data
@@ -49,13 +49,13 @@ namespace nnforge
 		virtual neuron_data_type::input_type get_input_type() const;
 
 	protected:
-		supervised_transformed_data_reader();
+		supervised_transformed_output_data_reader();
 
 	protected:
 		supervised_data_reader_smart_ptr original_reader;
 		data_transformer_smart_ptr transformer;
 
-		std::vector<unsigned char> buf;
-		void * local_input_ptr;
+		std::vector<float> buf;
+		float * local_output_ptr;
 	};
 }

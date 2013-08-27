@@ -34,8 +34,8 @@ namespace nnforge
 		virtual ~rotate_band_2d_data_transformer();
 
 		virtual void transform(
-			const void * input_data,
-			void * output_data,
+			const void * data,
+			void * data_transformed,
 			neuron_data_type::input_type type,
 			const layer_configuration_specific& original_config);
 			
