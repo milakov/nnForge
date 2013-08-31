@@ -43,7 +43,7 @@ namespace nnforge
 
 		size_t get_input_neuron_elem_size() const;
 
-		std::vector<feature_map_data_stat> get_feature_map_data_stat_list();
+		std::vector<feature_map_data_stat> get_feature_map_input_data_stat_list();
 
 	protected:
 		unsupervised_data_reader();

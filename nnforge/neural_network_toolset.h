@@ -28,6 +28,7 @@
 #include "data_transformer.h"
 #include "data_transformer_util.h"
 #include "weight_vector_bound.h"
+#include "normalize_data_transformer.h"
 
 #include <boost/filesystem.hpp>
 
@@ -43,7 +44,7 @@ namespace nnforge
 		// Returns true if action is specified
 		bool parse(int argc, char* argv[]);
 
-		virtual void do_action();
+		void do_action();
 
 	protected:
 		virtual std::vector<string_option> get_string_options();
@@ -70,51 +71,15 @@ namespace nnforge
 
 		virtual std::string get_class_name_by_id(unsigned int class_id) const;
 
-		virtual void randomize_data();
-
-		virtual void create();
-
-		virtual void generate_input_normalizer();
-
 		virtual network_tester_smart_ptr get_tester();
 
-		virtual void validate(
-			bool is_validate,
-			bool infinite);
-
-		virtual void validate_batch(bool is_validate);
-
-		virtual void snapshot();
-
-		virtual void snapshot_invalid();
-
-		virtual void ann_snapshot();
-
-		virtual void save_snapshot(
-			const std::string& name,
-			const std::vector<layer_configuration_specific_snapshot_smart_ptr>& data,
-			bool folder_for_invalid = false);
-
-		virtual void save_ann_snapshot(
-			const std::string& name,
-			const network_data& data,
-			const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list);
-
 		virtual std::vector<network_data_pusher_smart_ptr> get_validators_for_training(network_schema_smart_ptr schema);
-
-		unsigned int get_starting_index_for_batch_training();
-
-		virtual void train(bool batch = false);
-
-		virtual void profile_updater();
-
-		virtual void profile_hessian();
 
 		virtual network_output_type::output_type get_network_output_type() const;
 
 		virtual bool is_training_with_validation() const;
 
-		virtual testing_complete_result_set_visualizer_smart_ptr get_testing_visualizer() const;
+		virtual testing_complete_result_set_visualizer_smart_ptr get_validating_visualizer() const;
 
 		virtual void run_test_with_unsupervised_data(std::vector<output_neuron_value_set_smart_ptr>& predicted_neuron_value_set_list);
 
@@ -126,15 +91,25 @@ namespace nnforge
 
 		virtual std::vector<data_transformer_smart_ptr> get_output_data_transformer_list_for_training() const;
 
+		virtual std::vector<data_transformer_smart_ptr> get_input_data_transformer_list_for_validating() const;
+
+		virtual std::vector<data_transformer_smart_ptr> get_output_data_transformer_list_for_validating() const;
+
+		virtual std::vector<data_transformer_smart_ptr> get_input_data_transformer_list_for_testing() const;
+
+		virtual std::vector<data_transformer_smart_ptr> get_output_data_transformer_list_for_testing() const;
+
+	protected:
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
 		static const char * validating_data_filename;
 		static const char * testing_data_filename;
 		static const char * testing_unsupervised_data_filename;
-		static const char * scaling_params_filename;
 		static const char * schema_filename;
 		static const char * data_filename;
 		static const char * data_trained_filename;
+		static const char * normalizer_input_filename;
+		static const char * normalizer_output_filename;
 		static const char * snapshot_subfolder_name;
 		static const char * ann_snapshot_subfolder_name;
 		static const char * snapshot_invalid_subfolder_name;
@@ -159,18 +134,6 @@ namespace nnforge
 		std::string snapshot_mode;
 		unsigned int snapshot_video_fps;
 
-		struct std_dev_helper
-		{
-			std_dev_helper(float average);
-
-			float operator()(float x) const;
-
-		private:
-			float average;
-		};
-
-		static const float max_val_after_normalization;
-
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
 			supervised_data_reader& reader,
@@ -179,6 +142,56 @@ namespace nnforge
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(unsupervised_data_reader& reader);
 
 		supervised_data_reader_smart_ptr get_data_reader_for_training() const;
+
+		supervised_data_reader_smart_ptr get_data_reader_for_validating() const;
+
+		supervised_data_reader_smart_ptr get_data_reader_for_testing_supervised() const;
+
+		unsupervised_data_reader_smart_ptr get_data_reader_for_testing_unsupervised() const;
+
+		void randomize_data();
+
+		void create();
+
+		void generate_input_normalizer();
+
+		void generate_output_normalizer();
+
+		unsigned int get_starting_index_for_batch_training();
+
+		void validate(
+			bool is_validate,
+			bool infinite);
+
+		void validate_batch(bool is_validate);
+
+		void snapshot();
+
+		void snapshot_invalid();
+
+		void ann_snapshot();
+
+		void save_snapshot(
+			const std::string& name,
+			const std::vector<layer_configuration_specific_snapshot_smart_ptr>& data,
+			bool folder_for_invalid = false);
+
+		void save_ann_snapshot(
+			const std::string& name,
+			const network_data& data,
+			const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list);
+
+		void train(bool batch = false);
+
+		void profile_updater();
+
+		void profile_hessian();
+
+		normalize_data_transformer_smart_ptr get_input_data_normalize_transformer() const;
+
+		normalize_data_transformer_smart_ptr get_output_data_normalize_transformer() const;
+
+		normalize_data_transformer_smart_ptr get_reverse_output_data_normalize_transformer() const;
 
 	private:
 		factory_generator_smart_ptr factory;

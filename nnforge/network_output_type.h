@@ -25,7 +25,8 @@ namespace nnforge
 		{
 			type_unknown = 0,
 			type_classifier = 1,
-			type_roc = 2
+			type_roc = 2,
+			type_regression = 3
 		};
 	};
 }

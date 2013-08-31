@@ -21,6 +21,7 @@
 
 #include <vector>
 #include <limits>
+#include <cmath>
 
 namespace nnforge
 {
@@ -37,7 +38,7 @@ namespace nnforge
 		return neuron_data_type::get_input_size(get_input_type());
 	}
 
-	std::vector<feature_map_data_stat> unsupervised_data_reader::get_feature_map_data_stat_list()
+	std::vector<feature_map_data_stat> unsupervised_data_reader::get_feature_map_input_data_stat_list()
 	{
 		std::vector<feature_map_data_stat> res;
 

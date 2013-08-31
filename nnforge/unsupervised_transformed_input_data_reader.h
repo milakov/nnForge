@@ -16,42 +16,42 @@
 
 #pragma once
 
-#include "layer_configuration_specific.h"
-#include "output_neuron_value_set.h"
-#include "neuron_data_type.h"
 #include "unsupervised_data_reader.h"
-#include "feature_map_data_stat.h"
+#include "data_transformer.h"
 
-#include <vector>
+#include <memory>
 
 namespace nnforge
 {
-	class supervised_data_reader : public unsupervised_data_reader
+	class unsupervised_transformed_input_data_reader : public unsupervised_data_reader
 	{
 	public:
-		virtual ~supervised_data_reader();
+		unsupervised_transformed_input_data_reader(
+			unsupervised_data_reader_smart_ptr original_reader,
+			data_transformer_smart_ptr transformer);
+
+		virtual ~unsupervised_transformed_input_data_reader();
 
 		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
 		// If any parameter is null the method should just discard corresponding data
-		virtual bool read(
-			void * input_elems,
-			float * output_elems) = 0;
-
 		virtual bool read(void * input_elems);
 
-		virtual layer_configuration_specific get_output_configuration() const = 0;
+		virtual void reset();
 
-		output_neuron_value_set_smart_ptr get_output_neuron_value_set(unsigned int sample_count);
+		virtual layer_configuration_specific get_input_configuration() const;
 
-		std::vector<feature_map_data_stat> get_feature_map_output_data_stat_list();
+		virtual unsigned int get_entry_count() const;
+
+		virtual neuron_data_type::input_type get_input_type() const;
 
 	protected:
-		supervised_data_reader();
+		unsupervised_transformed_input_data_reader();
 
-	private:
-		supervised_data_reader(const supervised_data_reader&);
-		supervised_data_reader& operator =(const supervised_data_reader&);
+	protected:
+		unsupervised_data_reader_smart_ptr original_reader;
+		data_transformer_smart_ptr transformer;
+
+		std::vector<unsigned char> buf;
+		void * local_input_ptr;
 	};
-
-	typedef std::tr1::shared_ptr<supervised_data_reader> supervised_data_reader_smart_ptr;
 }
