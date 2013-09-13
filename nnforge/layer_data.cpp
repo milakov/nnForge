@@ -81,6 +81,12 @@ namespace nnforge
 		}
 	}
 
+	void layer_data::fill(float val)
+	{
+		for(std::vector<std::vector<float> >::iterator it = begin(); it != end(); ++it)
+			std::fill(it->begin(), it->end(), val);
+	}
+
 	layer_data::mult_transform::mult_transform(float mult)
 		: mult(mult)
 	{

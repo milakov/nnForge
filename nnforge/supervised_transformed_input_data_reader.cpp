@@ -77,7 +77,7 @@ namespace nnforge
 		return original_reader->get_output_configuration();
 	}
 
-	unsigned int supervised_transformed_input_data_reader::get_entry_count() const
+	unsigned int supervised_transformed_input_data_reader::get_actual_entry_count() const
 	{
 		return original_reader->get_entry_count();
 	}
@@ -85,5 +85,10 @@ namespace nnforge
 	neuron_data_type::input_type supervised_transformed_input_data_reader::get_input_type() const
 	{
 		return original_reader->get_input_type();
+	}
+
+	void supervised_transformed_input_data_reader::set_max_entries_to_read(unsigned int max_entries_to_read)
+	{
+		original_reader->set_max_entries_to_read(max_entries_to_read);
 	}
 }

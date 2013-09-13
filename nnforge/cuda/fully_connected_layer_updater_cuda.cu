@@ -25,6 +25,7 @@
 
 extern __shared__ float arr_sh[];
 
+template<bool different_input>
 __global__ void fully_connected_upd_kernel(
 	float * output,
 	const float * __restrict input,
@@ -39,7 +40,7 @@ __global__ void fully_connected_upd_kernel(
 	int threadblock_size = blockDim.x;
 
 	float sum = 0.0F;
-	const float * current_input = input + (int)(entry_id * input_neuron_count);
+	const float * current_input = input + (int)((different_input ? entry_id * input_neuron_count : 0) * input_neuron_count);
 	const float * current_weights = weights + (int)((entry_id * output_neuron_count + output_neuron_id) * input_neuron_count);
 	int current_input_neuron_id = thread_id;
 	for(int i = 0; i < min_iteration_count; ++i)
@@ -179,22 +180,22 @@ namespace nnforge
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
+			cuda_util::copy_buffer(
+				*cuda_config,
+				*data[1],
+				*output_neurons_buffer,
+				output_elem_count_per_entry * entry_count,
+				stream_id);
+
+			int threadblock_size = get_threadblock_size_forward(input_elem_count_per_entry);
+			dim3 grid_size(1, output_elem_count_per_entry, entry_count);
+			dim3 block_size(threadblock_size, 1, 1);
+			int smem_size = (cuda_config->get_compute_capability() >= 300) ? 0 : (threadblock_size * sizeof(float));
+			int min_iteration_count = input_elem_count_per_entry / threadblock_size;
+
 			if (different_input)
 			{
-				cuda_util::copy_buffer(
-					*cuda_config,
-					*data[1],
-					*output_neurons_buffer,
-					output_elem_count_per_entry * entry_count,
-					stream_id);
-
-				int threadblock_size = get_threadblock_size_forward(input_elem_count_per_entry);
-				dim3 grid_size(1, output_elem_count_per_entry, entry_count);
-				dim3 block_size(threadblock_size, 1, 1);
-				int smem_size = (cuda_config->get_compute_capability() >= 300) ? 0 : (threadblock_size * sizeof(float));
-				int min_iteration_count = input_elem_count_per_entry / threadblock_size;
-
-				fully_connected_upd_kernel<<<grid_size, block_size, smem_size, stream_id>>>(
+				fully_connected_upd_kernel<true><<<grid_size, block_size, smem_size, stream_id>>>(
 					*output_neurons_buffer,
 					*input_neurons_buffer,
 					*data[0],
@@ -204,22 +205,13 @@ namespace nnforge
 			}
 			else
 			{
-				float alpha = 1.0F;
-				float beta = 1.0F;
-				cublas_safe_call(cublasSetStream(cuda_config->get_cublas_handle(), stream_id));
-				cublas_safe_call(cublasSgemv(
-					cuda_config->get_cublas_handle(),
-					CUBLAS_OP_T,
-					input_elem_count_per_entry,
-					output_elem_count_per_entry * entry_count,
-					&alpha,
+				fully_connected_upd_kernel<false><<<grid_size, block_size, smem_size, stream_id>>>(
+					*output_neurons_buffer,
+					(const float *)(*input_neurons_buffer) + (offset_input_entry_id * input_elem_count_per_entry),
 					*data[0],
 					input_elem_count_per_entry,
-					(const float *)(*input_neurons_buffer) + (offset_input_entry_id * input_elem_count_per_entry),
-					1,
-					&beta,
-					*data[1],
-					1));
+					output_elem_count_per_entry,
+					min_iteration_count);
 			}
 		}
 

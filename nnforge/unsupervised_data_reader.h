@@ -37,20 +37,26 @@ namespace nnforge
 
 		virtual layer_configuration_specific get_input_configuration() const = 0;
 
-		virtual unsigned int get_entry_count() const = 0;
-
 		virtual neuron_data_type::input_type get_input_type() const = 0;
 
 		size_t get_input_neuron_elem_size() const;
 
 		std::vector<feature_map_data_stat> get_feature_map_input_data_stat_list();
 
+		unsigned int get_entry_count() const;
+
+		virtual void set_max_entries_to_read(unsigned int max_entries_to_read);
+
 	protected:
 		unsupervised_data_reader();
+
+		virtual unsigned int get_actual_entry_count() const = 0;
 
 	private:
 		unsupervised_data_reader(const unsupervised_data_reader&);
 		unsupervised_data_reader& operator =(const unsupervised_data_reader&);
+
+		unsigned int max_entries_to_read;
 	};
 
 	typedef std::tr1::shared_ptr<unsupervised_data_reader> unsupervised_data_reader_smart_ptr;

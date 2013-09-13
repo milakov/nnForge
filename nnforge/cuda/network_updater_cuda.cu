@@ -154,8 +154,6 @@ namespace nnforge
 		{
 			std::vector<testing_result_smart_ptr> res;
 
-			entry_count_updated_in_profile_mode = 0;
-
 			reader.reset();
 
 			layer_configuration_specific input_configuration = reader.get_input_configuration();
@@ -496,9 +494,6 @@ namespace nnforge
 						}
 					} // for(unsigned int input_entry_id
 
-					if (profile_mode)
-						entry_count_updated_in_profile_mode += entries_available_for_processing_count;
-
 					for(std::vector<testing_result_smart_ptr>::iterator it = res.begin(); it != res.end(); ++it)
 						(*it)->entry_count += entries_available_for_processing_count;
 
@@ -546,9 +541,6 @@ namespace nnforge
 
 				current_data_slot = 1 - current_data_slot;
 				current_command_slot = 1 - current_command_slot;
-
-				if (profile_mode)
-					entries_available_for_copy_in_count = 0;
 			}
 
 			read_data(net_data, data_list, *command_stream);

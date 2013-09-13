@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "convolution_2d_layer_hessian_cuda_kepler.h"
+#include "convolution_3d_layer_hessian_cuda_kepler.h"
 
 #include <cuda_runtime.h>
 
@@ -29,33 +29,39 @@
 #define WINDOW_WIDTH_LOCAL 4
 
 template<int BLOCK_SIZE>
-__global__ void convolution_2d_tex_blocked_hess_kernel_kepler(
+__global__ void convolution_3d_tex_blocked_hess_kernel_kepler(
 	float * __restrict output,
 	cudaTextureObject_t input_tex,
 	cudaTextureObject_t weights_tex,
 	const float * __restrict biases,
 	int output_width,
 	int output_height,
+	int output_depth,
 	int input_width,
 	int input_height,
+	int input_depth,
 	int window_width,
 	int window_height,
+	int window_depth,
 	int input_feature_map_count,
 	int output_feature_map_count,
-	int entry_count)
+	int entry_count,
+	int x_block_count)
 {
-	int x = (blockIdx.x * blockDim.x + threadIdx.x) * BLOCK_SIZE;
-	int _y = blockIdx.y * blockDim.y + threadIdx.y;
-	int output_feature_map_group_id = _y / output_height;
+	int xy = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = xy / x_block_count;
+	int _z = blockIdx.y * blockDim.y + threadIdx.y;
+	int output_feature_map_group_id = _z / output_depth;
 	int output_feature_map_id = output_feature_map_group_id * FEATURE_MAP_BLOCK_SIZE;
 	int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-	bool in_bounds = (entry_id < entry_count) && (x < output_width) && (output_feature_map_id < output_feature_map_count);
+	bool in_bounds = (entry_id < entry_count) && (y < output_height) && (output_feature_map_id < output_feature_map_count);
 	if (in_bounds)
 	{
-		int weight_count_per_output_feature_map = window_width * window_height * input_feature_map_count;
-		int y = _y - (output_feature_map_group_id * output_height);
-		int input_elem_id = (entry_id * input_feature_map_count * input_height + y) * input_width + x;
+		int weight_count_per_output_feature_map = (window_width * window_height) * (window_depth * input_feature_map_count);
+		int z = _z - (output_feature_map_group_id * output_depth);
+		int x = (xy - x_block_count * y) * BLOCK_SIZE;
+		int input_elem_id = ((entry_id * input_feature_map_count * input_depth + z) * input_height + y) * input_width + x;
 		int weights_offset = weight_count_per_output_feature_map * output_feature_map_id;
 
 		float bias_list[FEATURE_MAP_BLOCK_SIZE];
@@ -72,33 +78,37 @@ __global__ void convolution_2d_tex_blocked_hess_kernel_kepler(
 
 		for(int input_layer_id = 0; input_layer_id < input_feature_map_count; ++input_layer_id)
 		{
-			for(int input_y = 0; input_y < window_height; ++input_y)
+			for(int input_z = 0; input_z < window_depth; ++input_z)
 			{
-				#pragma unroll 4
-				for(int input_x = 0; input_x < window_width; ++input_x)
+				for(int input_y = 0; input_y < window_height; ++input_y)
 				{
-					float weight_list[FEATURE_MAP_BLOCK_SIZE];
-					#pragma unroll
-					for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-						weight_list[i] = tex1Dfetch<float>(weights_tex, weights_offset + weight_count_per_output_feature_map * i);
-					#pragma unroll
-					for(int j = 0; j < BLOCK_SIZE; ++j)
+					#pragma unroll 4
+					for(int input_x = 0; input_x < window_width; ++input_x)
 					{
-						float inp = tex1Dfetch<float>(input_tex, input_elem_id + j); 
+						float weight_list[FEATURE_MAP_BLOCK_SIZE];
 						#pragma unroll
 						for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-							sums[i * BLOCK_SIZE + j] += inp * weight_list[i];
-					}
-					weights_offset++;
-					input_elem_id++;
-				}
-				input_elem_id += input_width - window_width;
-			}
-			input_elem_id += input_width * (input_height - window_height);
+							weight_list[i] = tex1Dfetch<float>(weights_tex, weights_offset + weight_count_per_output_feature_map * i);
+						#pragma unroll
+						for(int j = 0; j < BLOCK_SIZE; ++j)
+						{
+							float inp = tex1Dfetch<float>(input_tex, input_elem_id + j); 
+							#pragma unroll
+							for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+								sums[i * BLOCK_SIZE + j] += inp * weight_list[i];
+						}
+						weights_offset++;
+						input_elem_id++;
+					} // for input_x
+					input_elem_id += input_width - window_width;
+				} // for input_y
+				input_elem_id += input_width * (input_height - window_height);
+			} // for input_z
+			input_elem_id += input_height * input_width * (input_depth - window_depth);
 		}
 
-		float * base_output = output + ((entry_id * output_feature_map_count + output_feature_map_id) * output_height + y) * output_width + x;
-		int output_neuron_count_per_feature_map = output_height * output_width;
+		float * base_output = output + (((entry_id * output_feature_map_count + output_feature_map_id) * output_depth + z) * output_height + y) * output_width + x;
+		int output_neuron_count_per_feature_map = output_depth * output_height * output_width;
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 		{
@@ -116,32 +126,38 @@ __global__ void convolution_2d_tex_blocked_hess_kernel_kepler(
 }
 
 template<int WINDOW_WIDTH, int BLOCK_SIZE>
-__global__ void convolution_2d_tex_exact_blocked_hess_kernel_kepler(
+__global__ void convolution_3d_tex_exact_blocked_hess_kernel_kepler(
 	float * __restrict output,
 	cudaTextureObject_t input_tex,
 	cudaTextureObject_t weights_tex,
 	const float * __restrict biases,
 	int output_width,
 	int output_height,
+	int output_depth,
 	int input_width,
 	int input_height,
+	int input_depth,
 	int window_height,
+	int window_depth,
 	int input_feature_map_count,
 	int output_feature_map_count,
-	int entry_count)
+	int entry_count,
+	int x_block_count)
 {
-	int x = (blockIdx.x * blockDim.x + threadIdx.x) * BLOCK_SIZE;
-	int _y = blockIdx.y * blockDim.y + threadIdx.y;
-	int output_feature_map_group_id = _y / output_height;
+	int xy = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = xy / x_block_count;
+	int _z = blockIdx.y * blockDim.y + threadIdx.y;
+	int output_feature_map_group_id = _z / output_depth;
 	int output_feature_map_id = output_feature_map_group_id * FEATURE_MAP_BLOCK_SIZE;
 	int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-	bool in_bounds = (entry_id < entry_count) && (x < output_width) && (output_feature_map_id < output_feature_map_count);
+	bool in_bounds = (entry_id < entry_count) && (y < output_height) && (output_feature_map_id < output_feature_map_count);
 	if (in_bounds)
 	{
-		int weight_count_per_output_feature_map = WINDOW_WIDTH * window_height * input_feature_map_count;
-		int y = _y - (output_feature_map_group_id * output_height);
-		int input_elem_id = (entry_id * input_feature_map_count * input_height + y) * input_width + x;
+		int weight_count_per_output_feature_map = (WINDOW_WIDTH * window_height) * (window_depth * input_feature_map_count);
+		int z = _z - (output_feature_map_group_id * output_depth);
+		int x = (xy - x_block_count * y) * BLOCK_SIZE;
+		int input_elem_id = ((entry_id * input_feature_map_count * input_depth + z) * input_height + y) * input_width + x;
 		int weights_offset = weight_count_per_output_feature_map * output_feature_map_id;
 
 		float bias_list[FEATURE_MAP_BLOCK_SIZE];
@@ -158,33 +174,37 @@ __global__ void convolution_2d_tex_exact_blocked_hess_kernel_kepler(
 
 		for(int input_layer_id = 0; input_layer_id < input_feature_map_count; ++input_layer_id)
 		{
-			for(int input_y = 0; input_y < window_height; ++input_y)
+			for(int input_z = 0; input_z < window_depth; ++input_z)
 			{
-				#pragma unroll
-				for(int input_x = 0; input_x < WINDOW_WIDTH; ++input_x)
+				for(int input_y = 0; input_y < window_height; ++input_y)
 				{
-					float weight_list[FEATURE_MAP_BLOCK_SIZE];
 					#pragma unroll
-					for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-						weight_list[i] = tex1Dfetch<float>(weights_tex, weights_offset + weight_count_per_output_feature_map * i);
-					#pragma unroll
-					for(int j = 0; j < BLOCK_SIZE; ++j)
+					for(int input_x = 0; input_x < WINDOW_WIDTH; ++input_x)
 					{
-						float inp = tex1Dfetch<float>(input_tex, input_elem_id + j); 
+						float weight_list[FEATURE_MAP_BLOCK_SIZE];
 						#pragma unroll
 						for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-							sums[i * BLOCK_SIZE + j] += inp * weight_list[i];
-					}
-					weights_offset++;
-					input_elem_id++;
-				}
-				input_elem_id += input_width - WINDOW_WIDTH;
-			}
-			input_elem_id += input_width * (input_height - window_height);
+							weight_list[i] = tex1Dfetch<float>(weights_tex, weights_offset + weight_count_per_output_feature_map * i);
+						#pragma unroll
+						for(int j = 0; j < BLOCK_SIZE; ++j)
+						{
+							float inp = tex1Dfetch<float>(input_tex, input_elem_id + j); 
+							#pragma unroll
+							for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+								sums[i * BLOCK_SIZE + j] += inp * weight_list[i];
+						}
+						weights_offset++;
+						input_elem_id++;
+					} // for input_x
+					input_elem_id += input_width - WINDOW_WIDTH;
+				} // for input_y
+				input_elem_id += input_width * (input_height - window_height);
+			} // for input_z
+			input_elem_id += input_height * input_width * (input_depth - window_depth);
 		}
 
-		float * base_output = output + ((entry_id * output_feature_map_count + output_feature_map_id) * output_height + y) * output_width + x;
-		int output_neuron_count_per_feature_map = output_height * output_width;
+		float * base_output = output + (((entry_id * output_feature_map_count + output_feature_map_id) * output_depth + z) * output_height + y) * output_width + x;
+		int output_neuron_count_per_feature_map = output_depth * output_height * output_width;
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 		{
@@ -202,7 +222,7 @@ __global__ void convolution_2d_tex_exact_blocked_hess_kernel_kepler(
 }
 
 extern __shared__ float arr[];
-__global__ void convolution_2d_update_biases_hess_kernel_kepler(
+__global__ void convolution_3d_update_biases_hess_kernel_kepler(
 	float * __restrict hessian_biases,
 	const float * __restrict output_errors,
 	int block_size,
@@ -247,39 +267,47 @@ __global__ void convolution_2d_update_biases_hess_kernel_kepler(
 }
 
 template<int BLOCK_SIZE>
-__global__ void convolution_2d_square_deriviative_tex_hess_kernel_kepler(
+__global__ void convolution_3d_square_deriviative_tex_hess_kernel_kepler(
 	float * __restrict input_errors,
 	cudaTextureObject_t output_tex,
 	cudaTextureObject_t weights_squared_tex,
 	int output_width,
 	int output_height,
+	int output_depth,
 	int input_width,
 	int input_height,
+	int input_depth,
 	int window_width,
 	int window_height,
+	int window_depth,
 	int input_feature_map_count,
 	int output_feature_map_count,
-	int entry_count)
+	int entry_count,
+	int x_block_count)
 {
-	int x = (blockIdx.x * blockDim.x + threadIdx.x) * BLOCK_SIZE + (BLOCK_SIZE - 1);
-	int _y = blockIdx.y * blockDim.y + threadIdx.y;
-	int input_feature_map_group_id = _y / input_height;
+	int xy = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = xy / x_block_count;
+	int _z = blockIdx.y * blockDim.y + threadIdx.y;
+	int input_feature_map_group_id = _z / input_depth;
 	int input_feature_map_id = input_feature_map_group_id * FEATURE_MAP_BLOCK_SIZE;
 	int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-	bool in_bounds = (entry_id < entry_count) && (x < input_width + (BLOCK_SIZE - 1)) && (input_feature_map_id < input_feature_map_count);
+	bool in_bounds = (entry_id < entry_count) && (y < input_height) && (input_feature_map_id < input_feature_map_count);
 	if (in_bounds)
 	{
-		int weight_count_per_input_feature_map = window_width * window_height;
-		int y = _y - (input_feature_map_group_id * input_height);
-		int output_elem_id = (entry_id * output_feature_map_count * output_height + y) * output_width + x;
-		int weights_offset = window_width * window_height * input_feature_map_id;
+		int weight_count_per_input_feature_map = window_depth * window_height * window_width;
+		int z = _z - (input_feature_map_group_id * input_depth);
+		int x = (xy - x_block_count * y) * BLOCK_SIZE + (BLOCK_SIZE - 1);
+		int output_elem_id = ((entry_id * output_feature_map_count * output_depth + z) * output_height + y) * output_width + x;
+		int weights_offset = weight_count_per_input_feature_map * input_feature_map_id;
 
 		float sums[FEATURE_MAP_BLOCK_SIZE * BLOCK_SIZE];
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE * BLOCK_SIZE; ++i)
 			sums[i] = 0.0F;
 
+		int min_z_exclusive = z - output_depth;
+		int max_z_inclusive = z;
 		int min_y_exclusive = y - output_height;
 		int max_y_inclusive = y;
 		int min_x_exclusive = x - output_width;
@@ -287,71 +315,77 @@ __global__ void convolution_2d_square_deriviative_tex_hess_kernel_kepler(
 
 		for(int output_layer_id = 0; output_layer_id < output_feature_map_count; ++output_layer_id)
 		{
-			for(int input_y = 0; input_y < window_height; ++input_y)
+			for(int input_z = 0; input_z < window_depth; ++input_z)
 			{
-				bool b_fit1 = (input_y > min_y_exclusive) && (input_y <= max_y_inclusive);
+				bool b_fit_z = (input_z > min_z_exclusive) && (input_z <= max_z_inclusive);
 
-				int input_x = 0;
-				#pragma unroll 1
-				for(; input_x < (window_width - (WINDOW_WIDTH_LOCAL - 1)); input_x += WINDOW_WIDTH_LOCAL)
+				for(int input_y = 0; input_y < window_height; ++input_y)
 				{
-					float output_vals[BLOCK_SIZE + WINDOW_WIDTH_LOCAL - 1];
-					#pragma unroll
-					for(int i = 0; i < BLOCK_SIZE + WINDOW_WIDTH_LOCAL - 1; ++i)
-					{
-						bool b_fit2 = b_fit1 && (i > min_x_exclusive) && (i <= max_x_inclusive);;
-						if (b_fit2)
-							output_vals[i] = tex1Dfetch<float>(output_tex, output_elem_id - i);
-						else
-							output_vals[i] = 0.0F;
-					}
-					output_elem_id -= WINDOW_WIDTH_LOCAL;
+					bool b_fit_y = b_fit_z && (input_y > min_y_exclusive) && (input_y <= max_y_inclusive);
 
-					#pragma unroll
-					for(int input_x_local = 0; input_x_local < WINDOW_WIDTH_LOCAL; ++input_x_local)
+					int input_x = 0;
+					#pragma unroll 1
+					for(; input_x < (window_width - (WINDOW_WIDTH_LOCAL - 1)); input_x += WINDOW_WIDTH_LOCAL)
 					{
-						float weight_list[FEATURE_MAP_BLOCK_SIZE];
+						float output_vals[BLOCK_SIZE + WINDOW_WIDTH_LOCAL - 1];
 						#pragma unroll
-						for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-							weight_list[i] = tex1Dfetch<float>(weights_squared_tex, weights_offset + weight_count_per_input_feature_map * i);
+						for(int i = 0; i < BLOCK_SIZE + WINDOW_WIDTH_LOCAL - 1; ++i)
+						{
+							bool b_fit_x = b_fit_y && (i > min_x_exclusive) && (i <= max_x_inclusive);;
+							if (b_fit_x)
+								output_vals[i] = tex1Dfetch<float>(output_tex, output_elem_id - i);
+							else
+								output_vals[i] = 0.0F;
+						}
+						output_elem_id -= WINDOW_WIDTH_LOCAL;
 
+						#pragma unroll
+						for(int input_x_local = 0; input_x_local < WINDOW_WIDTH_LOCAL; ++input_x_local)
+						{
+							float weight_list[FEATURE_MAP_BLOCK_SIZE];
+							#pragma unroll
+							for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+								weight_list[i] = tex1Dfetch<float>(weights_squared_tex, weights_offset + weight_count_per_input_feature_map * i);
+
+							#pragma unroll
+							for(int j = 0; j < BLOCK_SIZE; ++j)
+							{
+								#pragma unroll
+								for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+									sums[i * BLOCK_SIZE + j] += output_vals[input_x_local + j] * weight_list[i];
+							}
+							weights_offset++;
+						}
+					}
+					#pragma unroll 1
+					for(; input_x < window_width; ++input_x)
+					{
 						#pragma unroll
 						for(int j = 0; j < BLOCK_SIZE; ++j)
 						{
-							#pragma unroll
-							for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-								sums[i * BLOCK_SIZE + j] += output_vals[input_x_local + j] * weight_list[i];
+							bool b_fit_x = b_fit_y && (input_x + j > min_x_exclusive) && (input_x + j <= max_x_inclusive);
+							if (b_fit_x)
+							{
+								float inp = tex1Dfetch<float>(output_tex, output_elem_id - j);
+								#pragma unroll
+								for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+									sums[i * BLOCK_SIZE + j] += inp * tex1Dfetch<float>(weights_squared_tex, weights_offset + weight_count_per_input_feature_map * i);
+							}
 						}
 						weights_offset++;
+						output_elem_id--;
 					}
-				}
-				#pragma unroll 1
-				for(; input_x < window_width; ++input_x)
-				{
-					#pragma unroll
-					for(int j = 0; j < BLOCK_SIZE; ++j)
-					{
-						bool b_fit2 = b_fit1 && (input_x + j > min_x_exclusive) && (input_x + j <= max_x_inclusive);
-						if (b_fit2)
-						{
-							float inp = tex1Dfetch<float>(output_tex, output_elem_id - j);
-							#pragma unroll
-							for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-								sums[i * BLOCK_SIZE + j] += inp * tex1Dfetch<float>(weights_squared_tex, weights_offset + weight_count_per_input_feature_map * i);
-						}
-					}
-					weights_offset++;
-					output_elem_id--;
-				}
 
-				output_elem_id += window_width - output_width;
-			}
+					output_elem_id += window_width - output_width;
+				} // for input_y
+				output_elem_id += output_width * (window_height - output_height);
+			} // for input_z
+			output_elem_id += output_width * output_height * (output_depth + window_depth);
 			weights_offset += weight_count_per_input_feature_map * (input_feature_map_count - 1);
-			output_elem_id += output_width * (output_height + window_height);
 		}
 
-		float * base_input = input_errors + ((entry_id * input_feature_map_count + input_feature_map_id) * input_height + y) * input_width + x;
-		int input_neuron_count_per_feature_map = input_height * input_width;
+		float * base_input = input_errors + (((entry_id * input_feature_map_count + input_feature_map_id) * input_depth + z) * input_height + y) * input_width + x;
+		int input_neuron_count_per_feature_map = input_depth * input_height * input_width;
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 		{
@@ -369,89 +403,104 @@ __global__ void convolution_2d_square_deriviative_tex_hess_kernel_kepler(
 }
 
 template<int WINDOW_WIDTH, int BLOCK_SIZE>
-__global__ void convolution_2d_square_deriviative_tex_exact_hess_kernel_kepler(
+__global__ void convolution_3d_square_deriviative_tex_exact_hess_kernel_kepler(
 	float * __restrict input_errors,
 	cudaTextureObject_t output_tex,
 	cudaTextureObject_t weights_squared_tex,
 	int output_width,
 	int output_height,
+	int output_depth,
 	int input_width,
 	int input_height,
+	int input_depth,
 	int window_height,
+	int window_depth,
 	int input_feature_map_count,
 	int output_feature_map_count,
-	int entry_count)
+	int entry_count,
+	int x_block_count)
 {
-	int x = (blockIdx.x * blockDim.x + threadIdx.x) * BLOCK_SIZE + (BLOCK_SIZE - 1);
-	int _y = blockIdx.y * blockDim.y + threadIdx.y;
-	int input_feature_map_group_id = _y / input_height;
+	int xy = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = xy / x_block_count;
+	int _z = blockIdx.y * blockDim.y + threadIdx.y;
+	int input_feature_map_group_id = _z / input_depth;
 	int input_feature_map_id = input_feature_map_group_id * FEATURE_MAP_BLOCK_SIZE;
 	int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-	bool in_bounds = (entry_id < entry_count) && (x < input_width + (BLOCK_SIZE - 1)) && (input_feature_map_id < input_feature_map_count);
+	bool in_bounds = (entry_id < entry_count) && (y < input_height) && (input_feature_map_id < input_feature_map_count);
 	if (in_bounds)
 	{
-		int weight_count_per_input_feature_map = WINDOW_WIDTH * window_height;
-		int y = _y - (input_feature_map_group_id * input_height);
-		int output_elem_id = (entry_id * output_feature_map_count * output_height + y) * output_width + x;
-		int weights_offset = WINDOW_WIDTH * window_height * input_feature_map_id;
+		int weight_count_per_input_feature_map = window_depth * window_height * WINDOW_WIDTH;
+		int z = _z - (input_feature_map_group_id * input_depth);
+		int x = (xy - x_block_count * y) * BLOCK_SIZE + (BLOCK_SIZE - 1);
+		int output_elem_id = ((entry_id * output_feature_map_count * output_depth + z) * output_height + y) * output_width + x;
+		int weights_offset = weight_count_per_input_feature_map * input_feature_map_id;
 
 		float sums[FEATURE_MAP_BLOCK_SIZE * BLOCK_SIZE];
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE * BLOCK_SIZE; ++i)
 			sums[i] = 0.0F;
 
+		int min_z_exclusive = z - output_depth;
+		int max_z_inclusive = z;
 		int min_y_exclusive = y - output_height;
 		int max_y_inclusive = y;
 		int min_x_exclusive = x - output_width;
 		int max_x_inclusive = x;
 
 		unsigned int mask = 0;
+		#pragma unroll
 		for(int i = BLOCK_SIZE + WINDOW_WIDTH - 2; i >= 0; --i)
 			mask = mask << 1 | (((i > min_x_exclusive) && (i <= max_x_inclusive)) ? 1 : 0);
 
 		for(int output_layer_id = 0; output_layer_id < output_feature_map_count; ++output_layer_id)
 		{
-			for(int input_y = 0; input_y < window_height; ++input_y)
+			for(int input_z = 0; input_z < window_depth; ++input_z)
 			{
-				bool b_fit1 = (input_y > min_y_exclusive) && (input_y <= max_y_inclusive);
+				bool b_fit_z = (input_z > min_z_exclusive) && (input_z <= max_z_inclusive);
 
-				float output_vals[BLOCK_SIZE + WINDOW_WIDTH - 1];
-				#pragma unroll
-				for(int i = 0; i < BLOCK_SIZE + WINDOW_WIDTH - 1; ++i)
+				for(int input_y = 0; input_y < window_height; ++input_y)
 				{
-					bool b_fit2 = b_fit1 && (((1 << i) & mask) != 0);
-					if (b_fit2)
-						output_vals[i] = tex1Dfetch<float>(output_tex, output_elem_id - i);
-					else
-						output_vals[i] = 0.0F;
-				}
+					bool b_fit_y = b_fit_z && (input_y > min_y_exclusive) && (input_y <= max_y_inclusive);
 
-				#pragma unroll
-				for(int input_x = 0; input_x < WINDOW_WIDTH; ++input_x)
-				{
-					float weight_list[FEATURE_MAP_BLOCK_SIZE];
+					float output_vals[BLOCK_SIZE + WINDOW_WIDTH - 1];
 					#pragma unroll
-					for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-						weight_list[i] = tex1Dfetch<float>(weights_squared_tex, weights_offset + weight_count_per_input_feature_map * i);
-
-					#pragma unroll
-					for(int j = 0; j < BLOCK_SIZE; ++j)
+					for(int i = 0; i < BLOCK_SIZE + WINDOW_WIDTH - 1; ++i)
 					{
+						bool b_fit_x = b_fit_y && (((1 << i) & mask) != 0);
+						if (b_fit_x)
+							output_vals[i] = tex1Dfetch<float>(output_tex, output_elem_id - i);
+						else
+							output_vals[i] = 0.0F;
+					}
+
+					#pragma unroll
+					for(int input_x = 0; input_x < WINDOW_WIDTH; ++input_x)
+					{
+						float weight_list[FEATURE_MAP_BLOCK_SIZE];
 						#pragma unroll
 						for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-							sums[i * BLOCK_SIZE + j] += output_vals[input_x + j] * weight_list[i];
+							weight_list[i] = tex1Dfetch<float>(weights_squared_tex, weights_offset + weight_count_per_input_feature_map * i);
+
+						#pragma unroll
+						for(int j = 0; j < BLOCK_SIZE; ++j)
+						{
+							#pragma unroll
+							for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+								sums[i * BLOCK_SIZE + j] += output_vals[input_x + j] * weight_list[i];
+						}
+						weights_offset++;
 					}
-					weights_offset++;
-				}
-				output_elem_id -= output_width;
-			}
+					output_elem_id -= output_width;
+				} // for input_y
+				output_elem_id += output_width * (window_height - output_height);
+			} // for input_z
+			output_elem_id += output_width * output_height * (output_depth + window_depth);
 			weights_offset += weight_count_per_input_feature_map * (input_feature_map_count - 1);
-			output_elem_id += output_width * (output_height + window_height);
 		}
 
-		float * base_input = input_errors + ((entry_id * input_feature_map_count + input_feature_map_id) * input_height + y) * input_width + x;
-		int input_neuron_count_per_feature_map = input_height * input_width;
+		float * base_input = input_errors + (((entry_id * input_feature_map_count + input_feature_map_id) * input_depth + z) * input_height + y) * input_width + x;
+		int input_neuron_count_per_feature_map = input_depth * input_height * input_width;
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 		{
@@ -468,16 +517,19 @@ __global__ void convolution_2d_square_deriviative_tex_exact_hess_kernel_kepler(
 	}
 }
 
-__global__ void convolution_2d_update_weights_hess_kernel_kepler(
+__global__ void convolution_3d_update_weights_hess_kernel_kepler(
 	float * __restrict hessian_weights,
 	cudaTextureObject_t input_squared_tex,
 	cudaTextureObject_t output_tex,
 	int output_width,
 	int output_height,
+	int output_depth,
 	int input_width,
 	int input_height,
+	int input_depth,
 	int window_width,
 	int window_height,
+	int window_depth,
 	int input_feature_map_count,
 	int output_feature_map_count,
 	int entry_count,
@@ -485,24 +537,28 @@ __global__ void convolution_2d_update_weights_hess_kernel_kepler(
 	int block_size)
 {
 	int _x = blockIdx.x * blockDim.x + threadIdx.x;
-	int window_block_count = window_x_block_count * window_height;
-	int output_y = _x / window_block_count;
+	int window_block_count = window_x_block_count * window_height * window_depth;
+	int output_yz = _x / window_block_count;
 	int feature_map_pair_id = blockIdx.y * blockDim.y + threadIdx.y;
 	int output_feature_map_group_id = feature_map_pair_id / input_feature_map_count;
 	int output_feature_map_id = FEATURE_MAP_BLOCK_SIZE * output_feature_map_group_id;
 	int base_entry_id = (blockIdx.z * blockDim.z + threadIdx.z) * block_size;
 
-	if ((output_y < output_height) && (output_feature_map_id < output_feature_map_count) && (base_entry_id < entry_count))
+	if ((output_yz < (output_height * output_depth)) && (output_feature_map_id < output_feature_map_count) && (base_entry_id < entry_count))
 	{
-		int output_neuron_count_per_feature_map = output_width * output_height;
-		int weight_y_and_block_x = _x - window_block_count * output_y;
+		int output_neuron_count_per_feature_map = output_depth * output_width * output_height;
+		int output_z = output_yz / output_height;
+		int output_y = output_yz - output_height * output_z;
+		int weight_yz_and_block_x = _x - window_block_count * output_yz;
+		int weight_z = weight_yz_and_block_x / (window_x_block_count * window_height);
+		int weight_y_and_block_x = weight_yz_and_block_x - weight_z * (window_x_block_count * window_height);
 		int weight_y = weight_y_and_block_x / window_x_block_count;
 		int weight_x = (weight_y_and_block_x - window_x_block_count * weight_y) * WINDOW_WIDTH_LOCAL;
 		int input_feature_map_id = feature_map_pair_id - (output_feature_map_group_id * input_feature_map_count);
 		int iteration_count = min(block_size, entry_count - base_entry_id);
 
-		int output_errors_offset = ((base_entry_id * output_feature_map_count + output_feature_map_id) * output_height + output_y) * output_width;
-		int input_elem_id = ((base_entry_id * input_feature_map_count + input_feature_map_id) * input_height + output_y + weight_y) * input_width + weight_x;
+		int output_errors_offset = (((base_entry_id * output_feature_map_count + output_feature_map_id) * output_depth + output_z) * output_height + output_y) * output_width;
+		int input_elem_id = (((base_entry_id * input_feature_map_count + input_feature_map_id) * input_depth + output_z + weight_z) * input_height + output_y + weight_y) * input_width + weight_x;
 
 		float sums[FEATURE_MAP_BLOCK_SIZE * WINDOW_WIDTH_LOCAL];
 		#pragma unroll
@@ -540,12 +596,12 @@ __global__ void convolution_2d_update_weights_hess_kernel_kepler(
 				output_errors_offset++;
 				input_elem_id++;
 			}
-			output_errors_offset += (output_feature_map_count * output_height - 1) * output_width;
-			input_elem_id += (input_feature_map_count * input_height - 1) * input_width + (window_width - WINDOW_WIDTH_LOCAL);
+			output_errors_offset += (output_feature_map_count * output_height * output_depth - 1) * output_width;
+			input_elem_id += (input_feature_map_count * input_height * input_depth - 1) * input_width + (window_width - WINDOW_WIDTH_LOCAL);
 		}
 
-		float * base_weights = hessian_weights + ((output_feature_map_id * input_feature_map_count + input_feature_map_id) * window_height + weight_y) * window_width + weight_x;
-		int weight_count_per_output_feature_map = input_feature_map_count * window_height * window_width;
+		float * base_weights = hessian_weights + (((output_feature_map_id * input_feature_map_count + input_feature_map_id) * window_depth + weight_z) * window_height + weight_y) * window_width + weight_x;
+		int weight_count_per_output_feature_map = input_feature_map_count * window_depth * window_height * window_width;
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 		{
@@ -561,36 +617,43 @@ __global__ void convolution_2d_update_weights_hess_kernel_kepler(
 }
 
 template<int WINDOW_WIDTH>
-__global__ void convolution_2d_update_weights_exact_hess_kernel_kepler(
+__global__ void convolution_3d_update_weights_exact_hess_kernel_kepler(
 	float * __restrict hessian_weights,
 	cudaTextureObject_t input_squared_tex,
 	cudaTextureObject_t output_tex,
 	int output_width,
 	int output_height,
+	int output_depth,
 	int input_width,
 	int input_height,
+	int input_depth,
 	int window_height,
+	int window_depth,
 	int input_feature_map_count,
 	int output_feature_map_count,
 	int entry_count,
 	int block_size)
 {
 	int _x = blockIdx.x * blockDim.x + threadIdx.x;
-	int output_y = _x / window_height;
+	int output_yz = _x / (window_depth * window_height);
 	int feature_map_pair_id = blockIdx.y * blockDim.y + threadIdx.y;
 	int output_feature_map_group_id = feature_map_pair_id / input_feature_map_count;
 	int output_feature_map_id = FEATURE_MAP_BLOCK_SIZE * output_feature_map_group_id;
 	int base_entry_id = (blockIdx.z * blockDim.z + threadIdx.z) * block_size;
 
-	if ((output_y < output_height) && (output_feature_map_id < output_feature_map_count) && (base_entry_id < entry_count))
+	if ((output_yz < (output_height * output_depth)) && (output_feature_map_id < output_feature_map_count) && (base_entry_id < entry_count))
 	{
-		int output_neuron_count_per_feature_map = output_width * output_height;
-		int weight_y = _x - window_height * output_y;
+		int output_neuron_count_per_feature_map = output_depth * output_width * output_height;
+		int output_z = output_yz / output_height;
+		int output_y = output_yz - output_height * output_z;
+		int weight_yz = _x - (window_depth * window_height) * output_yz;
+		int weight_z = weight_yz / window_height;
+		int weight_y = weight_yz - weight_z * window_height;
 		int input_feature_map_id = feature_map_pair_id - (output_feature_map_group_id * input_feature_map_count);
 		int iteration_count = min(block_size, entry_count - base_entry_id);
 
-		int output_errors_offset = ((base_entry_id * output_feature_map_count + output_feature_map_id) * output_height + output_y) * output_width;
-		int input_elem_id = ((base_entry_id * input_feature_map_count + input_feature_map_id) * input_height + output_y + weight_y) * input_width;
+		int output_errors_offset = (((base_entry_id * output_feature_map_count + output_feature_map_id) * output_depth + output_z) * output_height + output_y) * output_width;
+		int input_elem_id = (((base_entry_id * input_feature_map_count + input_feature_map_id) * input_depth + output_z + weight_z) * input_height + output_y + weight_y) * input_width;
 
 		float sums[FEATURE_MAP_BLOCK_SIZE * WINDOW_WIDTH];
 		#pragma unroll
@@ -628,12 +691,12 @@ __global__ void convolution_2d_update_weights_exact_hess_kernel_kepler(
 				output_errors_offset++;
 				input_elem_id++;
 			}
-			output_errors_offset += (output_feature_map_count * output_height - 1) * output_width;
-			input_elem_id += (input_feature_map_count * input_height - 1) * input_width;
+			output_errors_offset += (output_feature_map_count * output_height * output_depth - 1) * output_width;
+			input_elem_id += (input_feature_map_count * input_height * input_depth - 1) * input_width;
 		}
 
-		float * base_weights = hessian_weights + ((output_feature_map_id * input_feature_map_count + input_feature_map_id) * window_height + weight_y) * WINDOW_WIDTH;
-		int weight_count_per_output_feature_map = input_feature_map_count * window_height * WINDOW_WIDTH;
+		float * base_weights = hessian_weights + (((output_feature_map_id * input_feature_map_count + input_feature_map_id) * window_depth + weight_z) * window_height + weight_y) * WINDOW_WIDTH;
+		int weight_count_per_output_feature_map = input_feature_map_count * window_depth * window_height * WINDOW_WIDTH;
 		#pragma unroll
 		for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 		{
@@ -651,11 +714,11 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		convolution_2d_layer_hessian_cuda_kepler::convolution_2d_layer_hessian_cuda_kepler()
+		convolution_3d_layer_hessian_cuda_kepler::convolution_3d_layer_hessian_cuda_kepler()
 		{
 		}
 
-		convolution_2d_layer_hessian_cuda_kepler::~convolution_2d_layer_hessian_cuda_kepler()
+		convolution_3d_layer_hessian_cuda_kepler::~convolution_3d_layer_hessian_cuda_kepler()
 		{
 		}
 
@@ -663,7 +726,7 @@ namespace nnforge
 #define MAX_WINDOW_WIDTH 10
 
 #define launch_exact_kernel_const_const(window_width_const, block_size_const) \
-	convolution_2d_tex_exact_blocked_hess_kernel_kepler<window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, input_tex, weights_tex, *data[1], output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count);
+	convolution_3d_tex_exact_blocked_hess_kernel_kepler<window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, input_tex, weights_tex, *data[1], output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], output_configuration_specific.dimension_sizes[2], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[2], window_sizes[1], window_sizes[2], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count, x_block_count);
 
 #define launch_exact_kernel_const(window_width, block_size_const) \
 	switch (window_width) \
@@ -721,7 +784,7 @@ namespace nnforge
 		};
 
 #define launch_kernel_const(block_size_const) \
-	convolution_2d_tex_blocked_hess_kernel_kepler<block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, input_tex, weights_tex, *data[1], output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[0], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count);
+	convolution_3d_tex_blocked_hess_kernel_kepler<block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, input_tex, weights_tex, *data[1], output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], output_configuration_specific.dimension_sizes[2], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[2], window_sizes[0], window_sizes[1], window_sizes[2], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count, x_block_count);
 
 #define launch_kernel(block_size) \
 	switch (block_size) \
@@ -744,7 +807,7 @@ namespace nnforge
 		};
 
 #define launch_backprop_exact_kernel_const_const(window_width_const, block_size_const) \
-	convolution_2d_square_deriviative_tex_exact_hess_kernel_kepler<window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, weights_squared_tex, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count);
+	convolution_3d_square_deriviative_tex_exact_hess_kernel_kepler<window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, weights_squared_tex, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], output_configuration_specific.dimension_sizes[2], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[2], window_sizes[1], window_sizes[2], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count, x_block_count);
 
 #define launch_backprop_exact_kernel_const(window_width, block_size_const) \
 	switch (window_width) \
@@ -802,7 +865,7 @@ namespace nnforge
 		};
 
 #define launch_backprop_kernel_const(block_size_const) \
-	convolution_2d_square_deriviative_tex_hess_kernel_kepler<block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, weights_squared_tex, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[0], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count);
+	convolution_3d_square_deriviative_tex_hess_kernel_kepler<block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, weights_squared_tex, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], output_configuration_specific.dimension_sizes[2], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[2], window_sizes[0], window_sizes[1], window_sizes[2], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count, x_block_count);
 
 #define launch_backprop_kernel(block_size) \
 	switch (block_size) \
@@ -825,7 +888,7 @@ namespace nnforge
 		};
 
 #define launch_update_weights_exact_kernel_const(window_width_const) \
-	convolution_2d_update_weights_exact_hess_kernel_kepler<window_width_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*hessian_data[0], input_squared_tex, output_tex, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count, block_size);
+	convolution_3d_update_weights_exact_hess_kernel_kepler<window_width_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*hessian_data[0], input_squared_tex, output_tex, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], output_configuration_specific.dimension_sizes[2], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[2], window_sizes[1], window_sizes[2], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count, block_size);
 
 #define launch_update_weights_exact_kernel(window_width) \
 	switch (window_width) \
@@ -862,7 +925,7 @@ namespace nnforge
 			break; \
 		};
 
-		void convolution_2d_layer_hessian_cuda_kepler::enqueue_test(
+		void convolution_3d_layer_hessian_cuda_kepler::enqueue_test(
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
@@ -875,13 +938,14 @@ namespace nnforge
 			cuda_texture input_tex(input_neurons_buffer);
 
 			int block_size = get_block_size(output_configuration_specific.dimension_sizes[0]);
+			int x_block_count = (output_configuration_specific.dimension_sizes[0] + block_size - 1) / block_size;
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_2d_access(
 				*cuda_config,
-				(output_configuration_specific.dimension_sizes[0] + block_size - 1) / block_size,
-				output_configuration_specific.dimension_sizes[1] * ((output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE),
+				x_block_count * output_configuration_specific.dimension_sizes[1],
+				output_configuration_specific.dimension_sizes[2] * ((output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE),
 				entry_count);
 
-			if (window_sizes[0] <= MAX_WINDOW_WIDTH)
+			if (window_sizes[0] <= MAX_WINDOW_WIDTH) 
 			{
 				launch_exact_kernel(window_sizes[0], block_size);
 			}
@@ -891,7 +955,7 @@ namespace nnforge
 			}
 		}
 
-		void convolution_2d_layer_hessian_cuda_kepler::enqueue_backprop(
+		void convolution_3d_layer_hessian_cuda_kepler::enqueue_backprop(
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_squared,
@@ -905,10 +969,11 @@ namespace nnforge
 			cuda_texture weights_squared_tex(data_squared[0]);
 
 			int block_size = get_block_size(input_configuration_specific.dimension_sizes[0]);
+			int x_block_count = (input_configuration_specific.dimension_sizes[0] + block_size - 1) / block_size;
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_2d_access(
 				*cuda_config,
-				(input_configuration_specific.dimension_sizes[0] + block_size - 1) / block_size,
-				input_configuration_specific.dimension_sizes[1] * ((input_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE),
+				x_block_count * input_configuration_specific.dimension_sizes[1],
+				input_configuration_specific.dimension_sizes[2] * ((input_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE),
 				entry_count);
 
 			if (window_sizes[0] <= MAX_WINDOW_WIDTH)
@@ -921,7 +986,7 @@ namespace nnforge
 			}
 		}
 
-		void convolution_2d_layer_hessian_cuda_kepler::enqueue_update_hessian(
+		void convolution_3d_layer_hessian_cuda_kepler::enqueue_update_hessian(
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& hessian_data,
@@ -949,7 +1014,7 @@ namespace nnforge
 					int block_count = (entry_count + block_size - 1) / block_size;
 					std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 						*cuda_config,
-						window_sizes[1] * output_configuration_specific.dimension_sizes[1],
+						window_sizes[1] * window_sizes[2] * output_configuration_specific.dimension_sizes[1] * output_configuration_specific.dimension_sizes[2],
 						((output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE) * input_configuration_specific.feature_map_count,
 						block_count);
 
@@ -962,20 +1027,23 @@ namespace nnforge
 					int block_count = (entry_count + block_size - 1) / block_size;
 					std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 						*cuda_config,
-						window_sizes[1] * output_configuration_specific.dimension_sizes[1] * window_x_block_count,
+						window_sizes[1] * window_sizes[2] * output_configuration_specific.dimension_sizes[1] * output_configuration_specific.dimension_sizes[2] * window_x_block_count,
 						((output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE) * input_configuration_specific.feature_map_count,
 						block_count);
 
-					convolution_2d_update_weights_hess_kernel_kepler<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					convolution_3d_update_weights_hess_kernel_kepler<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 						*hessian_data[0],
 						input_squared_tex,
 						output_tex,
 						output_configuration_specific.dimension_sizes[0],
 						output_configuration_specific.dimension_sizes[1],
+						output_configuration_specific.dimension_sizes[2],
 						input_configuration_specific.dimension_sizes[0],
 						input_configuration_specific.dimension_sizes[1],
+						input_configuration_specific.dimension_sizes[2],
 						window_sizes[0],
 						window_sizes[1],
+						window_sizes[2],
 						input_configuration_specific.feature_map_count,
 						output_configuration_specific.feature_map_count,
 						entry_count,
@@ -996,7 +1064,7 @@ namespace nnforge
 				kernel_dims.first.y = output_configuration_specific.feature_map_count;
 				int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
 				int smem_size = threadblock_size * sizeof(float);
-				convolution_2d_update_biases_hess_kernel_kepler<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+				convolution_3d_update_biases_hess_kernel_kepler<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 					*hessian_data[1],
 					*output_errors_buffer,
 					block_size,
@@ -1006,14 +1074,14 @@ namespace nnforge
 			}
 		}
 
-		int convolution_2d_layer_hessian_cuda_kepler::get_block_size(int width)
+		int convolution_3d_layer_hessian_cuda_kepler::get_block_size(int width)
 		{
 			int block_count = (width + MAX_BLOCK_SIZE - 1) / MAX_BLOCK_SIZE;
 			int block_size = (width + block_count - 1) / block_count;
 			return block_size;
 		}
 
-		void convolution_2d_layer_hessian_cuda_kepler::hessian_configured()
+		void convolution_3d_layer_hessian_cuda_kepler::hessian_configured()
 		{
 			std::tr1::shared_ptr<const convolution_layer> layer_derived = std::tr1::dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
@@ -1021,12 +1089,12 @@ namespace nnforge
 				window_sizes.push_back(static_cast<int>(*it));
 		}
 
-		bool convolution_2d_layer_hessian_cuda_kepler::is_in_place_backprop() const
+		bool convolution_3d_layer_hessian_cuda_kepler::is_in_place_backprop() const
 		{
 			return false;
 		}
 
-		std::vector<size_t> convolution_2d_layer_hessian_cuda_kepler::get_sizes_of_additional_buffers_per_entry() const
+		std::vector<size_t> convolution_3d_layer_hessian_cuda_kepler::get_sizes_of_additional_buffers_per_entry() const
 		{
 			std::vector<size_t> res;
 
@@ -1035,7 +1103,7 @@ namespace nnforge
 			return res;
 		}
 
-		std::vector<unsigned int> convolution_2d_layer_hessian_cuda_kepler::get_linear_addressing_through_texture_per_entry() const
+		std::vector<unsigned int> convolution_3d_layer_hessian_cuda_kepler::get_linear_addressing_through_texture_per_entry() const
 		{
 			std::vector<unsigned int> res;
 
@@ -1045,13 +1113,13 @@ namespace nnforge
 			return res;
 		}
 
-		int convolution_2d_layer_hessian_cuda_kepler::get_bias_update_block_size(int entry_count)
+		int convolution_3d_layer_hessian_cuda_kepler::get_bias_update_block_size(int entry_count)
 		{
 			int block_size = std::min<int>(std::max<int>(static_cast<int>(sqrtf(static_cast<float>(entry_count))), 1), entry_count);
 			return block_size;
 		}
 
-		int convolution_2d_layer_hessian_cuda_kepler::get_weights_update_block_size(int entry_count)
+		int convolution_3d_layer_hessian_cuda_kepler::get_weights_update_block_size(int entry_count)
 		{
 			int block_size = std::min<int>(std::max<int>(static_cast<int>(sqrtf(static_cast<float>(entry_count))), 1), entry_count);
 			return block_size;

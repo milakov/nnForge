@@ -33,7 +33,6 @@ namespace nnforge
 		, layer_to_dropout_rate_map(layer_to_dropout_rate_map)
 		, random_uniform_list(1 << random_list_bits)
 		, layer_to_weight_vector_bound_map(layer_to_weight_vector_bound_map)
-		, profile_mode(false)
 		, gen(rnd::get_random_generator())
 	{
 		const const_layer_list& layer_list = *schema;

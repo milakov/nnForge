@@ -1399,7 +1399,10 @@ namespace nnforge
 			res.push_back(sizeof(xy_config) * forward_x_block_count * output_configuration_specific.dimension_sizes[1]);
 			res.push_back(sizeof(feature_map_config) * input_configuration_specific.feature_map_count * forward_output_feature_map_block_count);
 
-			res.push_back(sizeof(output_y_weight_y_config) * window_sizes[1] * output_configuration_specific.dimension_sizes[1] * updater_window_x_block_count);
+			if (updater_window_x_block_count > 1)
+				res.push_back(sizeof(output_y_weight_y_weight_x_config) * window_sizes[1] * output_configuration_specific.dimension_sizes[1] * updater_window_x_block_count);
+			else
+				res.push_back(sizeof(output_y_weight_y_config) * window_sizes[1] * output_configuration_specific.dimension_sizes[1]);
 			res.push_back(sizeof(feature_map_config) * input_configuration_specific.feature_map_count * updater_output_feature_map_block_count);
 
 			if (backprop_required)

@@ -45,17 +45,17 @@ namespace nnforge
 			return input_configuration;
 		}
 
-		virtual unsigned int get_entry_count() const
-		{
-			return entry_count;
-		}
-
 		virtual neuron_data_type::input_type get_input_type() const
 		{
 			return type_code;
 		}
 
 	protected:
+		virtual unsigned int get_actual_entry_count() const
+		{
+			return entry_count;
+		}
+
 		bool entry_available();
 
 	protected:

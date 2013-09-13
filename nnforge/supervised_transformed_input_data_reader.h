@@ -44,12 +44,14 @@ namespace nnforge
 
 		virtual layer_configuration_specific get_output_configuration() const;
 
-		virtual unsigned int get_entry_count() const;
-
 		virtual neuron_data_type::input_type get_input_type() const;
+
+		virtual void set_max_entries_to_read(unsigned int max_entries_to_read);
 
 	protected:
 		supervised_transformed_input_data_reader();
+
+		virtual unsigned int get_actual_entry_count() const;
 
 	protected:
 		supervised_data_reader_smart_ptr original_reader;

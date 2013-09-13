@@ -416,12 +416,6 @@ namespace nnforge
 
 				for(std::vector<testing_result_smart_ptr>::iterator it = res.begin(); it != res.end(); ++it)
 					(*it)->entry_count += entries_available_for_processing_count;
-
-				if (profile_mode)
-				{
-					entries_remained_for_loading = false;
-					entry_count_updated_in_profile_mode = entries_available_for_processing_count;
-				}
 			}
 
 			return res;

@@ -42,6 +42,8 @@ namespace nnforge
 			const dropout_layer_config& dropout,
 			bool is_direct);
 
+		void fill(float val);
+
 	private:
 		class mult_transform
 		{

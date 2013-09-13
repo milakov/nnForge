@@ -26,11 +26,22 @@
 namespace nnforge
 {
 	unsupervised_data_reader::unsupervised_data_reader()
+		: max_entries_to_read(std::numeric_limits<unsigned int>::max())
 	{
 	}
 
 	unsupervised_data_reader::~unsupervised_data_reader()
 	{
+	}
+
+	void unsupervised_data_reader::set_max_entries_to_read(unsigned int max_entries_to_read)
+	{
+		this->max_entries_to_read = max_entries_to_read;
+	}
+
+	unsigned int unsupervised_data_reader::get_entry_count() const
+	{
+		return std::min(max_entries_to_read, get_actual_entry_count());
 	}
 
 	size_t unsupervised_data_reader::get_input_neuron_elem_size() const

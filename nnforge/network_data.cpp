@@ -112,6 +112,12 @@ namespace nnforge
 		}
 	}
 
+	void network_data::fill(float val)
+	{
+		for(layer_data_list::iterator it = begin(); it != end(); ++it)
+			(*it)->fill(val);
+	}
+
 	std::string network_data::get_stat() const
 	{
 		std::string stat = "";

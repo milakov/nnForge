@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class convolution_2d_layer_updater_cuda_kepler : public layer_updater_cuda
+		class convolution_3d_layer_updater_cuda_fermi : public layer_updater_cuda
 		{
 		public:
-			convolution_2d_layer_updater_cuda_kepler();
+			convolution_3d_layer_updater_cuda_fermi();
 
-			virtual ~convolution_2d_layer_updater_cuda_kepler();
+			virtual ~convolution_3d_layer_updater_cuda_fermi();
 
 			virtual void enqueue_test(
 				unsigned int offset_input_entry_id,
@@ -77,8 +77,6 @@ namespace nnforge
 
 			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const;
 
-			virtual int get_dynamic_memobject_count() const;
-
 			std::vector<int> window_sizes;
 
 			int forward_x_block_size;
@@ -93,8 +91,8 @@ namespace nnforge
 			int backward_output_feature_map_group_size;
 			int backward_input_feature_map_block_count;
 
-			int updater_output_y_group_count;
-			int updater_output_y_group_size;
+			int updater_output_z_group_count;
+			int updater_output_z_group_size;
 			int updater_output_feature_map_block_count;
 			int updater_window_x_block_count;
 

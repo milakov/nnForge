@@ -49,9 +49,6 @@ namespace nnforge
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
 		float get_flops_for_single_entry() const;
 
-		bool profile_mode;
-		unsigned int entry_count_updated_in_profile_mode;
-
 	protected:
 		network_updater(
 			network_schema_smart_ptr schema,

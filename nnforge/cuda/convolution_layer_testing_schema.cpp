@@ -22,6 +22,8 @@
 #include "convolution_1d_layer_tester_cuda_kepler.h"
 #include "convolution_2d_layer_tester_cuda_fermi.h"
 #include "convolution_2d_layer_tester_cuda_kepler.h"
+#include "convolution_3d_layer_tester_cuda_fermi.h"
+#include "convolution_3d_layer_tester_cuda_kepler.h"
 #include "fully_connected_layer_tester_cuda.h"
 
 #include <boost/format.hpp>
@@ -74,8 +76,14 @@ namespace nnforge
 					else
 						res = layer_tester_cuda_smart_ptr(new convolution_2d_layer_tester_cuda_fermi());
 					break;
+				case 3:
+					if (cuda_config->get_compute_capability() >= 300)
+						res = layer_tester_cuda_smart_ptr(new convolution_3d_layer_tester_cuda_kepler());
+					else
+						res = layer_tester_cuda_smart_ptr(new convolution_3d_layer_tester_cuda_fermi());
+					break;
 				default:
-					throw neural_network_exception((boost::format("No CUDA tester for the convolution layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
+					throw neural_network_exception((boost::format("No CUDA tester for the convolutional layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
 					break;
 				}
 			}

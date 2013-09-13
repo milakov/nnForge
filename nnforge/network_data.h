@@ -54,6 +54,8 @@ namespace nnforge
 			const const_layer_list& layer_list,
 			random_generator& gen);
 
+		void fill(float val);
+
 		void apply_dropout_layer_config(
 			const std::map<unsigned int, dropout_layer_config>& layer_id_to_dropout_config_map,
 			bool is_direct);

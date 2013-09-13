@@ -993,13 +993,16 @@ namespace nnforge
 			get_weight_vector_bound_map());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
+		training_data_reader->set_max_entries_to_read(100);
 
-		std::vector<network_data_smart_ptr> training_speed;
+		std::vector<network_data_smart_ptr> training_speeds;
 		std::vector<network_data_smart_ptr> data;
 
 		for(unsigned int i = 0; i < ann_count; ++i)
 		{
-			training_speed.push_back(network_data_smart_ptr(new network_data(*schema)));
+			network_data_smart_ptr ts(new network_data(*schema));
+			ts->fill(training_speed);
+			training_speeds.push_back(ts);
 
 			network_data_smart_ptr data_elem(new network_data(*schema));
 			{
@@ -1008,8 +1011,6 @@ namespace nnforge
 			}
 			data.push_back(data_elem);
 		}
-
-		updater->profile_mode = true;
 
 		std::vector<float> random_uniform_list(1 << 10);
 		random_generator gen = rnd::get_random_generator();
@@ -1020,14 +1021,14 @@ namespace nnforge
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		updater->update(
 			*training_data_reader,
-			training_speed,
+			training_speeds,
 			data);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		float time_to_complete_seconds = sec.count();
 
 		if (time_to_complete_seconds != 0.0F)
 		{
-			float flops = static_cast<float>(updater->entry_count_updated_in_profile_mode) * updater->get_flops_for_single_entry() * static_cast<float>(ann_count);
+			float flops = static_cast<float>(training_data_reader->get_entry_count()) * updater->get_flops_for_single_entry() * static_cast<float>(ann_count);
 			float gflops = flops / time_to_complete_seconds * 1.0e-9F;
 			std::cout << (boost::format("%|1$.1f| GFLOPs, %|2$.2f| seconds") % gflops % time_to_complete_seconds) << std::endl;
 		}

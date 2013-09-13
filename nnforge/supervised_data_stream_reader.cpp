@@ -84,7 +84,7 @@ namespace nnforge
 
 	bool supervised_data_stream_reader::entry_available()
 	{
-		return (entry_read_count < entry_count);
+		return (entry_read_count < get_entry_count());
 	}
 
 	void supervised_data_stream_reader::rewind(unsigned int entry_id)
