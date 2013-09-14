@@ -40,7 +40,7 @@ __global__ void fully_connected_upd_kernel(
 	int threadblock_size = blockDim.x;
 
 	float sum = 0.0F;
-	const float * current_input = input + (int)((different_input ? entry_id * input_neuron_count : 0) * input_neuron_count);
+	const float * current_input = input + (int)(different_input ? (entry_id * input_neuron_count): 0);
 	const float * current_weights = weights + (int)((entry_id * output_neuron_count + output_neuron_id) * input_neuron_count);
 	int current_input_neuron_id = thread_id;
 	for(int i = 0; i < min_iteration_count; ++i)

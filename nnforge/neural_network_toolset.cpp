@@ -993,11 +993,12 @@ namespace nnforge
 			get_weight_vector_bound_map());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
-		training_data_reader->set_max_entries_to_read(100);
+		training_data_reader->set_max_entries_to_read(200);
 
 		std::vector<network_data_smart_ptr> training_speeds;
 		std::vector<network_data_smart_ptr> data;
 
+		random_generator data_gen = rnd::get_random_generator(47597);
 		for(unsigned int i = 0; i < ann_count; ++i)
 		{
 			network_data_smart_ptr ts(new network_data(*schema));
@@ -1005,10 +1006,7 @@ namespace nnforge
 			training_speeds.push_back(ts);
 
 			network_data_smart_ptr data_elem(new network_data(*schema));
-			{
-				boost::filesystem::ifstream in(get_working_data_folder() / data_filename, std::ios_base::in | std::ios_base::binary);
-				data_elem->read(in);
-			}
+			data_elem->randomize(*schema, data_gen);
 			data.push_back(data_elem);
 		}
 

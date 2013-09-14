@@ -340,7 +340,8 @@ namespace nnforge
 			if (initial_threadblock_count >= minimum_threadblock_count)
 				return 1;
 
-			int group_count = std::min<int>(minimum_threadblock_count / initial_threadblock_count, static_cast<int>(powf(static_cast<float>(divisible), 2.0F/3.0F)));
+//			int group_count = std::min<int>(minimum_threadblock_count / initial_threadblock_count, static_cast<int>(powf(static_cast<float>(divisible), 2.0F/3.0F)));
+			int group_count = std::min<int>(minimum_threadblock_count / initial_threadblock_count, static_cast<int>(divisible));
 			int iteration_count = (divisible + group_count - 1) / group_count;
 			group_count = (divisible + iteration_count - 1) / iteration_count;
 
