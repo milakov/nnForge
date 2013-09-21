@@ -61,7 +61,7 @@ namespace nnforge
 	const char * neural_network_toolset::snapshot_subfolder_name = "snapshot";
 	const char * neural_network_toolset::ann_snapshot_subfolder_name = "ann_snapshot";
 	const char * neural_network_toolset::snapshot_invalid_subfolder_name = "invalid";
-	const char * neural_network_toolset::batch_subfolder_name = "batch";
+	const char * neural_network_toolset::ann_subfolder_name = "batch";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
 
 	neural_network_toolset::neural_network_toolset(factory_generator_smart_ptr factory)
@@ -286,7 +286,7 @@ namespace nnforge
 
 		boost::filesystem::ifstream ifs(config_file);
 		if (!ifs)
-			throw std::runtime_error("can not open config file");
+			throw std::runtime_error((boost::format("Can not open config file %1%") % config_file.string()).str());
 
 		boost::program_options::store(parse_config_file(ifs, config_file_options, true), vm);
 		boost::program_options::notify(vm);
@@ -304,6 +304,11 @@ namespace nnforge
 		hessian_factory = factory->create_hessian_factory();
 
 		return (action.size() > 0);
+	}
+
+	std::string neural_network_toolset::get_action() const
+	{
+		return action;
 	}
 
 	std::vector<string_option> neural_network_toolset::get_string_options()
@@ -339,6 +344,11 @@ namespace nnforge
 	boost::filesystem::path neural_network_toolset::get_working_data_folder() const
 	{
 		return working_data_folder;
+	}
+
+	boost::filesystem::path neural_network_toolset::get_ann_subfolder_name() const
+	{
+		return ann_subfolder_name;
 	}
 
 	void neural_network_toolset::randomize_data()
@@ -436,7 +446,7 @@ namespace nnforge
 	{
 		network_tester_smart_ptr tester = get_tester();
 
-		boost::filesystem::path batch_folder = get_working_data_folder() / batch_subfolder_name;
+		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 
 		std::tr1::regex expression(trained_ann_index_extractor_pattern);
 		std::tr1::cmatch what;
@@ -480,7 +490,7 @@ namespace nnforge
 	{
 		network_tester_smart_ptr tester = get_tester();
 
-		boost::filesystem::path batch_folder = get_working_data_folder() / batch_subfolder_name;
+		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 
 		std::tr1::regex expression(trained_ann_index_extractor_pattern);
 		std::tr1::cmatch what;
@@ -793,7 +803,7 @@ namespace nnforge
 		std::tr1::cmatch what;
 
 		int max_index = -1;
-		boost::filesystem::path batch_folder = get_working_data_folder() / batch_subfolder_name;
+		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(batch_folder); it != boost::filesystem::directory_iterator(); it++)
 		{
 			boost::filesystem::path file_path = it->path();
@@ -937,7 +947,7 @@ namespace nnforge
 		boost::filesystem::path batch_folder;
 		if (batch)
 		{
-			batch_folder = get_working_data_folder() / batch_subfolder_name;
+			batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 			boost::filesystem::create_directories(batch_folder);
 
 			unsigned int starting_index = get_starting_index_for_batch_training();

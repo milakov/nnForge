@@ -44,6 +44,8 @@ namespace nnforge
 		// Returns true if action is specified
 		bool parse(int argc, char* argv[]);
 
+		std::string get_action() const;
+
 		void do_action();
 
 	protected:
@@ -99,6 +101,8 @@ namespace nnforge
 
 		virtual std::vector<data_transformer_smart_ptr> get_output_data_transformer_list_for_testing() const;
 
+		virtual boost::filesystem::path get_ann_subfolder_name() const;
+
 	protected:
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
@@ -113,7 +117,7 @@ namespace nnforge
 		static const char * snapshot_subfolder_name;
 		static const char * ann_snapshot_subfolder_name;
 		static const char * snapshot_invalid_subfolder_name;
-		static const char * batch_subfolder_name;
+		static const char * ann_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
 
 		network_tester_factory_smart_ptr tester_factory;

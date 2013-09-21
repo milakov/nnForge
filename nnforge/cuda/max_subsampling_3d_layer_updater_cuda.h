@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class max_subsampling_2d_layer_updater_cuda : public layer_updater_cuda
+		class max_subsampling_3d_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			max_subsampling_2d_layer_updater_cuda();
+			max_subsampling_3d_layer_updater_cuda();
 
-			virtual ~max_subsampling_2d_layer_updater_cuda();
+			virtual ~max_subsampling_3d_layer_updater_cuda();
 
 			virtual void enqueue_test(
 				unsigned int offset_input_entry_id,
