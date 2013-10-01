@@ -78,11 +78,11 @@ __global__ void convolution_normalize_weights_to_max_l2_norm_kernel(
 		int current_weight_id = thread_id;
 		for(int i = 0; i < min_iteration_count; ++i)
 		{
-			weights[base_weight_id + current_weight_id] += weights_read_copy[base_weight_id + current_weight_id] * mult;
+			weights[base_weight_id + current_weight_id] = weights_read_copy[base_weight_id + current_weight_id] * mult;
 			current_weight_id += threadblock_size;
 		}
 		if (current_weight_id < incoming_weight_count_per_output_neuron)
-			weights[base_weight_id + current_weight_id] += weights_read_copy[base_weight_id + current_weight_id] * mult;
+			weights[base_weight_id + current_weight_id] = weights_read_copy[base_weight_id + current_weight_id] * mult;
 	}
 }
 
