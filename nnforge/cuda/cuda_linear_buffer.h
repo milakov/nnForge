@@ -53,6 +53,10 @@ namespace nnforge
 
 			operator const unsigned int *() const;
 
+			operator int *();
+
+			operator const int *() const;
+
 		protected:
 			cuda_linear_buffer();
 

@@ -87,5 +87,15 @@ namespace nnforge
 		{
 			return (unsigned int *)(get_buf());
 		}
+
+		cuda_linear_buffer::operator int *()
+		{
+			return (int *)(get_buf());
+		}
+
+		cuda_linear_buffer::operator const int *() const
+		{
+			return (int *)(get_buf());
+		}
 	}
 }
