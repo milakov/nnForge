@@ -759,7 +759,7 @@ namespace nnforge
 		output_neuron_class_set actual_cs(*testing_res.actual_output_neuron_value_set);
 		classifier_result cr(predicted_cs, actual_cs);
 
-		reader.reset();
+		reader->reset();
 
 		tester->set_input_configuration_specific(reader->get_input_configuration());
 
