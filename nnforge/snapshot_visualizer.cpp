@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <iostream>
 
 namespace nnforge
 {
@@ -83,7 +84,16 @@ namespace nnforge
 					current_data.begin() + ((current_height * feature_map_width) * (feature_map_id + 1)),
 					featureMapSubImage.begin(),
 					norm);
+
+				/*
+				copy(
+					current_data.begin() + ((current_height * feature_map_width) * feature_map_id),
+					current_data.begin() + ((current_height * feature_map_width) * (feature_map_id + 1)),
+					std::ostream_iterator<float>(std::cout, " "));
+				std::cout << std::endl;
+				*/
 			}
+			//std::cout << std::endl;
 		}
 
 		if (!cv::imwrite(file_path, image))
