@@ -31,7 +31,12 @@ namespace nnforge
 	namespace plain
 	{
 		factory_generator_plain::factory_generator_plain()
+			#ifdef _OPENMP
+			: plain_openmp_thread_count(omp_get_max_threads())
+			#else
 			: plain_openmp_thread_count(1)
+			#endif
+			, plain_max_global_memory_usage(0.5F)
 		{
 		}
 
