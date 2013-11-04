@@ -223,7 +223,7 @@ namespace nnforge
 							in_it += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
 
 						float err = *out_it;
-						unsigned int max_index = *((unsigned int *)(&(*max_indexes_it)));
+						unsigned int max_index = *((const unsigned int *)(&(*max_indexes_it)));
 						for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
 						{
 							*(in_it + (*(offset_list_it + i))) = ((i == max_index) ? err : 0.0F);
