@@ -25,6 +25,7 @@ namespace nnforge
 	network_trainer::network_trainer(network_schema_smart_ptr schema)
 		: schema(schema)
 		, iteration_count(50)
+		, learning_rate_decay_tail_iteration_count(0)
 	{
 	}
 
@@ -98,5 +99,15 @@ namespace nnforge
 		float mse = state.history.back()->get_mse();
 		bool sanity_check = (mse < 1.0e+10F) && (-mse > -1.0E+10F) && !(-mse < -1.0E+10F);
 		return !sanity_check;
+	}
+
+	float network_trainer::get_tail_decay_factor(unsigned int iteration) const
+	{
+		int first_iteration_with_decay = std::max(static_cast<int>(iteration_count) - static_cast<int>(learning_rate_decay_tail_iteration_count), 1);
+		int tail_degradation_iteration = static_cast<int>(iteration) - first_iteration_with_decay + 1;
+		if (tail_degradation_iteration <= 0)
+			return 1.0F;
+		else
+			return powf(0.5F, static_cast<float>(tail_degradation_iteration));
 	}
 }

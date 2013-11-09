@@ -134,6 +134,7 @@ namespace nnforge
 		unsigned int snapshot_count;
 		float training_speed;
 		float training_speed_degradaton;
+		unsigned int learning_rate_decay_tail_iteration_count;
 		float max_mu;
 		float mu_increase_factor;
 		unsigned int batch_offset;

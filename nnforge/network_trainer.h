@@ -41,9 +41,12 @@ namespace nnforge
 			network_data_pusher& pusher);
 
 		unsigned int iteration_count;
+		unsigned int learning_rate_decay_tail_iteration_count;
 
 	protected:
 		network_trainer(network_schema_smart_ptr schema);
+
+		float get_tail_decay_factor(unsigned int iteration) const;
 
 		virtual void initialize_train(supervised_data_reader& reader) = 0;
 

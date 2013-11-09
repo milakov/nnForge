@@ -196,6 +196,7 @@ namespace nnforge
 			("max_mu", boost::program_options::value<float>(&max_mu)->default_value(5.0e-4F), "Maximum Mu during training.")
 			("training_speed", boost::program_options::value<float>(&training_speed)->default_value(0.02F), "Eta/Mu ratio.")
 			("training_speed_degradation", boost::program_options::value<float>(&training_speed_degradaton)->default_value(1.0F), "Degradation of training speed at each iteration.")
+			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_iteration_count)->default_value(0), "Number of tail iterations with gradually lowering training speed.")
 			("batch_offset", boost::program_options::value<unsigned int>(&batch_offset)->default_value(0), "shift initial ANN ID when batch training.")
 			;
 
@@ -946,6 +947,7 @@ namespace nnforge
 		trainer.eta_degradation = training_speed_degradaton;
 		trainer.max_mu = max_mu;
 		trainer.mu_increase_factor = mu_increase_factor;
+		trainer.learning_rate_decay_tail_iteration_count = learning_rate_decay_tail_iteration_count;
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
 

@@ -167,9 +167,9 @@ namespace nnforge
 		float res = mu * speed;
 
 		if (history.size() > 0)
-		{
 			res *= powf(eta_degradation, static_cast<float>(history.size()));
-		}
+
+		res *= get_tail_decay_factor(static_cast<unsigned int>(history.size()));
 
 		return res;
 	}
