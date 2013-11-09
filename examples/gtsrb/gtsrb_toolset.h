@@ -44,7 +44,7 @@ public:
 	virtual ~gtsrb_toolset();
 
 protected:
-	virtual nnforge::network_schema_smart_ptr get_schema();
+	virtual nnforge::network_schema_smart_ptr get_schema() const;
 
 	virtual std::map<unsigned int, float> get_dropout_rate_map() const;
 

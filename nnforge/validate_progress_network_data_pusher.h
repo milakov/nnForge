@@ -32,6 +32,7 @@ namespace nnforge
 			network_tester_smart_ptr tester,
 			supervised_data_reader_smart_ptr reader,
 			testing_complete_result_set_visualizer_smart_ptr visualizer,
+			bool is_squared_hinge_loss,
 			unsigned int sample_count);
 
 		virtual ~validate_progress_network_data_pusher();
@@ -43,5 +44,6 @@ namespace nnforge
 		supervised_data_reader_smart_ptr reader;
 		output_neuron_value_set_smart_ptr actual_output_neuron_value_set;
 		testing_complete_result_set_visualizer_smart_ptr visualizer;
+		bool is_squared_hinge_loss;
 	};
 }

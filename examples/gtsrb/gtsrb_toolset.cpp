@@ -278,7 +278,7 @@ std::map<unsigned int, float> gtsrb_toolset::get_dropout_rate_map() const
 	return res;
 }
 
-nnforge::network_schema_smart_ptr gtsrb_toolset::get_schema()
+nnforge::network_schema_smart_ptr gtsrb_toolset::get_schema() const
 {
 	nnforge::network_schema_smart_ptr schema(new nnforge::network_schema());
 	if (is_color)

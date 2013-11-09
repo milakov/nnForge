@@ -27,9 +27,11 @@ namespace nnforge
 
 	network_updater::network_updater(
 		network_schema_smart_ptr schema,
+		bool is_squared_hinge_loss,
 		const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 		const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map)
 		: schema(schema)
+		, is_squared_hinge_loss(is_squared_hinge_loss)
 		, layer_to_dropout_rate_map(layer_to_dropout_rate_map)
 		, random_uniform_list(1 << random_list_bits)
 		, layer_to_weight_vector_bound_map(layer_to_weight_vector_bound_map)

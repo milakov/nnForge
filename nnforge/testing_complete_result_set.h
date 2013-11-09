@@ -27,14 +27,17 @@ namespace nnforge
 		testing_complete_result_set();
 
 	public:
-		testing_complete_result_set(output_neuron_value_set_smart_ptr actual_output_neuron_value_set);
+		testing_complete_result_set(
+			bool is_squared_hinge_loss,
+			output_neuron_value_set_smart_ptr actual_output_neuron_value_set);
 
-        void recalculate_mse();
+		void recalculate_mse();
 
 		void resize_predicted_output_neuron_value_set(unsigned int entry_count);
 
 		testing_result_smart_ptr mse;
 		output_neuron_value_set_smart_ptr predicted_output_neuron_value_set;
 		output_neuron_value_set_smart_ptr actual_output_neuron_value_set;
+		bool is_squared_hinge_loss;
 	};
 }

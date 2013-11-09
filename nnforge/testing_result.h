@@ -25,16 +25,22 @@ namespace nnforge
 	class testing_result
 	{
 	public:
-		testing_result();
+		testing_result(bool is_squared_hingle_loss);
 
-		testing_result(unsigned int neuron_count);
+		testing_result(
+			bool is_squared_hingle_loss,
+			unsigned int neuron_count);
 
 		float get_mse() const;
 
 		std::vector<float> cumulative_mse_list;
 		unsigned int entry_count;
+		bool is_squared_hingle_loss;
 		float flops;
 		float time_to_complete_seconds;
+
+	private:
+		testing_result();
 	};
 
 	std::ostream& operator<< (std::ostream& out, const testing_result& val);

@@ -50,8 +50,9 @@ __global__ void convert_compacted_to_raw_upd_kernel(
 __global__ void compute_error_upd_kernel(
 	float * __restrict errors,
 	float * __restrict mse,
-	const float * __restrict desired_output_neurons,
 	const float * __restrict actual_output_neurons,
+	const float * __restrict predicted_output_neurons,
+	bool is_squared_hinge_loss,
 	int output_entry_id,
 	int output_elem_count,
 	int updater_entry_count)
@@ -62,7 +63,13 @@ __global__ void compute_error_upd_kernel(
 	if (in_bounds)
 	{
 		int offset = updater_entry_id * output_elem_count + elem_id;
-		float err = desired_output_neurons[output_entry_id * output_elem_count + elem_id] - actual_output_neurons[offset];
+		float actual_val = actual_output_neurons[output_entry_id * output_elem_count + elem_id];
+		float predicted_val = predicted_output_neurons[offset];
+		float err = 0.0F;
+		{
+			if (!is_squared_hinge_loss || ((actual_val > 0.0F) && (predicted_val < actual_val)) || ((actual_val <= 0.0F) && (predicted_val > actual_val)))
+				err = actual_val - predicted_val;
+		}
 		errors[offset] = err;
 		mse[offset] += err * err * 0.5F;
 	}
@@ -93,10 +100,11 @@ namespace nnforge
 
 		network_updater_cuda::network_updater_cuda(
 			network_schema_smart_ptr schema,
+			bool is_squared_hinge_loss,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 			cuda_running_configuration_const_smart_ptr cuda_config)
-			: network_updater(schema, layer_to_dropout_rate_map, layer_to_weight_vector_bound_map)
+			: network_updater(schema, is_squared_hinge_loss, layer_to_dropout_rate_map, layer_to_weight_vector_bound_map)
 			, cuda_config(cuda_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -170,7 +178,7 @@ namespace nnforge
 				return res;
 
 			for(unsigned int i = 0; i < training_speed_vector_list.size(); ++i)
-				res.push_back(testing_result_smart_ptr(new testing_result(output_neuron_count)));
+				res.push_back(testing_result_smart_ptr(new testing_result(is_squared_hinge_loss, output_neuron_count)));
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data = enqueue_get_data(data_list, *command_stream);
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > training_speed_data = enqueue_get_training_speed(training_speed_vector_list, *command_stream);
@@ -414,6 +422,7 @@ namespace nnforge
 								*mse_buf,
 								*output_buf[current_command_slot],
 								*output_buffer,
+								is_squared_hinge_loss,
 								input_entry_id,
 								output_neuron_count,
 								updater_entry_count);

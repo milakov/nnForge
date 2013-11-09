@@ -33,11 +33,13 @@ namespace nnforge
 
 		network_updater_smart_ptr network_updater_plain_factory::create(
 			network_schema_smart_ptr schema,
+			bool is_squared_hinge_loss,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map) const
 		{
 			return network_updater_smart_ptr(new network_updater_plain(
 				schema,
+				is_squared_hinge_loss,
 				layer_to_dropout_rate_map,
 				layer_to_weight_vector_bound_map,
 				plain_config));

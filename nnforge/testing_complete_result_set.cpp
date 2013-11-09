@@ -22,8 +22,11 @@ namespace nnforge
 	{
 	}
 
-	testing_complete_result_set::testing_complete_result_set(output_neuron_value_set_smart_ptr actual_output_neuron_value_set)
-		: actual_output_neuron_value_set(actual_output_neuron_value_set)
+	testing_complete_result_set::testing_complete_result_set(
+		bool is_squared_hinge_loss,
+		output_neuron_value_set_smart_ptr actual_output_neuron_value_set)
+		: is_squared_hinge_loss(is_squared_hinge_loss)
+		, actual_output_neuron_value_set(actual_output_neuron_value_set)
 		, predicted_output_neuron_value_set(
 			new output_neuron_value_set(
 				static_cast<unsigned int>(actual_output_neuron_value_set->neuron_value_list.size()),
@@ -38,7 +41,7 @@ namespace nnforge
 
 	void testing_complete_result_set::recalculate_mse()
 	{
-		mse = testing_result_smart_ptr(new testing_result(static_cast<unsigned int>(actual_output_neuron_value_set->neuron_value_list[0].size())));
+		mse = testing_result_smart_ptr(new testing_result(is_squared_hinge_loss, static_cast<unsigned int>(actual_output_neuron_value_set->neuron_value_list[0].size())));
 		mse->entry_count = static_cast<unsigned int>(actual_output_neuron_value_set->neuron_value_list.size());
 
 		std::vector<std::vector<float> >::const_iterator it2 = predicted_output_neuron_value_set->neuron_value_list.begin();
@@ -48,8 +51,11 @@ namespace nnforge
 			std::vector<float>::const_iterator it_predicted = it2->begin();
 			for(std::vector<float>::iterator it_mse = mse->cumulative_mse_list.begin(); it_mse != mse->cumulative_mse_list.end(); ++it_mse, ++it_actual, ++it_predicted)
 			{
-				float diff = (*it_actual - *it_predicted);
-				*it_mse += diff * diff * 0.5F;
+				if (!is_squared_hinge_loss || ((*it_actual > 0.0F) && (*it_predicted < *it_actual)) || ((*it_actual <= 0.0F) && (*it_predicted > *it_actual)))
+				{
+					float diff = (*it_actual - *it_predicted);
+					*it_mse += diff * diff * 0.5F;
+				}
 			}
 		}
 	}

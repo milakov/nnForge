@@ -33,6 +33,7 @@ namespace nnforge
 		public:
 			network_updater_cuda(
 				network_schema_smart_ptr schema,
+				bool is_squared_hinge_loss,
 				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 				cuda_running_configuration_const_smart_ptr cuda_config);

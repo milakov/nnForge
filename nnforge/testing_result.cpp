@@ -22,15 +22,19 @@
 
 namespace nnforge
 {
-	testing_result::testing_result()
+	testing_result::testing_result(bool is_squared_hingle_loss)
 		: entry_count(0)
+		, is_squared_hingle_loss(is_squared_hingle_loss)
 		, flops(0.0F)
 		, time_to_complete_seconds(0.0F)
 	{
 	}
 
-	testing_result::testing_result(unsigned int neuron_count)
+	testing_result::testing_result(
+		bool is_squared_hingle_loss,
+		unsigned int neuron_count)
 		: entry_count(0)
+		, is_squared_hingle_loss(is_squared_hingle_loss)
 		, flops(0.0F)
 		, time_to_complete_seconds(0.0F)
 	{
@@ -48,7 +52,11 @@ namespace nnforge
 
 	std::ostream& operator<< (std::ostream& out, const testing_result& val)
 	{
-		out << (boost::format("MSE %|1$.6f|") % val.get_mse());
+		if (val.is_squared_hingle_loss)
+			out << "SHL";
+		else
+			out << "MSE";
+		out << (boost::format(" %|1$.6f|") % val.get_mse());
 
 		if (val.time_to_complete_seconds != 0.0F)
 		{

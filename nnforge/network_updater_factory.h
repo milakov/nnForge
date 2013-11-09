@@ -30,6 +30,7 @@ namespace nnforge
 
 		virtual network_updater_smart_ptr create(
 			network_schema_smart_ptr schema,
+			bool is_squared_hinge_loss,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map) const = 0;
 

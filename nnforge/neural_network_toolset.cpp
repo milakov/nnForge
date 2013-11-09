@@ -428,7 +428,7 @@ namespace nnforge
 
 		do
 		{
-			testing_complete_result_set testing_res(actual_neuron_value_set);
+			testing_complete_result_set testing_res(is_squared_hinge_loss(), actual_neuron_value_set);
 			boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 			tester->test(
 				*reader,
@@ -469,7 +469,7 @@ namespace nnforge
 
 				tester->set_data(data);
 
-				testing_complete_result_set testing_res(actual_neuron_value_set);
+				testing_complete_result_set testing_res(is_squared_hinge_loss(), actual_neuron_value_set);
 				boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 				tester->test(
 					reader,
@@ -547,7 +547,7 @@ namespace nnforge
 
 			std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(*reader, actual_neuron_value_set);
 
-			testing_complete_result_set complete_result_set_avg(actual_neuron_value_set);
+			testing_complete_result_set complete_result_set_avg(is_squared_hinge_loss(), actual_neuron_value_set);
 			{
 				complete_result_set_avg.predicted_output_neuron_value_set = output_neuron_value_set_smart_ptr(new output_neuron_value_set(predicted_neuron_value_set_list, output_neuron_value_set::merge_average));
 				complete_result_set_avg.recalculate_mse();
@@ -748,7 +748,7 @@ namespace nnforge
 		unsigned int sample_count = get_validating_sample_count();
 		output_neuron_value_set_smart_ptr actual_neuron_value_set = reader->get_output_neuron_value_set(sample_count);
 
-		testing_complete_result_set testing_res(actual_neuron_value_set);
+		testing_complete_result_set testing_res(is_squared_hinge_loss(), actual_neuron_value_set);
 		if (reader->get_output_configuration().get_neuron_count() == 1)
 			throw "Invalid snapshots is not implemented for single output neuron configuration";
 		tester->test(
@@ -826,7 +826,12 @@ namespace nnforge
 		if (is_training_with_validation())
 		{
 			supervised_data_reader_smart_ptr validating_data_reader = get_data_reader_for_validating();
-			res.push_back(network_data_pusher_smart_ptr(new validate_progress_network_data_pusher(tester_factory->create(schema), validating_data_reader, get_validating_visualizer(), get_validating_sample_count())));
+			res.push_back(network_data_pusher_smart_ptr(new validate_progress_network_data_pusher(
+				tester_factory->create(schema),
+				validating_data_reader,
+				get_validating_visualizer(),
+				is_squared_hinge_loss(),
+				get_validating_sample_count())));
 		}
 
 		return res;
@@ -928,6 +933,7 @@ namespace nnforge
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
+			is_squared_hinge_loss(),
 			get_dropout_rate_map(),
 			get_weight_vector_bound_map());
 
@@ -999,6 +1005,7 @@ namespace nnforge
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
+			is_squared_hinge_loss(),
 			get_dropout_rate_map(),
 			get_weight_vector_bound_map());
 
@@ -1142,5 +1149,10 @@ namespace nnforge
 	std::vector<data_transformer_smart_ptr> neural_network_toolset::get_output_data_transformer_list_for_testing() const
 	{
 		return std::vector<data_transformer_smart_ptr>();
+	}
+
+	bool neural_network_toolset::is_squared_hinge_loss() const
+	{
+		return false;
 	}
 }

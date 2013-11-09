@@ -25,10 +25,12 @@ namespace nnforge
 		network_tester_smart_ptr tester,
 		supervised_data_reader_smart_ptr reader,
 		testing_complete_result_set_visualizer_smart_ptr visualizer,
+		bool is_squared_hinge_loss,
 		unsigned int sample_count)
 		: tester(tester)
 		, reader(reader)
 		, visualizer(visualizer)
+		, is_squared_hinge_loss(is_squared_hinge_loss)
 	{
 		actual_output_neuron_value_set = reader->get_output_neuron_value_set(sample_count);
 	}
@@ -41,7 +43,7 @@ namespace nnforge
 	{
 		tester->set_data(task_state.data);
 
-		testing_complete_result_set testing_res(actual_output_neuron_value_set);
+		testing_complete_result_set testing_res(is_squared_hinge_loss, actual_output_neuron_value_set);
 		tester->test(
 			*reader,
 			testing_res);

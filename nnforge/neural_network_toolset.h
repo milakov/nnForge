@@ -61,7 +61,7 @@ namespace nnforge
 
 		virtual void prepare_testing_data();
 
-		virtual network_schema_smart_ptr get_schema() = 0;
+		virtual network_schema_smart_ptr get_schema() const = 0;
 
 		virtual std::map<unsigned int, float> get_dropout_rate_map() const;
 
@@ -102,6 +102,8 @@ namespace nnforge
 		virtual std::vector<data_transformer_smart_ptr> get_output_data_transformer_list_for_testing() const;
 
 		virtual boost::filesystem::path get_ann_subfolder_name() const;
+
+		virtual bool is_squared_hinge_loss() const;
 
 	protected:
 		static const char * training_data_filename;

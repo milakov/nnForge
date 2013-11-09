@@ -52,6 +52,7 @@ namespace nnforge
 	protected:
 		network_updater(
 			network_schema_smart_ptr schema,
+			bool is_squared_hinge_loss,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map);
 
@@ -69,6 +70,7 @@ namespace nnforge
 
 	protected:
 		network_schema_smart_ptr schema;
+		bool is_squared_hinge_loss;
 		std::map<unsigned int, float> layer_to_dropout_rate_map;
 		layer_configuration_specific_list layer_config_list;
 		std::vector<float> random_uniform_list;

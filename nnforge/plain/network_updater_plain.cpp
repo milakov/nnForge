@@ -33,10 +33,11 @@ namespace nnforge
 
 		network_updater_plain::network_updater_plain(
 			network_schema_smart_ptr schema,
+			bool is_squared_hinge_loss,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 			plain_running_configuration_const_smart_ptr plain_config)
-			: network_updater(schema, layer_to_dropout_rate_map, layer_to_weight_vector_bound_map)
+			: network_updater(schema, is_squared_hinge_loss, layer_to_dropout_rate_map, layer_to_weight_vector_bound_map)
 			, plain_config(plain_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -93,7 +94,7 @@ namespace nnforge
 				return res;
 
 			for(unsigned int i = 0; i < training_speed_vector_list.size(); ++i)
-				res.push_back(testing_result_smart_ptr(new testing_result(output_neuron_count)));
+				res.push_back(testing_result_smart_ptr(new testing_result(is_squared_hinge_loss, output_neuron_count)));
 
 			buffer_plain_size_configuration buffers_config;
 			update_buffers_configuration(buffers_config, updater_entry_count);
@@ -323,7 +324,13 @@ namespace nnforge
 						for(int i = 0; i < elem_count; ++i)
 						{
 							int elem_id = i % output_neuron_count;
-							float err = *(actual_output_buf_it + elem_id) - *(output_buffer_it + i);
+							float predicted_val = *(output_buffer_it + i);
+							float actual_val = *(actual_output_buf_it + elem_id);
+							float err = 0.0F;
+							{
+								if (!is_squared_hinge_loss || ((actual_val > 0.0F) && (predicted_val < actual_val)) || ((actual_val <= 0.0F) && (predicted_val > actual_val)))
+									err = actual_val - predicted_val;
+							}
 							*(initial_error_it + i) = err;
 							*(temp_mse_it + i) += (err * err);
 						}
