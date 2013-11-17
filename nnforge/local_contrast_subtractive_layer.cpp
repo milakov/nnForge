@@ -47,14 +47,15 @@ namespace nnforge
 		if (window_sizes.size() == 0)
 			throw neural_network_exception("window sizes for local contrast subtractive layer may not be empty");
 
-		if (feature_maps_affected.empty())
-			throw neural_network_exception("affected feature map list for local contrast subtractive layer may not be empty");
-
 		for(unsigned int i = 0; i < window_sizes.size(); i++)
 		{
 			if (window_sizes[i] == 0)
 				throw neural_network_exception("window dimension for local contrast subtractive layer may not be zero");
 		}
+
+		if (this->feature_maps_affected.empty())
+			for(unsigned int i = 0; i < feature_map_count; i++)
+				this->feature_maps_affected.push_back(i);
 
 		std::sort(this->feature_maps_affected.begin(), this->feature_maps_affected.end());
 		for(unsigned int i = 0; i < feature_map_count; i++)
