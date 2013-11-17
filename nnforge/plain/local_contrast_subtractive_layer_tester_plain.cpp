@@ -63,13 +63,13 @@ namespace nnforge
 				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
 
 			const std::vector<unsigned int>::const_iterator dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
-			const unsigned int feature_maps_affected_acount = static_cast<unsigned int>(feature_maps_affected.size());
+			const unsigned int feature_maps_affected_count = static_cast<unsigned int>(feature_maps_affected.size());
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator feature_maps_affected_it = feature_maps_affected.begin();
 			const std::vector<float>::iterator input_buffer_it = input_buffer->begin();
 			const std::vector<std::vector<float> >::const_iterator window_weights_list_it = window_weights_list.begin();
 
-			const int total_workload = entry_count * feature_maps_affected_acount;
+			const int total_workload = entry_count * feature_maps_affected_count;
 			const int openmp_thread_count = plain_config->openmp_thread_count;
 			
 			#pragma omp parallel default(none) shared(additional_buffers) num_threads(openmp_thread_count)
@@ -87,8 +87,8 @@ namespace nnforge
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 				{
-					int entry_id = workload_id / feature_maps_affected_acount;
-					int affected_feature_map_id = workload_id - (entry_id * feature_maps_affected_acount);
+					int entry_id = workload_id / feature_maps_affected_count;
+					int affected_feature_map_id = workload_id - (entry_id * feature_maps_affected_count);
 
 					unsigned int current_output_buffer_index = 0;
 					unsigned int feature_map_id = *(feature_maps_affected_it + affected_feature_map_id);
