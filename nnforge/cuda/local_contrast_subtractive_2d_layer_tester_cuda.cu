@@ -284,34 +284,34 @@ namespace nnforge
 			switch(half_window_sizes[1])
 			{
 			case 1:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<1><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<1><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 2:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<2><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<2><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 3:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<3><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<3><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 4:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<4><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<4><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 5:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<5><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<5><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 6:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<6><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<6><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 7:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<7><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<7><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 8:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<8><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<8><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 9:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<9><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<9><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			case 10:
-				local_contrast_blur_vertical_and_subtract_exact_kernel<10><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[1], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
+				local_contrast_blur_vertical_and_subtract_exact_kernel<10><<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(*additional_buffers[0], *input_buffer, *schema_data[0], *schema_data[2], input_configuration_specific.feature_map_count, affected_feature_map_count, input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], entry_count);
 				break;
 			default:
 				local_contrast_blur_vertical_and_subtract_kernel<<<kernel_2nd_dims.first, kernel_2nd_dims.second, 0, stream_id>>>(
