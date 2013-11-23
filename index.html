@@ -36,6 +36,28 @@
 
 <p>nnForge is a library for training convolutional and fully-connected neural networks. It includes CPU and GPU (CUDA) backends.</p>
 
+<h2>
+<a name="layers" class="anchor" href="#layers"><span class="octicon octicon-link"></span></a>Layers</h2>
+
+<p>The library has a number of layers defined:</p>
+
+<ul>
+<li>Convolutional (CPU backend - no limitations, GPU backend - 1D, 2D, and 3D only)</li>
+<li>Fully connected</li>
+<li>Local contrast subtractive (CPU backend - no limitations, GPU backend - 2D only)</li>
+<li>RGB-&gt;YUV conversion (forward propagation only)</li>
+<li>Max spatial subsampling (CPU backend - no limitations, GPU backend - 2D and 3D only)</li>
+<li>Average spatial subsampling (CPU backend - no limitations, GPU backend - 2D only)</li>
+<li>Maxout - <a href="http://arxiv.org/abs/1302.4389">arXiv:1302.4389</a>
+</li>
+<li>Rectification - |x|</li>
+<li>Hyperbolic tangent - 1.7159*tanh(0.666666*x)</li>
+<li>Rectified linear unit - max(0,x)</li>
+<li>Soft rectified linear unit - log(1+exp(x))</li>
+<li>Softmax</li>
+</ul><h2>
+<a name="training" class="anchor" href="#training"><span class="octicon octicon-link"></span></a>Training</h2>
+
 <p>The library implements Stochastic Diagonal Levenberg-Marquardt training algorithm, well described in:</p>
 
 <ul>
@@ -45,14 +67,23 @@
 </li>
 </ul><p>You will find these papers at <a href="http://yann.lecun.com/exdb/publis/index.html">Yann LeCun site</a>.</p>
 
-<p>It also has "dropout" and "Upper bound on L2 norm of the weight vector" regularizations implemented:</p>
+<h2>
+<a name="regularization" class="anchor" href="#regularization"><span class="octicon octicon-link"></span></a>Regularization</h2>
+
+<p>The library also has "dropout" and "Upper bound on L2 norm of the weight vector" regularizations implemented:</p>
 
 <ul>
 <li>Improving neural networks by preventing co-adaptation of feature detectors, Geoffery Hinton, Nitish Srivastava, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov, <a href="http://arxiv.org/abs/1207.0580">arXiv:1207.0580</a>
 </li>
-</ul><p>The package contains nnForge library as well as examples, applications using the library.</p>
+</ul><h2>
+<a name="error-functions" class="anchor" href="#error-functions"><span class="octicon octicon-link"></span></a>Error functions</h2>
 
-<h2>
+<p>2 error functions are available:</p>
+
+<ul>
+<li>MSE - Mean Squared Error</li>
+<li>SHL - Squared Hinge Loss</li>
+</ul><h2>
 <a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p>nnForge is an open-source software distributed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
@@ -61,6 +92,8 @@
 <a name="download" class="anchor" href="#download"><span class="octicon octicon-link"></span></a>Download</h2>
 
 <p>Download the <a href="https://github.com/milakov/nnForge/tarball/master">latest version</a>. Access all the releases along with release notes on <a href="https://github.com/milakov/nnForge/releases">GitHub</a>.</p>
+
+<p>The package contains nnForge library as well as examples - applications using the library.</p>
 
 <h2>
 <a name="prerequisites" class="anchor" href="#prerequisites"><span class="octicon octicon-link"></span></a>Prerequisites</h2>
