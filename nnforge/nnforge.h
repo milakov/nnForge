@@ -35,6 +35,7 @@
 #include "supervised_data_stream_writer.h"
 #include "unsupervised_data_stream_reader.h"
 #include "unsupervised_data_stream_writer.h"
+#include "supervised_data_mem_reader.h"
 #include "rnd.h"
 
 #include "data_transformer_util.h"
