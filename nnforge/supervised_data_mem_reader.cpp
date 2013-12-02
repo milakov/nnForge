@@ -25,8 +25,8 @@ namespace nnforge
 	supervised_data_mem_reader::supervised_data_mem_reader(
 		const layer_configuration_specific& input_configuration,
 		const layer_configuration_specific& output_configuration,
-		const std::vector<std::shared_ptr<const std::vector<unsigned char> > >& input_data_list,
-		const std::vector<std::shared_ptr<const std::vector<float> > >& output_data_list)
+		const std::vector<std::tr1::shared_ptr<const std::vector<unsigned char> > >& input_data_list,
+		const std::vector<std::tr1::shared_ptr<const std::vector<float> > >& output_data_list)
 		: input_configuration(input_configuration)
 		, output_configuration(output_configuration)
 		, input_data_list_byte(input_data_list)
@@ -42,8 +42,8 @@ namespace nnforge
 	supervised_data_mem_reader::supervised_data_mem_reader(
 		const layer_configuration_specific& input_configuration,
 		const layer_configuration_specific& output_configuration,
-		const std::vector<std::shared_ptr<const std::vector<float> > >& input_data_list,
-		const std::vector<std::shared_ptr<const std::vector<float> > >& output_data_list)
+		const std::vector<std::tr1::shared_ptr<const std::vector<float> > >& input_data_list,
+		const std::vector<std::tr1::shared_ptr<const std::vector<float> > >& output_data_list)
 		: input_configuration(input_configuration)
 		, output_configuration(output_configuration)
 		, input_data_list_float(input_data_list)
