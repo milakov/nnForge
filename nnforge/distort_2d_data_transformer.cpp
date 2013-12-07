@@ -31,8 +31,6 @@ namespace nnforge
 		float max_shift_right_x,
 		float min_shift_down_y,
 		float max_shift_down_y,
-		float max_contrast_factor,
-		float max_absolute_brightness_shift,
 		bool flip_around_x_axis_allowed,
 		bool flip_around_y_axis_allowed)
 	{
@@ -42,8 +40,6 @@ namespace nnforge
 		scale_distribution = std::tr1::uniform_real<float>(1.0F / max_scale_factor, max_scale_factor);
 		shift_x_distribution = std::tr1::uniform_real<float>(min_shift_right_x, max_shift_right_x);
 		shift_y_distribution = std::tr1::uniform_real<float>(min_shift_down_y, max_shift_down_y);
-		contrast_distribution = std::tr1::uniform_real<float>(1.0F / max_contrast_factor, max_contrast_factor);
-		brightness_shift_distribution = std::tr1::uniform_real<float>(-max_absolute_brightness_shift, max_absolute_brightness_shift);
 		flip_around_x_distribution = std::tr1::uniform_int<int>(0, flip_around_x_axis_allowed ? 1 : 0);
 		flip_around_y_distribution = std::tr1::uniform_int<int>(0, flip_around_y_axis_allowed ? 1 : 0);
 	}
@@ -64,36 +60,30 @@ namespace nnforge
 		if (original_config.dimension_sizes.size() != 2)
 			throw neural_network_exception((boost::format("distort_2d_data_transformer is processing 2d data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
 
-		if (original_config.feature_map_count != 1)
-			throw neural_network_exception("distort_2d_data_transformer is implemented for 1 feature map data only");
-
-		cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed));
-
 		float rotation_angle = rotate_angle_distribution(generator);
 		float scale = scale_distribution(generator);
 		float shift_x = shift_x_distribution(generator);
 		float shift_y = shift_y_distribution(generator);
-		float contrast = contrast_distribution(generator);
-		float brightness_shift = brightness_shift_distribution(generator) * 255.0F;
 		bool flip_around_x_axis = (flip_around_x_distribution(generator) == 1);
 		bool flip_around_y_axis = (flip_around_y_distribution(generator) == 1);
 
-		data_transformer_util::change_brightness_and_contrast(
-			image,
-			contrast,
-			brightness_shift);
+		unsigned int neuron_count_per_feature_map = original_config.get_neuron_count_per_feature_map();
+		for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
+		{
+			cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed) + (neuron_count_per_feature_map * feature_map_id));
 
-		data_transformer_util::rotate_scale_shift(
-			image,
-			cv::Point2f(static_cast<float>(image.cols) * 0.5F, static_cast<float>(image.rows) * 0.5F),
-			rotation_angle,
-			scale,
-			shift_x,
-			shift_y);
+			data_transformer_util::rotate_scale_shift(
+				image,
+				cv::Point2f(static_cast<float>(image.cols) * 0.5F, static_cast<float>(image.rows) * 0.5F),
+				rotation_angle,
+				scale,
+				shift_x,
+				shift_y);
 
-		data_transformer_util::flip(
-			image,
-			flip_around_x_axis,
-			flip_around_y_axis);
+			data_transformer_util::flip(
+				image,
+				flip_around_x_axis,
+				flip_around_y_axis);
+		}
 	}
 }

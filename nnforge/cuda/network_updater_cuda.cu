@@ -24,6 +24,7 @@
 #include "cuda_event.h"
 #include "layer_updater_schema_factory.h"
 #include "weight_vector_bound_cuda_factory.h"
+#include "cuda_profiling.h"
 
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
@@ -516,6 +517,7 @@ namespace nnforge
 				unsigned int entries_read_count = 0;
 				if (entries_available_for_copy_in_count > 0)
 				{
+					PUSH_RANGE("Reading training data", 0)
 					unsigned int entries_to_read_count = std::min<unsigned int>(max_entry_count, entries_available_for_copy_in_count);
 					while(entries_read_count < entries_to_read_count)
 					{
@@ -528,6 +530,7 @@ namespace nnforge
 
 						entries_read_count++;
 					}
+					POP_RANGE
 					cuda_safe_call(cudaMemcpyAsync(
 						*(input_buf[current_data_slot]),
 						input,

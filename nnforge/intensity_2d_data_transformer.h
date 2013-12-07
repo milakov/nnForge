@@ -24,20 +24,14 @@
 
 namespace nnforge
 {
-	class distort_2d_data_transformer : public data_transformer
+	class intensity_2d_data_transformer : public data_transformer
 	{
 	public:
-		distort_2d_data_transformer(
-			float max_absolute_rotation_angle_in_degrees,
-			float max_scale_factor, // >=1
-			float min_shift_right_x, // in pixels
-			float max_shift_right_x, // in pixels
-			float min_shift_down_y, // in pixels
-			float max_shift_down_y, // in pixels
-			bool flip_around_x_axis_allowed,
-			bool flip_around_y_axis_allowed);
+		intensity_2d_data_transformer(
+			float max_contrast_factor, // >=1
+			float max_absolute_brightness_shift); // in [0,1]
 
-		virtual ~distort_2d_data_transformer();
+		virtual ~intensity_2d_data_transformer();
 
 		virtual void transform(
 			const void * data,
@@ -48,11 +42,7 @@ namespace nnforge
 	protected:
 		random_generator generator;
 
-		std::tr1::uniform_real<float> rotate_angle_distribution;
-		std::tr1::uniform_real<float> scale_distribution;
-		std::tr1::uniform_real<float> shift_x_distribution;
-		std::tr1::uniform_real<float> shift_y_distribution;
-		std::tr1::uniform_int<int> flip_around_x_distribution;
-		std::tr1::uniform_int<int> flip_around_y_distribution;
+		std::tr1::uniform_real<float> contrast_distribution;
+		std::tr1::uniform_real<float> brightness_shift_distribution;
 	};
 }
