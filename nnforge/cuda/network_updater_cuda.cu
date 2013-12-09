@@ -187,6 +187,7 @@ namespace nnforge
 			buffer_cuda_size_configuration buffers_config;
 			update_buffers_configuration(buffers_config, updater_entry_count);
 
+			buffers_config.add_per_entry_linear_addressing_through_texture(layer_config_list[testing_layer_count].get_neuron_count()); // This is for the first updater to safely read input data through the texture
 			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(float)); // converted input
