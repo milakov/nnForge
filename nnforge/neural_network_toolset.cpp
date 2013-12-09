@@ -1012,7 +1012,7 @@ namespace nnforge
 			get_weight_vector_bound_map());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
-		training_data_reader->set_max_entries_to_read(200);
+		training_data_reader->set_max_entries_to_read(2000);
 
 		std::vector<network_data_smart_ptr> training_speeds;
 		std::vector<network_data_smart_ptr> data;

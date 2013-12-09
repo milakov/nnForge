@@ -24,7 +24,7 @@
 #include "cuda_event.h"
 #include "layer_updater_schema_factory.h"
 #include "weight_vector_bound_cuda_factory.h"
-#include "cuda_profiling.h"
+#include "training_data_reader_helper.h"
 
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
@@ -294,6 +294,24 @@ namespace nnforge
 			unsigned int mask = static_cast<unsigned int>(random_uniform_list.size() - 1);
 			while((entries_available_for_copy_in_count > 0) || (entries_available_for_processing_count > 0))
 			{
+				training_data_reader_helper tdrh;
+				if (entries_available_for_copy_in_count > 0)
+				{
+					unsigned int entries_to_read_count = std::min<unsigned int>(max_entry_count, entries_available_for_copy_in_count);
+					tdrh.fun = training_data_reader_functor(
+						entries_to_read_count,
+						&reader,
+						input,
+						output,
+						*(input_buf[current_data_slot]),
+						*(output_buf[current_data_slot]),
+						input_neuron_count,
+						output_neuron_count,
+						input_neuron_elem_size,
+						*data_stream);
+					tdrh.start();
+				}
+
 				if (entries_available_for_processing_count > 0)
 				{
 					// Convert input
@@ -517,34 +535,7 @@ namespace nnforge
 
 				unsigned int entries_read_count = 0;
 				if (entries_available_for_copy_in_count > 0)
-				{
-					PUSH_RANGE("Reading training data", 0)
-					unsigned int entries_to_read_count = std::min<unsigned int>(max_entry_count, entries_available_for_copy_in_count);
-					while(entries_read_count < entries_to_read_count)
-					{
-						bool entry_read = reader.read(
-							input + (input_neuron_count * entries_read_count * input_neuron_elem_size),
-							output + (output_neuron_count * entries_read_count));
-
-						if (!entry_read)
-							break;
-
-						entries_read_count++;
-					}
-					POP_RANGE
-					cuda_safe_call(cudaMemcpyAsync(
-						*(input_buf[current_data_slot]),
-						input,
-						entries_read_count * input_neuron_count * input_neuron_elem_size,
-						cudaMemcpyHostToDevice,
-						*data_stream));
-					cuda_safe_call(cudaMemcpyAsync(
-						*(output_buf[current_data_slot]),
-						output,
-						entries_read_count * output_neuron_count * sizeof(float),
-						cudaMemcpyHostToDevice,
-						*data_stream));
-				}
+					entries_read_count = tdrh.wait();
 
 				cuda_safe_call(cudaStreamSynchronize(*data_stream));
 				cuda_safe_call(cudaStreamSynchronize(*command_stream));
