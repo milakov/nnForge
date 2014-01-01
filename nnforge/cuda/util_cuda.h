@@ -107,33 +107,11 @@ namespace nnforge
 				int divisible,
 				bool more_threadblocks = false);
 
-			static void fill_tiling_pattern(
-				int size_x,
-				int size_y,
-				std::vector<std::pair<int, int> >& pair_list);
-
 		private:
 			cuda_util();
 			cuda_util(const cuda_util&);
 			cuda_util& operator =(const cuda_util&);
 			~cuda_util();
-
-			struct tile
-			{
-				tile(int left_x, int right_x, int top_y, int bottom_y);
-
-				bool is_point() const;
-
-				void split_to_stack(
-					std::stack<tile>& st,
-					int start_x,
-					int start_y) const;
-
-				int left_x;
-				int right_x;
-				int top_y;
-				int bottom_y;
-			};
 
 			static const unsigned int preferred_width_2d_access;
 			static const unsigned int preferred_height_2d_access;

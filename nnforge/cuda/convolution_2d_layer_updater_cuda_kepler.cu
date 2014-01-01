@@ -23,6 +23,7 @@
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
 #include "cuda_texture.h"
+#include "space_filling_curve.h"
 #include "../convolution_layer.h"
 
 texture<float, cudaTextureType1D, cudaReadModeElementType> output_tex_ref;
@@ -1434,12 +1435,15 @@ namespace nnforge
 			}
 
 			{
-				std::vector<std::pair<int, int> > pair_list;
-				cuda_util::fill_tiling_pattern(input_configuration_specific.feature_map_count, updater_output_feature_map_block_count, pair_list);
+				std::vector<std::vector<int> > ordered_list;
+				std::vector<int> size_list;
+				size_list.push_back(input_configuration_specific.feature_map_count);
+				size_list.push_back(updater_output_feature_map_block_count);
+				space_filling_curve::get_space_filling_curve()->fill_tiling_pattern(size_list, ordered_list);
 
 				std::vector<feature_map_config> task_list;
-				for(std::vector<std::pair<int, int> >::const_iterator it = pair_list.begin(); it != pair_list.end(); ++it)
-					task_list.push_back(feature_map_config(it->first, it->second * FEATURE_MAP_BLOCK_SIZE));
+				for(std::vector<std::vector<int> >::const_iterator it = ordered_list.begin(); it != ordered_list.end(); ++it)
+					task_list.push_back(feature_map_config(it->at(0), it->at(1) * FEATURE_MAP_BLOCK_SIZE));
 
 				cuda_safe_call(cudaMemcpy(*additional_buffers[3], &(*task_list.begin()), sizeof(feature_map_config) * task_list.size(), cudaMemcpyHostToDevice));
 			}
