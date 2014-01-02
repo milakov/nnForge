@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,12 +46,20 @@ namespace nnforge
 
 			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
 
+			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const;
+
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
+
+			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const;
 
 			std::vector<int> window_sizes;
 
 		private:
 			static int get_block_size(int output_width);
+
+			int forward_x_block_size;
+			int forward_x_block_count;
+			int forward_output_feature_map_block_count;
 		};
 	}
 }
