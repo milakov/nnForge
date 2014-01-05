@@ -16,24 +16,37 @@
 
 #pragma once
 
-#include "space_filling_curve.h"
+#include <array>
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		class space_filling_curve_z_order : public space_filling_curve
+		template<int dimension_count>
+		class space_filling_curve_tile
 		{
 		public:
-			space_filling_curve_z_order();
+			space_filling_curve_tile() {}
 
-			virtual ~space_filling_curve_z_order();
+			space_filling_curve_tile(
+				const std::tr1::array<int, dimension_count>& start_elems,
+				const std::tr1::array<int, dimension_count>& end_elems)
+				: start_elems(start_elems)
+				, end_elems(end_elems)
+			{
+			}
 
-		protected:
-			virtual void split_to_stack(
-				const tile& tile_to_split,
-				std::stack<tile>& st,
-				const std::vector<int>& start_elems) const;
+			bool is_point() const
+			{
+				for(int i = 0; i < dimension_count; ++i)
+					if ((end_elems[i] - start_elems[i]) != 1)
+						return false;
+
+				return true;
+			}
+
+			std::tr1::array<int, dimension_count> start_elems;
+			std::tr1::array<int, dimension_count> end_elems;
 		};
 	}
 }

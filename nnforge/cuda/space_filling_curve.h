@@ -19,46 +19,78 @@
 #include <vector>
 #include <stack>
 #include <memory>
+#include <array>
+#include <algorithm>
+
+#include "space_filling_curve_tile.h"
+#include "split_policy_z_order.h"
+#include "../neural_network_exception.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		enum space_filling_curve_type
-		{
-			space_filling_curve_type_z_order
-		};
-
+		template<int dimension_count, class split_policy = split_policy_z_order<dimension_count> >
 		class space_filling_curve
 		{
 		public:
-			space_filling_curve();
-
-			virtual ~space_filling_curve();
-
-			static std::tr1::shared_ptr<space_filling_curve> get_space_filling_curve(space_filling_curve_type curve_type = space_filling_curve_type_z_order);
-
-			void fill_tiling_pattern(
-				const std::vector<int>& size_list,
-				std::vector<std::vector<int> >& ordered_list) const;
-
-		protected:
-			struct tile
+			static void fill_pattern(
+				const std::tr1::array<int, dimension_count>& size_list,
+				std::vector<std::tr1::array<int, dimension_count> >& ordered_list)
 			{
-				tile(
-					const std::vector<int>& start_elems,
-					const std::vector<int>& end_elems);
+				ordered_list.clear();
 
-				bool is_point() const;
+				std::stack<space_filling_curve_tile<dimension_count> > work_set;
 
-				std::vector<int> start_elems;
-				std::vector<int> end_elems;
-			};
+				int size_max = *std::max_element(size_list.begin(), size_list.end());
+				int size_aligned = 1;
+				while (size_aligned < size_max)
+					size_aligned <<= 1;
 
-			virtual void split_to_stack(
-				const tile& tile_to_split,
-				std::stack<tile>& st,
-				const std::vector<int>& start_elems) const = 0;
+				space_filling_curve_tile<dimension_count> whole_space;
+				for(int i = 0; i < dimension_count; ++i)
+				{
+					whole_space.start_elems[i] = 0;
+					whole_space.end_elems[i] = size_aligned;
+				}
+				work_set.push(whole_space);
+
+				std::tr1::array<int, dimension_count> start_elems;
+				for(int i = 0; i < dimension_count; ++i)
+					start_elems[i] = size_aligned - size_list[i];
+
+				while (!work_set.empty())
+				{
+					space_filling_curve_tile<dimension_count> cur_tile = work_set.top();
+					work_set.pop();
+
+					if (cur_tile.is_point())
+					{
+						std::tr1::array<int, dimension_count> new_elem;
+						bool is_valid = true;
+						for(int i = 0; (i < dimension_count) && is_valid; ++i)
+						{
+							int val = cur_tile.start_elems[i] - start_elems[i];
+							if (val >= 0)
+								new_elem[i] = val;
+							else
+								is_valid = false;
+						}
+
+						if (is_valid)
+							ordered_list.push_back(new_elem);
+					}
+					else
+						split_policy::split_to_stack(cur_tile, work_set, start_elems);
+				}
+
+				int total_size_expected = 1;
+				for(int i = 0; i < dimension_count; ++i)
+					total_size_expected *= size_list[i];
+
+				if (ordered_list.size() != total_size_expected)
+					throw neural_network_exception("Internal error when generating space-filling curve");
+			}
 		};
 	}
 }

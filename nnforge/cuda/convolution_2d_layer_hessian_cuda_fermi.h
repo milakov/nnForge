@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 #pragma once
 
 #include "layer_hessian_cuda.h"
+
+#include <array>
 
 namespace nnforge
 {
@@ -64,7 +66,11 @@ namespace nnforge
 
 			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
 
+			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const;
+
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
+
+			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const;
 
 			std::vector<int> window_sizes;
 
@@ -74,6 +80,19 @@ namespace nnforge
 			static int get_bias_update_block_size(int entry_count);
 
 			static int get_weights_update_block_size(int entry_count);
+
+			int forward_x_block_size;
+			int forward_x_block_count;
+			int forward_output_feature_map_block_count;
+
+			int backward_x_block_size;
+			int backward_x_block_count;
+			int backward_input_feature_map_block_count;
+
+			int updater_output_feature_map_block_count;
+			int updater_window_x_block_count;
+			std::vector<std::tr1::array<int, 2> > updater_config_ordered_list1;
+			std::vector<std::tr1::array<int, 2> > updater_config_ordered_list2;
 		};
 	}
 }

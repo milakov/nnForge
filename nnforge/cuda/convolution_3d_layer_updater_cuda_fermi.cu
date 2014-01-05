@@ -1518,14 +1518,14 @@ namespace nnforge
 			}
 
 			{
-				std::vector<std::vector<int> > ordered_list;
-				std::vector<int> size_list;
-				size_list.push_back(input_configuration_specific.feature_map_count);
-				size_list.push_back(updater_output_feature_map_block_count);
-				space_filling_curve::get_space_filling_curve()->fill_tiling_pattern(size_list, ordered_list);
+				std::vector<std::tr1::array<int, 2> > ordered_list;
+				std::tr1::array<int, 2> size_list;
+				size_list[0] = input_configuration_specific.feature_map_count;
+				size_list[1] = updater_output_feature_map_block_count;
+				space_filling_curve<2>::fill_pattern(size_list, ordered_list);
 
 				std::vector<feature_map_config> task_list;
-				for(std::vector<std::vector<int> >::const_iterator it = ordered_list.begin(); it != ordered_list.end(); ++it)
+				for(std::vector<std::tr1::array<int, 2> >::const_iterator it = ordered_list.begin(); it != ordered_list.end(); ++it)
 					task_list.push_back(feature_map_config(it->at(0), it->at(1) * FEATURE_MAP_BLOCK_SIZE));
 
 				cuda_safe_call(cudaMemcpy(*additional_buffers[3], &(*task_list.begin()), sizeof(feature_map_config) * task_list.size(), cudaMemcpyHostToDevice));

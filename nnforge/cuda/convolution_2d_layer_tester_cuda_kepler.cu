@@ -56,7 +56,7 @@ namespace nnforge
 			int packed_config_id = blockIdx.y * blockDim.y + threadIdx.y;
 			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-			bool in_bounds = (entry_id < entry_count) && (packed_config_id < packed_config_count);
+			bool in_bounds = (entry_id < entry_count) && (x < output_width) && (packed_config_id < packed_config_count);
 			if (in_bounds)
 			{
 				int weight_count_per_output_feature_map = window_width * window_height * input_feature_map_count;
@@ -144,7 +144,7 @@ namespace nnforge
 			int packed_config_id = blockIdx.y * blockDim.y + threadIdx.y;
 			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-			bool in_bounds = (entry_id < entry_count) && (packed_config_id < packed_config_count);
+			bool in_bounds = (entry_id < entry_count) && (x < output_width) && (packed_config_id < packed_config_count);
 			if (in_bounds)
 			{
 				int weight_count_per_output_feature_map = WINDOW_WIDTH * window_height * input_feature_map_count;
