@@ -18,6 +18,7 @@
 
 #include "../supervised_data_reader.h"
 
+#include <string>
 #include <cuda_runtime.h>
 
 namespace nnforge
@@ -54,6 +55,8 @@ namespace nnforge
 			unsigned int output_neuron_count;
 			size_t input_neuron_elem_size;
 			cudaStream_t stream;
+
+			std::string * error;
 		};
 
 		class training_data_reader_helper
@@ -74,6 +77,9 @@ namespace nnforge
 			training_data_reader_functor fun;
 
 			void * impl;
+
+		private:
+			std::string error;
 		};
 	}
 }

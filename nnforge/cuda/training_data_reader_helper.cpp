@@ -80,32 +80,39 @@ namespace nnforge
 		unsigned int training_data_reader_functor::operator()()
 		{
 			unsigned int entries_read_count = 0;
-			PUSH_RANGE("Reading training data", 0)
-			while(entries_read_count < entries_to_read_count)
+			try
 			{
-				bool entry_read = reader->read(
-					input + (input_neuron_count * entries_read_count * input_neuron_elem_size),
-					output + (output_neuron_count * entries_read_count));
+				PUSH_RANGE("Reading training data", 0)
+				while(entries_read_count < entries_to_read_count)
+				{
+					bool entry_read = reader->read(
+						input + (input_neuron_count * entries_read_count * input_neuron_elem_size),
+						output + (output_neuron_count * entries_read_count));
 
-				if (!entry_read)
-					break;
+					if (!entry_read)
+						break;
 
-				entries_read_count++;
+					entries_read_count++;
+				}
+				POP_RANGE
+
+				cuda_safe_call(cudaMemcpyAsync(
+					d_input,
+					input,
+					entries_read_count * input_neuron_count * input_neuron_elem_size,
+					cudaMemcpyHostToDevice,
+					stream));
+				cuda_safe_call(cudaMemcpyAsync(
+					d_output,
+					output,
+					entries_read_count * output_neuron_count * sizeof(float),
+					cudaMemcpyHostToDevice,
+					stream));
 			}
-			POP_RANGE
-
-			cuda_safe_call(cudaMemcpyAsync(
-				d_input,
-				input,
-				entries_read_count * input_neuron_count * input_neuron_elem_size,
-				cudaMemcpyHostToDevice,
-				stream));
-			cuda_safe_call(cudaMemcpyAsync(
-				d_output,
-				output,
-				entries_read_count * output_neuron_count * sizeof(float),
-				cudaMemcpyHostToDevice,
-				stream));
+			catch (std::runtime_error& e)
+			{
+				*error = e.what();
+			}
 
 			return entries_read_count;
 		}
@@ -129,6 +136,9 @@ namespace nnforge
 
 		void training_data_reader_helper::start()
 		{
+			error.clear();
+			fun.error = &error;
+
 			if (impl != 0)
 				delete ((thread_struct *)impl);
 
@@ -143,7 +153,12 @@ namespace nnforge
 		{
 			thread_struct * tst = static_cast<thread_struct *>(impl);
 			tst->fu.wait();
-			return tst->fu.get();
+			unsigned int res = tst->fu.get();
+
+			if (!error.empty())
+				throw std::runtime_error(error);
+
+			return res;
 		}
 	}
 }
