@@ -233,8 +233,7 @@ namespace nnforge
 			int output_group_count = cuda_util::get_group_count(
 					*cuda_config,
 					input_elem_count_per_entry * entry_count,
-					output_elem_count_per_entry,
-					true);
+					output_elem_count_per_entry);
 			int max_iteration_count = (output_elem_count_per_entry + output_group_count - 1) / output_group_count;
 
 			if (output_group_count > 1)

@@ -104,8 +104,7 @@ namespace nnforge
 			static int get_group_count(
 				const cuda_running_configuration& cuda_config,
 				int total_thread_count,
-				int divisible,
-				bool more_threadblocks = false);
+				int divisible);
 
 		private:
 			cuda_util();
