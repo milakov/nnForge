@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "training_data_reader_helper.h"
+#include "unsupervised_data_reader_async_helper.h"
 
 #include "util_cuda.h"
 #include "cuda_profiling.h"
@@ -33,79 +33,58 @@ namespace nnforge
 			boost::thread t;
 		};
 
-		training_data_reader_functor::training_data_reader_functor()
+		unsupervised_data_reader_functor::unsupervised_data_reader_functor()
 		{
 		}
 
-		training_data_reader_functor::training_data_reader_functor(
+		unsupervised_data_reader_functor::unsupervised_data_reader_functor(
 			unsigned int entries_to_read_count,
-			supervised_data_reader * reader,
+			unsupervised_data_reader * reader,
 			unsigned char * input,
-			float * output,
 			void * d_input,
-			void * d_output,
-			unsigned int input_neuron_count,
-			unsigned int output_neuron_count,
-			size_t input_neuron_elem_size,
 			cudaStream_t stream)
 			: entries_to_read_count(entries_to_read_count)
 			, reader(reader)
 			, input(input)
-			, output(output)
 			, d_input(d_input)
-			, d_output(d_output)
-			, input_neuron_count(input_neuron_count)
-			, output_neuron_count(output_neuron_count)
-			, input_neuron_elem_size(input_neuron_elem_size)
 			, stream(stream)
 		{
 		}
 
-		training_data_reader_functor& training_data_reader_functor::operator =(const training_data_reader_functor& other)
+		unsupervised_data_reader_functor& unsupervised_data_reader_functor::operator =(const unsupervised_data_reader_functor& other)
 		{
 			this->entries_to_read_count = other.entries_to_read_count;
 			this->reader = other.reader;
 			this->input = other.input;
-			this->output = other.output;
 			this->d_input = other.d_input;
-			this->d_output = other.d_output;
-			this->input_neuron_count = other.input_neuron_count;
-			this->output_neuron_count = other.output_neuron_count;
-			this->input_neuron_elem_size = other.input_neuron_elem_size;
 			this->stream = other.stream;
 
 			return *this;
 		}
 
-		unsigned int training_data_reader_functor::operator()()
+		unsigned int unsupervised_data_reader_functor::operator()()
 		{
 			unsigned int entries_read_count = 0;
 			try
 			{
-				PUSH_RANGE("Reading training data", 0)
+				PUSH_RANGE("Reading unsupervised data", 0);
+				unsigned int input_neuron_count = reader->get_input_configuration().get_neuron_count();
+				size_t input_neuron_elem_size = reader->get_input_neuron_elem_size();
 				while(entries_read_count < entries_to_read_count)
 				{
-					bool entry_read = reader->read(
-						input + (input_neuron_count * entries_read_count * input_neuron_elem_size),
-						output + (output_neuron_count * entries_read_count));
+					bool entry_read = reader->read(input + (input_neuron_count * entries_read_count * input_neuron_elem_size));
 
 					if (!entry_read)
 						break;
 
 					entries_read_count++;
 				}
-				POP_RANGE
+				POP_RANGE;
 
 				cuda_safe_call(cudaMemcpyAsync(
 					d_input,
 					input,
 					entries_read_count * input_neuron_count * input_neuron_elem_size,
-					cudaMemcpyHostToDevice,
-					stream));
-				cuda_safe_call(cudaMemcpyAsync(
-					d_output,
-					output,
-					entries_read_count * output_neuron_count * sizeof(float),
 					cudaMemcpyHostToDevice,
 					stream));
 			}
@@ -117,24 +96,24 @@ namespace nnforge
 			return entries_read_count;
 		}
 
-		training_data_reader_helper::training_data_reader_helper()
+		unsupervised_data_reader_async_helper::unsupervised_data_reader_async_helper()
 			: impl(0)
 		{
 		}
 
-		training_data_reader_helper::training_data_reader_helper(const training_data_reader_functor& fun)
+		unsupervised_data_reader_async_helper::unsupervised_data_reader_async_helper(const unsupervised_data_reader_functor& fun)
 			: impl(0)
 			, fun(fun)
 		{
 		}
 
-		training_data_reader_helper::~training_data_reader_helper()
+		unsupervised_data_reader_async_helper::~unsupervised_data_reader_async_helper()
 		{
 			if (impl != 0)
 				delete ((thread_struct *)impl);
 		}
 
-		void training_data_reader_helper::start()
+		void unsupervised_data_reader_async_helper::start()
 		{
 			error.clear();
 			fun.error = &error;
@@ -149,7 +128,7 @@ namespace nnforge
 			tst->t = boost::thread(boost::move(tst->enqueue_copy_training_data_task));
 		}
 
-		unsigned int training_data_reader_helper::wait()
+		unsigned int unsupervised_data_reader_async_helper::wait()
 		{
 			thread_struct * tst = static_cast<thread_struct *>(impl);
 			tst->fu.wait();

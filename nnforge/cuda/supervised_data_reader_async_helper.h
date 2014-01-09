@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,23 +25,20 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		struct training_data_reader_functor
+		struct supervised_data_reader_functor
 		{
-			training_data_reader_functor();
+			supervised_data_reader_functor();
 
-			training_data_reader_functor(
+			supervised_data_reader_functor(
 				unsigned int entries_to_read_count,
 				supervised_data_reader * reader,
 				unsigned char * input,
 				float * output,
 				void * d_input,
 				void * d_output,
-				unsigned int input_neuron_count,
-				unsigned int output_neuron_count,
-				size_t input_neuron_elem_size,
 				cudaStream_t stream);
 
-			training_data_reader_functor& operator =(const training_data_reader_functor& other);
+			supervised_data_reader_functor& operator =(const supervised_data_reader_functor& other);
 
 			unsigned int operator()();
 
@@ -51,22 +48,19 @@ namespace nnforge
 			float * output;
 			void * d_input;
 			void * d_output;
-			unsigned int input_neuron_count;
-			unsigned int output_neuron_count;
-			size_t input_neuron_elem_size;
 			cudaStream_t stream;
 
 			std::string * error;
 		};
 
-		class training_data_reader_helper
+		class supervised_data_reader_async_helper
 		{
 		public:
-			training_data_reader_helper();
+			supervised_data_reader_async_helper();
 
-			training_data_reader_helper(const training_data_reader_functor& fun);
+			supervised_data_reader_async_helper(const supervised_data_reader_functor& fun);
 
-			virtual ~training_data_reader_helper();
+			virtual ~supervised_data_reader_async_helper();
 
 			void start();
 
@@ -74,7 +68,7 @@ namespace nnforge
 
 			unsigned int operator()();
 
-			training_data_reader_functor fun;
+			supervised_data_reader_functor fun;
 
 			void * impl;
 

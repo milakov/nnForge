@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ namespace nnforge
 		}
 
 		network_data_smart_ptr hessian_calculator_plain::actual_get_hessian(
-			supervised_data_reader& reader,
+			unsupervised_data_reader& reader,
 			network_data_smart_ptr data,
 			unsigned int hessian_entry_to_process_count)
 		{
@@ -67,7 +67,7 @@ namespace nnforge
 			reader.reset();
 
 			const unsigned int input_neuron_count = reader.get_input_configuration().get_neuron_count();
-			const unsigned int output_neuron_count = reader.get_output_configuration().get_neuron_count();
+			const unsigned int output_neuron_count = layer_config_list.back().get_neuron_count();
 			const unsigned int input_feature_map_count = reader.get_input_configuration().feature_map_count;
 			const unsigned int neuron_count_per_input_feature_map = reader.get_input_configuration().get_neuron_count_per_feature_map();
 			neuron_data_type::input_type type_code = reader.get_input_type();
@@ -143,8 +143,7 @@ namespace nnforge
 				while((entries_available_for_processing_count < max_entry_count) && (entries_read_count < hessian_entry_to_process_count))
 				{
 					bool entry_read = reader.read(
-						&(*(input_buf.begin() + (input_neuron_count * entries_available_for_processing_count * input_neuron_elem_size))),
-						0);
+						&(*(input_buf.begin() + (input_neuron_count * entries_available_for_processing_count * input_neuron_elem_size))));
 
 					if (!entry_read)
 						throw neural_network_exception((boost::format("Unable to read %1% entries to calculate hessian, %2% read") % hessian_entry_to_process_count % entries_read_count).str());

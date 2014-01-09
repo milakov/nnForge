@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include "cuda_linear_buffer_host.h"
 #include "util_cuda.h"
 #include "cuda_event.h"
+#include "unsupervised_data_reader_async_helper.h"
 
 #include "layer_hessian_schema_factory.h"
 
@@ -106,7 +107,7 @@ namespace nnforge
 		}
 
 		network_data_smart_ptr hessian_calculator_cuda::actual_get_hessian(
-			supervised_data_reader& reader,
+			unsupervised_data_reader& reader,
 			network_data_smart_ptr data,
 			unsigned int hessian_entry_to_process_count)
 		{
@@ -115,7 +116,7 @@ namespace nnforge
 			reader.reset();
 
 			layer_configuration_specific input_configuration = reader.get_input_configuration();
-			layer_configuration_specific output_configuration = reader.get_output_configuration();
+			layer_configuration_specific output_configuration = layer_config_list.back();
 
 			unsigned int input_neuron_count = input_configuration.get_neuron_count();
 			unsigned int input_neuron_count_per_feature_map = input_configuration.get_neuron_count_per_feature_map();
@@ -202,6 +203,19 @@ namespace nnforge
 			}
 			while((entries_available_for_copy_in_count > 0) || (entries_available_for_processing_count > 0))
 			{
+				unsupervised_data_reader_async_helper async_reader;
+				if (entries_available_for_copy_in_count > 0)
+				{
+					unsigned int entries_to_read_count = std::min<unsigned int>(max_entry_count, entries_available_for_copy_in_count);
+					async_reader.fun = unsupervised_data_reader_functor(
+						entries_to_read_count,
+						&reader,
+						input,
+						*(input_buf[current_data_slot]),
+						*data_stream);
+					async_reader.start();
+				}
+
 				if (entries_available_for_processing_count > 0)
 				{
 					// Convert input
@@ -311,24 +325,7 @@ namespace nnforge
 
 				unsigned int entries_read_count = 0;
 				if (entries_available_for_copy_in_count > 0)
-				{
-					unsigned int entries_to_read_count = std::min<unsigned int>(max_entry_count, entries_available_for_copy_in_count);
-					while(entries_read_count < entries_to_read_count)
-					{
-						bool entry_read = reader.read(input + (input_neuron_count * entries_read_count * input_neuron_elem_size), 0);
-
-						if (!entry_read)
-							break;
-
-						entries_read_count++;
-					}
-					cuda_safe_call(cudaMemcpyAsync(
-						*(input_buf[current_data_slot]),
-						input,
-						entries_read_count * input_neuron_count * input_neuron_elem_size,
-						cudaMemcpyHostToDevice,
-						*data_stream));
-				}
+					entries_read_count = async_reader.wait();
 
 				cuda_safe_call(cudaStreamSynchronize(*data_stream));
 				cuda_safe_call(cudaStreamSynchronize(*command_stream));

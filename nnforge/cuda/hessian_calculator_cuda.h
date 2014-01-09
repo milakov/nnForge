@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ namespace nnforge
 		protected:
 			// schema, data and reader are guaranteed to be compatible
 			virtual network_data_smart_ptr actual_get_hessian(
-				supervised_data_reader& reader,
+				unsupervised_data_reader& reader,
 				network_data_smart_ptr data,
 				unsigned int hessian_entry_to_process_count);
 

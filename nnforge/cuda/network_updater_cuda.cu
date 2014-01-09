@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include "cuda_event.h"
 #include "layer_updater_schema_factory.h"
 #include "weight_vector_bound_cuda_factory.h"
-#include "training_data_reader_helper.h"
+#include "supervised_data_reader_async_helper.h"
 
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
@@ -294,22 +294,19 @@ namespace nnforge
 			unsigned int mask = static_cast<unsigned int>(random_uniform_list.size() - 1);
 			while((entries_available_for_copy_in_count > 0) || (entries_available_for_processing_count > 0))
 			{
-				training_data_reader_helper tdrh;
+				supervised_data_reader_async_helper async_reader;
 				if (entries_available_for_copy_in_count > 0)
 				{
 					unsigned int entries_to_read_count = std::min<unsigned int>(max_entry_count, entries_available_for_copy_in_count);
-					tdrh.fun = training_data_reader_functor(
+					async_reader.fun = supervised_data_reader_functor(
 						entries_to_read_count,
 						&reader,
 						input,
 						output,
 						*(input_buf[current_data_slot]),
 						*(output_buf[current_data_slot]),
-						input_neuron_count,
-						output_neuron_count,
-						input_neuron_elem_size,
 						*data_stream);
-					tdrh.start();
+					async_reader.start();
 				}
 
 				if (entries_available_for_processing_count > 0)
@@ -535,7 +532,7 @@ namespace nnforge
 
 				unsigned int entries_read_count = 0;
 				if (entries_available_for_copy_in_count > 0)
-					entries_read_count = tdrh.wait();
+					entries_read_count = async_reader.wait();
 
 				cuda_safe_call(cudaStreamSynchronize(*data_stream));
 				cuda_safe_call(cudaStreamSynchronize(*command_stream));

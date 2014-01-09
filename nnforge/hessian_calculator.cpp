@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,14 +43,11 @@ namespace nnforge
 	}
 
 	network_data_smart_ptr hessian_calculator::get_hessian(
-		supervised_data_reader& reader,
+		unsupervised_data_reader& reader,
 		network_data_smart_ptr data,
 		unsigned int hessian_entry_to_process_count)
 	{
 		set_input_configuration_specific(reader.get_input_configuration());
-
-		// Check schema-reader consistency
-		layer_config_list[layer_config_list.size() - 1].check_equality(reader.get_output_configuration());
 
 		// Check data-schema consistency
 		data->check_network_data_consistency(*schema);

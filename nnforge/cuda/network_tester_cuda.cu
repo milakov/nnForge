@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include "cuda_linear_buffer_host.h"
 #include "util_cuda.h"
 #include "cuda_event.h"
+#include "unsupervised_data_reader_async_helper.h"
 
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
@@ -194,6 +195,19 @@ namespace nnforge
 			cuda_event input_copied_event;
 			while((entries_available_for_copy_in_count > 0) || (entries_available_for_processing_count > 0) || (entries_available_for_copy_out_count > 0))
 			{
+				unsupervised_data_reader_async_helper async_reader;
+				if (entries_available_for_copy_in_count > 0)
+				{
+					unsigned int entries_to_read_count = std::min<unsigned int>(max_entry_count, entries_available_for_copy_in_count);
+					async_reader.fun = unsupervised_data_reader_functor(
+						entries_to_read_count,
+						&reader,
+						input,
+						*(input_buf[current_data_slot]),
+						*data_stream);
+					async_reader.start();
+				}
+
 				if (entries_available_for_processing_count > 0)
 				{
 					// Convert input
@@ -253,6 +267,10 @@ namespace nnforge
 					}
 				}
 
+				unsigned int entries_read_count = 0;
+				if (entries_available_for_copy_in_count > 0)
+					entries_read_count = async_reader.wait();
+
 				if (entries_available_for_copy_out_count > 0)
 				{
 					cuda_safe_call(cudaMemcpyAsync(
@@ -273,26 +291,6 @@ namespace nnforge
 					}
 					
 					entries_processed_count += entries_available_for_copy_out_count;
-				}
-
-				unsigned int entries_read_count = 0;
-				if (entries_available_for_copy_in_count > 0)
-				{
-					while(entries_read_count < max_entry_count)
-					{
-						bool entry_read = reader.read(input + (input_neuron_count * entries_read_count * input_neuron_elem_size));
-
-						if (!entry_read)
-							break;
-
-						entries_read_count++;
-					}
-					cuda_safe_call(cudaMemcpyAsync(
-						*(input_buf[current_data_slot]),
-						input,
-						entries_read_count * input_neuron_count * input_neuron_elem_size,
-						cudaMemcpyHostToDevice,
-						*data_stream));
 				}
 
 				cuda_safe_call(cudaStreamSynchronize(*data_stream));
