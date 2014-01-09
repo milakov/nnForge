@@ -8,7 +8,7 @@ J. Stallkamp, M. Schlipsing, J. Salmen, and C. Igel. The German Traffic Sign Rec
 Input data
 ----------
 
-Download _Images and annotations_ both for _official GTSRB training set_ and _official GTSRB test set_, and also _Extended annotations including class ids_ for the latter from [Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset#Downloads).
+Download _Images and annotations_ both for _official GTSRB training set_ and _official GTSRB test set_, and also _Extended annotations including class ids_ for the official GTSRB test set (this one is important!) from [Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset#Downloads).
 
 Extract input files from archives and store them in the gtsrb input directory in the following way:
 
@@ -39,6 +39,7 @@ Train
 -----
 
 	./gtsrb prepare_training_data
+	./gtsrb prepare_validating_data
 	./gtsrb randomize_data
 	./gtsrb create
 	./gtsrb train_batch -N 10
