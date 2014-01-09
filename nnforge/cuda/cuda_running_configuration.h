@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ namespace nnforge
 			int pci_bus_id;
 			int pci_device_id;
 
-		#ifdef WIN32
+		#ifdef _WIN32
 			bool tcc_mode;
 		#endif
 
