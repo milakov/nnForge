@@ -380,6 +380,9 @@ namespace nnforge
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			unsigned int entry_count)
 		{
+			if (!is_even_subsampling)
+				cuda_util::set_with_value(*cuda_config, *input_errors_buffer, 0.0F, input_configuration_specific.get_neuron_count() * entry_count, stream_id);
+
 			int output_elem_count_per_feature_map_aligned = cuda_util::get_power2_aligned_size(output_configuration_specific.dimension_sizes[0]) * output_configuration_specific.dimension_sizes[1];
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
@@ -426,6 +429,14 @@ namespace nnforge
 			subsampling_sizes = layer_derived->subsampling_sizes;
 			subsampling_weight = 1.0F / static_cast<float>(subsampling_sizes[0] * subsampling_sizes[1]);
 			subsampling_weight_squared = subsampling_weight * subsampling_weight;
+
+			is_even_subsampling = true;
+			for(int i = 0; i < subsampling_sizes.size(); ++i)
+				if (subsampling_sizes[i] * output_configuration_specific.dimension_sizes[i] != input_configuration_specific.dimension_sizes[i])
+				{
+					is_even_subsampling = false;
+					break;
+				}
 		}
 
 		bool average_subsampling_2d_layer_hessian_cuda::is_in_place_backprop() const

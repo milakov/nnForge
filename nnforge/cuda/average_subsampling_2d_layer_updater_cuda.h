@@ -62,6 +62,7 @@ namespace nnforge
 		private:
 			float subsampling_weight;
 			std::vector<unsigned int> subsampling_sizes;
+			bool is_even_subsampling;
 		};
 	}
 }
