@@ -949,6 +949,7 @@ namespace nnforge
 		trainer.max_mu = max_mu;
 		trainer.mu_increase_factor = mu_increase_factor;
 		trainer.learning_rate_decay_tail_iteration_count = learning_rate_decay_tail_iteration_count;
+		trainer.learning_rate_decay_rate = learning_rate_decay_rate;
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
 
