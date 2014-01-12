@@ -26,6 +26,7 @@ namespace nnforge
 		: schema(schema)
 		, iteration_count(50)
 		, learning_rate_decay_tail_iteration_count(0)
+		, learning_rate_decay_rate(0.5F)
 	{
 	}
 
@@ -108,6 +109,6 @@ namespace nnforge
 		if (tail_degradation_iteration <= 0)
 			return 1.0F;
 		else
-			return powf(0.5F, static_cast<float>(tail_degradation_iteration));
+			return powf(learning_rate_decay_rate, static_cast<float>(tail_degradation_iteration));
 	}
 }

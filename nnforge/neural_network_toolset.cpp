@@ -197,6 +197,7 @@ namespace nnforge
 			("training_speed", boost::program_options::value<float>(&training_speed)->default_value(0.02F), "Eta/Mu ratio.")
 			("training_speed_degradation", boost::program_options::value<float>(&training_speed_degradaton)->default_value(1.0F), "Degradation of training speed at each iteration.")
 			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_iteration_count)->default_value(0), "Number of tail iterations with gradually lowering training speed.")
+			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of training speed at each tail iteration.")
 			("batch_offset", boost::program_options::value<unsigned int>(&batch_offset)->default_value(0), "shift initial ANN ID when batch training.")
 			;
 

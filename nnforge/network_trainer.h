@@ -42,6 +42,7 @@ namespace nnforge
 
 		unsigned int iteration_count;
 		unsigned int learning_rate_decay_tail_iteration_count;
+		float learning_rate_decay_rate;
 
 	protected:
 		network_trainer(network_schema_smart_ptr schema);
