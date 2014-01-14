@@ -105,6 +105,14 @@ namespace nnforge
 
 		virtual bool is_squared_hinge_loss() const;
 
+		virtual supervised_data_reader_smart_ptr get_data_reader_for_training() const;
+
+		virtual supervised_data_reader_smart_ptr get_data_reader_for_validating() const;
+
+		virtual supervised_data_reader_smart_ptr get_data_reader_for_testing_supervised() const;
+
+		virtual unsupervised_data_reader_smart_ptr get_data_reader_for_testing_unsupervised() const;
+
 	protected:
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
@@ -148,14 +156,6 @@ namespace nnforge
 			output_neuron_value_set_smart_ptr actual_neuron_value_set);
 
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(unsupervised_data_reader& reader);
-
-		supervised_data_reader_smart_ptr get_data_reader_for_training() const;
-
-		supervised_data_reader_smart_ptr get_data_reader_for_validating() const;
-
-		supervised_data_reader_smart_ptr get_data_reader_for_testing_supervised() const;
-
-		unsupervised_data_reader_smart_ptr get_data_reader_for_testing_unsupervised() const;
 
 		void randomize_data();
 
