@@ -35,7 +35,8 @@ namespace nnforge
 			const void * data,
 			void * data_transformed,
 			neuron_data_type::input_type type,
-			const layer_configuration_specific& original_config);
+			const layer_configuration_specific& original_config,
+			unsigned int sample_id);
 			
 	protected:
 		bool is_same_sequence_from_reset;

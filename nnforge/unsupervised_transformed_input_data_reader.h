@@ -55,5 +55,7 @@ namespace nnforge
 
 		std::vector<unsigned char> buf;
 		void * local_input_ptr;
+		unsigned int current_sample_id;
+		unsigned int transformer_sample_count;
 	};
 }

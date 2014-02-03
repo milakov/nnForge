@@ -39,4 +39,9 @@ namespace nnforge
 	void data_transformer::reset()
 	{
 	}
+
+	unsigned int data_transformer::get_sample_count() const
+	{
+		return 1;
+	}
 }

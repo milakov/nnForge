@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,6 +58,11 @@ namespace nnforge
 		data_transformer_smart_ptr transformer;
 
 		std::vector<float> buf;
+		std::vector<unsigned char> input_buf;
 		float * local_output_ptr;
+		void * local_input_ptr;
+		size_t input_buf_size;
+		unsigned int current_sample_id;
+		unsigned int transformer_sample_count;
 	};
 }

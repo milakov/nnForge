@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ namespace nnforge
 		: original_reader(original_reader)
 		, transformer(transformer)
 		, local_input_ptr(0)
+		, transformer_sample_count(transformer->get_sample_count())
+		, current_sample_id(0)
 	{
 		if (!transformer->is_in_place())
 		{
@@ -42,7 +44,9 @@ namespace nnforge
 
 	bool unsupervised_transformed_input_data_reader::read(void * input_elems)
 	{
-		bool read = original_reader->read(local_input_ptr ? local_input_ptr : input_elems);
+		bool read = true;
+		if (current_sample_id == 0)
+			read = original_reader->read((local_input_ptr != 0) && (input_elems != 0) ? local_input_ptr : input_elems);
 
 		if (!read)
 			return false;
@@ -53,14 +57,18 @@ namespace nnforge
 				local_input_ptr,
 				input_elems,
 				original_reader->get_input_type(),
-				original_reader->get_input_configuration());
+				original_reader->get_input_configuration(),
+				current_sample_id);
 		}
+
+		current_sample_id = (current_sample_id + 1) % transformer_sample_count;
 
 		return true;
 	}
 
 	void unsupervised_transformed_input_data_reader::reset()
 	{
+		current_sample_id = 0;
 		transformer->reset();
 		original_reader->reset();
 	}
@@ -72,7 +80,7 @@ namespace nnforge
 
 	unsigned int unsupervised_transformed_input_data_reader::get_actual_entry_count() const
 	{
-		return original_reader->get_entry_count();
+		return original_reader->get_entry_count() * transformer_sample_count;
 	}
 
 	neuron_data_type::input_type unsupervised_transformed_input_data_reader::get_input_type() const

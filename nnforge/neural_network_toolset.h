@@ -155,7 +155,7 @@ namespace nnforge
 			supervised_data_reader& reader,
 			output_neuron_value_set_smart_ptr actual_neuron_value_set);
 
-		std::vector<output_neuron_value_set_smart_ptr> run_batch(unsupervised_data_reader& reader);
+		std::vector<output_neuron_value_set_smart_ptr> run_batch(unsupervised_data_reader& reader, unsigned int sample_count);
 
 		void randomize_data();
 
@@ -200,6 +200,12 @@ namespace nnforge
 		normalize_data_transformer_smart_ptr get_output_data_normalize_transformer() const;
 
 		normalize_data_transformer_smart_ptr get_reverse_output_data_normalize_transformer() const;
+
+		std::pair<supervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_validating_and_sample_count() const;
+
+		std::pair<supervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_testing_supervised_and_sample_count() const;
+
+		std::pair<unsupervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_testing_unsupervised_and_sample_count() const;
 
 	private:
 		factory_generator_smart_ptr factory;

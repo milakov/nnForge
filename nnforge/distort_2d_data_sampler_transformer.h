@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,26 +18,30 @@
 
 #include "data_transformer.h"
 
-#include "rnd.h"
-
 #include <memory>
 
 namespace nnforge
 {
-	class distort_2d_data_transformer : public data_transformer
+	struct distort_2d_data_sampler_param
+	{
+		float rotation_angle_in_degrees;
+		float scale;
+		float shift_right_x;
+		float shift_down_y;
+	};
+
+	class distort_2d_data_sampler_transformer : public data_transformer
 	{
 	public:
-		distort_2d_data_transformer(
-			float max_absolute_rotation_angle_in_degrees,
-			float max_scale_factor, // >=1
-			float min_shift_right_x, // in pixels
-			float max_shift_right_x, // in pixels
-			float min_shift_down_y, // in pixels
-			float max_shift_down_y, // in pixels
-			bool flip_around_x_axis_allowed,
-			bool flip_around_y_axis_allowed);
+		distort_2d_data_sampler_transformer(const std::vector<distort_2d_data_sampler_param>& params);
 
-		virtual ~distort_2d_data_transformer();
+		distort_2d_data_sampler_transformer(
+			const std::vector<float>& rotation_angle_in_degrees_list,
+			const std::vector<float>& scale_list, // 1.0F - no scaling
+			const std::vector<float>& shift_right_x_list,
+			const std::vector<float>& shift_down_y_list);
+
+		virtual ~distort_2d_data_sampler_transformer();
 
 		virtual void transform(
 			const void * data,
@@ -46,14 +50,11 @@ namespace nnforge
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-	protected:
-		random_generator generator;
+		virtual bool is_in_place() const;
 
-		std::tr1::uniform_real<float> rotate_angle_distribution;
-		std::tr1::uniform_real<float> scale_distribution;
-		std::tr1::uniform_real<float> shift_x_distribution;
-		std::tr1::uniform_real<float> shift_y_distribution;
-		std::tr1::uniform_int<int> flip_around_x_distribution;
-		std::tr1::uniform_int<int> flip_around_y_distribution;
+		virtual unsigned int get_sample_count() const;
+
+	protected:
+		std::vector<distort_2d_data_sampler_param> params;
 	};
 }

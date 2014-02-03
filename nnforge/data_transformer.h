@@ -32,11 +32,14 @@ namespace nnforge
 			const void * data,
 			void * data_transformed,
 			neuron_data_type::input_type type,
-			const layer_configuration_specific& original_config) = 0;
+			const layer_configuration_specific& original_config,
+			unsigned int sample_id) = 0;
 
 		virtual layer_configuration_specific get_transformed_configuration(const layer_configuration_specific& original_config) const;
 
 		virtual bool is_in_place() const;
+
+		virtual unsigned int get_sample_count() const;
 		
 		virtual void reset();
 

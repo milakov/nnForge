@@ -52,7 +52,8 @@ namespace nnforge
 		const void * data,
 		void * data_transformed,
 		neuron_data_type::input_type type,
-		const layer_configuration_specific& original_config)
+		const layer_configuration_specific& original_config,
+		unsigned int sample_id)
 	{
 		if (type != neuron_data_type::type_byte)
 			throw neural_network_exception("distort_2d_data_transformer is implemented for data stored as bytes only");

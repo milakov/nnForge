@@ -45,6 +45,8 @@
 #include "rotate_band_2d_data_transformer.h"
 #include "noise_data_transformer.h"
 #include "normalize_data_transformer.h"
+#include "distort_2d_data_sampler_transformer.h"
+#include "flip_2d_data_sampler_transformer.h"
 
 namespace nnforge
 {
