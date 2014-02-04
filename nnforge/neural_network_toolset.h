@@ -148,6 +148,7 @@ namespace nnforge
 		unsigned int batch_offset;
 		std::string snapshot_mode;
 		unsigned int snapshot_video_fps;
+		int test_validate_ann_index;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
@@ -166,11 +167,7 @@ namespace nnforge
 
 		unsigned int get_starting_index_for_batch_training();
 
-		void validate(
-			bool is_validate,
-			bool infinite);
-
-		void validate_batch(bool is_validate);
+		void validate(bool is_validate);
 
 		void snapshot();
 

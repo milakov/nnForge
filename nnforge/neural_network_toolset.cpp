@@ -101,23 +101,11 @@ namespace nnforge
 		}
 		else if (!action.compare("validate"))
 		{
-			validate(true, false);
+			validate(true);
 		}
 		else if (!action.compare("test"))
 		{
-			validate(false, false);
-		}
-		else if (!action.compare("validate_batch"))
-		{
-			validate_batch(true);
-		}
-		else if (!action.compare("test_batch"))
-		{
-			validate_batch(false);
-		}
-		else if (!action.compare("validate_infinite"))
-		{
-			validate(true, true);
+			validate(false);
 		}
 		else if (!action.compare("info"))
 		{
@@ -181,7 +169,7 @@ namespace nnforge
 		config.add_options()
 			("input_data_folder,I", boost::program_options::value<boost::filesystem::path>(&input_data_folder)->default_value(""), "path to the folder where input data are located.")
 			("working_data_folder,W", boost::program_options::value<boost::filesystem::path>(&working_data_folder)->default_value(""), "path to the folder where data are processed.")
-			("ann_count,N", boost::program_options::value<unsigned int>(&ann_count)->default_value(1), "amount of networks to be processed.")
+			("ann_count,N", boost::program_options::value<unsigned int>(&ann_count)->default_value(1), "amount of networks to train.")
 			("training_epoch_count,E", boost::program_options::value<unsigned int>(&training_epoch_count)->default_value(50), "amount of epochs to perform during single ANN training.")
 			("snapshot_count", boost::program_options::value<unsigned int>(&snapshot_count)->default_value(100), "amount of snapshots to generate.")
 			("snapshot_extension", boost::program_options::value<std::string>(&snapshot_extension)->default_value("jpg"), "Extension (type) of the files for neuron values snapshots.")
@@ -194,6 +182,7 @@ namespace nnforge
 			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_epoch_count)->default_value(0), "Number of tail iterations with gradually lowering training speed.")
 			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of training speed at each tail epoch.")
 			("batch_offset", boost::program_options::value<unsigned int>(&batch_offset)->default_value(0), "shift initial ANN ID when batch training.")
+			("test_validate_ann_index", boost::program_options::value<int>(&test_validate_ann_index)->default_value(-1), "Index of ANN to test/validate. -1 indicates all ANNs, batch mode.")
 			;
 
 		{
@@ -404,37 +393,6 @@ namespace nnforge
 		return tester_factory->create(schema);
 	}
 
-	void neural_network_toolset::validate(
-		bool is_validate,
-		bool infinite)
-	{
-		network_tester_smart_ptr tester = get_tester();
-
-		network_data_smart_ptr data(new network_data());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / data_trained_filename, std::ios_base::in | std::ios_base::binary);
-			data->read(in);
-		}
-
-		tester->set_data(data);
-
-		std::pair<supervised_data_reader_smart_ptr, unsigned int> reader_and_sample_count = is_validate ? get_data_reader_for_validating_and_sample_count() : get_data_reader_for_testing_supervised_and_sample_count();
-		output_neuron_value_set_smart_ptr actual_neuron_value_set = reader_and_sample_count.first->get_output_neuron_value_set(reader_and_sample_count.second);
-
-		do
-		{
-			testing_complete_result_set testing_res(is_squared_hinge_loss(), actual_neuron_value_set);
-			boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
-			tester->test(
-				*reader_and_sample_count.first,
-				testing_res);
-			boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
-			get_validating_visualizer()->dump(std::cout, testing_res);
-			std::cout << std::endl;
-		}
-		while (infinite);
-	}
-
 	std::vector<output_neuron_value_set_smart_ptr> neural_network_toolset::run_batch(
 		supervised_data_reader& reader,
 		output_neuron_value_set_smart_ptr actual_neuron_value_set)
@@ -456,6 +414,9 @@ namespace nnforge
 			if (std::tr1::regex_search(file_name.c_str(), what, expression))
 			{
 				unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
+				if ((test_validate_ann_index >= 0) && (test_validate_ann_index != index))
+					continue;
+
 				network_data_smart_ptr data(new network_data());
 				{
 					boost::filesystem::ifstream in(file_path, std::ios_base::in | std::ios_base::binary);
@@ -465,11 +426,9 @@ namespace nnforge
 				tester->set_data(data);
 
 				testing_complete_result_set testing_res(is_squared_hinge_loss(), actual_neuron_value_set);
-				boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 				tester->test(
 					reader,
 					testing_res);
-				boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 				std::cout << "# " << index << ", ";
 				get_validating_visualizer()->dump(std::cout, testing_res);
 				std::cout << std::endl;
@@ -500,6 +459,9 @@ namespace nnforge
 			if (std::tr1::regex_search(file_name.c_str(), what, expression))
 			{
 				unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
+				if ((test_validate_ann_index >= 0) && (test_validate_ann_index != index))
+					continue;
+
 				network_data_smart_ptr data(new network_data());
 				{
 					boost::filesystem::ifstream in(file_path, std::ios_base::in | std::ios_base::binary);
@@ -531,16 +493,16 @@ namespace nnforge
 		return 1;
 	}
 
-	void neural_network_toolset::validate_batch(bool is_validate)
+	void neural_network_toolset::validate(bool is_validate)
 	{
 		if (is_validate || boost::filesystem::exists(get_working_data_folder() / testing_data_filename))
 		{
-			std::pair<supervised_data_reader_smart_ptr, unsigned int> reader_sample_count = is_validate ? get_data_reader_for_validating_and_sample_count() : get_data_reader_for_testing_supervised_and_sample_count();
-			output_neuron_value_set_smart_ptr actual_neuron_value_set = reader_sample_count.first->get_output_neuron_value_set(reader_sample_count.second);
+			std::pair<supervised_data_reader_smart_ptr, unsigned int> reader_and_sample_count = is_validate ? get_data_reader_for_validating_and_sample_count() : get_data_reader_for_testing_supervised_and_sample_count();
+			output_neuron_value_set_smart_ptr actual_neuron_value_set = reader_and_sample_count.first->get_output_neuron_value_set(reader_and_sample_count.second);
 			if (actual_neuron_value_set->neuron_value_list.empty())
 				throw neural_network_exception("Empty validating/testing value set");
 
-			std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(*reader_sample_count.first, actual_neuron_value_set);
+			std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(*reader_and_sample_count.first, actual_neuron_value_set);
 
 			testing_complete_result_set complete_result_set_avg(is_squared_hinge_loss(), actual_neuron_value_set);
 			{
