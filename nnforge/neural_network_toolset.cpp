@@ -186,17 +186,17 @@ namespace nnforge
 			("input_data_folder,I", boost::program_options::value<boost::filesystem::path>(&input_data_folder)->default_value(""), "path to the folder where input data are located.")
 			("working_data_folder,W", boost::program_options::value<boost::filesystem::path>(&working_data_folder)->default_value(""), "path to the folder where data are processed.")
 			("ann_count,N", boost::program_options::value<unsigned int>(&ann_count)->default_value(1), "amount of networks to be processed.")
-			("training_iteration_count,T", boost::program_options::value<unsigned int>(&training_iteration_count)->default_value(50), "amount of iterations to perform during single ANN training.")
+			("training_epoch_count,E", boost::program_options::value<unsigned int>(&training_epoch_count)->default_value(50), "amount of epochs to perform during single ANN training.")
 			("snapshot_count", boost::program_options::value<unsigned int>(&snapshot_count)->default_value(100), "amount of snapshots to generate.")
 			("snapshot_extension", boost::program_options::value<std::string>(&snapshot_extension)->default_value("jpg"), "Extension (type) of the files for neuron values snapshots.")
 			("snapshot_mode", boost::program_options::value<std::string>(&snapshot_mode)->default_value("image"), "Type of the neuron values snapshot to generate (image, video).")
 			("snapshot_video_fps", boost::program_options::value<unsigned int>(&snapshot_video_fps)->default_value(5), "Frames per second when saving video snapshot.")
 			("ann_snapshot_extension", boost::program_options::value<std::string>(&ann_snapshot_extension)->default_value("jpg"), "Extension (type) of the files for network weights snapshots.")
-			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.3F), "Mu increases by this ratio each iteration.")
+			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.3F), "Mu increases by this ratio each epoch.")
 			("max_mu", boost::program_options::value<float>(&max_mu)->default_value(5.0e-4F), "Maximum Mu during training.")
 			("learning_rate,L", boost::program_options::value<float>(&learning_rate)->default_value(0.02F), "Global learning rate, Eta/Mu ratio for Stochastic Diagonal Levenberg Marquardt.")
-			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_iteration_count)->default_value(0), "Number of tail iterations with gradually lowering training speed.")
-			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of training speed at each tail iteration.")
+			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_epoch_count)->default_value(0), "Number of tail iterations with gradually lowering training speed.")
+			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of training speed at each tail epoch.")
 			("batch_offset", boost::program_options::value<unsigned int>(&batch_offset)->default_value(0), "shift initial ANN ID when batch training.")
 			;
 
@@ -968,11 +968,11 @@ namespace nnforge
 			schema,
 			hessian,
 			updater);
-		trainer.iteration_count = training_iteration_count;
+		trainer.epoch_count = training_epoch_count;
 		trainer.speed = learning_rate;
 		trainer.max_mu = max_mu;
 		trainer.mu_increase_factor = mu_increase_factor;
-		trainer.learning_rate_decay_tail_iteration_count = learning_rate_decay_tail_iteration_count;
+		trainer.learning_rate_decay_tail_epoch_count = learning_rate_decay_tail_epoch_count;
 		trainer.learning_rate_decay_rate = learning_rate_decay_rate;
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();

@@ -24,8 +24,8 @@ namespace nnforge
 {
 	network_trainer::network_trainer(network_schema_smart_ptr schema)
 		: schema(schema)
-		, iteration_count(50)
-		, learning_rate_decay_tail_iteration_count(0)
+		, epoch_count(50)
+		, learning_rate_decay_tail_epoch_count(0)
 		, learning_rate_decay_rate(0.5F)
 	{
 	}
@@ -81,7 +81,7 @@ namespace nnforge
 					continue;
 				}
 
-				if (is_last_iteration(task_list[i]))
+				if (is_last_epoch(task_list[i]))
 				{
 					pusher.push(task_list[i]);
 					task_list.erase(task_list.begin() + i);
@@ -90,9 +90,9 @@ namespace nnforge
 		}
 	}
 
-	bool network_trainer::is_last_iteration(const training_task_state& state) const
+	bool network_trainer::is_last_epoch(const training_task_state& state) const
 	{
-		return (state.history.size() >= iteration_count);
+		return (state.history.size() >= epoch_count);
 	}
 
 	bool network_trainer::is_broken(const training_task_state& state) const
@@ -102,13 +102,13 @@ namespace nnforge
 		return !sanity_check;
 	}
 
-	float network_trainer::get_tail_decay_factor(unsigned int iteration) const
+	float network_trainer::get_tail_decay_factor(unsigned int epoch) const
 	{
-		int first_iteration_with_decay = std::max(static_cast<int>(iteration_count) - static_cast<int>(learning_rate_decay_tail_iteration_count), 1);
-		int tail_degradation_iteration = static_cast<int>(iteration) - first_iteration_with_decay + 1;
-		if (tail_degradation_iteration <= 0)
+		int first_iteration_with_decay = std::max(static_cast<int>(epoch_count) - static_cast<int>(learning_rate_decay_tail_epoch_count), 1);
+		int tail_degradation_epoch = static_cast<int>(epoch) - first_iteration_with_decay + 1;
+		if (tail_degradation_epoch <= 0)
 			return 1.0F;
 		else
-			return powf(learning_rate_decay_rate, static_cast<float>(tail_degradation_iteration));
+			return powf(learning_rate_decay_rate, static_cast<float>(tail_degradation_epoch));
 	}
 }

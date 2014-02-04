@@ -40,14 +40,14 @@ namespace nnforge
 			network_data_pusher& progress_pusher,
 			network_data_pusher& pusher);
 
-		unsigned int iteration_count;
-		unsigned int learning_rate_decay_tail_iteration_count;
+		unsigned int epoch_count;
+		unsigned int learning_rate_decay_tail_epoch_count;
 		float learning_rate_decay_rate;
 
 	protected:
 		network_trainer(network_schema_smart_ptr schema);
 
-		float get_tail_decay_factor(unsigned int iteration) const;
+		float get_tail_decay_factor(unsigned int epoch) const;
 
 		virtual void initialize_train(supervised_data_reader& reader) = 0;
 
@@ -62,7 +62,7 @@ namespace nnforge
 		network_schema_smart_ptr schema;
 
 	private:
-		bool is_last_iteration(const training_task_state& state) const;
+		bool is_last_epoch(const training_task_state& state) const;
 
 		bool is_broken(const training_task_state& state) const;
 

@@ -138,10 +138,10 @@ namespace nnforge
 		std::string snapshot_extension;
 		std::string ann_snapshot_extension;
 		unsigned int ann_count;
-		unsigned int training_iteration_count;
+		unsigned int training_epoch_count;
 		unsigned int snapshot_count;
 		float learning_rate;
-		unsigned int learning_rate_decay_tail_iteration_count;
+		unsigned int learning_rate_decay_tail_epoch_count;
 		float learning_rate_decay_rate;
 		float max_mu;
 		float mu_increase_factor;
