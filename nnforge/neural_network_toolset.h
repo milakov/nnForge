@@ -121,7 +121,6 @@ namespace nnforge
 		static const char * testing_unsupervised_data_filename;
 		static const char * schema_filename;
 		static const char * data_filename;
-		static const char * data_trained_filename;
 		static const char * normalizer_input_filename;
 		static const char * normalizer_output_filename;
 		static const char * snapshot_subfolder_name;
@@ -149,6 +148,7 @@ namespace nnforge
 		std::string snapshot_mode;
 		unsigned int snapshot_video_fps;
 		int test_validate_ann_index;
+		unsigned int snapshot_ann_index;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
@@ -184,6 +184,8 @@ namespace nnforge
 			const std::string& name,
 			const network_data& data,
 			const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list);
+
+		network_data_smart_ptr load_ann_data(unsigned int ann_id);
 
 		void train();
 

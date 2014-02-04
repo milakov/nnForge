@@ -55,7 +55,6 @@ namespace nnforge
 	const char * neural_network_toolset::testing_unsupervised_data_filename = "testing.udt";
 	const char * neural_network_toolset::schema_filename = "ann.schema";
 	const char * neural_network_toolset::data_filename = "ann.data";
-	const char * neural_network_toolset::data_trained_filename = "ann_trained.data";
 	const char * neural_network_toolset::normalizer_input_filename = "normalizer_input.data";
 	const char * neural_network_toolset::normalizer_output_filename = "normalizer_output.data";
 	const char * neural_network_toolset::snapshot_subfolder_name = "snapshot";
@@ -176,6 +175,7 @@ namespace nnforge
 			("snapshot_mode", boost::program_options::value<std::string>(&snapshot_mode)->default_value("image"), "Type of the neuron values snapshot to generate (image, video).")
 			("snapshot_video_fps", boost::program_options::value<unsigned int>(&snapshot_video_fps)->default_value(5), "Frames per second when saving video snapshot.")
 			("ann_snapshot_extension", boost::program_options::value<std::string>(&ann_snapshot_extension)->default_value("jpg"), "Extension (type) of the files for network weights snapshots.")
+			("snapshot_ann_index", boost::program_options::value<unsigned int>(&snapshot_ann_index)->default_value(0), "Index of ANN for snapshots.")
 			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.3F), "Mu increases by this ratio each epoch.")
 			("max_mu", boost::program_options::value<float>(&max_mu)->default_value(5.0e-4F), "Maximum Mu during training.")
 			("learning_rate,L", boost::program_options::value<float>(&learning_rate)->default_value(0.02F), "Global learning rate, Eta/Mu ratio for Stochastic Diagonal Levenberg Marquardt.")
@@ -393,6 +393,17 @@ namespace nnforge
 		return tester_factory->create(schema);
 	}
 
+	network_data_smart_ptr neural_network_toolset::load_ann_data(unsigned int ann_id)
+	{
+		boost::filesystem::path data_filepath = get_working_data_folder() / get_ann_subfolder_name() / (boost::format("ann_trained_%|1$03d|.data") % ann_id).str();
+		network_data_smart_ptr data(new network_data());
+		{
+			boost::filesystem::ifstream in(data_filepath, std::ios_base::in | std::ios_base::binary);
+			data->read(in);
+		}
+		return data;
+	}
+
 	std::vector<output_neuron_value_set_smart_ptr> neural_network_toolset::run_batch(
 		supervised_data_reader& reader,
 		output_neuron_value_set_smart_ptr actual_neuron_value_set)
@@ -598,11 +609,7 @@ namespace nnforge
 	{
 		network_tester_smart_ptr tester = get_tester();
 
-		network_data_smart_ptr data(new network_data());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / data_trained_filename, std::ios_base::in | std::ios_base::binary);
-			data->read(in);
-		}
+		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
 
 		tester->set_data(data);
 
@@ -639,11 +646,7 @@ namespace nnforge
 		}
 		std::vector<layer_data_configuration_list> layer_data_configuration_list_list = schema->get_layer_data_configuration_list_list();
 
-		network_data_smart_ptr data(new network_data());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / data_trained_filename, std::ios_base::in | std::ios_base::binary);
-			data->read(in);
-		}
+		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
 
 		std::string ann_snapshot_filename = "trained";
 		save_ann_snapshot(ann_snapshot_filename, *data, layer_data_configuration_list_list);
@@ -692,11 +695,7 @@ namespace nnforge
 	{
 		network_tester_smart_ptr tester = get_tester();
 
-		network_data_smart_ptr data(new network_data());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / data_trained_filename, std::ios_base::in | std::ios_base::binary);
-			data->read(in);
-		}
+		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
 
 		tester->set_data(data);
 
