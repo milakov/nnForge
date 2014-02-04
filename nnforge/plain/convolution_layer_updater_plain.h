@@ -61,7 +61,7 @@ namespace nnforge
 				const_additional_buffer_smart_ptr output_errors,
 				std::vector<additional_buffer_smart_ptr>& additional_buffers,
 				layer_data_list& data,
-				const layer_data_list& training_speed,
+				const layer_data_list& learning_rate,
 				plain_running_configuration_const_smart_ptr plain_config,
 				const_layer_smart_ptr layer_schema,
 				const layer_configuration_specific& input_configuration_specific,

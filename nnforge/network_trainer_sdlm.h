@@ -42,7 +42,6 @@ namespace nnforge
 		float max_mu;
 		float mu_increase_factor;
 		float speed;
-		float eta_degradation;
 
 	protected:
 		// The method should add testing result to the training history of each element

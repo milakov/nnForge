@@ -36,7 +36,6 @@ namespace nnforge
 		, max_mu(5.0e-4F)
 		, mu_increase_factor(1.3F)
 		, speed(0.02F)
-		, eta_degradation(1.0F)
 	{
 	}
 
@@ -52,7 +51,7 @@ namespace nnforge
 
 		unsigned int hessian_entry_to_process_count = std::min<unsigned int>(std::max<unsigned int>(static_cast<unsigned int>(hessian_entry_to_process_ratio * reader.get_entry_count()), min_hessian_entry_to_process_count), reader.get_entry_count());
 
-		std::vector<network_data_smart_ptr> training_speed_vector_list;
+		std::vector<network_data_smart_ptr> learning_rate_vector_list;
 		for(unsigned int i = 0; i < task_list.size(); ++i)
 		{
 			network_data_smart_ptr hessian = hessian_calc->get_hessian(
@@ -64,7 +63,7 @@ namespace nnforge
 				hessian,
 				task_list[i].history);
 
-			training_speed_vector_list.push_back(hessian);
+			learning_rate_vector_list.push_back(hessian);
 
 			task_list[i].comments.push_back(comment);
 		}
@@ -75,7 +74,7 @@ namespace nnforge
 
 		std::vector<testing_result_smart_ptr> train_result = updater->update(
 			reader,
-			training_speed_vector_list,
+			learning_rate_vector_list,
 			data_list);
 
 		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start) / task_list.size();
@@ -165,9 +164,6 @@ namespace nnforge
 		const std::vector<testing_result_smart_ptr>& history) const
 	{
 		float res = mu * speed;
-
-		if (history.size() > 0)
-			res *= powf(eta_degradation, static_cast<float>(history.size()));
 
 		res *= get_tail_decay_factor(static_cast<unsigned int>(history.size()));
 

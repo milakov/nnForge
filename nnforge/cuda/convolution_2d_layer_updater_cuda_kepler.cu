@@ -277,7 +277,7 @@ namespace nnforge
 		__global__ void convolution_2d_update_biases_upd_kernel_kepler(
 			float * __restrict biases,
 			const float * __restrict output_errors,
-			const float * __restrict training_speed,
+			const float * __restrict learning_rate,
 			int output_feature_map_count,
 			int output_elem_count_per_feature_map,
 			int min_iteration_count)
@@ -308,8 +308,8 @@ namespace nnforge
 			if (lane_id == 0)
 			{
 				int offset = entry_id * output_feature_map_count + output_feature_map_id;
-				float current_training_speed_val = training_speed[offset];
-				atomicAdd(biases + offset, sum * current_training_speed_val);
+				float current_learning_rate_val = learning_rate[offset];
+				atomicAdd(biases + offset, sum * current_learning_rate_val);
 			}
 		}
 
@@ -590,7 +590,7 @@ namespace nnforge
 			float * __restrict weights,
 			cudaTextureObject_t input_tex,
 			cudaTextureObject_t output_tex,
-			const float * __restrict training_speed,
+			const float * __restrict learning_rate,
 			const packed_config<4> * __restrict packed_config_list,
 			int output_width,
 			int output_height,
@@ -667,7 +667,7 @@ namespace nnforge
 				int offset = (((entry_id * output_feature_map_count + output_feature_map_id) * input_feature_map_count + input_feature_map_id) * window_height + weight_y) * window_width + weight_x;
 				int weight_count_per_output_feature_map = input_feature_map_count * window_height * window_width;
 				float * cur_weights = weights + offset;
-				const float * cur_training_speed = training_speed + offset;
+				const float * cur_learning_rate = learning_rate + offset;
 				if (single_output_y_group)
 				{
 					#pragma unroll
@@ -678,7 +678,7 @@ namespace nnforge
 							#pragma unroll
 							for(int j = 0; j < WINDOW_WIDTH_LOCAL; ++j)
 								if (j < window_width - weight_x)
-									cur_weights[i * weight_count_per_output_feature_map + j] += sums[i * WINDOW_WIDTH_LOCAL + j] * cur_training_speed[i * weight_count_per_output_feature_map + j];
+									cur_weights[i * weight_count_per_output_feature_map + j] += sums[i * WINDOW_WIDTH_LOCAL + j] * cur_learning_rate[i * weight_count_per_output_feature_map + j];
 						}
 					}
 				}
@@ -692,7 +692,7 @@ namespace nnforge
 							#pragma unroll
 							for(int j = 0; j < WINDOW_WIDTH_LOCAL; ++j)
 								if (j < window_width - weight_x)
-									atomicAdd(cur_weights + i * weight_count_per_output_feature_map + j, sums[i * WINDOW_WIDTH_LOCAL + j] * cur_training_speed[i * weight_count_per_output_feature_map + j]);
+									atomicAdd(cur_weights + i * weight_count_per_output_feature_map + j, sums[i * WINDOW_WIDTH_LOCAL + j] * cur_learning_rate[i * weight_count_per_output_feature_map + j]);
 						}
 					}
 				}
@@ -704,7 +704,7 @@ namespace nnforge
 			float * __restrict weights,
 			cudaTextureObject_t input_tex,
 			cudaTextureObject_t output_tex,
-			const float * __restrict training_speed,
+			const float * __restrict learning_rate,
 			const packed_config<4> * __restrict packed_config_list,
 			int output_width,
 			int output_height,
@@ -779,7 +779,7 @@ namespace nnforge
 				int offset = (((entry_id * output_feature_map_count + output_feature_map_id) * input_feature_map_count + input_feature_map_id) * window_height + weight_y) * WINDOW_WIDTH;
 				int weight_count_per_output_feature_map = input_feature_map_count * window_height * WINDOW_WIDTH;
 				float * cur_weights = weights + offset;
-				const float * cur_training_speed = training_speed + offset;
+				const float * cur_learning_rate = learning_rate + offset;
 				if (single_output_y_group)
 				{
 					#pragma unroll
@@ -789,7 +789,7 @@ namespace nnforge
 						{
 							#pragma unroll
 							for(int j = 0; j < WINDOW_WIDTH; ++j)
-								cur_weights[i * weight_count_per_output_feature_map + j] += sums[i * WINDOW_WIDTH + j] * cur_training_speed[i * weight_count_per_output_feature_map + j];
+								cur_weights[i * weight_count_per_output_feature_map + j] += sums[i * WINDOW_WIDTH + j] * cur_learning_rate[i * weight_count_per_output_feature_map + j];
 						}
 					}
 				}
@@ -802,7 +802,7 @@ namespace nnforge
 						{
 							#pragma unroll
 							for(int j = 0; j < WINDOW_WIDTH; ++j)
-								atomicAdd(cur_weights + i * weight_count_per_output_feature_map + j, sums[i * WINDOW_WIDTH + j] * cur_training_speed[i * weight_count_per_output_feature_map + j]);
+								atomicAdd(cur_weights + i * weight_count_per_output_feature_map + j, sums[i * WINDOW_WIDTH + j] * cur_learning_rate[i * weight_count_per_output_feature_map + j]);
 						}
 					}
 				}
@@ -983,7 +983,7 @@ namespace nnforge
 		};
 
 #define launch_update_weights_exact_kernel_const(window_width_const, single_output_y_group_const) \
-	convolution_2d_update_weights_exact_upd_kernel_kepler<window_width_const, single_output_y_group_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], input_tex, output_tex, *training_speed[0], packed_config_list, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, updater_output_y_group_count, texture_offset, entry_count, different_input, packed_config_count);
+	convolution_2d_update_weights_exact_upd_kernel_kepler<window_width_const, single_output_y_group_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], input_tex, output_tex, *learning_rate[0], packed_config_list, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, updater_output_y_group_count, texture_offset, entry_count, different_input, packed_config_count);
 
 #define launch_update_weights_exact_kernel(window_width, single_output_y_group_const) \
 	switch (window_width) \
@@ -1021,7 +1021,7 @@ namespace nnforge
 		};
 
 #define launch_update_weights_kernel_const(single_output_y_group_const) \
-	convolution_2d_update_weights_upd_kernel_kepler<single_output_y_group_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], input_tex, output_tex, *training_speed[0], packed_config_list, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[0], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, updater_output_y_group_count, texture_offset, entry_count, different_input, packed_config_count);
+	convolution_2d_update_weights_upd_kernel_kepler<single_output_y_group_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], input_tex, output_tex, *learning_rate[0], packed_config_list, output_configuration_specific.dimension_sizes[0], output_configuration_specific.dimension_sizes[1], input_configuration_specific.dimension_sizes[0], input_configuration_specific.dimension_sizes[1], window_sizes[0], window_sizes[1], input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, updater_output_y_group_count, texture_offset, entry_count, different_input, packed_config_count);
 
 		void convolution_2d_layer_updater_cuda_kepler::enqueue_test(
 			unsigned int offset_input_entry_id,
@@ -1156,7 +1156,7 @@ namespace nnforge
 			cudaStream_t stream_id,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& training_speed,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& learning_rate,
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
@@ -1173,7 +1173,7 @@ namespace nnforge
 				convolution_2d_update_biases_upd_kernel_kepler<<<grid_size, block_size, 0, stream_id>>>(
 					*data[1],
 					*output_errors_buffer,
-					*training_speed[1],
+					*learning_rate[1],
 					output_configuration_specific.feature_map_count,
 					output_elem_count_per_feature_map,
 					min_iteration_count);

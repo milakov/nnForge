@@ -140,8 +140,7 @@ namespace nnforge
 		unsigned int ann_count;
 		unsigned int training_iteration_count;
 		unsigned int snapshot_count;
-		float training_speed;
-		float training_speed_degradaton;
+		float learning_rate;
 		unsigned int learning_rate_decay_tail_iteration_count;
 		float learning_rate_decay_rate;
 		float max_mu;

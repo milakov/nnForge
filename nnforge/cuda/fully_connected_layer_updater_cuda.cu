@@ -119,7 +119,7 @@ __global__ void fully_connected_deriviative_upd_kernel(
 __global__ void fully_connected_update_biases_upd_kernel(
 	float * __restrict biases,
 	const float * __restrict output_errors,
-	const float * __restrict training_speed,
+	const float * __restrict learning_rate,
 	int output_neuron_count,
 	int entry_count)
 {
@@ -129,7 +129,7 @@ __global__ void fully_connected_update_biases_upd_kernel(
 	if (in_bounds)
 	{
 		int offset = entry_id * output_neuron_count + output_neuron_id;
-		float upd_val = output_errors[offset] * training_speed[offset] + biases[offset];
+		float upd_val = output_errors[offset] * learning_rate[offset] + biases[offset];
 		biases[offset] = upd_val;
 	}
 }
@@ -139,7 +139,7 @@ __global__ void fully_connected_update_weights_upd_kernel(
 	float * __restrict weights,
 	const float * __restrict input_neurons,
 	const float * __restrict output_errors,
-	const float * __restrict training_speed,
+	const float * __restrict learning_rate,
 	int input_neuron_count,
 	int output_neuron_count,
 	int entry_count)
@@ -152,7 +152,7 @@ __global__ void fully_connected_update_weights_upd_kernel(
 	{
 		int input_offset = (different_input ? entry_id * input_neuron_count : 0) + input_neuron_id;
 		int offset = (entry_id * output_neuron_count + output_neuron_id) * input_neuron_count + input_neuron_id;
-		float upd_val = input_neurons[input_offset] * output_errors[entry_id * output_neuron_count + output_neuron_id] * training_speed[offset] + weights[offset];
+		float upd_val = input_neurons[input_offset] * output_errors[entry_id * output_neuron_count + output_neuron_id] * learning_rate[offset] + weights[offset];
 		weights[offset] = upd_val;
 	}
 }
@@ -277,7 +277,7 @@ namespace nnforge
 			cudaStream_t stream_id,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& training_speed,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& learning_rate,
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
@@ -294,7 +294,7 @@ namespace nnforge
 				fully_connected_update_biases_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					*data[1],
 					*output_errors_buffer,
-					*training_speed[1],
+					*learning_rate[1],
 					output_elem_count_per_entry,
 					entry_count);
 			}
@@ -310,7 +310,7 @@ namespace nnforge
 					*data[0],
 					*input_neurons_buffer,
 					*output_errors_buffer,
-					*training_speed[0],
+					*learning_rate[0],
 					input_elem_count_per_entry,
 					output_elem_count_per_entry,
 					entry_count);
@@ -321,7 +321,7 @@ namespace nnforge
 					*data[0],
 					(const float *)(*input_neurons_buffer) + (offset_input_entry_id * input_elem_count_per_entry),
 					*output_errors_buffer,
-					*training_speed[0],
+					*learning_rate[0],
 					input_elem_count_per_entry,
 					output_elem_count_per_entry,
 					entry_count);

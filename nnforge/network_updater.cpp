@@ -92,13 +92,13 @@ namespace nnforge
 
 	std::vector<testing_result_smart_ptr> network_updater::update(
 		supervised_data_reader& reader,
-		const std::vector<network_data_smart_ptr>& training_speed_vector_list,
+		const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
 		std::vector<network_data_smart_ptr>& data_list)
 	{
 		// Check data-schema consistency
 		for(std::vector<network_data_smart_ptr>::iterator it = data_list.begin(); it != data_list.end(); it++)
 			(*it)->check_network_data_consistency(*schema);
-		for(std::vector<network_data_smart_ptr>::const_iterator it = training_speed_vector_list.begin(); it != training_speed_vector_list.end(); it++)
+		for(std::vector<network_data_smart_ptr>::const_iterator it = learning_rate_vector_list.begin(); it != learning_rate_vector_list.end(); it++)
 			(*it)->check_network_data_consistency(*schema);
 
 		set_input_configuration_specific(reader.get_input_configuration());
@@ -113,7 +113,7 @@ namespace nnforge
 		for(std::vector<network_data_smart_ptr>::iterator it = data_list.begin(); it != data_list.end(); ++it)
 			(*it)->apply_dropout_layer_config(layer_id_to_dropout_config_map, false);
 
-		std::vector<testing_result_smart_ptr> res = actual_update(reader, training_speed_vector_list, data_list);
+		std::vector<testing_result_smart_ptr> res = actual_update(reader, learning_rate_vector_list, data_list);
 
 		for(std::vector<network_data_smart_ptr>::iterator it = data_list.begin(); it != data_list.end(); ++it)
 			(*it)->apply_dropout_layer_config(layer_id_to_dropout_config_map, true);

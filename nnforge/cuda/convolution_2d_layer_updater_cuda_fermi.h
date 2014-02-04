@@ -60,7 +60,7 @@ namespace nnforge
 				cudaStream_t stream_id,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& training_speed,
+				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& learning_rate,
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,

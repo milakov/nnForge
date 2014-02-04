@@ -76,7 +76,7 @@ namespace nnforge
 
 		std::vector<testing_result_smart_ptr> network_updater_plain::actual_update(
 			supervised_data_reader& reader,
-			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
+			const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
 			std::vector<network_data_smart_ptr>& data_list)
 		{
 			std::vector<testing_result_smart_ptr> res;
@@ -93,7 +93,7 @@ namespace nnforge
 			if (updater_entry_count == 0)
 				return res;
 
-			for(unsigned int i = 0; i < training_speed_vector_list.size(); ++i)
+			for(unsigned int i = 0; i < learning_rate_vector_list.size(); ++i)
 				res.push_back(testing_result_smart_ptr(new testing_result(is_squared_hinge_loss, output_neuron_count)));
 
 			buffer_plain_size_configuration buffers_config;
@@ -120,10 +120,10 @@ namespace nnforge
 				for(unsigned int updater_entry_id = 0; updater_entry_id < updater_entry_count; ++updater_entry_id)
 					data_list_reorganized[layer_id - testing_layer_count].push_back((*data_list[updater_entry_id])[layer_id]);
 
-			std::vector<layer_data_list> training_speed_vector_list_reorganized(training_speed_vector_list[0]->size() - testing_layer_count);
-			for(unsigned int layer_id = testing_layer_count; layer_id < training_speed_vector_list[0]->size(); ++layer_id)
+			std::vector<layer_data_list> learning_rate_vector_list_reorganized(learning_rate_vector_list[0]->size() - testing_layer_count);
+			for(unsigned int layer_id = testing_layer_count; layer_id < learning_rate_vector_list[0]->size(); ++layer_id)
 				for(unsigned int updater_entry_id = 0; updater_entry_id < updater_entry_count; ++updater_entry_id)
-					training_speed_vector_list_reorganized[layer_id - testing_layer_count].push_back((*training_speed_vector_list[updater_entry_id])[layer_id]);
+					learning_rate_vector_list_reorganized[layer_id - testing_layer_count].push_back((*learning_rate_vector_list[updater_entry_id])[layer_id]);
 
 			unsigned int max_entry_count = std::min<unsigned int>(std::min<unsigned int>(plain_config->get_max_entry_count(buffers_config), reader.get_entry_count()), max_entry_count_in_single_batch);
 
@@ -342,10 +342,10 @@ namespace nnforge
 						std::vector<std::pair<additional_buffer_smart_ptr, updater_additional_buffer_set> >::reverse_iterator updater_buffers_it = input_buffer_and_additional_updater_buffers_pack.rbegin();
 						layer_configuration_specific_list::const_reverse_iterator input_config_it = layer_config_list.rbegin();
 						std::vector<layer_data_list>::reverse_iterator data_it = data_list_reorganized.rbegin();
-						std::vector<layer_data_list>::const_reverse_iterator training_speed_it = training_speed_vector_list_reorganized.rbegin();
+						std::vector<layer_data_list>::const_reverse_iterator learning_rate_it = learning_rate_vector_list_reorganized.rbegin();
 						additional_buffer_smart_ptr output_errors = initial_error_buf;
 						unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1;
-						for(std::vector<const_layer_updater_plain_smart_ptr>::const_reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++training_speed_it, --reverse_layer_id)
+						for(std::vector<const_layer_updater_plain_smart_ptr>::const_reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++learning_rate_it, --reverse_layer_id)
 						{
 							if (it != updater_list.rend() - 1)
 							{
@@ -381,7 +381,7 @@ namespace nnforge
 								output_errors,
 								updater_buffers_it->second.additional_buffers,
 								*data_it,
-								*training_speed_it,
+								*learning_rate_it,
 								plain_config,
 								*layer_it,
 								*(input_config_it + 1),

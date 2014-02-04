@@ -194,8 +194,7 @@ namespace nnforge
 			("ann_snapshot_extension", boost::program_options::value<std::string>(&ann_snapshot_extension)->default_value("jpg"), "Extension (type) of the files for network weights snapshots.")
 			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.3F), "Mu increases by this ratio each iteration.")
 			("max_mu", boost::program_options::value<float>(&max_mu)->default_value(5.0e-4F), "Maximum Mu during training.")
-			("training_speed", boost::program_options::value<float>(&training_speed)->default_value(0.02F), "Eta/Mu ratio.")
-			("training_speed_degradation", boost::program_options::value<float>(&training_speed_degradaton)->default_value(1.0F), "Degradation of training speed at each iteration.")
+			("learning_rate,L", boost::program_options::value<float>(&learning_rate)->default_value(0.02F), "Global learning rate, Eta/Mu ratio for Stochastic Diagonal Levenberg Marquardt.")
 			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_iteration_count)->default_value(0), "Number of tail iterations with gradually lowering training speed.")
 			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of training speed at each tail iteration.")
 			("batch_offset", boost::program_options::value<unsigned int>(&batch_offset)->default_value(0), "shift initial ANN ID when batch training.")
@@ -970,8 +969,7 @@ namespace nnforge
 			hessian,
 			updater);
 		trainer.iteration_count = training_iteration_count;
-		trainer.speed = training_speed;
-		trainer.eta_degradation = training_speed_degradaton;
+		trainer.speed = learning_rate;
 		trainer.max_mu = max_mu;
 		trainer.mu_increase_factor = mu_increase_factor;
 		trainer.learning_rate_decay_tail_iteration_count = learning_rate_decay_tail_iteration_count;
@@ -1042,15 +1040,15 @@ namespace nnforge
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
 		training_data_reader->set_max_entries_to_read(2000);
 
-		std::vector<network_data_smart_ptr> training_speeds;
+		std::vector<network_data_smart_ptr> learning_rates;
 		std::vector<network_data_smart_ptr> data;
 
 		random_generator data_gen = rnd::get_random_generator(47597);
 		for(unsigned int i = 0; i < ann_count; ++i)
 		{
 			network_data_smart_ptr ts(new network_data(*schema));
-			ts->fill(training_speed);
-			training_speeds.push_back(ts);
+			ts->fill(learning_rate);
+			learning_rates.push_back(ts);
 
 			network_data_smart_ptr data_elem(new network_data(*schema));
 			data_elem->randomize(*schema, data_gen);
@@ -1066,7 +1064,7 @@ namespace nnforge
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		updater->update(
 			*training_data_reader,
-			training_speeds,
+			learning_rates,
 			data);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		float time_to_complete_seconds = sec.count();

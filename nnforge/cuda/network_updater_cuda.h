@@ -46,7 +46,7 @@ namespace nnforge
 			// schema, data and reader are guaranteed to be compatible
 			virtual std::vector<testing_result_smart_ptr> actual_update(
 				supervised_data_reader& reader,
-				const std::vector<network_data_smart_ptr>& training_speed_vector_list,
+				const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
 				std::vector<network_data_smart_ptr>& data_list);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
@@ -63,8 +63,8 @@ namespace nnforge
 				buffer_cuda_size_configuration& buffer_configuration,
 				unsigned int updater_entry_count) const;
 
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > enqueue_get_training_speed(
-				const std::vector<network_data_smart_ptr>& training_speed_list,
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > enqueue_get_learning_rate(
+				const std::vector<network_data_smart_ptr>& learning_rate_list,
 				cudaStream_t stream_id) const;
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > enqueue_get_data(

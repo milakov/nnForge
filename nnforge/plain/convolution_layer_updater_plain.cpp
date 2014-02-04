@@ -258,7 +258,7 @@ namespace nnforge
 			const_additional_buffer_smart_ptr output_errors,
 			std::vector<additional_buffer_smart_ptr>& additional_buffers,
 			layer_data_list& data,
-			const layer_data_list& training_speed,
+			const layer_data_list& learning_rate,
 			plain_running_configuration_const_smart_ptr plain_config,
 			const_layer_smart_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
@@ -285,7 +285,7 @@ namespace nnforge
 				window_elem_count *= window_sizes[i];
 			const unsigned int const_window_elem_count = window_elem_count;
 			const layer_data_list::iterator data_list_it = data.begin();
-			const layer_data_list::const_iterator training_speed_list_it = training_speed.begin();
+			const layer_data_list::const_iterator learning_rate_list_it = learning_rate.begin();
 
 			std::vector<unsigned int> current_local_input_position(dimension_count, 0);
 			std::vector<unsigned int> offset_list(window_elem_count);
@@ -327,12 +327,12 @@ namespace nnforge
 					int input_feature_map_id = feature_map_pair_id - (output_feature_map_id * input_feature_map_count);
 
 					const std::vector<float>::iterator weights = (**(data_list_it + entry_id))[0].begin();
-					const std::vector<float>::const_iterator training_speeds = (**(training_speed_list_it + entry_id))[0].begin();
+					const std::vector<float>::const_iterator learning_rates = (**(learning_rate_list_it + entry_id))[0].begin();
 
 					std::vector<float>::const_iterator in_it_base = in_it_global + (same_input ? 0 : (entry_id * input_neuron_count)) + (input_feature_map_id * input_neuron_count_per_feature_map);
 					std::vector<float>::const_iterator out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
 					std::vector<float>::iterator weights_it_base = weights + (output_feature_map_id * (const_window_elem_count * input_feature_map_count)) + (const_window_elem_count * input_feature_map_id);
-					std::vector<float>::const_iterator training_speeds_it_base = training_speeds + (output_feature_map_id * (const_window_elem_count * input_feature_map_count)) + (const_window_elem_count * input_feature_map_id);
+					std::vector<float>::const_iterator learning_rates_it_base = learning_rates + (output_feature_map_id * (const_window_elem_count * input_feature_map_count)) + (const_window_elem_count * input_feature_map_id);
 
 					std::fill_n(weights_local.begin(), const_window_elem_count, 0.0F);
 					std::fill_n(current_output_position.begin(), dimension_count, 0);
@@ -359,9 +359,9 @@ namespace nnforge
 					}
 
 					std::vector<float>::iterator weights_local_it = weights_local.begin();
-					std::vector<float>::const_iterator training_speeds_it = training_speeds_it_base;
-					for(std::vector<float>::iterator it = weights_it_base; it != weights_it_base + const_window_elem_count; ++it, ++weights_local_it, ++training_speeds_it)
-						*it += (*weights_local_it) * (*training_speeds_it);
+					std::vector<float>::const_iterator learning_rates_it = learning_rates_it_base;
+					for(std::vector<float>::iterator it = weights_it_base; it != weights_it_base + const_window_elem_count; ++it, ++weights_local_it, ++learning_rates_it)
+						*it += (*weights_local_it) * (*learning_rates_it);
 				}
 			}
 
@@ -378,9 +378,9 @@ namespace nnforge
 					sum += *out_err_it;
 
 				const std::vector<float>::iterator biases = (**(data_list_it + entry_id))[1].begin();
-				const std::vector<float>::const_iterator training_speeds = (**(training_speed_list_it + entry_id))[1].begin();
+				const std::vector<float>::const_iterator learning_rates = (**(learning_rate_list_it + entry_id))[1].begin();
 
-				*(biases + output_feature_map_id) += sum * *(training_speeds + output_feature_map_id);
+				*(biases + output_feature_map_id) += sum * *(learning_rates + output_feature_map_id);
 			}
 		}
 

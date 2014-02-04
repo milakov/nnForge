@@ -40,7 +40,7 @@ namespace nnforge
 		// Size of random_uniform_list is a power of 2
 		std::vector<testing_result_smart_ptr> update(
 			supervised_data_reader& reader,
-			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
+			const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
 			std::vector<network_data_smart_ptr>& data_list);
 
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
@@ -59,7 +59,7 @@ namespace nnforge
 		// schema, data and reader are guaranteed to be compatible
 		virtual std::vector<testing_result_smart_ptr> actual_update(
 			supervised_data_reader& reader,
-			const std::vector<network_data_smart_ptr>& training_speed_vector_list,
+			const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
 			std::vector<network_data_smart_ptr>& data_list) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
