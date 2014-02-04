@@ -33,7 +33,7 @@ namespace nnforge
 		, hessian_calc(hessian_calc)
 		, updater(updater)
 		, hessian_entry_to_process_ratio(0.05F)
-		, max_mu(5.0e-4F)
+		, max_mu(1.0F)
 		, mu_increase_factor(1.0F)
 		, speed(0.02F)
 	{

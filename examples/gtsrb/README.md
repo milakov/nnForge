@@ -46,6 +46,6 @@ Train
 Validate
 --------
 
-	./gtsrb validate_batch
+	./gtsrb validate
 
 I got about 0.3% error rate on validation data. You will likely get similar results.
