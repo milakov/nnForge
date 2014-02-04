@@ -188,7 +188,7 @@ namespace nnforge
 			const network_data& data,
 			const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list);
 
-		void train(bool batch = false);
+		void train();
 
 		void profile_updater();
 

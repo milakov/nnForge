@@ -123,10 +123,6 @@ namespace nnforge
 		{
 			factory->info();
 		}
-		else if (!action.compare("train_batch"))
-		{
-			train(true);
-		}
 		else if (!action.compare("train"))
 		{
 			train();
@@ -174,7 +170,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, train_batch, snapshot, snapshot_invalid, ann_snapshot, profile_updater, profile_hessian)")
+			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_invalid, ann_snapshot, profile_updater, profile_hessian)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -948,7 +944,7 @@ namespace nnforge
 		return current_reader;
 	}
 
-	void neural_network_toolset::train(bool batch)
+	void neural_network_toolset::train()
 	{
 		network_schema_smart_ptr schema(new network_schema());
 		{
@@ -979,24 +975,11 @@ namespace nnforge
 
 		std::tr1::shared_ptr<network_data_peeker> peeker;
 		boost::filesystem::path batch_folder;
-		if (batch)
-		{
-			batch_folder = get_working_data_folder() / get_ann_subfolder_name();
-			boost::filesystem::create_directories(batch_folder);
+		batch_folder = get_working_data_folder() / get_ann_subfolder_name();
+		boost::filesystem::create_directories(batch_folder);
 
-			unsigned int starting_index = get_starting_index_for_batch_training();
-			peeker = std::tr1::shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index));
-		}
-		else
-		{
-			network_data_smart_ptr data(new network_data(*schema));
-			{
-				boost::filesystem::ifstream in(get_working_data_folder() / data_filename, std::ios_base::in | std::ios_base::binary);
-				data->read(in);
-			}
-
-			peeker = std::tr1::shared_ptr<network_data_peeker>(new network_data_peeker_single(data));
-		}
+		unsigned int starting_index = get_starting_index_for_batch_training();
+		peeker = std::tr1::shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index));
 
 		complex_network_data_pusher progress;
 		progress.push_back(network_data_pusher_smart_ptr(new report_progress_network_data_pusher()));
@@ -1012,15 +995,7 @@ namespace nnforge
 			progress,
 			res);
 
-		if (batch)
-		{
-			res.save_all(batch_folder);
-		}
-		else
-		{
-			boost::filesystem::ofstream file_with_data(get_working_data_folder() / data_trained_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			res.task_state_list[0].data->write(file_with_data);
-		}
+		res.save_all(batch_folder);
 	}
 
 	void neural_network_toolset::profile_updater()
