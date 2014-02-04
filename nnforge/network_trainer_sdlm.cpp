@@ -34,7 +34,7 @@ namespace nnforge
 		, updater(updater)
 		, hessian_entry_to_process_ratio(0.05F)
 		, max_mu(5.0e-4F)
-		, mu_increase_factor(1.3F)
+		, mu_increase_factor(1.0F)
 		, speed(0.02F)
 	{
 	}
