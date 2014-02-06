@@ -21,6 +21,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <boost/format.hpp>
+#include <cstring>
 
 namespace nnforge
 {
@@ -51,7 +52,10 @@ namespace nnforge
 		{
 			cv::Mat1b src_image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), const_cast<unsigned char *>(static_cast<const unsigned char *>(data)) + (neuron_count_per_feature_map * feature_map_id));
 			cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed) + (neuron_count_per_feature_map * feature_map_id));
-			std::copy(src_image.begin(), src_image.end(), image.begin());
+			memcpy(
+				((unsigned char *)data_transformed) + neuron_count_per_feature_map * feature_map_id,
+				((unsigned char *)data) + neuron_count_per_feature_map * feature_map_id,
+				neuron_count_per_feature_map * neuron_data_type::get_input_size(type));
 
 			if (sample_id == 1)
 			{
