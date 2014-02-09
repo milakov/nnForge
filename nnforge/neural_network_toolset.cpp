@@ -54,7 +54,6 @@ namespace nnforge
 	const char * neural_network_toolset::testing_data_filename = "testing.sdt";
 	const char * neural_network_toolset::testing_unsupervised_data_filename = "testing.udt";
 	const char * neural_network_toolset::schema_filename = "ann.schema";
-	const char * neural_network_toolset::data_filename = "ann.data";
 	const char * neural_network_toolset::normalizer_input_filename = "normalizer_input.data";
 	const char * neural_network_toolset::normalizer_output_filename = "normalizer_output.data";
 	const char * neural_network_toolset::snapshot_subfolder_name = "snapshot";
@@ -366,20 +365,6 @@ namespace nnforge
 			boost::filesystem::ofstream file_with_schema(get_working_data_folder() / schema_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 			schema->write(file_with_schema);
 		}
-
-		network_data data(*schema);
-
-		random_generator gen = rnd::get_random_generator();
-		data.randomize(
-			*schema,
-			gen);
-
-		{
-			boost::filesystem::ofstream file_with_data(get_working_data_folder() / data_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			data.write(file_with_data);
-		}
-
-		data.check_network_data_consistency(*schema);
 	}
 
 	network_tester_smart_ptr neural_network_toolset::get_tester()
@@ -1029,8 +1014,10 @@ namespace nnforge
 
 		network_data_smart_ptr data(new network_data(*schema));
 		{
-			boost::filesystem::ifstream in(get_working_data_folder() / data_filename, std::ios_base::in | std::ios_base::binary);
-			data->read(in);
+			random_generator gen = rnd::get_random_generator(47597);
+			data->randomize(
+				*schema,
+				gen);
 		}
 
 		unsigned int hessian_entry_to_process_count = std::min<unsigned int>(std::max<unsigned int>(static_cast<unsigned int>(0.05F * training_data_reader->get_entry_count()), 50), training_data_reader->get_entry_count());

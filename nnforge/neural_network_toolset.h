@@ -120,7 +120,6 @@ namespace nnforge
 		static const char * testing_data_filename;
 		static const char * testing_unsupervised_data_filename;
 		static const char * schema_filename;
-		static const char * data_filename;
 		static const char * normalizer_input_filename;
 		static const char * normalizer_output_filename;
 		static const char * snapshot_subfolder_name;
