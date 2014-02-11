@@ -25,6 +25,7 @@ namespace nnforge
 		data_transformer_smart_ptr transformer)
 		: original_reader(original_reader)
 		, transformer(transformer)
+		, local_input_ptr(0)
 		, local_output_ptr(0)
 		, transformer_sample_count(transformer->get_sample_count())
 		, current_sample_id(0)
