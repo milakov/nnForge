@@ -71,19 +71,14 @@ namespace nnforge
 		hessian_calculator_smart_ptr hessian_calc;
 		network_updater_smart_ptr updater;
 
-		float get_mu(
+		std::vector<std::vector<float> > get_average_hessian_list(
 			network_data_smart_ptr hessian,
-			const std::vector<testing_result_smart_ptr>& history,
-			std::vector<std::vector<float> >& original_mu_list) const;
-
-		float get_eta(
-			float mu,
 			const std::vector<testing_result_smart_ptr>& history) const;
 
-		void convert_hessian_to_training_vector(
+		std::string convert_hessian_to_training_vector(
 			network_data_smart_ptr hessian,
-			float mu,
-			float eta) const;
+			const std::vector<std::vector<float> >& average_hessian_list,
+			const std::vector<testing_result_smart_ptr>& history) const;
 
 		std::string convert_hessian_to_training_vector(
 			network_data_smart_ptr hessian,

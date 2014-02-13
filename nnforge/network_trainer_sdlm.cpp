@@ -17,7 +17,8 @@
 #include "network_trainer_sdlm.h"
 
 #include <boost/format.hpp>
-#include <numeric> 
+#include <numeric>
+#include <limits>
 
 #include "neural_network_exception.h"
 
@@ -96,76 +97,53 @@ namespace nnforge
 		network_data_smart_ptr hessian,
 		const std::vector<testing_result_smart_ptr>& history) const
 	{
-		std::vector<std::vector<float> > original_mu_list;
-
-		float mu = get_mu(
+		std::vector<std::vector<float> > average_hessian_list = get_average_hessian_list(
 			hessian,
-			history,
-			original_mu_list);
-
-		float eta = get_eta(
-			mu,
 			history);
-
-		convert_hessian_to_training_vector(hessian, mu, eta);
-
-		std::string original_mu_str;
-		for(std::vector<std::vector<float> >::const_iterator it = original_mu_list.begin(); it != original_mu_list.end(); it++)
+		std::string average_hessian_str;
+		for(std::vector<std::vector<float> >::const_iterator it = average_hessian_list.begin(); it != average_hessian_list.end(); it++)
 		{
-			if (it != original_mu_list.begin())
-				original_mu_str += ", ";
+			if (it != average_hessian_list.begin())
+				average_hessian_str += ", ";
 
 			for(std::vector<float>::const_iterator it2 = it->begin(); it2 != it->end(); it2++)
 			{
 				if (it2 != it->begin())
-					original_mu_str += " ";
-				original_mu_str += (boost::format("%|1$.1e|") % *it2).str();
+					average_hessian_str += " ";
+				average_hessian_str += (boost::format("%|1$.1e|") % *it2).str();
 			}
 		}
 
-		return (boost::format("Eta = %|1$.2e|, Mu = %|2$.2e| (%|3$s|)") % eta % mu % original_mu_str).str();
+		std::string convertion_str = convert_hessian_to_training_vector(hessian, average_hessian_list, history);
+
+		return (boost::format("%|1$s|, Hessian (%|2$s|)") % convertion_str % average_hessian_str).str();
 	}
 
-	float network_trainer_sdlm::get_mu(
+	std::vector<std::vector<float> > network_trainer_sdlm::get_average_hessian_list(
 		network_data_smart_ptr hessian,
-		const std::vector<testing_result_smart_ptr>& history,
-		std::vector<std::vector<float> >& original_mu_list) const
+		const std::vector<testing_result_smart_ptr>& history) const
 	{
-		original_mu_list.clear();
+		std::vector<std::vector<float> >res;
 
-		float min_hessian = 1.0e38F;
-		float max_hessian = 1.0e-37F;
+		float min_hessian = std::numeric_limits<float>::max();
+		float max_hessian = std::numeric_limits<float>::min();
 
 		for(network_data::iterator it = hessian->begin(); it != hessian->end(); it++)
 		{
 			if ((*it)->size() > 0)
 			{
-				std::vector<float> mu_list;
+				std::vector<float> hs_list;
 				for(layer_data::iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++)
 				{
 					float sum = std::accumulate(it2->begin(), it2->end(), 0.0F);
 					float new_hessian_per_block = sum / it2->size();
-					mu_list.push_back(new_hessian_per_block);
+					hs_list.push_back(new_hessian_per_block);
 					min_hessian = std::min<float>(min_hessian, new_hessian_per_block);
 					max_hessian = std::max<float>(max_hessian, new_hessian_per_block);
 				}
-				original_mu_list.push_back(mu_list);
+				res.push_back(hs_list);
 			}
 		}
-
-		float max_mu_current = std::min<float>(max_mu, max_hessian * 0.5F);
-		float current_mu = min_hessian * 0.5F * powf(mu_increase_factor, static_cast<float>(history.size()));
-		current_mu = std::min<float>(current_mu, max_mu_current);
-		return current_mu;
-	}
-
-	float network_trainer_sdlm::get_eta(
-		float mu,
-		const std::vector<testing_result_smart_ptr>& history) const
-	{
-		float res = mu * speed;
-
-		res *= get_tail_decay_factor(static_cast<unsigned int>(history.size()));
 
 		return res;
 	}
@@ -181,16 +159,63 @@ namespace nnforge
 		return eta / (in + mu);
 	}
 
-	void network_trainer_sdlm::convert_hessian_to_training_vector(
+	std::string network_trainer_sdlm::convert_hessian_to_training_vector(
 		network_data_smart_ptr hessian,
-		float mu,
-		float eta) const
+		const std::vector<std::vector<float> >& average_hessian_list,
+		const std::vector<testing_result_smart_ptr>& history) const
 	{
-		hessian_transform ht(mu, eta);
+		float min_hessian = 1.0e38F;
+		float max_hessian = 1.0e-37F;
+		for(std::vector<std::vector<float> >::const_iterator it = average_hessian_list.begin(); it != average_hessian_list.end(); ++it)
+		{
+			const std::vector<float>& avl = *it;
+			std::vector<float>::const_iterator it_max = std::max_element(avl.begin(), avl.end());
+			if (it_max != avl.end())
+				max_hessian = std::max(max_hessian, *it_max);
+			std::vector<float>::const_iterator it_min = std::min_element(avl.begin(), avl.end());
+			if (it_min != avl.end())
+				min_hessian = std::min(min_hessian, *it_min);
+		}
+		float max_mu_current = std::min(max_mu, max_hessian * 0.5F);
+		float mu = min_hessian * 0.5F * powf(mu_increase_factor, static_cast<float>(history.size()));
+		mu = std::min(mu, max_mu_current);
 
+		float eta = mu * speed * get_tail_decay_factor(static_cast<unsigned int>(history.size()));
+
+		std::vector<std::vector<float> > avg_lr_lists;
 		for(network_data::iterator it = hessian->begin(); it != hessian->end(); it++)
-			for(layer_data::iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++)
-				std::transform(it2->begin(), it2->end(), it2->begin(), ht);
+		{
+			if ((*it)->size() > 0)
+			{
+				std::vector<float> avg_lr_list;
+				for(layer_data::iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++)
+				{
+					hessian_transform ht(mu, eta);
+					std::transform(it2->begin(), it2->end(), it2->begin(), ht);
+
+					float sum = std::accumulate(it2->begin(), it2->end(), 0.0F);
+					float new_vg_lr = sum / it2->size();
+					avg_lr_list.push_back(new_vg_lr);
+				}
+				avg_lr_lists.push_back(avg_lr_list);
+			}
+		}
+
+		std::string average_lr_str;
+		for(std::vector<std::vector<float> >::const_iterator it = avg_lr_lists.begin(); it != avg_lr_lists.end(); it++)
+		{
+			if (it != avg_lr_lists.begin())
+				average_lr_str += ", ";
+
+			for(std::vector<float>::const_iterator it2 = it->begin(); it2 != it->end(); it2++)
+			{
+				if (it2 != it->begin())
+					average_lr_str += " ";
+				average_lr_str += (boost::format("%|1$.1e|") % *it2).str();
+			}
+		}
+
+		return (boost::format("Eta = %|1$.2e|, Mu = %|2$.2e|, LR (%|3$s|)") % eta % mu % average_lr_str).str();
 	}
 
 	unsigned int network_trainer_sdlm::get_max_batch_size() const
