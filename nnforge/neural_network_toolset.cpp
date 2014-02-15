@@ -177,6 +177,7 @@ namespace nnforge
 			("snapshot_ann_index", boost::program_options::value<unsigned int>(&snapshot_ann_index)->default_value(0), "Index of ANN for snapshots.")
 			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.0F), "Mu increases by this ratio each epoch.")
 			("max_mu", boost::program_options::value<float>(&max_mu)->default_value(1.0F), "Maximum Mu during training.")
+			("per_layer_mu", boost::program_options::value<bool>(&per_layer_mu)->default_value(false), "Mu is calculated for each layer separately.")
 			("learning_rate,L", boost::program_options::value<float>(&learning_rate)->default_value(0.02F), "Global learning rate, Eta/Mu ratio for Stochastic Diagonal Levenberg Marquardt.")
 			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_epoch_count)->default_value(0), "Number of tail iterations with gradually lowering training speed.")
 			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of training speed at each tail epoch.")
@@ -913,6 +914,7 @@ namespace nnforge
 		trainer.epoch_count = training_epoch_count;
 		trainer.speed = learning_rate;
 		trainer.max_mu = max_mu;
+		trainer.per_layer_mu = per_layer_mu;
 		trainer.mu_increase_factor = mu_increase_factor;
 		trainer.learning_rate_decay_tail_epoch_count = learning_rate_decay_tail_epoch_count;
 		trainer.learning_rate_decay_rate = learning_rate_decay_rate;

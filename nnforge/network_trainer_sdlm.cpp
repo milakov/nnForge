@@ -19,6 +19,7 @@
 #include <boost/format.hpp>
 #include <numeric>
 #include <limits>
+#include <fstream>
 
 #include "neural_network_exception.h"
 
@@ -37,6 +38,7 @@ namespace nnforge
 		, max_mu(1.0F)
 		, mu_increase_factor(1.0F)
 		, speed(0.02F)
+		, per_layer_mu(false)
 	{
 	}
 
@@ -93,10 +95,35 @@ namespace nnforge
 		}
 	}
 
+#ifdef NNFORGE_DEBUG_HESSIAN
+	void network_trainer_sdlm::dump_lists(
+		network_data_smart_ptr hessian,
+		const char * filename_prefix) const
+	{
+		for(network_data::const_iterator it = hessian->begin(); it != hessian->end(); it++)
+		{
+			for(layer_data::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++)
+			{
+				if (!it2->empty())
+				{
+					std::string filename = (boost::format("%1%_%|2$02d|_%|3$02d|.txt") % filename_prefix % (it - hessian->begin()) % (it2 - (*it)->begin())).str();
+					std::ofstream out(filename.c_str());
+					for(std::vector<float>::const_iterator it3 = it2->begin(); it3 != it2->end(); ++it3)
+						out << *it3 << std::endl;
+				}
+			}
+		}
+	}
+#endif
+
 	std::string network_trainer_sdlm::convert_hessian_to_training_vector(
 		network_data_smart_ptr hessian,
 		const std::vector<testing_result_smart_ptr>& history) const
 	{
+#ifdef NNFORGE_DEBUG_HESSIAN
+		dump_lists(hessian, "hessian");
+#endif
+
 		std::vector<std::vector<float> > average_hessian_list = get_average_hessian_list(
 			hessian,
 			history);
@@ -114,7 +141,12 @@ namespace nnforge
 			}
 		}
 
-		std::string convertion_str = convert_hessian_to_training_vector(hessian, average_hessian_list, history);
+		std::string convertion_str = per_layer_mu ?
+			convert_hessian_to_training_vector_per_layer_mu(hessian, average_hessian_list, history) : convert_hessian_to_training_vector(hessian, average_hessian_list, history);
+
+#ifdef NNFORGE_DEBUG_HESSIAN
+		dump_lists(hessian, "learning_rate");
+#endif
 
 		return (boost::format("%|1$s|, Hessian (%|2$s|)") % convertion_str % average_hessian_str).str();
 	}
@@ -130,7 +162,7 @@ namespace nnforge
 
 		for(network_data::iterator it = hessian->begin(); it != hessian->end(); it++)
 		{
-			if ((*it)->size() > 0)
+			if (!(*it)->empty())
 			{
 				std::vector<float> hs_list;
 				for(layer_data::iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++)
@@ -159,13 +191,61 @@ namespace nnforge
 		return eta / (in + mu);
 	}
 
+
+
+	std::string network_trainer_sdlm::convert_hessian_to_training_vector_per_layer_mu(
+		network_data_smart_ptr hessian,
+		const std::vector<std::vector<float> >& average_hessian_list,
+		const std::vector<testing_result_smart_ptr>& history) const
+	{
+		std::vector<std::vector<float> >::const_iterator ah_it = average_hessian_list.begin();
+		std::vector<std::vector<float> > avg_lr_lists;
+		for(network_data::iterator it = hessian->begin(); it != hessian->end(); it++)
+		{
+			if ((*it)->size() > 0)
+			{
+				std::vector<float>::const_iterator ah_it2 = ah_it->begin();
+				std::vector<float> avg_lr_list;
+				for(layer_data::iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++, ah_it2++)
+				{
+					float mu = *ah_it2;
+					float eta = mu * speed * get_tail_decay_factor(static_cast<unsigned int>(history.size()));
+					hessian_transform ht(mu, eta);
+					std::transform(it2->begin(), it2->end(), it2->begin(), ht);
+
+					float sum = std::accumulate(it2->begin(), it2->end(), 0.0F);
+					float new_vg_lr = sum / it2->size();
+					avg_lr_list.push_back(new_vg_lr);
+				}
+				avg_lr_lists.push_back(avg_lr_list);
+				++ah_it;
+			}
+		}
+
+		std::string average_lr_str;
+		for(std::vector<std::vector<float> >::const_iterator it = avg_lr_lists.begin(); it != avg_lr_lists.end(); it++)
+		{
+			if (it != avg_lr_lists.begin())
+				average_lr_str += ", ";
+
+			for(std::vector<float>::const_iterator it2 = it->begin(); it2 != it->end(); it2++)
+			{
+				if (it2 != it->begin())
+					average_lr_str += " ";
+				average_lr_str += (boost::format("%|1$.1e|") % *it2).str();
+			}
+		}
+
+		return (boost::format("LR (%|1$s|)") % average_lr_str).str();
+	}
+
 	std::string network_trainer_sdlm::convert_hessian_to_training_vector(
 		network_data_smart_ptr hessian,
 		const std::vector<std::vector<float> >& average_hessian_list,
 		const std::vector<testing_result_smart_ptr>& history) const
 	{
-		float min_hessian = 1.0e38F;
-		float max_hessian = 1.0e-37F;
+		float min_hessian = std::numeric_limits<float>::max();
+		float max_hessian = std::numeric_limits<float>::min();
 		for(std::vector<std::vector<float> >::const_iterator it = average_hessian_list.begin(); it != average_hessian_list.end(); ++it)
 		{
 			const std::vector<float>& avl = *it;

@@ -142,6 +142,7 @@ namespace nnforge
 		unsigned int learning_rate_decay_tail_epoch_count;
 		float learning_rate_decay_rate;
 		float max_mu;
+		bool per_layer_mu;
 		float mu_increase_factor;
 		unsigned int batch_offset;
 		std::string snapshot_mode;

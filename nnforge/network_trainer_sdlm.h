@@ -42,6 +42,7 @@ namespace nnforge
 		float max_mu;
 		float mu_increase_factor;
 		float speed;
+		bool per_layer_mu;
 
 	protected:
 		// The method should add testing result to the training history of each element
@@ -80,8 +81,19 @@ namespace nnforge
 			const std::vector<std::vector<float> >& average_hessian_list,
 			const std::vector<testing_result_smart_ptr>& history) const;
 
+		std::string convert_hessian_to_training_vector_per_layer_mu(
+			network_data_smart_ptr hessian,
+			const std::vector<std::vector<float> >& average_hessian_list,
+			const std::vector<testing_result_smart_ptr>& history) const;
+
 		std::string convert_hessian_to_training_vector(
 			network_data_smart_ptr hessian,
 			const std::vector<testing_result_smart_ptr>& history) const;
+
+#ifdef NNFORGE_DEBUG_HESSIAN
+		void dump_lists(
+			network_data_smart_ptr hessian,
+			const char * filename_prefix) const;
+#endif
 	};
 }
