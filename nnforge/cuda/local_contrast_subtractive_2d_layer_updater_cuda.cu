@@ -574,7 +574,7 @@ namespace nnforge
 					*additional_buffers[0],
 					*output_errors_buffer,
 					*schema_data[0],
-					*schema_data[4],
+					*schema_data[2],
 					input_configuration_specific.feature_map_count,
 					affected_feature_map_count,
 					half_window_sizes[1],
