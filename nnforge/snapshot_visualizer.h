@@ -28,10 +28,6 @@ namespace nnforge
 	class snapshot_visualizer
 	{
 	public:
-		static void save_snapshot(
-			const std::vector<layer_configuration_specific_snapshot_smart_ptr>& snapshot,
-			const char * file_path);
-
 		static void save_snapshot_video(
 			const std::vector<layer_configuration_specific_snapshot_smart_ptr>& snapshot,
 			const char * file_path,
@@ -41,6 +37,12 @@ namespace nnforge
 			const layer_data_list& data,
 			const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list,
 			const char * file_path);
+
+		static void save_2d_snapshot(
+			const layer_configuration_specific_snapshot& snapshot,
+			const char * file_path,
+			bool is_rgb,
+			bool should_normalize);
 
 	private:
 		struct normalize_pixel_helper

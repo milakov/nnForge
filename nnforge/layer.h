@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,9 +39,13 @@ namespace nnforge
 
 		virtual std::tr1::shared_ptr<layer> clone() const = 0;
 
-		virtual layer_configuration get_layer_configuration(const layer_configuration& input_configuration) const = 0;
+		virtual layer_configuration get_layer_configuration(const layer_configuration& input_configuration) const;
 
-		virtual layer_configuration_specific get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const = 0;
+		virtual layer_configuration_specific get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
+
+		// Returns minimal input rectangle which this layer quasi-transforms into output one covering the one supplied as an argument to the function
+		// "Quasi" means that we don't take into account "soft" effects from nearby neurons, for example when doing local contrast subtracting blurred version
+		virtual std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const;
 
 		virtual layer_data_configuration_list get_layer_data_configuration_list() const;
 

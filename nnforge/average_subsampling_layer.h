@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ namespace nnforge
 
 		virtual layer_configuration get_layer_configuration(const layer_configuration& input_configuration) const;
 
-		virtual layer_configuration_specific get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
+		virtual layer_configuration_specific get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
+
+		virtual std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const;
 
 		virtual float get_forward_flops(const layer_configuration_specific& input_configuration_specific) const;
 

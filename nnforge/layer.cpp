@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -109,5 +109,20 @@ namespace nnforge
 	layer_data_configuration_list layer::get_layer_data_configuration_list() const
 	{
 		return layer_data_configuration_list();
+	}
+
+ 	layer_configuration layer::get_layer_configuration(const layer_configuration& input_configuration) const
+	{
+		return layer_configuration(input_configuration);
+	}
+
+	layer_configuration_specific layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	{
+		return layer_configuration_specific(input_configuration_specific);
+	}
+
+	std::vector<std::pair<unsigned int, unsigned int> > layer::get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const
+	{
+		return output_rectangle_borders;
 	}
 }

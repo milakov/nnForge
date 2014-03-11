@@ -40,16 +40,6 @@ namespace nnforge
 		return layer_smart_ptr(new absolute_layer(*this));
 	}
 
-	layer_configuration absolute_layer::get_layer_configuration(const layer_configuration& input_configuration) const
-	{
-		return layer_configuration(input_configuration);
-	}
-
-	layer_configuration_specific absolute_layer::get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return layer_configuration_specific(input_configuration_specific);
-	}
-
 	float absolute_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
 		return static_cast<float>(input_configuration_specific.get_neuron_count());

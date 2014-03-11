@@ -146,10 +146,7 @@ namespace nnforge
 						float current_err = *out_err_it;
 						unsigned int max_feature_map_position = *((const unsigned int *)(&(*max_feature_map_positions_it)));
 						for(unsigned int i = 0; i < feature_map_subsampling_size; ++i)
-						{
-							*in_err_it = ((i == max_feature_map_position) ? current_err : 0.0F);
-							in_err_it += output_feature_map_count * output_neuron_count_per_feature_map;
-						}
+							in_err_it[output_feature_map_count * output_neuron_count_per_feature_map * i] = ((i == max_feature_map_position) ? current_err : 0.0F);
 					}
 				}
 			}

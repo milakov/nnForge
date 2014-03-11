@@ -41,16 +41,6 @@ namespace nnforge
 		return layer_smart_ptr(new rectified_linear_layer(*this));
 	}
 
-	layer_configuration rectified_linear_layer::get_layer_configuration(const layer_configuration& input_configuration) const
-	{
-		return layer_configuration(input_configuration);
-	}
-
-	layer_configuration_specific rectified_linear_layer::get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return layer_configuration_specific(input_configuration_specific);
-	}
-
 	float rectified_linear_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
 		return static_cast<float>(input_configuration_specific.get_neuron_count());

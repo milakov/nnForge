@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include "network_tester_cuda_factory.h"
 #include "network_updater_cuda_factory.h"
 #include "hessian_calculator_cuda_factory.h"
+#include "network_analyzer_cuda_factory.h"
 
 #include <iostream>
 
@@ -52,6 +53,11 @@ namespace nnforge
 		hessian_calculator_factory_smart_ptr factory_generator_cuda::create_hessian_factory() const
 		{
 			return hessian_calculator_factory_smart_ptr(new hessian_calculator_cuda_factory(cuda_config));
+		}
+
+		network_analyzer_factory_smart_ptr factory_generator_cuda::create_analyzer_factory() const
+		{
+			return network_analyzer_factory_smart_ptr(new network_analyzer_cuda_factory(cuda_config));
 		}
 
 		std::vector<float_option> factory_generator_cuda::get_float_options()

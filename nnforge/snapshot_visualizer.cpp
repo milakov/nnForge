@@ -25,79 +25,96 @@
 #include <algorithm>
 #include <numeric>
 #include <iostream>
+#include <limits>
 
 namespace nnforge
 {
-	void snapshot_visualizer::save_snapshot(
-		const std::vector<layer_configuration_specific_snapshot_smart_ptr>& snapshot,
-		const char * file_path)
+	void snapshot_visualizer::save_2d_snapshot(
+		const layer_configuration_specific_snapshot& snapshot,
+		const char * file_path,
+		bool is_rgb,
+		bool should_normalize)
 	{
-		std::vector<unsigned int> layer_offset_from_top;
-		unsigned int layer_offset_from_top_current = 0;
-		unsigned int width = 0;
-		for(unsigned int i = 0; i < snapshot.size(); ++i)
+		if (is_rgb)
 		{
-			const layer_configuration_specific& current_config = snapshot[i]->config;
+			float addition = 0.0F;
+			float mult = 255.0F;
 
-			layer_offset_from_top.push_back(layer_offset_from_top_current);
-
-			if (current_config.dimension_sizes.size() > 2)
-				throw neural_network_exception((boost::format("Unable to save snapshot to image for dimension size %1%") % current_config.dimension_sizes.size()).str());
-
-			unsigned int current_height = current_config.dimension_sizes.size() > 1 ? current_config.dimension_sizes[1] : 1;
-			unsigned int current_width = current_config.dimension_sizes[0] * current_config.feature_map_count;
-
-			width = std::max<unsigned int>(width, current_width);
-			layer_offset_from_top_current += current_height + 1;
-		}
-
-		cv::Mat_<unsigned char> image(layer_offset_from_top_current - 1, width, 255);
-
-		for(unsigned int i = 0; i < snapshot.size(); ++i)
-		{
-			const layer_configuration_specific& current_config = snapshot[i]->config;
-			const std::vector<float>& current_data = snapshot[i]->data;
-			unsigned int current_height = current_config.dimension_sizes.size() > 1 ? current_config.dimension_sizes[1] : 1;
-			
-			cv::Mat_<unsigned char> subImage = image.rowRange(layer_offset_from_top[i], layer_offset_from_top[i] + current_height);
-
-			float min = *std::min_element(current_data.begin(), current_data.end());
-			float max = *std::max_element(current_data.begin(), current_data.end());
-			if (min >= max)
+			if (should_normalize)
 			{
-				min = std::min<float>(min, -1.0F);
-				max = std::max<float>(max, 1.0F);
+				float min_val = *std::min_element(snapshot.data.begin(), snapshot.data.end());
+				float max_val = *std::max_element(snapshot.data.begin(), snapshot.data.end());
+				if (min_val >= max_val)
+				{
+					min_val = std::min<float>(min_val, -1.0F);
+					max_val = std::max<float>(max_val, 1.0F);
+				}
+				addition = -min_val;
+				mult = 255.0F / (max_val - min_val);
 			}
 
-			float addition = -min;
-			float multiplication = 255.0F / (max - min);
-
-			normalize_pixel_helper norm(addition, multiplication);
-			unsigned int feature_map_width = current_config.dimension_sizes[0];
-
-			for(unsigned int feature_map_id = 0; feature_map_id < current_config.feature_map_count; ++feature_map_id)
+			cv::Mat3b im(snapshot.config.dimension_sizes[1], snapshot.config.dimension_sizes[0]);
 			{
-				cv::Mat_<unsigned char> featureMapSubImage = subImage.colRange(feature_map_width * feature_map_id, feature_map_width * (feature_map_id + 1));
+				std::vector<float>::const_iterator red_it = snapshot.data.begin();
+				std::vector<float>::const_iterator green_it = snapshot.data.begin() + snapshot.config.get_neuron_count_per_feature_map();
+				std::vector<float>::const_iterator blue_it = snapshot.data.begin() + snapshot.config.get_neuron_count_per_feature_map() * 2;
+				for(cv::Mat3b::iterator dst_it = im.begin(); dst_it != im.end(); ++red_it, ++green_it, ++blue_it, ++dst_it)
+				{
+					float red = *red_it;
+					float green = *green_it;
+					float blue = *blue_it;
 
-				std::transform(
-					current_data.begin() + ((current_height * feature_map_width) * feature_map_id),
-					current_data.begin() + ((current_height * feature_map_width) * (feature_map_id + 1)),
-					featureMapSubImage.begin(),
-					norm);
+					unsigned char red_val = static_cast<unsigned char>(std::min<float>(std::max<float>((red + addition) * mult, 0.0F), 255.0F));
+					unsigned char green_val = static_cast<unsigned char>(std::min<float>(std::max<float>((green + addition) * mult, 0.0F), 255.0F));
+					unsigned char blue_val = static_cast<unsigned char>(std::min<float>(std::max<float>((blue + addition) * mult, 0.0F), 255.0F));
 
-				/*
-				copy(
-					current_data.begin() + ((current_height * feature_map_width) * feature_map_id),
-					current_data.begin() + ((current_height * feature_map_width) * (feature_map_id + 1)),
-					std::ostream_iterator<float>(std::cout, " "));
-				std::cout << std::endl;
-				*/
+					*dst_it = cv::Vec3b(blue_val, green_val, red_val);
+				}
 			}
-			//std::cout << std::endl;
-		}
 
-		if (!cv::imwrite(file_path, image))
-			throw std::runtime_error((boost::format("Error saving snapshot to %1%") % file_path).str());
+			if (!cv::imwrite(file_path, im))
+				throw std::runtime_error((boost::format("Error saving snapshot to %1%") % file_path).str());
+		}
+		else
+		{
+			float addition = 0.0F;
+			float mult = 255.0F;
+
+			if (should_normalize)
+			{
+				float min_val = *std::min_element(snapshot.data.begin(), snapshot.data.end());
+				float max_val = *std::max_element(snapshot.data.begin(), snapshot.data.end());
+				if (min_val >= max_val)
+				{
+					min_val = std::min<float>(min_val, -1.0F);
+					max_val = std::max<float>(max_val, 1.0F);
+				}
+				addition = -min_val;
+				mult = 255.0F / (max_val - min_val);
+			}
+
+			cv::Mat1b im(snapshot.config.dimension_sizes[1], snapshot.config.dimension_sizes[0] * snapshot.config.feature_map_count + snapshot.config.feature_map_count - 1);
+			im = 0;
+			{
+				std::vector<float>::const_iterator it = snapshot.data.begin();
+				for(unsigned int feature_map_id = 0; feature_map_id < snapshot.config.feature_map_count; ++feature_map_id)
+				{
+					unsigned int start_x = snapshot.config.dimension_sizes[0] * feature_map_id + feature_map_id;
+					cv::Mat1b im_window = im.colRange(start_x, start_x + snapshot.config.dimension_sizes[0]);
+					for(cv::Mat1b::iterator dst_it = im_window.begin(); dst_it != im_window.end(); ++it, ++dst_it)
+					{
+						float val = *it;
+
+						unsigned char val_converted = static_cast<unsigned char>(std::min<float>(std::max<float>((val + addition) * mult, 0.0F), 255.0F));
+
+						*dst_it = val_converted;
+					}
+				}
+			}
+
+			if (!cv::imwrite(file_path, im))
+				throw std::runtime_error((boost::format("Error saving snapshot to %1%") % file_path).str());
+		}
 	}
 
 	void snapshot_visualizer::save_snapshot_video(

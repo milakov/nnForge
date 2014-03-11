@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -131,10 +131,20 @@ namespace nnforge
 		res.push_back(input_layer_configuration_specific);
 
 		for(unsigned int i = 0; i < layers.size(); ++i)
-		{
-			res.push_back(layers[i]->get_layer_configuration_specific(res[i]));
-		}
+			res.push_back(layers[i]->get_output_layer_configuration_specific(res[i]));
 
 		return res;
+	}
+
+	std::vector<std::pair<unsigned int, unsigned int> > network_schema::get_input_rectangle_borders(
+		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
+		unsigned int output_layer_id) const
+	{
+		std::vector<std::pair<unsigned int, unsigned int> > input_rectangle_borders = output_rectangle_borders;
+
+		for(int i = static_cast<int>(output_layer_id); i >= 0; --i)
+			input_rectangle_borders = layers[i]->get_input_rectangle_borders(input_rectangle_borders);
+
+		return input_rectangle_borders;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ namespace nnforge
 			float angle_in_degrees,
 			float scale,
 			float shift_x,
-			float shift_y);
+			float shift_y,
+			float stretch = 1.0F,
+			float stretch_angle_in_degrees = 0.0F);
 
 		// contrast: relative multiplication, about 1.0
 		// brightness: change in luminocity for the middle lightness

@@ -75,6 +75,8 @@ namespace nnforge
 
 		virtual network_tester_smart_ptr get_tester();
 
+		virtual network_analyzer_smart_ptr get_analyzer();
+
 		virtual std::vector<network_data_pusher_smart_ptr> get_validators_for_training(network_schema_smart_ptr schema);
 
 		virtual network_output_type::output_type get_network_output_type() const;
@@ -113,6 +115,15 @@ namespace nnforge
 
 		virtual unsupervised_data_reader_smart_ptr get_data_reader_for_testing_unsupervised() const;
 
+		virtual std::pair<unsupervised_data_reader_smart_ptr, unsigned int> get_data_reader_and_sample_count_for_snapshots() const;
+
+		virtual std::vector<std::vector<std::pair<unsigned int, unsigned int> > > get_samples_for_snapshot(
+			network_data_smart_ptr data,
+			unsupervised_data_reader_smart_ptr reader,
+			unsigned int sample_count);
+
+		virtual bool is_rgb_input() const;
+
 	protected:
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
@@ -131,6 +142,7 @@ namespace nnforge
 		network_tester_factory_smart_ptr tester_factory;
 		network_updater_factory_smart_ptr updater_factory;
 		hessian_calculator_factory_smart_ptr hessian_factory;
+		network_analyzer_factory_smart_ptr analyzer_factory;
 
 		std::string action;
 		std::string snapshot_extension;
@@ -149,6 +161,7 @@ namespace nnforge
 		unsigned int snapshot_video_fps;
 		int test_validate_ann_index;
 		unsigned int snapshot_ann_index;
+		std::string snapshot_data_set;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
@@ -175,11 +188,6 @@ namespace nnforge
 
 		void ann_snapshot();
 
-		void save_snapshot(
-			const std::string& name,
-			const std::vector<layer_configuration_specific_snapshot_smart_ptr>& data,
-			bool folder_for_invalid = false);
-
 		void save_ann_snapshot(
 			const std::string& name,
 			const network_data& data,
@@ -204,6 +212,13 @@ namespace nnforge
 		std::pair<supervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_testing_supervised_and_sample_count() const;
 
 		std::pair<unsupervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_testing_unsupervised_and_sample_count() const;
+
+		std::pair<layer_configuration_specific_snapshot_smart_ptr, layer_configuration_specific_snapshot_smart_ptr> run_analyzer_for_single_neuron(
+			network_analyzer& analyzer,
+			unsigned int layer_id,
+			unsigned int feature_map_id,
+			const std::vector<unsigned int>& location_list,
+			unsigned int feature_map_count) const;
 
 	private:
 		factory_generator_smart_ptr factory;

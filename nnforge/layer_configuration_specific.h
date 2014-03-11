@@ -43,6 +43,10 @@ namespace nnforge
 
 		unsigned int get_dimension_count() const;
 
+		unsigned int get_pos(const std::vector<unsigned int>& offsets) const;
+
+		std::vector<unsigned int> get_offsets(unsigned int pos) const;
+
 		// The method throws exception in case the two object are not equal
 		void check_equality(const layer_configuration_specific& other) const;
 

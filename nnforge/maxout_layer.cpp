@@ -65,7 +65,7 @@ namespace nnforge
 		}
 	}
 
-	layer_configuration_specific maxout_layer::get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific maxout_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
 	{
 		if ((input_configuration_specific.feature_map_count % feature_map_subsampling_size) != 0)
 			throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not evenly divisible by feature map subsampling count (%2%)") % input_configuration_specific.feature_map_count % feature_map_subsampling_size).str());
@@ -85,7 +85,7 @@ namespace nnforge
 
 	float maxout_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
-		unsigned int neuron_count = get_layer_configuration_specific(input_configuration_specific).get_neuron_count();
+		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
 		unsigned int per_item_flops = feature_map_subsampling_size - 1;
 
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);

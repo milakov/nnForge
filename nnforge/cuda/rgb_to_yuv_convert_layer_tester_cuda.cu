@@ -25,7 +25,7 @@
 #define w_r 0.299F
 #define w_b 0.114F
 #define w_g (1.0F - w_r - w_b)
-#define u_max 0.436
+#define u_max 0.436F
 #define v_max 0.615F
 #define u_mult (u_max / (1.0F - w_b))
 #define v_mult (v_max / (1.0F - w_r))

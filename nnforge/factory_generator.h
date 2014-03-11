@@ -19,6 +19,7 @@
 #include "network_tester_factory.h"
 #include "network_updater_factory.h"
 #include "hessian_calculator_factory.h"
+#include "network_analyzer_factory.h"
 #include "config_options.h"
 
 namespace nnforge
@@ -35,6 +36,8 @@ namespace nnforge
 		virtual network_updater_factory_smart_ptr create_updater_factory() const = 0;
 
 		virtual hessian_calculator_factory_smart_ptr create_hessian_factory() const = 0;
+
+		virtual network_analyzer_factory_smart_ptr create_analyzer_factory() const = 0;
 
 		virtual void info() const = 0;
 

@@ -64,7 +64,7 @@ namespace nnforge
 		return layer_configuration(input_configuration.feature_map_count, static_cast<int>(subsampling_sizes.size()));
 	}
 
-	layer_configuration_specific max_subsampling_layer::get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific max_subsampling_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
 	{
 		if (input_configuration_specific.get_dimension_count() != subsampling_sizes.size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration_specific.get_dimension_count()).str());
@@ -78,6 +78,19 @@ namespace nnforge
 
 			res.dimension_sizes.push_back(input_configuration_specific.dimension_sizes[i] / subsampling_sizes[i]);
 		}
+
+		return res;
+	}
+
+	std::vector<std::pair<unsigned int, unsigned int> > max_subsampling_layer::get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const
+	{
+		if (output_rectangle_borders.size() != subsampling_sizes.size())
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output borders (%2%) don't match") % subsampling_sizes.size() % output_rectangle_borders.size()).str());
+
+		std::vector<std::pair<unsigned int, unsigned int> > res;
+
+		for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
+			res.push_back(std::make_pair(output_rectangle_borders[i].first * subsampling_sizes[i], output_rectangle_borders[i].second * subsampling_sizes[i]));
 
 		return res;
 	}
@@ -99,7 +112,7 @@ namespace nnforge
 
 	float max_subsampling_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
-		unsigned int neuron_count = get_layer_configuration_specific(input_configuration_specific).get_neuron_count();
+		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
 		unsigned int per_item_flops = 1;
 		std::for_each(subsampling_sizes.begin(), subsampling_sizes.end(), per_item_flops *= boost::lambda::_1);
 		per_item_flops -= 1;

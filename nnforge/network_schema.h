@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,6 +49,11 @@ namespace nnforge
 
 		// The result includes input configuration
 		layer_configuration_specific_list get_layer_configuration_specific_list(const layer_configuration_specific& input_layer_configuration_specific) const;
+
+		// Returns minimal input rectangle which is quasi-transformed into output one covering the rectangle supplied
+		std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(
+			const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
+			unsigned int output_layer_id) const;
 
 		std::vector<layer_data_configuration_list> get_layer_data_configuration_list_list() const;
 

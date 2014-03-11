@@ -41,16 +41,6 @@ namespace nnforge
 		return layer_smart_ptr(new softmax_layer(*this));
 	}
 
-	layer_configuration softmax_layer::get_layer_configuration(const layer_configuration& input_configuration) const
-	{
-		return layer_configuration(input_configuration);
-	}
-
-	layer_configuration_specific softmax_layer::get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return layer_configuration_specific(input_configuration_specific);
-	}
-
 	float softmax_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
 		return static_cast<float>(input_configuration_specific.get_neuron_count_per_feature_map() * (input_configuration_specific.feature_map_count * 3 - 1));

@@ -183,6 +183,7 @@ namespace nnforge
 			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of training speed at each tail epoch.")
 			("batch_offset", boost::program_options::value<unsigned int>(&batch_offset)->default_value(0), "shift initial ANN ID when batch training.")
 			("test_validate_ann_index", boost::program_options::value<int>(&test_validate_ann_index)->default_value(-1), "Index of ANN to test/validate. -1 indicates all ANNs, batch mode.")
+			("snapshot_data_set", boost::program_options::value<std::string>(&snapshot_data_set)->default_value("training"), "Type of the dataset to use for snapshots (training, validating, testing).")
 			;
 
 		{
@@ -288,6 +289,7 @@ namespace nnforge
 		tester_factory = factory->create_tester_factory();
 		updater_factory = factory->create_updater_factory();
 		hessian_factory = factory->create_hessian_factory();
+		analyzer_factory = factory->create_analyzer_factory();
 
 		return (action.size() > 0);
 	}
@@ -337,6 +339,28 @@ namespace nnforge
 		return ann_subfolder_name;
 	}
 
+	std::pair<unsupervised_data_reader_smart_ptr, unsigned int> neural_network_toolset::get_data_reader_and_sample_count_for_snapshots() const
+	{
+		if (snapshot_data_set == "training")
+			return std::make_pair(get_data_reader_for_training(), 1);
+		else if (snapshot_data_set == "validating")
+		{
+			std::pair<supervised_data_reader_smart_ptr, unsigned int> p = get_data_reader_for_validating_and_sample_count();
+			return std::make_pair(p.first, p.second);
+		}
+		else if (snapshot_data_set == "testing")
+		{
+			if (boost::filesystem::exists(get_working_data_folder() / testing_unsupervised_data_filename))
+				return get_data_reader_for_testing_unsupervised_and_sample_count();
+			else
+			{
+				std::pair<supervised_data_reader_smart_ptr, unsigned int> p = get_data_reader_for_testing_supervised_and_sample_count();
+				return std::make_pair(p.first, p.second);
+			}
+		}
+		else throw std::runtime_error((boost::format("Unknown data set for taking snapshots: %1%") % snapshot_data_set).str());
+	}
+
 	void neural_network_toolset::randomize_data()
 	{
 		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
@@ -377,6 +401,17 @@ namespace nnforge
 		}
 
 		return tester_factory->create(schema);
+	}
+
+	network_analyzer_smart_ptr neural_network_toolset::get_analyzer()
+	{
+		network_schema_smart_ptr schema(new network_schema());
+		{
+			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
+			schema->read(in);
+		}
+
+		return analyzer_factory->create(schema);
 	}
 
 	network_data_smart_ptr neural_network_toolset::load_ann_data(unsigned int ann_id)
@@ -591,36 +626,232 @@ namespace nnforge
 		return get_output_data_normalize_transformer()->get_inverted_transformer();
 	}
 
-	void neural_network_toolset::snapshot()
+	std::vector<std::vector<std::pair<unsigned int, unsigned int> > > neural_network_toolset::get_samples_for_snapshot(
+		network_data_smart_ptr data,
+		unsupervised_data_reader_smart_ptr reader,
+		unsigned int sample_count)
 	{
-		network_tester_smart_ptr tester = get_tester();
-
-		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
-
-		tester->set_data(data);
-
-		supervised_data_reader_smart_ptr reader = get_data_reader_for_training();
+		std::vector<std::vector<std::pair<unsigned int, unsigned int> > > layer_feature_map_sample_and_offset_list;
+		std::vector<std::vector<float> > layer_feature_map_max_val_list;
 
 		reader->reset();
 
+		network_tester_smart_ptr tester = get_tester();
+		tester->set_data(data);
 		tester->set_input_configuration_specific(reader->get_input_configuration());
 
-		unsigned int image_count = std::min<unsigned int>(snapshot_count, reader->get_entry_count());
 		std::vector<unsigned char> input(reader->get_input_configuration().get_neuron_count() * reader->get_input_neuron_elem_size());
-		for(unsigned int image_id = 0; image_id < image_count; ++image_id)
+		unsigned int current_sample_id = 0;
+		while(true)
 		{
-			if (!reader->read(&(*input.begin()), 0))
-				throw std::runtime_error((boost::format("Only %1% entries available while %2% snapshots requested") % image_id % image_count).str().c_str());
+			if (!reader->read(&(*input.begin())))
+				break;
+			for(unsigned int skip_id = 0; skip_id < sample_count - 1; ++skip_id)
+				if (!reader->read(0))
+					break;
 
-			std::string snapshot_filename = (boost::format("%|1$03d|") % image_id).str();
-
-			std::vector<layer_configuration_specific_snapshot_smart_ptr> data_res = tester->get_snapshot(
+			std::vector<layer_configuration_specific_snapshot_smart_ptr> current_snapshot = tester->get_snapshot(
 				&(*input.begin()),
 				reader->get_input_type(),
 				reader->get_input_configuration().get_neuron_count());
 
-			save_snapshot(snapshot_filename, data_res);
+			if (current_sample_id == 0)
+			{
+				for(std::vector<layer_configuration_specific_snapshot_smart_ptr>::const_iterator it = current_snapshot.begin() + 1; it != current_snapshot.end(); ++it)
+				{
+					const layer_configuration_specific_snapshot& sn = **it;
+					unsigned int neuron_count_per_feature_map = sn.config.get_neuron_count_per_feature_map();
+
+					std::vector<std::pair<unsigned int, unsigned int> > feature_map_sample_and_offset_list;
+					std::vector<float> feature_map_max_val_list;
+					for(std::vector<float>::const_iterator src_it = sn.data.begin(); src_it != sn.data.end(); src_it += neuron_count_per_feature_map)
+					{
+						std::vector<float>::const_iterator max_it = std::max_element(src_it, src_it + neuron_count_per_feature_map);
+						unsigned int offset = max_it - src_it;
+						float val = *max_it;
+
+						feature_map_sample_and_offset_list.push_back(std::make_pair(0, offset));
+						feature_map_max_val_list.push_back(val);
+					}
+
+					layer_feature_map_sample_and_offset_list.push_back(feature_map_sample_and_offset_list);
+					layer_feature_map_max_val_list.push_back(feature_map_max_val_list);
+				}
+			}
+			else
+			{
+				std::vector<std::vector<std::pair<unsigned int, unsigned int> > >::iterator layer_feature_map_sample_and_offset_it = layer_feature_map_sample_and_offset_list.begin();
+				std::vector<std::vector<float> >::iterator layer_feature_map_max_val_it = layer_feature_map_max_val_list.begin();
+				for(std::vector<layer_configuration_specific_snapshot_smart_ptr>::const_iterator it = current_snapshot.begin() + 1; it != current_snapshot.end(); ++it, ++layer_feature_map_sample_and_offset_it, ++layer_feature_map_max_val_it)
+				{
+					const layer_configuration_specific_snapshot& sn = **it;
+					std::vector<std::pair<unsigned int, unsigned int> >& current_feature_map_sample_and_offset = *layer_feature_map_sample_and_offset_it;
+					std::vector<float>& current_feature_map_max_val = *layer_feature_map_max_val_it;
+					unsigned int neuron_count_per_feature_map = sn.config.get_neuron_count_per_feature_map();
+
+					std::vector<std::pair<unsigned int, unsigned int> >::iterator sample_and_offset_it = current_feature_map_sample_and_offset.begin();
+					std::vector<float>::iterator max_val_it = current_feature_map_max_val.begin();
+					for(std::vector<float>::const_iterator src_it = sn.data.begin(); src_it != sn.data.end(); src_it += neuron_count_per_feature_map, ++sample_and_offset_it, ++max_val_it)
+					{
+						std::vector<float>::const_iterator max_it = std::max_element(src_it, src_it + neuron_count_per_feature_map);
+						unsigned int offset = max_it - src_it;
+						float val = *max_it;
+
+						if (val < *max_val_it)
+						{
+							*max_val_it = val;
+							sample_and_offset_it->first = current_sample_id;
+							sample_and_offset_it->second = offset;
+						}
+					}
+				}
+			}
+
+			++current_sample_id;
 		}
+
+		return layer_feature_map_sample_and_offset_list;
+	}
+
+	struct sample_location
+	{
+		unsigned int layer_id;
+		unsigned int feature_map_id;
+		unsigned int offset;
+	};
+
+	void neural_network_toolset::snapshot()
+	{
+		boost::filesystem::path snapshot_folder = get_working_data_folder() / snapshot_subfolder_name;
+		boost::filesystem::create_directories(snapshot_folder);
+
+		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
+
+		std::pair<unsupervised_data_reader_smart_ptr, unsigned int> reader_and_sample_count = get_data_reader_and_sample_count_for_snapshots();
+		unsupervised_data_reader_smart_ptr reader = reader_and_sample_count.first;
+		unsigned int reader_sample_count = reader_and_sample_count.second;
+
+		std::cout << "Parsing entries from " << snapshot_data_set << " data set" << std::endl;
+		std::vector<std::vector<std::pair<unsigned int, unsigned int> > > layer_feature_map_sample_and_offset_list = get_samples_for_snapshot(
+			data,
+			reader,
+			reader_sample_count);
+
+		std::map<unsigned int, std::vector<sample_location> > sample_to_location_list_map;
+		unsigned int snapshot_count = 0;
+		for(unsigned int layer_id = 0; layer_id < layer_feature_map_sample_and_offset_list.size(); ++layer_id)
+		{
+			const std::vector<std::pair<unsigned int, unsigned int> >& feature_map_sample_and_offset_list = layer_feature_map_sample_and_offset_list[layer_id];
+			for(unsigned int feature_map_id = 0; feature_map_id < feature_map_sample_and_offset_list.size(); ++feature_map_id)
+			{
+				unsigned int sample_id = feature_map_sample_and_offset_list[feature_map_id].first;
+				unsigned int offset = feature_map_sample_and_offset_list[feature_map_id].second;
+
+				sample_location new_item;
+				new_item.layer_id = layer_id;
+				new_item.feature_map_id = feature_map_id;
+				new_item.offset = offset;
+				std::map<unsigned int, std::vector<sample_location> >::iterator it = sample_to_location_list_map.find(sample_id);
+				if (it == sample_to_location_list_map.end())
+					sample_to_location_list_map.insert(std::make_pair(sample_id, std::vector<sample_location>(1, new_item)));
+				else
+					it->second.push_back(new_item);
+				++snapshot_count;
+			}
+		}
+		std::cout << snapshot_count << " snapshots from " << sample_to_location_list_map.size() << " samples" << std::endl;
+
+		reader->reset();
+
+		network_schema_smart_ptr schema(new network_schema());
+		{
+			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
+			schema->read(in);
+		}
+		layer_configuration_specific_list layer_config_list = schema->get_layer_configuration_specific_list(reader->get_input_configuration());
+
+		network_analyzer_smart_ptr analyzer = get_analyzer();
+		analyzer->set_data(data);
+		analyzer->set_input_configuration_specific(reader->get_input_configuration());
+
+		std::vector<unsigned char> input(reader->get_input_configuration().get_neuron_count() * reader->get_input_neuron_elem_size());
+
+		unsigned int current_sample_id = 0;
+		while(true)
+		{
+			std::map<unsigned int, std::vector<sample_location> >::iterator it = sample_to_location_list_map.find(current_sample_id);
+			if (it == sample_to_location_list_map.end())
+			{
+				if (!reader->read(0))
+					break;
+			}
+			else
+			{
+				if (!reader->read(&(*input.begin())))
+					break;
+
+				analyzer->set_input_data(
+					&(*input.begin()),
+					reader->get_input_type(),
+					reader->get_input_configuration().get_neuron_count());
+
+				const std::vector<sample_location>& location_list = it->second;
+				for(std::vector<sample_location>::const_iterator sample_location_it = location_list.begin(); sample_location_it != location_list.end(); ++sample_location_it)
+				{
+					unsigned int layer_id = sample_location_it->layer_id;
+					unsigned int feature_map_id = sample_location_it->feature_map_id;
+					unsigned int offset = sample_location_it->offset;
+
+					boost::filesystem::path snapshot_layer_folder = snapshot_folder / (boost::format("%|1$03d|") % layer_id).str();
+					boost::filesystem::create_directories(snapshot_layer_folder);
+
+					boost::filesystem::path snapshot_file_path = snapshot_layer_folder / ((boost::format("snapshot_layer_%|1$03d|_fm_%|2$04d|_%3%_sample_%4%") % layer_id % feature_map_id % snapshot_data_set % current_sample_id).str() + "." + snapshot_extension);
+					boost::filesystem::path original_snapshot_file_path = snapshot_layer_folder / ((boost::format("snapshot_layer_%|1$03d|_fm_%|2$04d|_%3%_sample_%4%_original") % layer_id % feature_map_id % snapshot_data_set % current_sample_id).str() + "." + snapshot_extension);
+
+					std::pair<layer_configuration_specific_snapshot_smart_ptr, layer_configuration_specific_snapshot_smart_ptr> input_image_pair = run_analyzer_for_single_neuron(
+						*analyzer,
+						layer_id,
+						feature_map_id,
+						layer_config_list[layer_id + 1].get_offsets(offset),
+						layer_config_list[layer_id + 1].feature_map_count);
+
+					snapshot_visualizer::save_2d_snapshot(
+						*(input_image_pair.first),
+						snapshot_file_path.string().c_str(),
+						is_rgb_input() && (input_image_pair.first->config.feature_map_count == 3),
+						true);
+
+					snapshot_visualizer::save_2d_snapshot(
+						*(input_image_pair.second),
+						original_snapshot_file_path.string().c_str(),
+						is_rgb_input() && (input_image_pair.second->config.feature_map_count == 3),
+						false);
+				}
+			}
+
+			for(unsigned int skip_id = 0; skip_id < reader_sample_count - 1; ++skip_id)
+				if (!reader->read(0))
+					break;
+			++current_sample_id;
+		}
+	}
+
+	std::pair<layer_configuration_specific_snapshot_smart_ptr, layer_configuration_specific_snapshot_smart_ptr> neural_network_toolset::run_analyzer_for_single_neuron(
+		network_analyzer& analyzer,
+		unsigned int layer_id,
+		unsigned int feature_map_id,
+		const std::vector<unsigned int>& location_list,
+		unsigned int feature_map_count) const
+	{
+		layer_configuration_specific_snapshot output_data;
+		output_data.config = layer_configuration_specific(feature_map_count, std::vector<unsigned int>(location_list.size(), 1));
+		output_data.data.resize(feature_map_count, 0.0F);
+		output_data.data[feature_map_id] = 1.0F;
+
+		return analyzer.run_backprop(
+			output_data,
+			location_list,
+			layer_id);
 	}
 
 	void neural_network_toolset::ann_snapshot()
@@ -649,32 +880,6 @@ namespace nnforge
 		boost::filesystem::path ann_snapshot_file_path = ann_snapshot_folder / (std::string("ann_snapshot_") + name + "." + ann_snapshot_extension);
 
 		snapshot_visualizer::save_ann_snapshot(data, layer_data_configuration_list_list, ann_snapshot_file_path.string().c_str());
-	}
-
-	void neural_network_toolset::save_snapshot(
-		const std::string& name,
-		const std::vector<layer_configuration_specific_snapshot_smart_ptr>& data,
-		bool folder_for_invalid)
-	{
-		boost::filesystem::path snapshot_folder = get_working_data_folder() / snapshot_subfolder_name;
-		if (folder_for_invalid)
-			snapshot_folder /= snapshot_invalid_subfolder_name;
-		boost::filesystem::create_directories(snapshot_folder);
-
-		boost::filesystem::path snapshot_file_path = snapshot_folder / (std::string("snapshot_") + name + "." + snapshot_extension);
-		if (snapshot_mode == "video")
-		{
-			snapshot_visualizer::save_snapshot_video(
-				data,
-				snapshot_file_path.string().c_str(),
-				snapshot_video_fps);
-		}
-		else
-		{
-			snapshot_visualizer::save_snapshot(
-				data,
-				snapshot_file_path.string().c_str());
-		}
 	}
 
 	void neural_network_toolset::snapshot_invalid()
@@ -722,15 +927,7 @@ namespace nnforge
 
 			if (single_result.first != single_result.second)
 			{
-				std::string snapshot_filename = (boost::format("actual_%|1$s|_predicted_%|2$s|_entry_%|3$03d|") %
-					get_class_name_by_id(actual_class_id) % get_class_name_by_id(predicted_class_id) % entry_id).str();
-
-				std::vector<layer_configuration_specific_snapshot_smart_ptr> res = tester->get_snapshot(
-					&(*input.begin()),
-					reader_and_sample_count.first->get_input_type(),
-					reader_and_sample_count.first->get_input_configuration().get_neuron_count());
-
-				save_snapshot(snapshot_filename, res, true);
+				std::cout << "Actual: " << get_class_name_by_id(actual_class_id) << ", Predicted: " << get_class_name_by_id(predicted_class_id) << ", Entry ID: " << entry_id << std::endl;
 			}
 
 			entry_id++;
@@ -1107,5 +1304,10 @@ namespace nnforge
 	bool neural_network_toolset::is_squared_hinge_loss() const
 	{
 		return false;
+	}
+
+	bool neural_network_toolset::is_rgb_input() const
+	{
+		return true;
 	}
 }

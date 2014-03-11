@@ -45,9 +45,7 @@ namespace nnforge
 
 		virtual layer_smart_ptr clone() const;
 
-		virtual layer_configuration get_layer_configuration(const layer_configuration& input_configuration) const;
-
-		virtual layer_configuration_specific get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
+		virtual layer_configuration_specific get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
 
 		virtual float get_forward_flops(const layer_configuration_specific& input_configuration_specific) const;
 

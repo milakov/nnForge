@@ -90,7 +90,7 @@ namespace nnforge
 		return layer_configuration(input_configuration.feature_map_count, static_cast<int>(window_sizes.size()));
 	}
 
-	layer_configuration_specific local_contrast_subtractive_layer::get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific local_contrast_subtractive_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
 	{
 		if (input_configuration_specific.feature_map_count != feature_map_count)
 			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % feature_map_count % input_configuration_specific.feature_map_count).str());

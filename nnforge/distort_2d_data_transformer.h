@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,7 +35,8 @@ namespace nnforge
 			float min_shift_down_y, // in pixels
 			float max_shift_down_y, // in pixels
 			bool flip_around_x_axis_allowed,
-			bool flip_around_y_axis_allowed);
+			bool flip_around_y_axis_allowed,
+			float max_stretch_factor = 1.0F); // >=1
 
 		virtual ~distort_2d_data_transformer();
 
@@ -55,5 +56,7 @@ namespace nnforge
 		std::tr1::uniform_real<float> shift_y_distribution;
 		std::tr1::uniform_int<int> flip_around_x_distribution;
 		std::tr1::uniform_int<int> flip_around_y_distribution;
+		std::tr1::uniform_real<float> stretch_distribution;
+		std::tr1::uniform_real<float> stretch_angle_distribution;
 	};
 }

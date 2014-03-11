@@ -62,12 +62,7 @@ namespace nnforge
 		return layer_smart_ptr(new rgb_to_yuv_convert_layer(*this));
 	}
 
-	layer_configuration rgb_to_yuv_convert_layer::get_layer_configuration(const layer_configuration& input_configuration) const
-	{
-		return layer_configuration(input_configuration);
-	}
-
-	layer_configuration_specific rgb_to_yuv_convert_layer::get_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific rgb_to_yuv_convert_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
 	{
 		for(std::vector<color_feature_map_config>::const_iterator it = color_feature_map_config_list.begin(); it != color_feature_map_config_list.end(); ++it)
 		{
@@ -111,7 +106,7 @@ namespace nnforge
 
 	float rgb_to_yuv_convert_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
-		unsigned int neuron_count = get_layer_configuration_specific(input_configuration_specific).get_neuron_count_per_feature_map();
+		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count_per_feature_map();
 
 		return static_cast<float>(neuron_count * 9);
 	}

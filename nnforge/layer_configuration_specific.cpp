@@ -93,6 +93,30 @@ namespace nnforge
 		}
 	}
 
+	unsigned int layer_configuration_specific::get_pos(const std::vector<unsigned int>& offsets) const
+	{
+		unsigned int res = 0;
+		std::vector<unsigned int>::const_reverse_iterator offsets_it = offsets.rbegin();
+		for(std::vector<unsigned int>::const_reverse_iterator it = dimension_sizes.rbegin(); it != dimension_sizes.rend(); ++it, ++offsets_it)
+			res = res * *it + *offsets_it;
+
+		return res;
+	}
+
+	std::vector<unsigned int> layer_configuration_specific::get_offsets(unsigned int pos) const
+	{
+		std::vector<unsigned int> res(dimension_sizes.size());
+
+		std::vector<unsigned int>::iterator dst_it = res.begin();
+		for(std::vector<unsigned int>::const_iterator it = dimension_sizes.begin(); it != dimension_sizes.end(); ++it, ++dst_it)
+		{
+			*dst_it = pos % *it;
+			pos = pos / *it;
+		}
+
+		return res;
+	}
+
 	void layer_configuration_specific::check_equality(unsigned int neuron_count) const
 	{
 		if (get_neuron_count() != neuron_count)
