@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,8 +77,8 @@ namespace nnforge
 		result.predicted_output_neuron_value_set->compact(sample_count);
 		result.recalculate_mse();
 
-		result.mse->flops = static_cast<float>(original_entry_count) * flops;
-		result.mse->time_to_complete_seconds = sec.count();
+		result.tr->flops = static_cast<float>(original_entry_count) * flops;
+		result.tr->time_to_complete_seconds = sec.count();
 	}
 
 	output_neuron_value_set_smart_ptr network_tester::run(

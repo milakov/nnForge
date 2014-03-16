@@ -33,7 +33,7 @@ namespace nnforge
 		public:
 			network_updater_plain(
 				network_schema_smart_ptr schema,
-				bool is_squared_hinge_loss,
+				const_error_function_smart_ptr ef,
 				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 				plain_running_configuration_const_smart_ptr plain_config);

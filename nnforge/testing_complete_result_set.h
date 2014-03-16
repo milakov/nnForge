@@ -18,6 +18,7 @@
 
 #include "testing_result.h"
 #include "output_neuron_value_set.h"
+#include "error_function.h"
 
 namespace nnforge
 {
@@ -28,16 +29,16 @@ namespace nnforge
 
 	public:
 		testing_complete_result_set(
-			bool is_squared_hinge_loss,
+			const_error_function_smart_ptr ef,
 			output_neuron_value_set_smart_ptr actual_output_neuron_value_set);
 
 		void recalculate_mse();
 
 		void resize_predicted_output_neuron_value_set(unsigned int entry_count);
 
-		testing_result_smart_ptr mse;
+		const_error_function_smart_ptr ef;
+		testing_result_smart_ptr tr;
 		output_neuron_value_set_smart_ptr predicted_output_neuron_value_set;
 		output_neuron_value_set_smart_ptr actual_output_neuron_value_set;
-		bool is_squared_hinge_loss;
 	};
 }

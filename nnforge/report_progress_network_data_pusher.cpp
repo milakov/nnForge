@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,15 +42,15 @@ namespace nnforge
 		{
 			std::cout << " (";
 
-			float mse_improvement = task_state.history[last_index - 1]->get_mse() - task_state.history[last_index]->get_mse();
-			std::cout << (boost::format("Imp %|1$.6f|") % mse_improvement);
+			float error_improvement = task_state.history[last_index - 1]->get_error() - task_state.history[last_index]->get_error();
+			std::cout << (boost::format("Imp %|1$.6f|") % error_improvement);
 
 			if (last_index > 1)
 			{
-				float previous_mse_improvement = task_state.history[last_index - 2]->get_mse() - task_state.history[last_index - 1]->get_mse();
-				if ((previous_mse_improvement > 0.0F) && (mse_improvement >= 0.0F))
+				float previous_error_improvement = task_state.history[last_index - 2]->get_error() - task_state.history[last_index - 1]->get_error();
+				if ((previous_error_improvement > 0.0F) && (error_improvement >= 0.0F))
 				{
-					float improvement_ratio = mse_improvement / previous_mse_improvement * 100.0F;
+					float improvement_ratio = error_improvement / previous_error_improvement * 100.0F;
 					std::cout << (boost::format(", Ratio %|1$.0f|%%") % improvement_ratio);
 				}
 			}

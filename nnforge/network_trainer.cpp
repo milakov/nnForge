@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -97,8 +97,8 @@ namespace nnforge
 
 	bool network_trainer::is_broken(const training_task_state& state) const
 	{
-		float mse = state.history.back()->get_mse();
-		bool sanity_check = (mse < 1.0e+10F) && (-mse > -1.0E+10F) && !(-mse < -1.0E+10F);
+		float error = state.history.back()->get_error();
+		bool sanity_check = (error < 1.0e+10F) && (-error > -1.0E+10F) && !(-error < -1.0E+10F);
 		return !sanity_check;
 	}
 

@@ -49,7 +49,9 @@ namespace nnforge
 
 		for(unsigned char * data_it = dt; data_it != (dt + elem_count); data_it++)
 		{
-			int shift = max_noise_distribution(generator);
+			int shift = max_noise_distribution.min();
+			if (max_noise_distribution.max() > max_noise_distribution.min())
+				shift = max_noise_distribution(generator);
 			*data_it = static_cast<unsigned char>(std::min<int>(std::max<int>((shift + static_cast<int>(*data_it)), 0), 255));
 		}
 	}

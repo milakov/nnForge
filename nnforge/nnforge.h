@@ -48,6 +48,9 @@
 #include "distort_2d_data_sampler_transformer.h"
 #include "flip_2d_data_sampler_transformer.h"
 
+#include "mse_error_function.h"
+#include "squared_hinge_loss_error_function.h"
+
 namespace nnforge
 {
 	class nnforge

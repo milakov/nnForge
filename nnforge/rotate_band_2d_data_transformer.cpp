@@ -56,8 +56,12 @@ namespace nnforge
 
 		cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed));
 
-		int rotate_band_x = rotate_band_x_distribution(generator);
-		int rotate_band_y = rotate_band_y_distribution(generator);
+		int rotate_band_x = rotate_band_x_distribution.min();
+		if (rotate_band_x_distribution.max() > rotate_band_x_distribution.min())
+			rotate_band_x = rotate_band_x_distribution(generator);
+		int rotate_band_y = rotate_band_y_distribution.min();
+		if (rotate_band_y_distribution.max() > rotate_band_y_distribution.min())
+			rotate_band_y = rotate_band_y_distribution(generator);
 
 		data_transformer_util::rotate_band(
 			image,

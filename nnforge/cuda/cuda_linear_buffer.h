@@ -37,6 +37,10 @@ namespace nnforge
 
 			operator const float *() const;
 
+			operator double *();
+
+			operator const double *() const;
+
 			operator float4 *();
 
 			operator const float4 *() const;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@
 #include "supervised_transformed_output_data_reader.h"
 #include "normalize_data_transformer.h"
 #include "unsupervised_transformed_input_data_reader.h"
+#include "mse_error_function.h"
 
 namespace nnforge
 {
@@ -457,7 +458,7 @@ namespace nnforge
 
 				tester->set_data(data);
 
-				testing_complete_result_set testing_res(is_squared_hinge_loss(), actual_neuron_value_set);
+				testing_complete_result_set testing_res(get_error_function(), actual_neuron_value_set);
 				tester->test(
 					reader,
 					testing_res);
@@ -536,7 +537,7 @@ namespace nnforge
 
 			std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(*reader_and_sample_count.first, actual_neuron_value_set);
 
-			testing_complete_result_set complete_result_set_avg(is_squared_hinge_loss(), actual_neuron_value_set);
+			testing_complete_result_set complete_result_set_avg(get_error_function(), actual_neuron_value_set);
 			{
 				complete_result_set_avg.predicted_output_neuron_value_set = output_neuron_value_set_smart_ptr(new output_neuron_value_set(predicted_neuron_value_set_list, output_neuron_value_set::merge_average));
 				complete_result_set_avg.recalculate_mse();
@@ -893,7 +894,7 @@ namespace nnforge
 		std::pair<supervised_data_reader_smart_ptr, unsigned int> reader_and_sample_count = get_data_reader_for_validating_and_sample_count();
 		output_neuron_value_set_smart_ptr actual_neuron_value_set = reader_and_sample_count.first->get_output_neuron_value_set(reader_and_sample_count.second);
 
-		testing_complete_result_set testing_res(is_squared_hinge_loss(), actual_neuron_value_set);
+		testing_complete_result_set testing_res(get_error_function(), actual_neuron_value_set);
 		if (reader_and_sample_count.first->get_output_configuration().get_neuron_count() == 1)
 			throw "Invalid snapshots is not implemented for single output neuron configuration";
 		tester->test(
@@ -967,7 +968,7 @@ namespace nnforge
 				tester_factory->create(schema),
 				validating_data_reader_and_sample_count.first,
 				get_validating_visualizer(),
-				is_squared_hinge_loss(),
+				get_error_function(),
 				validating_data_reader_and_sample_count.second)));
 		}
 
@@ -1100,7 +1101,7 @@ namespace nnforge
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
-			is_squared_hinge_loss(),
+			get_error_function(),
 			get_dropout_rate_map(),
 			get_weight_vector_bound_map());
 
@@ -1153,7 +1154,7 @@ namespace nnforge
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
-			is_squared_hinge_loss(),
+			get_error_function(),
 			get_dropout_rate_map(),
 			get_weight_vector_bound_map());
 
@@ -1301,9 +1302,9 @@ namespace nnforge
 		return std::vector<data_transformer_smart_ptr>();
 	}
 
-	bool neural_network_toolset::is_squared_hinge_loss() const
+	const_error_function_smart_ptr neural_network_toolset::get_error_function() const
 	{
-		return false;
+		return error_function_smart_ptr(new mse_error_function());
 	}
 
 	bool neural_network_toolset::is_rgb_input() const

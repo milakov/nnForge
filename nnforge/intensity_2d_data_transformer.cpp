@@ -51,8 +51,12 @@ namespace nnforge
 		if (original_config.dimension_sizes.size() != 2)
 			throw neural_network_exception((boost::format("intensity_2d_data_transformer is processing 2d data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
 
-		float contrast = contrast_distribution(generator);
-		float brightness_shift = brightness_shift_distribution(generator) * 255.0F;
+		float contrast = contrast_distribution.min();
+		if (contrast_distribution.max() > contrast_distribution.min())
+			contrast = contrast_distribution(generator);
+		float brightness_shift = brightness_shift_distribution.min() * 255.0F;
+		if (brightness_shift_distribution.max() > brightness_shift_distribution.min())
+			brightness_shift = brightness_shift_distribution(generator) * 255.0F;
 
 		unsigned int neuron_count_per_feature_map = original_config.get_neuron_count_per_feature_map();
 		for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)

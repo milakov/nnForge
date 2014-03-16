@@ -33,11 +33,11 @@ namespace nnforge
 
 		network_updater_plain::network_updater_plain(
 			network_schema_smart_ptr schema,
-			bool is_squared_hinge_loss,
+			const_error_function_smart_ptr ef,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
 			plain_running_configuration_const_smart_ptr plain_config)
-			: network_updater(schema, is_squared_hinge_loss, layer_to_dropout_rate_map, layer_to_weight_vector_bound_map)
+			: network_updater(schema, ef, layer_to_dropout_rate_map, layer_to_weight_vector_bound_map)
 			, plain_config(plain_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -94,14 +94,13 @@ namespace nnforge
 				return res;
 
 			for(unsigned int i = 0; i < learning_rate_vector_list.size(); ++i)
-				res.push_back(testing_result_smart_ptr(new testing_result(is_squared_hinge_loss, output_neuron_count)));
+				res.push_back(testing_result_smart_ptr(new testing_result(ef)));
 
 			buffer_plain_size_configuration buffers_config;
 			update_buffers_configuration(buffers_config, updater_entry_count);
 			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(float)); // converted input
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
-			buffers_config.add_constant_buffer(output_neuron_count * sizeof(float) * updater_entry_count); // temp_mse
 			buffers_config.add_constant_buffer(output_neuron_count * sizeof(float) * updater_entry_count); // initial error
 			for(std::vector<network_data_smart_ptr>::iterator it3 = data_list.begin(); it3 != data_list.end(); ++it3)
 			{
@@ -130,7 +129,6 @@ namespace nnforge
 			std::vector<unsigned char> input_buf(max_entry_count * input_neuron_count * input_neuron_elem_size);
 			std::vector<float> actual_output_buf(max_entry_count * input_neuron_count);
 			additional_buffer_smart_ptr initial_error_buf(new std::vector<float>(updater_entry_count * output_neuron_count));
-			additional_buffer_smart_ptr temp_mse_buf(new std::vector<float>(updater_entry_count * output_neuron_count, 0.0F));
 			additional_buffer_smart_ptr input_converted_buf(new std::vector<float>(input_neuron_count * max_entry_count));
 
 			additional_buffer_smart_ptr output_buffer = input_converted_buf;
@@ -315,24 +313,21 @@ namespace nnforge
 
 					// Set initial error and compute temporary MSE
 					{
-						const int elem_count = static_cast<int>(output_neuron_count * updater_entry_count);
 						const std::vector<float>::iterator initial_error_it = initial_error_buf->begin();
-						const std::vector<float>::iterator temp_mse_it = temp_mse_buf->begin();
 						const std::vector<float>::const_iterator actual_output_buf_it = actual_output_buf.begin() + (output_neuron_count * input_entry_id);
 						const std::vector<float>::const_iterator output_buffer_it = output_buffer->begin();
+						const std::vector<testing_result_smart_ptr>::iterator testing_res_it = res.begin();
+						const int elem_count = updater_entry_count;
 						#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-						for(int i = 0; i < elem_count; ++i)
+						for(int updater_entry_id = 0; updater_entry_id < elem_count; ++updater_entry_id)
 						{
-							int elem_id = i % output_neuron_count;
-							float predicted_val = *(output_buffer_it + i);
-							float actual_val = *(actual_output_buf_it + elem_id);
-							float err = 0.0F;
-							{
-								if (!is_squared_hinge_loss || ((actual_val > 0.0F) && (predicted_val < actual_val)) || ((actual_val <= 0.0F) && (predicted_val > actual_val)))
-									err = actual_val - predicted_val;
-							}
-							*(initial_error_it + i) = err;
-							*(temp_mse_it + i) += (err * err);
+							const float * predicted_vals = &(*(output_buffer_it + (updater_entry_id * output_neuron_count)));
+							const float * actual_vals = &(*(actual_output_buf_it + (updater_entry_id * output_neuron_count)));
+							float * initial_errors = &(*(initial_error_it + (updater_entry_id * output_neuron_count)));
+							testing_result& tr = **(testing_res_it + updater_entry_id);
+
+							tr.add_error(actual_vals, predicted_vals, output_neuron_count);
+							tr.ef->calculate_gradient(actual_vals, predicted_vals, initial_errors, output_neuron_count);
 						}
 					}
 
@@ -405,24 +400,6 @@ namespace nnforge
 						}
 					}
 				}
-
-				{
-					const int elem_count = static_cast<int>(output_neuron_count * updater_entry_count);
-					const std::vector<float>::iterator temp_mse_it = temp_mse_buf->begin();
-					const std::vector<testing_result_smart_ptr>::iterator res_it = res.begin();
-					#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-					for(int i = 0; i < elem_count; ++i)
-					{
-						float t = *(temp_mse_it + i) * 0.5F;
-						unsigned int updater_entry_id = i / output_neuron_count;
-						unsigned int output_neuron_id = i - (updater_entry_id * output_neuron_count);
-						(*(res_it + updater_entry_id))->cumulative_mse_list[output_neuron_id] += t;
-						*(temp_mse_it + i) = 0.0F;
-					}
-				}
-
-				for(std::vector<testing_result_smart_ptr>::iterator it = res.begin(); it != res.end(); ++it)
-					(*it)->entry_count += entries_available_for_processing_count;
 			}
 
 			return res;

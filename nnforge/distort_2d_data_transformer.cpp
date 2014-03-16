@@ -64,14 +64,30 @@ namespace nnforge
 		if (original_config.dimension_sizes.size() != 2)
 			throw neural_network_exception((boost::format("distort_2d_data_transformer is processing 2d data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
 
-		float rotation_angle = rotate_angle_distribution(generator);
-		float scale = scale_distribution(generator);
-		float shift_x = shift_x_distribution(generator);
-		float shift_y = shift_y_distribution(generator);
-		bool flip_around_x_axis = (flip_around_x_distribution(generator) == 1);
-		bool flip_around_y_axis = (flip_around_y_distribution(generator) == 1);
-		float stretch = stretch_distribution(generator);
-		float stretch_angle = stretch_angle_distribution(generator);
+		float rotation_angle = rotate_angle_distribution.min();
+		if (rotate_angle_distribution.max() > rotate_angle_distribution.min())
+			rotation_angle = rotate_angle_distribution(generator);
+		float scale = scale_distribution.min();
+		if (scale_distribution.max() > scale_distribution.min())
+			scale = scale_distribution(generator);
+		float shift_x = shift_x_distribution.min();
+		if (shift_x_distribution.max() > shift_x_distribution.min())
+			shift_x = shift_x_distribution(generator);
+		float shift_y = shift_y_distribution.min();
+		if (shift_y_distribution.max() > shift_y_distribution.min())
+			shift_y = shift_y_distribution(generator);
+		bool flip_around_x_axis = (flip_around_x_distribution.min() == 1);
+		if (flip_around_x_distribution.max() > flip_around_x_distribution.min())
+			flip_around_x_axis = (flip_around_x_distribution(generator) == 1);
+		bool flip_around_y_axis = (flip_around_y_distribution.min() == 1);
+		if (flip_around_y_distribution.max() > flip_around_y_distribution.min())
+			flip_around_y_axis = (flip_around_y_distribution(generator) == 1);
+		float stretch = stretch_distribution.min();
+		if (stretch_distribution.max() > stretch_distribution.min())
+			stretch = stretch_distribution(generator);
+		float stretch_angle = stretch_angle_distribution.min();
+		if (stretch_angle_distribution.max() > stretch_angle_distribution.min())
+			stretch_angle = stretch_angle_distribution(generator);
 
 		unsigned int neuron_count_per_feature_map = original_config.get_neuron_count_per_feature_map();
 		for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)

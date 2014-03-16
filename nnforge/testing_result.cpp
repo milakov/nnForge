@@ -22,41 +22,46 @@
 
 namespace nnforge
 {
-	testing_result::testing_result(bool is_squared_hingle_loss)
+	testing_result::testing_result(const_error_function_smart_ptr ef)
 		: entry_count(0)
-		, is_squared_hingle_loss(is_squared_hingle_loss)
+		, ef(ef)
 		, flops(0.0F)
 		, time_to_complete_seconds(0.0F)
+		, cumulative_error(0.0)
 	{
 	}
 
-	testing_result::testing_result(
-		bool is_squared_hingle_loss,
+	float testing_result::get_error() const
+	{
+		return static_cast<float>(static_cast<double>(cumulative_error) / static_cast<double>(entry_count));
+	}
+
+	void testing_result::add_error(
+		const float * actual_values,
+		const float * predicted_values,
 		unsigned int neuron_count)
-		: entry_count(0)
-		, is_squared_hingle_loss(is_squared_hingle_loss)
-		, flops(0.0F)
-		, time_to_complete_seconds(0.0F)
 	{
-		cumulative_mse_list.resize(neuron_count, 0.0F);
+		++entry_count;
+		cumulative_error += static_cast<double>(ef->calculate_error(actual_values, predicted_values, neuron_count));
 	}
 
-	float testing_result::get_mse() const
+	unsigned int testing_result::get_entry_count() const
 	{
-		float res = 0.0F;
+		return entry_count;
+	}
 
-		std::for_each(cumulative_mse_list.begin(), cumulative_mse_list.end(), res += boost::lambda::_1);
-
-		return res / static_cast<float>(entry_count);
+	void testing_result::init(
+		double cumulative_error,
+		unsigned int entry_count)
+	{
+		this->cumulative_error = cumulative_error;
+		this->entry_count = entry_count;
 	}
 
 	std::ostream& operator<< (std::ostream& out, const testing_result& val)
 	{
-		if (val.is_squared_hingle_loss)
-			out << "SHL";
-		else
-			out << "MSE";
-		out << (boost::format(" %|1$.6f|") % val.get_mse());
+		out << val.ef->get_function_name();
+		out << (boost::format(" %|1$.6f|") % val.get_error());
 
 		if (val.time_to_complete_seconds != 0.0F)
 		{

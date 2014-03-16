@@ -80,6 +80,13 @@ namespace nnforge
 				int elem_count,
 				cudaStream_t cuda_stream);
 
+			static void set_with_value(
+				const cuda_running_configuration& cuda_config,
+				double * buf_with_aligned_size,
+				double v,
+				int elem_count,
+				cudaStream_t cuda_stream);
+
 			static void multiply_by_value(
 				const cuda_running_configuration& cuda_config,
 				float * buf_with_aligned_size,

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include "supervised_data_reader.h"
 #include "output_neuron_value_set.h"
 #include "testing_complete_result_set_visualizer.h"
+#include "error_function.h"
 
 namespace nnforge
 {
@@ -32,7 +33,7 @@ namespace nnforge
 			network_tester_smart_ptr tester,
 			supervised_data_reader_smart_ptr reader,
 			testing_complete_result_set_visualizer_smart_ptr visualizer,
-			bool is_squared_hinge_loss,
+			const_error_function_smart_ptr ef,
 			unsigned int sample_count);
 
 		virtual ~validate_progress_network_data_pusher();
@@ -44,6 +45,6 @@ namespace nnforge
 		supervised_data_reader_smart_ptr reader;
 		output_neuron_value_set_smart_ptr actual_output_neuron_value_set;
 		testing_complete_result_set_visualizer_smart_ptr visualizer;
-		bool is_squared_hinge_loss;
+		const_error_function_smart_ptr ef;
 	};
 }

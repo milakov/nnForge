@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,11 +27,11 @@ namespace nnforge
 
 	network_updater::network_updater(
 		network_schema_smart_ptr schema,
-		bool is_squared_hinge_loss,
+		const_error_function_smart_ptr ef,
 		const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 		const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map)
 		: schema(schema)
-		, is_squared_hinge_loss(is_squared_hinge_loss)
+		, ef(ef)
 		, layer_to_dropout_rate_map(layer_to_dropout_rate_map)
 		, random_uniform_list(1 << random_list_bits)
 		, layer_to_weight_vector_bound_map(layer_to_weight_vector_bound_map)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ namespace nnforge
 		network_tester_smart_ptr tester,
 		supervised_data_reader_smart_ptr reader,
 		testing_complete_result_set_visualizer_smart_ptr visualizer,
-		bool is_squared_hinge_loss,
+		const_error_function_smart_ptr ef,
 		unsigned int sample_count)
 		: tester(tester)
 		, reader(reader)
 		, visualizer(visualizer)
-		, is_squared_hinge_loss(is_squared_hinge_loss)
+		, ef(ef)
 	{
 		actual_output_neuron_value_set = reader->get_output_neuron_value_set(sample_count);
 	}
@@ -43,7 +43,7 @@ namespace nnforge
 	{
 		tester->set_data(task_state.data);
 
-		testing_complete_result_set testing_res(is_squared_hinge_loss, actual_output_neuron_value_set);
+		testing_complete_result_set testing_res(ef, actual_output_neuron_value_set);
 		tester->test(
 			*reader,
 			testing_res);

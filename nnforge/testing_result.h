@@ -20,26 +20,37 @@
 #include <vector>
 #include <ostream>
 
+#include "error_function.h"
+
 namespace nnforge
 {
 	class testing_result
 	{
 	public:
-		testing_result(bool is_squared_hingle_loss);
+		testing_result(const_error_function_smart_ptr ef);
 
-		testing_result(
-			bool is_squared_hingle_loss,
-			unsigned int neuron_count);
+		float get_error() const;
 
-		float get_mse() const;
+		const_error_function_smart_ptr ef;
 
-		std::vector<float> cumulative_mse_list;
-		unsigned int entry_count;
-		bool is_squared_hingle_loss;
 		float flops;
 		float time_to_complete_seconds;
 
+		void add_error(
+			const float * actual_values,
+			const float * predicted_values,
+			unsigned int neuron_count);
+
+		unsigned int get_entry_count() const;
+
+		void init(
+			double cumulative_error,
+			unsigned int entry_count);
+
 	private:
+		double cumulative_error;
+		unsigned int entry_count;
+
 		testing_result();
 	};
 

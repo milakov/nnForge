@@ -29,6 +29,7 @@
 #include "data_transformer_util.h"
 #include "weight_vector_bound.h"
 #include "normalize_data_transformer.h"
+#include "error_function.h"
 
 #include <boost/filesystem.hpp>
 
@@ -105,7 +106,7 @@ namespace nnforge
 
 		virtual boost::filesystem::path get_ann_subfolder_name() const;
 
-		virtual bool is_squared_hinge_loss() const;
+		virtual const_error_function_smart_ptr get_error_function() const;
 
 		virtual supervised_data_reader_smart_ptr get_data_reader_for_training() const;
 

@@ -38,6 +38,21 @@ __global__ void set_with_value_util_kernel(
 	}
 }
 
+__global__ void set_with_value_util_kernel(
+	double2 * __restrict buf,
+	double v,
+	int elem_count)
+{
+	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+	if (elem_id < elem_count)
+	{
+		double2 val;
+		val.x = v;
+		val.y = v;
+		buf[elem_id] = val;
+	}
+}
+
 __global__ void multiply_by_value_util_kernel(
 	float4 * __restrict buf,
 	float v,
@@ -284,6 +299,20 @@ namespace nnforge
 				cuda_config,
 				new_elem_count);
 			set_with_value_util_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((float4 *)buf_with_aligned_size, v, new_elem_count);
+		}
+
+		void cuda_util::set_with_value(
+			const cuda_running_configuration& cuda_config,
+			double * buf_with_aligned_size,
+			double v,
+			int elem_count,
+			cudaStream_t cuda_stream)
+		{
+			int new_elem_count = (elem_count + 1) / 2;
+			std::pair<dim3, dim3> kernel_dims = get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				new_elem_count);
+			set_with_value_util_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((double2 *)buf_with_aligned_size, v, new_elem_count);
 		}
 
 		void cuda_util::multiply_by_value(
