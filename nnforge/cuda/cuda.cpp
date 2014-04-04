@@ -62,6 +62,7 @@
 #include "error_function_updater_cuda_factory.h"
 #include "mse_error_function_updater_cuda.h"
 #include "squared_hinge_loss_error_function_updater_cuda.h"
+#include "cross_entropy_error_function_updater_cuda.h"
 
 namespace nnforge
 {
@@ -110,6 +111,7 @@ namespace nnforge
 
 			single_error_function_updater_cuda_factory::get_mutable_instance().register_error_function_updater_cuda(error_function_updater_cuda_smart_ptr(new mse_error_function_updater_cuda()));
 			single_error_function_updater_cuda_factory::get_mutable_instance().register_error_function_updater_cuda(error_function_updater_cuda_smart_ptr(new squared_hinge_loss_error_function_updater_cuda()));
+			single_error_function_updater_cuda_factory::get_mutable_instance().register_error_function_updater_cuda(error_function_updater_cuda_smart_ptr(new cross_entropy_error_function_updater_cuda()));
 		}
 	}
 }

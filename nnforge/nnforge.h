@@ -50,6 +50,7 @@
 
 #include "mse_error_function.h"
 #include "squared_hinge_loss_error_function.h"
+#include "cross_entropy_error_function.h"
 
 namespace nnforge
 {
