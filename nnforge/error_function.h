@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <memory>
+#include "nn_types.h"
+
 #include <string>
 #include <boost/uuid/uuid.hpp>
 
@@ -46,6 +47,6 @@ namespace nnforge
 		error_function();
 	};
 
-	typedef std::tr1::shared_ptr<error_function> error_function_smart_ptr;
-	typedef std::tr1::shared_ptr<const error_function> const_error_function_smart_ptr;
+	typedef nnforge_shared_ptr<error_function> error_function_smart_ptr;
+	typedef nnforge_shared_ptr<const error_function> const_error_function_smart_ptr;
 }

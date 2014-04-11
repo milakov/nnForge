@@ -20,6 +20,7 @@
 #include "layer_configuration.h"
 #include "layer_configuration_specific.h"
 #include "layer_data_configuration.h"
+#include "nn_types.h"
 
 #include <vector>
 #include <ostream>
@@ -68,5 +69,5 @@ namespace nnforge
 		static const boost::uuids::uuid schema_guid;
 	};
 
-	typedef std::tr1::shared_ptr<network_schema> network_schema_smart_ptr;
+	typedef nnforge_shared_ptr<network_schema> network_schema_smart_ptr;
 }

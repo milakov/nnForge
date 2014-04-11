@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 #include <ostream>
 
+#include "nn_types.h"
 #include "output_neuron_class_set.h"
 
 namespace nnforge
@@ -40,5 +40,5 @@ namespace nnforge
 
 	std::ostream& operator<< (std::ostream& out, const classifier_result& val);
 
-	typedef std::tr1::shared_ptr<classifier_result> classifier_result_smart_ptr;
+	typedef nnforge_shared_ptr<classifier_result> classifier_result_smart_ptr;
 }

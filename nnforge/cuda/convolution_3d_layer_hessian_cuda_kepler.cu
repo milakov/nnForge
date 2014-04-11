@@ -1090,7 +1090,7 @@ namespace nnforge
 
 		void convolution_3d_layer_hessian_cuda_kepler::hessian_configured()
 		{
-			std::tr1::shared_ptr<const convolution_layer> layer_derived = std::tr1::dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)
 				window_sizes.push_back(static_cast<int>(*it));
@@ -1102,7 +1102,7 @@ namespace nnforge
 			updater_output_feature_map_block_count = (output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE;
 			updater_window_x_block_count = (window_sizes[0] <= MAX_WINDOW_WIDTH) ? 1 : (window_sizes[0] + WINDOW_WIDTH_LOCAL - 1) / WINDOW_WIDTH_LOCAL;
 			{
-				std::tr1::array<int, 6> size_list;
+				nnforge_array<int, 6> size_list;
 				size_list[0] = window_sizes[1];
 				size_list[1] = window_sizes[2];
 				size_list[2] = input_configuration_specific.feature_map_count;
@@ -1197,7 +1197,7 @@ namespace nnforge
 			{
 				std::vector<packed_config<6> > task_list;
 				packed_config<6> new_elem;
-				for(std::vector<std::tr1::array<int, 6> >::const_iterator it = updater_config_ordered_list.begin(); it != updater_config_ordered_list.end(); ++it)
+				for(std::vector<nnforge_array<int, 6> >::const_iterator it = updater_config_ordered_list.begin(); it != updater_config_ordered_list.end(); ++it)
 				{
 					new_elem.set_val(0, it->at(0));
 					new_elem.set_val(1, it->at(1));

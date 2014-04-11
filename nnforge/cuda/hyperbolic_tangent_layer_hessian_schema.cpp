@@ -31,7 +31,7 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_hessian_schema> hyperbolic_tangent_layer_hessian_schema::create_specific() const
+		layer_hessian_schema_smart_ptr hyperbolic_tangent_layer_hessian_schema::create_specific() const
 		{
 			return layer_hessian_schema_smart_ptr(new hyperbolic_tangent_layer_hessian_schema());
 		}

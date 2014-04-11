@@ -51,5 +51,5 @@ namespace nnforge
 
 	std::ostream& operator<< (std::ostream& out, const roc_result& val);
 
-	typedef std::tr1::shared_ptr<roc_result> roc_result_smart_ptr;
+	typedef nnforge_shared_ptr<roc_result> roc_result_smart_ptr;
 }

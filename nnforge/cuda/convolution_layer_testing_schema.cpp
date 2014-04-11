@@ -45,7 +45,7 @@ namespace nnforge
 			return convolution_layer::layer_guid;
 		}
 
-		std::tr1::shared_ptr<layer_testing_schema> convolution_layer_testing_schema::create_specific() const
+		layer_testing_schema_smart_ptr convolution_layer_testing_schema::create_specific() const
 		{
 			return layer_testing_schema_smart_ptr(new convolution_layer_testing_schema());
 		}

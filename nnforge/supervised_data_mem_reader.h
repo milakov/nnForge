@@ -31,14 +31,14 @@ namespace nnforge
 		supervised_data_mem_reader(
 			const layer_configuration_specific& input_configuration,
 			const layer_configuration_specific& output_configuration,
-			const std::vector<std::tr1::shared_ptr<const std::vector<unsigned char> > >& input_data_list,
-			const std::vector<std::tr1::shared_ptr<const std::vector<float> > >& output_data_list);
+			const std::vector<nnforge_shared_ptr<const std::vector<unsigned char> > >& input_data_list,
+			const std::vector<nnforge_shared_ptr<const std::vector<float> > >& output_data_list);
 
 		supervised_data_mem_reader(
 			const layer_configuration_specific& input_configuration,
 			const layer_configuration_specific& output_configuration,
-			const std::vector<std::tr1::shared_ptr<const std::vector<float> > >& input_data_list,
-			const std::vector<std::tr1::shared_ptr<const std::vector<float> > >& output_data_list);
+			const std::vector<nnforge_shared_ptr<const std::vector<float> > >& input_data_list,
+			const std::vector<nnforge_shared_ptr<const std::vector<float> > >& output_data_list);
 
 		virtual ~supervised_data_mem_reader();
 
@@ -81,9 +81,9 @@ namespace nnforge
 		layer_configuration_specific input_configuration;
 		layer_configuration_specific output_configuration;
 		neuron_data_type::input_type type_code;
-		std::vector<std::tr1::shared_ptr<const std::vector<unsigned char> > > input_data_list_byte;
-		std::vector<std::tr1::shared_ptr<const std::vector<float> > > input_data_list_float;
-		std::vector<std::tr1::shared_ptr<const std::vector<float> > > output_data_list;
+		std::vector<nnforge_shared_ptr<const std::vector<unsigned char> > > input_data_list_byte;
+		std::vector<nnforge_shared_ptr<const std::vector<float> > > input_data_list_float;
+		std::vector<nnforge_shared_ptr<const std::vector<float> > > output_data_list;
 
 		unsigned int entry_read_count;
 		unsigned int entry_count;
@@ -95,5 +95,5 @@ namespace nnforge
 		supervised_data_mem_reader& operator =(const supervised_data_mem_reader&);
 	};
 
-	typedef std::tr1::shared_ptr<supervised_data_mem_reader> supervised_data_mem_reader_smart_ptr;
+	typedef nnforge_shared_ptr<supervised_data_mem_reader> supervised_data_mem_reader_smart_ptr;
 }

@@ -35,7 +35,7 @@ namespace nnforge
 	}
 
 	output_neuron_value_set::output_neuron_value_set(
-		const std::vector<std::tr1::shared_ptr<output_neuron_value_set> >& source_output_neuron_value_set_list,
+		const std::vector<nnforge_shared_ptr<output_neuron_value_set> >& source_output_neuron_value_set_list,
 		merge_type_enum merge_type)
 		: neuron_value_list(source_output_neuron_value_set_list[0]->neuron_value_list.size(), std::vector<float>(source_output_neuron_value_set_list[0]->neuron_value_list[0].size()))
 	{

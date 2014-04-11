@@ -17,7 +17,7 @@
 #pragma once
 
 #include "network_tester.h"
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -32,5 +32,5 @@ namespace nnforge
 		network_tester_factory();
 	};
 
-	typedef std::tr1::shared_ptr<network_tester_factory> network_tester_factory_smart_ptr;
+	typedef nnforge_shared_ptr<network_tester_factory> network_tester_factory_smart_ptr;
 }

@@ -19,8 +19,7 @@
 #include "network_updater.h"
 #include "weight_vector_bound.h"
 #include "error_function.h"
-
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -39,5 +38,5 @@ namespace nnforge
 		network_updater_factory();
 	};
 
-	typedef std::tr1::shared_ptr<network_updater_factory> network_updater_factory_smart_ptr;
+	typedef nnforge_shared_ptr<network_updater_factory> network_updater_factory_smart_ptr;
 }

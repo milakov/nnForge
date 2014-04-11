@@ -52,7 +52,7 @@ void gtsrb_toolset::prepare_training_data()
 		boost::filesystem::path file_path = get_working_data_folder() / training_data_filename;
 		std::cout << "Writing data to " << file_path.string() << std::endl;
 
-		std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge_shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific input_configuration;
 		input_configuration.feature_map_count = is_color ? 3 : 1;
 		input_configuration.dimension_sizes.push_back(image_width);
@@ -83,7 +83,7 @@ void gtsrb_toolset::prepare_training_data()
 		boost::filesystem::path file_path = get_working_data_folder() / validating_data_filename;
 		std::cout << "Writing data to " << file_path.string() << std::endl;
 
-		std::tr1::shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge_shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific input_configuration;
 		input_configuration.feature_map_count = is_color ? 3 : 1;
 		input_configuration.dimension_sizes.push_back(image_width);
@@ -122,11 +122,11 @@ void gtsrb_toolset::write_folder(
 	boost::filesystem::ifstream file_input(annotation_file_path, std::ios_base::in);
 
 	nnforge::random_generator generator = nnforge::rnd::get_random_generator();
-	std::tr1::uniform_real<float> rotate_angle_distribution(-max_rotation_angle_in_degrees, max_rotation_angle_in_degrees);
-	std::tr1::uniform_real<float> scale_distribution(1.0F / max_scale_factor, max_scale_factor);
-	std::tr1::uniform_real<float> shift_distribution(-max_shift, max_shift);
-	std::tr1::uniform_real<float> contrast_distribution(1.0F / max_contrast_factor, max_contrast_factor);
-	std::tr1::uniform_real<float> brightness_shift_distribution(-max_brightness_shift, max_brightness_shift);
+	nnforge_uniform_real_distribution<float> rotate_angle_distribution(-max_rotation_angle_in_degrees, max_rotation_angle_in_degrees);
+	nnforge_uniform_real_distribution<float> scale_distribution(1.0F / max_scale_factor, max_scale_factor);
+	nnforge_uniform_real_distribution<float> shift_distribution(-max_shift, max_shift);
+	nnforge_uniform_real_distribution<float> contrast_distribution(1.0F / max_contrast_factor, max_contrast_factor);
+	nnforge_uniform_real_distribution<float> brightness_shift_distribution(-max_brightness_shift, max_brightness_shift);
 
 	std::string str;
 	std::getline(file_input, str); // read the header

@@ -40,7 +40,7 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_hessian_schema> convolution_layer_hessian_schema::create_specific() const
+		layer_hessian_schema_smart_ptr convolution_layer_hessian_schema::create_specific() const
 		{
 			return layer_hessian_schema_smart_ptr(new convolution_layer_hessian_schema());
 		}

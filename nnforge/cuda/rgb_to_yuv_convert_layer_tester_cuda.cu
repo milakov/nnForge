@@ -21,6 +21,7 @@
 #include "util_cuda.h"
 
 #include "../rgb_to_yuv_convert_layer.h"
+#include "../nn_types.h"
 
 #define w_r 0.299F
 #define w_b 0.114F
@@ -103,7 +104,7 @@ namespace nnforge
 
 		void rgb_to_yuv_convert_layer_tester_cuda::tester_configured()
 		{
-			std::tr1::shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = std::tr1::dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
+			nnforge_shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = nnforge_dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
 
 			color_feature_map_config_count = layer_derived->color_feature_map_config_list.size();
 		}

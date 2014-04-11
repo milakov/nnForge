@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <random>
+#include "nn_types.h"
 
 namespace nnforge
 {
-	typedef std::tr1::mt19937 random_generator;
+	typedef nnforge_mt19937 random_generator;
 
 	class rnd
 	{

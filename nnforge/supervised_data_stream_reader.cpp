@@ -23,7 +23,7 @@
 
 namespace nnforge
 {
-	supervised_data_stream_reader::supervised_data_stream_reader(std::tr1::shared_ptr<std::istream> input_stream)
+	supervised_data_stream_reader::supervised_data_stream_reader(nnforge_shared_ptr<std::istream> input_stream)
 		: in_stream(input_stream)
 		, entry_read_count(0)
 	{
@@ -95,7 +95,7 @@ namespace nnforge
 		entry_read_count = entry_id;
 	}
 
-	void supervised_data_stream_reader::write_randomized(std::tr1::shared_ptr<std::ostream> output_stream)
+	void supervised_data_stream_reader::write_randomized(nnforge_shared_ptr<std::ostream> output_stream)
 	{
 		supervised_data_stream_writer sw(
 			output_stream,
@@ -118,7 +118,7 @@ namespace nnforge
 
 		for(unsigned int entry_to_write_count = entry_count; entry_to_write_count > 0; --entry_to_write_count)
 		{
-			std::tr1::uniform_int<unsigned int> dist(0, entry_to_write_count - 1);
+			nnforge_uniform_int_distribution<unsigned int> dist(0, entry_to_write_count - 1);
 
 			unsigned int index = dist(rnd);
 			unsigned int entry_id = entry_to_write_list[index];
@@ -132,7 +132,7 @@ namespace nnforge
 		}
 	}
 
-	void supervised_data_stream_reader::write_randomized_classifier(std::tr1::shared_ptr<std::ostream> output_stream)
+	void supervised_data_stream_reader::write_randomized_classifier(nnforge_shared_ptr<std::ostream> output_stream)
 	{
 		supervised_data_stream_writer sw(
 			output_stream,
@@ -222,7 +222,7 @@ namespace nnforge
 
 	unsigned int randomized_classifier_keeper::peek_random(random_generator& rnd)
 	{
-		std::tr1::uniform_int<unsigned int> dist(0, static_cast<unsigned int>(entry_id_list.size()) - 1);
+		nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(entry_id_list.size()) - 1);
 
 		unsigned int index = dist(rnd);
 		unsigned int entry_id = entry_id_list[index];

@@ -18,8 +18,8 @@
 
 #include "data_transformer.h"
 #include "feature_map_data_stat.h"
+#include "nn_types.h"
 
-#include <memory>
 #include <vector>
 #include <ostream>
 #include <istream>
@@ -52,7 +52,7 @@ namespace nnforge
 		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
 		void read(std::istream& binary_stream_to_read_from);
 
-		std::tr1::shared_ptr<normalize_data_transformer> get_inverted_transformer() const;
+		nnforge_shared_ptr<normalize_data_transformer> get_inverted_transformer() const;
 
 	public:
 		std::vector<std::pair<float, float> > mul_add_list;
@@ -75,5 +75,5 @@ namespace nnforge
 		static const boost::uuids::uuid normalizer_guid;
 	};
 
-	typedef std::tr1::shared_ptr<normalize_data_transformer> normalize_data_transformer_smart_ptr;
+	typedef nnforge_shared_ptr<normalize_data_transformer> normalize_data_transformer_smart_ptr;
 }

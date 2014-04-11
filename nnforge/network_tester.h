@@ -24,6 +24,7 @@
 #include "layer_configuration_specific.h"
 #include "layer_configuration_specific_snapshot.h"
 #include "neuron_data_type.h"
+#include "nn_types.h"
 
 #include <vector>
 #include <utility>
@@ -111,5 +112,5 @@ namespace nnforge
 		network_tester& operator =(const network_tester&);
 	};
 
-	typedef std::tr1::shared_ptr<network_tester> network_tester_smart_ptr;
+	typedef nnforge_shared_ptr<network_tester> network_tester_smart_ptr;
 }

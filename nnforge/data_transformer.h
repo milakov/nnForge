@@ -18,8 +18,7 @@
 
 #include "layer_configuration_specific.h"
 #include "neuron_data_type.h"
-
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -51,5 +50,5 @@ namespace nnforge
 		data_transformer& operator =(const data_transformer&);
 	};
 
-	typedef std::tr1::shared_ptr<data_transformer> data_transformer_smart_ptr;
+	typedef nnforge_shared_ptr<data_transformer> data_transformer_smart_ptr;
 }

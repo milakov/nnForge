@@ -17,7 +17,7 @@
 #pragma once
 
 #include "hessian_calculator.h"
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -32,5 +32,5 @@ namespace nnforge
 		hessian_calculator_factory();
 	};
 
-	typedef std::tr1::shared_ptr<hessian_calculator_factory> hessian_calculator_factory_smart_ptr;
+	typedef nnforge_shared_ptr<hessian_calculator_factory> hessian_calculator_factory_smart_ptr;
 }

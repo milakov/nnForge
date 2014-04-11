@@ -18,6 +18,7 @@
 
 #include "../local_contrast_subtractive_layer.h"
 #include "../neural_network_exception.h"
+#include "../nn_types.h"
 
 #include "util_cuda.h"
 
@@ -590,7 +591,7 @@ namespace nnforge
 			if (!different_input)
 				throw neural_network_exception("hyperbolic_tangent_layer_updater_cuda is not able to run using the same input");
 
-			std::tr1::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::tr1::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 
 			affected_feature_map_count = static_cast<int>(layer_derived->feature_maps_affected.size());
 			unaffected_feature_map_count = static_cast<int>(layer_derived->feature_maps_unaffected.size());

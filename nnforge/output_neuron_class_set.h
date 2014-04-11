@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 
 #include "output_neuron_value_set.h"
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -30,10 +30,10 @@ namespace nnforge
 
 		output_neuron_class_set(const output_neuron_value_set& neuron_value_set);
 
-		output_neuron_class_set(const std::vector<std::tr1::shared_ptr<output_neuron_class_set> >& source_output_neuron_class_set_list);
+		output_neuron_class_set(const std::vector<nnforge_shared_ptr<output_neuron_class_set> >& source_output_neuron_class_set_list);
 
 		std::vector<unsigned int> class_id_list;
 	};
 
-	typedef std::tr1::shared_ptr<output_neuron_class_set> output_neuron_class_set_smart_ptr;
+	typedef nnforge_shared_ptr<output_neuron_class_set> output_neuron_class_set_smart_ptr;
 }

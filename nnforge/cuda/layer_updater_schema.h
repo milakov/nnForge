@@ -20,6 +20,8 @@
 #include "../layer.h"
 #include "../layer_data.h"
 #include "../layer_configuration_specific.h"
+#include "../nn_types.h"
+
 #include "cuda_running_configuration.h"
 
 #include <utility>
@@ -37,7 +39,7 @@ namespace nnforge
 		public:
 			virtual ~layer_updater_schema();
 
-			std::tr1::shared_ptr<layer_updater_schema> create(
+			nnforge_shared_ptr<layer_updater_schema> create(
 				const_layer_smart_ptr layer_schema,
 				cuda_running_configuration_const_smart_ptr cuda_config) const;
 
@@ -53,7 +55,7 @@ namespace nnforge
 			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_schema_buffers() const;
 
 		protected:
-			virtual std::tr1::shared_ptr<layer_updater_schema> create_specific() const = 0;
+			virtual nnforge_shared_ptr<layer_updater_schema> create_specific() const = 0;
 
 			virtual layer_updater_cuda_smart_ptr create_updater_specific(
 				const layer_configuration_specific& input_configuration_specific,
@@ -69,8 +71,8 @@ namespace nnforge
 			layer_updater_schema& operator =(const layer_updater_schema&);
 		};
 
-		typedef std::tr1::shared_ptr<layer_updater_schema> layer_updater_schema_smart_ptr;
-		typedef std::tr1::shared_ptr<const layer_updater_schema> const_layer_updater_schema_smart_ptr;
+		typedef nnforge_shared_ptr<layer_updater_schema> layer_updater_schema_smart_ptr;
+		typedef nnforge_shared_ptr<const layer_updater_schema> const_layer_updater_schema_smart_ptr;
 		typedef std::vector<const_layer_updater_schema_smart_ptr> const_layer_updater_schema_list;
 	}
 }

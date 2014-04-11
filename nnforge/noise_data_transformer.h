@@ -17,10 +17,8 @@
 #pragma once
 
 #include "data_transformer.h"
-
 #include "rnd.h"
-
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -42,6 +40,6 @@ namespace nnforge
 		bool is_same_sequence_from_reset;
 		random_generator generator;
 
-		std::tr1::uniform_int<int> max_noise_distribution;
+		nnforge_uniform_int_distribution<int> max_noise_distribution;
 	};
 }

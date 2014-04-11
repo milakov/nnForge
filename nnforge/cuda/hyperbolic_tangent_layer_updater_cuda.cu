@@ -20,6 +20,8 @@
 
 #include "../hyperbolic_tangent_layer.h"
 #include "../neural_network_exception.h"
+#include "../nn_types.h"
+
 #include "util_cuda.h"
 
 static __forceinline__ __device__ float hyperbolic_tangent(
@@ -152,7 +154,7 @@ namespace nnforge
 			if (!different_input)
 				throw neural_network_exception("hyperbolic_tangent_layer_updater_cuda is not able to run using the same input");
 
-			std::tr1::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::tr1::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
+			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 
 			hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
 			hyperbolic_tangent_major_multiplier = layer_derived->major_multiplier;

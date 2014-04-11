@@ -17,10 +17,8 @@
 #pragma once
 
 #include "data_transformer.h"
-
 #include "rnd.h"
-
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -50,13 +48,13 @@ namespace nnforge
 	protected:
 		random_generator generator;
 
-		std::tr1::uniform_real<float> rotate_angle_distribution;
-		std::tr1::uniform_real<float> scale_distribution;
-		std::tr1::uniform_real<float> shift_x_distribution;
-		std::tr1::uniform_real<float> shift_y_distribution;
-		std::tr1::uniform_int<int> flip_around_x_distribution;
-		std::tr1::uniform_int<int> flip_around_y_distribution;
-		std::tr1::uniform_real<float> stretch_distribution;
-		std::tr1::uniform_real<float> stretch_angle_distribution;
+		nnforge_uniform_real_distribution<float> rotate_angle_distribution;
+		nnforge_uniform_real_distribution<float> scale_distribution;
+		nnforge_uniform_real_distribution<float> shift_x_distribution;
+		nnforge_uniform_real_distribution<float> shift_y_distribution;
+		nnforge_uniform_int_distribution<int> flip_around_x_distribution;
+		nnforge_uniform_int_distribution<int> flip_around_y_distribution;
+		nnforge_uniform_real_distribution<float> stretch_distribution;
+		nnforge_uniform_real_distribution<float> stretch_angle_distribution;
 	};
 }

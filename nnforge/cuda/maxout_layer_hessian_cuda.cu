@@ -20,7 +20,9 @@
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
+
 #include "../maxout_layer.h"
+#include "../nn_types.h"
 
 __global__ void maxout_hess_kernel(
 	float * __restrict output,
@@ -161,7 +163,7 @@ namespace nnforge
 
 		void maxout_layer_hessian_cuda::hessian_configured()
 		{
-			std::tr1::shared_ptr<const maxout_layer> layer_derived = std::tr1::dynamic_pointer_cast<const maxout_layer>(layer_schema);
+			nnforge_shared_ptr<const maxout_layer> layer_derived = nnforge_dynamic_pointer_cast<const maxout_layer>(layer_schema);
 
 			feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
 		}

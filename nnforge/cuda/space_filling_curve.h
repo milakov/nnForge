@@ -18,13 +18,14 @@
 
 #include <vector>
 #include <stack>
-#include <memory>
 #include <array>
 #include <algorithm>
 
 #include "space_filling_curve_tile.h"
 #include "split_policy_z_order.h"
+
 #include "../neural_network_exception.h"
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -35,8 +36,8 @@ namespace nnforge
 		{
 		public:
 			static void fill_pattern(
-				const std::tr1::array<int, dimension_count>& size_list,
-				std::vector<std::tr1::array<int, dimension_count> >& ordered_list)
+				const nnforge_array<int, dimension_count>& size_list,
+				std::vector<nnforge_array<int, dimension_count> >& ordered_list)
 			{
 				ordered_list.clear();
 
@@ -55,7 +56,7 @@ namespace nnforge
 				}
 				work_set.push(whole_space);
 
-				std::tr1::array<int, dimension_count> start_elems;
+				nnforge_array<int, dimension_count> start_elems;
 				for(int i = 0; i < dimension_count; ++i)
 					start_elems[i] = size_aligned - size_list[i];
 
@@ -66,7 +67,7 @@ namespace nnforge
 
 					if (cur_tile.is_point())
 					{
-						std::tr1::array<int, dimension_count> new_elem;
+						nnforge_array<int, dimension_count> new_elem;
 						bool is_valid = true;
 						for(int i = 0; (i < dimension_count) && is_valid; ++i)
 						{

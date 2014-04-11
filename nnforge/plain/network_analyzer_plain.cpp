@@ -20,6 +20,7 @@
 #include "../neural_network_exception.h"
 
 #include <boost/format.hpp>
+#include <cstring>
 
 namespace nnforge
 {

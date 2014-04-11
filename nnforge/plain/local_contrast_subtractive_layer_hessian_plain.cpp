@@ -21,6 +21,7 @@
 #endif
 
 #include "../local_contrast_subtractive_layer.h"
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -54,7 +55,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			std::tr1::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::tr1::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 			const std::vector<std::vector<float> >& window_weights_list = layer_derived->window_weights_list;
 			const std::vector<unsigned int>& feature_maps_affected = layer_derived->feature_maps_affected;
 			const std::vector<unsigned int>& feature_maps_unaffected = layer_derived->feature_maps_unaffected;
@@ -183,7 +184,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			std::tr1::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::tr1::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 			const std::vector<std::vector<float> >& window_weights_list = layer_derived->window_weights_list;
 			const std::vector<unsigned int>& feature_maps_affected = layer_derived->feature_maps_affected;
 			const unsigned int dimension_count = static_cast<unsigned int>(window_weights_list.size());
@@ -293,7 +294,7 @@ namespace nnforge
 		{
 			std::vector<std::pair<unsigned int, bool> > res;
 
-			std::tr1::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::tr1::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 			unsigned int elem_count_per_intermediate_elem = static_cast<unsigned int>(layer_derived->feature_maps_affected.size() * output_configuration_specific.get_neuron_count_per_feature_map());
 
 			for(int i = 0; i < plain_config->openmp_thread_count; ++i)

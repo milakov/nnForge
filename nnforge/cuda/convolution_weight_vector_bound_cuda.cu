@@ -17,6 +17,7 @@
 #include "convolution_weight_vector_bound_cuda.h"
 
 #include "../convolution_layer.h"
+#include "../nn_types.h"
 
 extern __shared__ float arr[];
 template<bool single_item_per_thread>
@@ -139,14 +140,14 @@ namespace nnforge
 			}
 		}
 
-		std::tr1::shared_ptr<weight_vector_bound_cuda> convolution_weight_vector_bound_cuda::create_specific() const
+		weight_vector_bound_cuda_smart_ptr convolution_weight_vector_bound_cuda::create_specific() const
 		{
-			return std::tr1::shared_ptr<weight_vector_bound_cuda>(new convolution_weight_vector_bound_cuda());
+			return weight_vector_bound_cuda_smart_ptr(new convolution_weight_vector_bound_cuda());
 		}
 
 		void convolution_weight_vector_bound_cuda::weight_vector_bound_configured()
 		{
-			std::tr1::shared_ptr<const convolution_layer> layer_derived = std::tr1::dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			incoming_weight_count_per_output_neuron = layer_derived->input_feature_map_count;
 			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)

@@ -19,8 +19,8 @@
 #include "supervised_data_stream_schema.h"
 #include "layer_configuration_specific.h"
 #include "neuron_data_type.h"
+#include "nn_types.h"
 
-#include <memory>
 #include <vector>
 #include <ostream>
 
@@ -32,7 +32,7 @@ namespace nnforge
 		// The constructor modifies output_stream to throw exceptions in case of failure
 		// The stream should be created with std::ios_base::binary flag
 		supervised_data_stream_writer(
-			std::tr1::shared_ptr<std::ostream> output_stream,
+			nnforge_shared_ptr<std::ostream> output_stream,
 			const layer_configuration_specific& input_configuration,
 			const layer_configuration_specific& output_configuration);
 
@@ -52,7 +52,7 @@ namespace nnforge
 			const float * output_neurons);
 
 	private:
-		std::tr1::shared_ptr<std::ostream> out_stream;
+		nnforge_shared_ptr<std::ostream> out_stream;
 		unsigned int input_neuron_count;
 		unsigned int output_neuron_count;
 
@@ -68,5 +68,5 @@ namespace nnforge
 		supervised_data_stream_writer& operator =(const supervised_data_stream_writer&);
 	};
 
-	typedef std::tr1::shared_ptr<supervised_data_stream_writer> supervised_data_stream_writer_smart_ptr;
+	typedef nnforge_shared_ptr<supervised_data_stream_writer> supervised_data_stream_writer_smart_ptr;
 }

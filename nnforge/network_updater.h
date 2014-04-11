@@ -24,8 +24,8 @@
 #include "dropout_layer_config.h"
 #include "weight_vector_bound.h"
 #include "error_function.h"
+#include "nn_types.h"
 
-#include <memory>
 #include <map>
 
 namespace nnforge
@@ -89,5 +89,5 @@ namespace nnforge
 		std::map<unsigned int, dropout_layer_config> layer_id_to_dropout_config_map;
 	};
 
-	typedef std::tr1::shared_ptr<network_updater> network_updater_smart_ptr;
+	typedef nnforge_shared_ptr<network_updater> network_updater_smart_ptr;
 }

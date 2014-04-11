@@ -36,7 +36,7 @@ namespace nnforge
 			return softmax_layer::layer_guid;
 		}
 
-		std::tr1::shared_ptr<layer_testing_schema> softmax_layer_testing_schema::create_specific() const
+		layer_testing_schema_smart_ptr softmax_layer_testing_schema::create_specific() const
 		{
 			return layer_testing_schema_smart_ptr(new softmax_layer_testing_schema());
 		}

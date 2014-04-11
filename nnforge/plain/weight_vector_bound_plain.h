@@ -16,10 +16,11 @@
 
 #pragma once
 
-#include "../layer.h"
 #include "plain_running_configuration.h"
 
+#include "../layer.h"
 #include "../weight_vector_bound.h"
+#include "../nn_types.h"
 
 #include <map>
 
@@ -49,8 +50,8 @@ namespace nnforge
 			weight_vector_bound_plain& operator =(const weight_vector_bound_plain&);
 		};
 
-		typedef std::tr1::shared_ptr<weight_vector_bound_plain> weight_vector_bound_plain_smart_ptr;
-		typedef std::tr1::shared_ptr<const weight_vector_bound_plain> const_weight_vector_bound_plain_smart_ptr;
+		typedef nnforge_shared_ptr<weight_vector_bound_plain> weight_vector_bound_plain_smart_ptr;
+		typedef nnforge_shared_ptr<const weight_vector_bound_plain> const_weight_vector_bound_plain_smart_ptr;
 		typedef std::map<unsigned int, const_weight_vector_bound_plain_smart_ptr> weight_vector_bound_map;
 	}
 }

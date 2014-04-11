@@ -28,11 +28,11 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_hessian_schema> layer_hessian_schema::create(
+		layer_hessian_schema_smart_ptr layer_hessian_schema::create(
 			const_layer_smart_ptr layer_schema,
 			cuda_running_configuration_const_smart_ptr cuda_config) const
 		{
-			std::tr1::shared_ptr<layer_hessian_schema> res = create_specific();
+			layer_hessian_schema_smart_ptr res = create_specific();
 
 			res->layer_schema = layer_schema;
 			res->cuda_config = cuda_config;

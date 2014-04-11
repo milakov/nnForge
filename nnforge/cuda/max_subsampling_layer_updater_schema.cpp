@@ -35,7 +35,7 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_updater_schema> max_subsampling_layer_updater_schema::create_specific() const
+		layer_updater_schema_smart_ptr max_subsampling_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema_smart_ptr(new max_subsampling_layer_updater_schema());
 		}

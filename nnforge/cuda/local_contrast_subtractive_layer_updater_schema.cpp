@@ -18,6 +18,8 @@
 
 #include "../local_contrast_subtractive_layer.h"
 #include "../neural_network_exception.h"
+#include "../nn_types.h"
+
 #include "local_contrast_subtractive_2d_layer_updater_cuda.h"
 
 #include <boost/format.hpp>
@@ -34,7 +36,7 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_updater_schema> local_contrast_subtractive_layer_updater_schema::create_specific() const
+		layer_updater_schema_smart_ptr local_contrast_subtractive_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema_smart_ptr(new local_contrast_subtractive_layer_updater_schema());
 		}
@@ -67,7 +69,7 @@ namespace nnforge
 		{
 			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
 
-			std::tr1::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::tr1::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 
 			res.push_back(
 				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(

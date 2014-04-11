@@ -23,7 +23,7 @@
 namespace nnforge
 {
 	unsupervised_data_stream_writer::unsupervised_data_stream_writer(
-		std::tr1::shared_ptr<std::ostream> output_stream,
+		nnforge_shared_ptr<std::ostream> output_stream,
 		const layer_configuration_specific& input_configuration)
 		: out_stream(output_stream), entry_count(0), type_code(neuron_data_type::type_unknown)
 	{

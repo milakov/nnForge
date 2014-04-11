@@ -17,6 +17,7 @@
 #include "average_subsampling_layer_tester_plain.h"
 
 #include "../average_subsampling_layer.h"
+#include "../nn_types.h"
 
 #include <array>
 
@@ -55,7 +56,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			std::tr1::shared_ptr<const average_subsampling_layer> layer_derived = std::tr1::dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
+			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 			const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
 			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->subsampling_sizes.size());
 			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
@@ -95,7 +96,7 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
 			{
-				std::tr1::array<unsigned int, max_dimension_count> current_output_position;
+				nnforge_array<unsigned int, max_dimension_count> current_output_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)

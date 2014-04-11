@@ -17,6 +17,7 @@
 #include "maxout_layer_tester_plain.h"
 
 #include "../maxout_layer.h"
+#include "../nn_types.h"
 
 #include <array>
 
@@ -53,7 +54,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			std::tr1::shared_ptr<const maxout_layer> layer_derived = std::tr1::dynamic_pointer_cast<const maxout_layer>(layer_schema);
+			nnforge_shared_ptr<const maxout_layer> layer_derived = nnforge_dynamic_pointer_cast<const maxout_layer>(layer_schema);
 			const unsigned int feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
 			const int output_feature_map_count = output_configuration_specific.feature_map_count;
 			const int total_workload = entry_count * output_feature_map_count;

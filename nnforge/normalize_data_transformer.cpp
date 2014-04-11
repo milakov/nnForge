@@ -71,9 +71,9 @@ namespace nnforge
 	{
 	}
 
-	std::tr1::shared_ptr<normalize_data_transformer> normalize_data_transformer::get_inverted_transformer() const
+	nnforge_shared_ptr<normalize_data_transformer> normalize_data_transformer::get_inverted_transformer() const
 	{
-		std::tr1::shared_ptr<normalize_data_transformer> res(new normalize_data_transformer());
+		nnforge_shared_ptr<normalize_data_transformer> res(new normalize_data_transformer());
 
 		for(std::vector<std::pair<float, float> >::const_iterator mul_add_it = mul_add_list.begin(); mul_add_it != mul_add_list.end(); ++mul_add_it)
 		{

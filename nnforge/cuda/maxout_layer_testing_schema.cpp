@@ -39,7 +39,7 @@ namespace nnforge
 			return maxout_layer::layer_guid;
 		}
 
-		std::tr1::shared_ptr<layer_testing_schema> maxout_layer_testing_schema::create_specific() const
+		layer_testing_schema_smart_ptr maxout_layer_testing_schema::create_specific() const
 		{
 			return layer_testing_schema_smart_ptr(new maxout_layer_testing_schema());
 		}

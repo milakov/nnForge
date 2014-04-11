@@ -22,6 +22,7 @@
 #include "cuda_linear_buffer_device.h"
 
 #include "../weight_vector_bound.h"
+#include "../nn_types.h"
 
 #include <map>
 
@@ -34,7 +35,7 @@ namespace nnforge
 		public:
 			virtual ~weight_vector_bound_cuda();
 
-			std::tr1::shared_ptr<weight_vector_bound_cuda> create(
+			nnforge_shared_ptr<weight_vector_bound_cuda> create(
 				const_layer_smart_ptr layer_schema,
 				cuda_running_configuration_const_smart_ptr cuda_config) const;
 
@@ -58,7 +59,7 @@ namespace nnforge
 		protected:
 			weight_vector_bound_cuda();
 
-			virtual std::tr1::shared_ptr<weight_vector_bound_cuda> create_specific() const = 0;
+			virtual nnforge_shared_ptr<weight_vector_bound_cuda> create_specific() const = 0;
 
 			// The method is called when configuration is finished
 			virtual void weight_vector_bound_configured();
@@ -75,7 +76,7 @@ namespace nnforge
 			weight_vector_bound_cuda& operator =(const weight_vector_bound_cuda&);
 		};
 
-		typedef std::tr1::shared_ptr<weight_vector_bound_cuda> weight_vector_bound_cuda_smart_ptr;
+		typedef nnforge_shared_ptr<weight_vector_bound_cuda> weight_vector_bound_cuda_smart_ptr;
 		typedef std::map<unsigned int, weight_vector_bound_cuda_smart_ptr> weight_vector_bound_map;
 	}
 }

@@ -46,6 +46,7 @@
 #include "normalize_data_transformer.h"
 #include "unsupervised_transformed_input_data_reader.h"
 #include "mse_error_function.h"
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -364,8 +365,8 @@ namespace nnforge
 
 	void neural_network_toolset::randomize_data()
 	{
-		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
-		std::tr1::shared_ptr<std::ostream> out(new boost::filesystem::ofstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
+		nnforge_shared_ptr<std::ostream> out(new boost::filesystem::ofstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 
 		supervised_data_stream_reader reader(in);
 
@@ -434,8 +435,8 @@ namespace nnforge
 
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 
-		std::tr1::regex expression(trained_ann_index_extractor_pattern);
-		std::tr1::cmatch what;
+		nnforge_regex expression(trained_ann_index_extractor_pattern);
+		nnforge_cmatch what;
 
 		std::vector<float> invalid_ratio_list;
 		std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list;
@@ -444,7 +445,7 @@ namespace nnforge
 			boost::filesystem::path file_path = it->path();
 			std::string file_name = file_path.filename().string();
 
-			if (std::tr1::regex_search(file_name.c_str(), what, expression))
+			if (nnforge_regex_search(file_name.c_str(), what, expression))
 			{
 				unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
 				if ((test_validate_ann_index >= 0) && (test_validate_ann_index != index))
@@ -479,8 +480,8 @@ namespace nnforge
 
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 
-		std::tr1::regex expression(trained_ann_index_extractor_pattern);
-		std::tr1::cmatch what;
+		nnforge_regex expression(trained_ann_index_extractor_pattern);
+		nnforge_cmatch what;
 
 		std::vector<float> invalid_ratio_list;
 		std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list;
@@ -489,7 +490,7 @@ namespace nnforge
 			boost::filesystem::path file_path = it->path();
 			std::string file_name = file_path.filename().string();
 
-			if (std::tr1::regex_search(file_name.c_str(), what, expression))
+			if (nnforge_regex_search(file_name.c_str(), what, expression))
 			{
 				unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
 				if ((test_validate_ann_index >= 0) && (test_validate_ann_index != index))
@@ -564,7 +565,7 @@ namespace nnforge
 
 	void neural_network_toolset::generate_input_normalizer()
 	{
-		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
+		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
 		nnforge::supervised_data_stream_reader reader(in);
 
 		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader.get_feature_map_input_data_stat_list();
@@ -580,7 +581,7 @@ namespace nnforge
 
 	void neural_network_toolset::generate_output_normalizer()
 	{
-		std::tr1::shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
+		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
 		nnforge::supervised_data_stream_reader reader(in);
 
 		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader.get_feature_map_output_data_stat_list();
@@ -937,8 +938,8 @@ namespace nnforge
 
 	unsigned int neural_network_toolset::get_starting_index_for_batch_training()
 	{
-		std::tr1::regex expression(trained_ann_index_extractor_pattern);
-		std::tr1::cmatch what;
+		nnforge_regex expression(trained_ann_index_extractor_pattern);
+		nnforge_cmatch what;
 
 		int max_index = -1;
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
@@ -947,7 +948,7 @@ namespace nnforge
 			boost::filesystem::path file_path = it->path();
 			std::string file_name = file_path.filename().string();
 
-			if (std::tr1::regex_search(file_name.c_str(), what, expression))
+			if (nnforge_regex_search(file_name.c_str(), what, expression))
 			{
 				int index = atol(std::string(what[1].first, what[1].second).c_str());
 				max_index = std::max<int>(max_index, index); 
@@ -977,7 +978,7 @@ namespace nnforge
 
 	supervised_data_reader_smart_ptr neural_network_toolset::get_data_reader_for_training() const
 	{
-		std::tr1::shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::in | std::ios_base::binary));
+		nnforge_shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::in | std::ios_base::binary));
 		supervised_data_reader_smart_ptr current_reader(new supervised_data_stream_reader(training_data_stream));
 		{
 			std::vector<data_transformer_smart_ptr> data_transformer_list = get_input_data_transformer_list_for_training();
@@ -1027,7 +1028,7 @@ namespace nnforge
 
 	supervised_data_reader_smart_ptr neural_network_toolset::get_data_reader_for_validating() const
 	{
-		std::tr1::shared_ptr<std::istream> validating_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / validating_data_filename, std::ios_base::in | std::ios_base::binary));
+		nnforge_shared_ptr<std::istream> validating_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / validating_data_filename, std::ios_base::in | std::ios_base::binary));
 		supervised_data_reader_smart_ptr current_reader(new supervised_data_stream_reader(validating_data_stream));
 		return current_reader;
 	}
@@ -1060,7 +1061,7 @@ namespace nnforge
 
 	supervised_data_reader_smart_ptr neural_network_toolset::get_data_reader_for_testing_supervised() const
 	{
-		std::tr1::shared_ptr<std::istream> testing_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / testing_data_filename, std::ios_base::in | std::ios_base::binary));
+		nnforge_shared_ptr<std::istream> testing_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / testing_data_filename, std::ios_base::in | std::ios_base::binary));
 		supervised_data_reader_smart_ptr current_reader(new supervised_data_stream_reader(testing_data_stream));
 		return current_reader;
 	}
@@ -1084,7 +1085,7 @@ namespace nnforge
 
 	unsupervised_data_reader_smart_ptr neural_network_toolset::get_data_reader_for_testing_unsupervised() const
 	{
-		std::tr1::shared_ptr<std::istream> testing_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / testing_unsupervised_data_filename, std::ios_base::in | std::ios_base::binary));
+		nnforge_shared_ptr<std::istream> testing_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / testing_unsupervised_data_filename, std::ios_base::in | std::ios_base::binary));
 		unsupervised_data_reader_smart_ptr current_reader(new unsupervised_data_stream_reader(testing_data_stream));
 		return current_reader;
 	}
@@ -1119,13 +1120,13 @@ namespace nnforge
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
 
-		std::tr1::shared_ptr<network_data_peeker> peeker;
+		nnforge_shared_ptr<network_data_peeker> peeker;
 		boost::filesystem::path batch_folder;
 		batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
 
 		unsigned int starting_index = get_starting_index_for_batch_training();
-		peeker = std::tr1::shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index));
+		peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index));
 
 		complex_network_data_pusher progress;
 		progress.push_back(network_data_pusher_smart_ptr(new report_progress_network_data_pusher()));
@@ -1178,7 +1179,7 @@ namespace nnforge
 
 		std::vector<float> random_uniform_list(1 << 10);
 		random_generator gen = rnd::get_random_generator();
-		std::tr1::uniform_real<float> dist(0.0F, 1.0F);
+		nnforge_uniform_real_distribution<float> dist(0.0F, 1.0F);
 		for(std::vector<float>::iterator it = random_uniform_list.begin(); it != random_uniform_list.end(); ++it)
 			*it = dist(gen);
 

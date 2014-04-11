@@ -40,7 +40,7 @@ namespace nnforge
 		}
 	}
 
-	output_neuron_class_set::output_neuron_class_set(const std::vector<std::tr1::shared_ptr<output_neuron_class_set> >& source_output_neuron_class_set_list)
+	output_neuron_class_set::output_neuron_class_set(const std::vector<nnforge_shared_ptr<output_neuron_class_set> >& source_output_neuron_class_set_list)
 		: class_id_list(source_output_neuron_class_set_list[0]->class_id_list.size())
 	{
 		for(unsigned int i = 0; i < class_id_list.size(); i++)

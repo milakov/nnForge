@@ -30,8 +30,8 @@ namespace nnforge
 	{
 		generator = rnd::get_random_generator();
 
-		rotate_band_x_distribution = std::tr1::uniform_int<int>(-static_cast<int>(max_absolute_band_rotation_x), static_cast<int>(max_absolute_band_rotation_x));
-		rotate_band_y_distribution = std::tr1::uniform_int<int>(-static_cast<int>(max_absolute_band_rotation_y), static_cast<int>(max_absolute_band_rotation_y));
+		rotate_band_x_distribution = nnforge_uniform_int_distribution<int>(-static_cast<int>(max_absolute_band_rotation_x), static_cast<int>(max_absolute_band_rotation_x));
+		rotate_band_y_distribution = nnforge_uniform_int_distribution<int>(-static_cast<int>(max_absolute_band_rotation_y), static_cast<int>(max_absolute_band_rotation_y));
 	}
 
 	rotate_band_2d_data_transformer::~rotate_band_2d_data_transformer()

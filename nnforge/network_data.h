@@ -19,11 +19,11 @@
 #include "layer_data.h"
 #include "layer.h"
 #include "dropout_layer_config.h"
+#include "nn_types.h"
 
 #include <vector>
 #include <ostream>
 #include <istream>
-#include <memory>
 #include <string>
 #include <boost/uuid/uuid.hpp>
 
@@ -66,5 +66,5 @@ namespace nnforge
 		static const boost::uuids::uuid data_guid;
 	};
 
-	typedef std::tr1::shared_ptr<network_data> network_data_smart_ptr;
+	typedef nnforge_shared_ptr<network_data> network_data_smart_ptr;
 }

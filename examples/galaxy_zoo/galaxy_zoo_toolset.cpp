@@ -149,7 +149,7 @@ void galaxy_zoo_toolset::prepare_training_data()
 	{
 		boost::filesystem::path training_file_path = get_working_data_folder() / training_data_filename;
 		std::cout << "Writing training data to " << training_file_path.string() << std::endl;
-		std::tr1::shared_ptr<std::ofstream> training_file(new boost::filesystem::ofstream(training_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge_shared_ptr<std::ofstream> training_file(new boost::filesystem::ofstream(training_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		training_data_writer = nnforge::supervised_data_stream_writer_smart_ptr(new nnforge::supervised_data_stream_writer(
 			training_file,
 			input_configuration,
@@ -161,7 +161,7 @@ void galaxy_zoo_toolset::prepare_training_data()
 	{
 		boost::filesystem::path validating_file_path = get_working_data_folder() / validating_data_filename;
 		std::cout << "... and writing validating data to " << validating_file_path.string() << std::endl;
-		std::tr1::shared_ptr<std::ofstream> validating_file(new boost::filesystem::ofstream(validating_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge_shared_ptr<std::ofstream> validating_file(new boost::filesystem::ofstream(validating_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		validating_data_writer = nnforge::supervised_data_stream_writer_smart_ptr(new nnforge::supervised_data_stream_writer(
 			validating_file,
 			input_configuration,
@@ -173,7 +173,7 @@ void galaxy_zoo_toolset::prepare_training_data()
 	unsigned int training_entry_count_written = 0;
 	unsigned int validating_entry_count_written = 0;
 	nnforge::random_generator gen = nnforge::rnd::get_random_generator();
-	std::tr1::uniform_real<float> dist(0.0F, 1.0F);
+	nnforge_uniform_real_distribution<float> dist(0.0F, 1.0F);
 	while (true)
 	{
 		std::string str;
@@ -227,7 +227,7 @@ void galaxy_zoo_toolset::prepare_testing_data()
 	{
 		boost::filesystem::path testing_file_path = get_working_data_folder() / testing_unsupervised_data_filename;
 		std::cout << "... and writing testing data to " << testing_file_path.string() << std::endl;
-		std::tr1::shared_ptr<std::ofstream> validating_file(new boost::filesystem::ofstream(testing_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge_shared_ptr<std::ofstream> validating_file(new boost::filesystem::ofstream(testing_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		testing_data_writer = nnforge::unsupervised_data_stream_writer_smart_ptr(new nnforge::unsupervised_data_stream_writer(
 			validating_file,
 			input_configuration));
@@ -237,15 +237,15 @@ void galaxy_zoo_toolset::prepare_testing_data()
 	boost::filesystem::ofstream testing_rec_labels_writer(testing_rec_ids_filepath, std::ios_base::out | std::ios_base::trunc);
 	std::cout << "... and testing labels to " << testing_rec_ids_filepath.string() << std::endl;
 
-	std::tr1::regex expression(testing_filename_pattern);
-	std::tr1::cmatch what;
+	nnforge_regex expression(testing_filename_pattern);
+	nnforge_cmatch what;
 	std::vector<unsigned char> input_data;
 	unsigned int testing_entry_count_written = 0;
 	for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(input_testing_folder_path); it != boost::filesystem::directory_iterator(); ++it)
 	{
 		boost::filesystem::path file_path = it->path();
 		std::string file_name = file_path.filename().string();
-		if (std::tr1::regex_search(file_name.c_str(), what, expression))
+		if (nnforge_regex_search(file_name.c_str(), what, expression))
 		{
 			std::string rec_id = std::string(what[1].first, what[1].second);
 

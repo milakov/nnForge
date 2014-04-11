@@ -17,6 +17,7 @@
 #include "local_contrast_subtractive_2d_layer_tester_cuda.h"
 
 #include "../local_contrast_subtractive_layer.h"
+#include "../nn_types.h"
 
 #include "util_cuda.h"
 
@@ -331,7 +332,7 @@ namespace nnforge
 
 		void local_contrast_subtractive_2d_layer_tester_cuda::tester_configured()
 		{
-			std::tr1::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::tr1::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 
 			affected_feature_map_count = static_cast<int>(layer_derived->feature_maps_affected.size());
 

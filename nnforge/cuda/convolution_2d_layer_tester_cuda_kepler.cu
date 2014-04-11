@@ -27,6 +27,7 @@
 #include "space_filling_curve.h"
 
 #include "../convolution_layer.h"
+#include "../nn_types.h"
 
 #define FEATURE_MAP_BLOCK_SIZE 4
 
@@ -342,7 +343,7 @@ namespace nnforge
 
 		void convolution_2d_layer_tester_cuda_kepler::tester_configured()
 		{
-			std::tr1::shared_ptr<const convolution_layer> layer_derived = std::tr1::dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)
 				window_sizes.push_back(static_cast<int>(*it));

@@ -40,7 +40,7 @@ namespace nnforge
 			return max_subsampling_layer::layer_guid;
 		}
 
-		std::tr1::shared_ptr<layer_testing_schema> max_subsampling_layer_testing_schema::create_specific() const
+		layer_testing_schema_smart_ptr max_subsampling_layer_testing_schema::create_specific() const
 		{
 			return layer_testing_schema_smart_ptr(new max_subsampling_layer_testing_schema());
 		}

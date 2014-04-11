@@ -18,6 +18,7 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
+ #include "nn_types.h"
 
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
@@ -151,8 +152,8 @@ namespace nnforge
 		float standard_deviation = 1.0F / sqrtf(static_cast<float>(input_neuron_count));
 		float max_abs_value = 3.0F * standard_deviation;
 
-		std::tr1::normal_distribution<float> nd(0.0F, standard_deviation);
-		//std::tr1::uniform_real_distribution<float> nd(-2.0F * standard_deviation, 2.0F * standard_deviation);
+		nnforge_normal_distribution<float> nd(0.0F, standard_deviation);
+		//nnforge_uniform_real_distribution<float> nd(-2.0F * standard_deviation, 2.0F * standard_deviation);
 
 		for(unsigned int i = 0; i < data[0].size(); ++i)
 		{

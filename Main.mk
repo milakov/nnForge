@@ -9,8 +9,16 @@ VPATH+=$(NNFORGE_PATH)/lib
 LDFLAGS+=-L$(NNFORGE_PATH)/lib
 endif
 
+ifeq ($(CPP11COMPILER),yes)
+CXXFLAGS+=-DNNFORGE_CPP11COMPILER
+CXXFLAGS+=$(CPP_FLAGS_CPP11)
+endif
+
 ifeq ($(USE_BOOST),yes)
-CXXFLAGS+=-I$(BOOST_PATH)/include/boost/tr1/tr1 -I$(BOOST_PATH)/include
+ifneq ($(CPP11COMPILER),yes)
+CXXFLAGS+=-I$(BOOST_PATH)/include/boost/tr1/tr1
+endif
+CXXFLAGS+=-I$(BOOST_PATH)/include
 LDFLAGS+=-L$(BOOST_PATH)/lib $(BOOST_LIBS)
 endif
 
@@ -49,6 +57,10 @@ ifeq ($(BUILD_MODE),debug)
 NVCCFLAGS+=$(CUDA_FLAGS_DEBUG_MODE)
 else
 NVCCFLAGS+=$(CUDA_FLAGS_RELEASE_MODE)
+endif
+
+ifeq ($(CPP11COMPILER),yes)
+NVCCFLAGS+=-DNNFORGE_CPP11COMPILER
 endif
 
 ifeq ($(ENABLE_CUDA_PROFILING),yes)

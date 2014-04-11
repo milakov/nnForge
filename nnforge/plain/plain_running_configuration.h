@@ -17,9 +17,10 @@
 #pragma once
 
 #include <ostream>
-#include <memory>
 
 #include "buffer_plain_size_configuration.h"
+
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -45,7 +46,7 @@ namespace nnforge
 			plain_running_configuration& operator =(const plain_running_configuration&);
 		};
 
-		typedef std::tr1::shared_ptr<const plain_running_configuration> plain_running_configuration_const_smart_ptr;
+		typedef nnforge_shared_ptr<const plain_running_configuration> plain_running_configuration_const_smart_ptr;
 
 		std::ostream& operator<< (std::ostream& out, const plain_running_configuration& running_configuration);
 	}

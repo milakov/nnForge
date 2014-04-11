@@ -19,6 +19,8 @@
 #include "../layer.h"
 #include "../layer_data.h"
 #include "../layer_configuration_specific.h"
+#include "../nn_types.h"
+ 
 #include "layer_tester_cuda.h"
 #include "cuda_running_configuration.h"
 
@@ -37,7 +39,7 @@ namespace nnforge
 		public:
 			virtual ~layer_testing_schema();
 
-			std::tr1::shared_ptr<layer_testing_schema> create(
+			nnforge_shared_ptr<layer_testing_schema> create(
 				const_layer_smart_ptr layer_schema,
 				cuda_running_configuration_const_smart_ptr cuda_config) const;
 
@@ -51,7 +53,7 @@ namespace nnforge
 			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_schema_buffers() const;
 
 		protected:
-			virtual std::tr1::shared_ptr<layer_testing_schema> create_specific() const = 0;
+			virtual nnforge_shared_ptr<layer_testing_schema> create_specific() const = 0;
 
 			virtual layer_tester_cuda_smart_ptr create_tester_specific(
 				const layer_configuration_specific& input_configuration_specific,
@@ -67,8 +69,8 @@ namespace nnforge
 			layer_testing_schema& operator =(const layer_testing_schema&);
 		};
 
-		typedef std::tr1::shared_ptr<layer_testing_schema> layer_testing_schema_smart_ptr;
-		typedef std::tr1::shared_ptr<const layer_testing_schema> const_layer_testing_schema_smart_ptr;
+		typedef nnforge_shared_ptr<layer_testing_schema> layer_testing_schema_smart_ptr;
+		typedef nnforge_shared_ptr<const layer_testing_schema> const_layer_testing_schema_smart_ptr;
 		typedef std::vector<const_layer_testing_schema_smart_ptr> const_layer_testing_schema_list;
 	}
 }

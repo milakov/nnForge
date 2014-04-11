@@ -27,7 +27,7 @@ namespace nnforge
 	{
 		generator = rnd::get_random_generator();
 
-		max_noise_distribution = std::tr1::uniform_int<int>(-static_cast<int>(max_noise), static_cast<int>(max_noise));
+		max_noise_distribution = nnforge_uniform_int_distribution<int>(-static_cast<int>(max_noise), static_cast<int>(max_noise));
 	}
 
 	noise_data_transformer::~noise_data_transformer()

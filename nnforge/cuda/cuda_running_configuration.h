@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 
 #include <cublas_v2.h>
 
 #include "buffer_cuda_size_configuration.h"
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -90,7 +90,7 @@ namespace nnforge
 			cublasHandle_t cublas_handle;
 		};
 
-		typedef std::tr1::shared_ptr<const cuda_running_configuration> cuda_running_configuration_const_smart_ptr;
+		typedef nnforge_shared_ptr<const cuda_running_configuration> cuda_running_configuration_const_smart_ptr;
 
 		std::ostream& operator<< (std::ostream& out, const cuda_running_configuration& running_configuration);
 	}

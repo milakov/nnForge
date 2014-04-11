@@ -31,7 +31,7 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_hessian_schema> softmax_layer_hessian_schema::create_specific() const
+		layer_hessian_schema_smart_ptr softmax_layer_hessian_schema::create_specific() const
 		{
 			return layer_hessian_schema_smart_ptr(new softmax_layer_hessian_schema());
 		}

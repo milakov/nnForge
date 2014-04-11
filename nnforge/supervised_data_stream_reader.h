@@ -22,8 +22,8 @@
 #include "neural_network_exception.h"
 #include "rnd.h"
 #include "neuron_data_type.h"
+#include "nn_types.h"
 
-#include <memory>
 #include <vector>
 #include <istream>
 #include <ostream>
@@ -55,7 +55,7 @@ namespace nnforge
 	{
 	public:
 		// The constructor modifies input_stream to throw exceptions in case of failure
-		supervised_data_stream_reader(std::tr1::shared_ptr<std::istream> input_stream);
+		supervised_data_stream_reader(nnforge_shared_ptr<std::istream> input_stream);
 
 		virtual ~supervised_data_stream_reader();
 
@@ -80,9 +80,9 @@ namespace nnforge
 			return type_code;
 		}
 
-		void write_randomized(std::tr1::shared_ptr<std::ostream> output_stream);
+		void write_randomized(nnforge_shared_ptr<std::ostream> output_stream);
 
-		void write_randomized_classifier(std::tr1::shared_ptr<std::ostream> output_stream);
+		void write_randomized_classifier(nnforge_shared_ptr<std::ostream> output_stream);
 
 	protected:
 		virtual unsigned int get_actual_entry_count() const
@@ -97,7 +97,7 @@ namespace nnforge
 		void fill_class_buckets_entry_id_lists(std::vector<randomized_classifier_keeper>& class_buckets_entry_id_lists);
 
 	protected:
-		std::tr1::shared_ptr<std::istream> in_stream;
+		nnforge_shared_ptr<std::istream> in_stream;
 		unsigned int input_neuron_count;
 		unsigned int output_neuron_count;
 		layer_configuration_specific input_configuration;
@@ -113,5 +113,5 @@ namespace nnforge
 		supervised_data_stream_reader& operator =(const supervised_data_stream_reader&);
 	};
 
-	typedef std::tr1::shared_ptr<supervised_data_stream_reader> supervised_data_stream_reader_smart_ptr;
+	typedef nnforge_shared_ptr<supervised_data_stream_reader> supervised_data_stream_reader_smart_ptr;
 }

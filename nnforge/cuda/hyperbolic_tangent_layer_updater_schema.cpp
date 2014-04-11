@@ -31,7 +31,7 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_updater_schema> hyperbolic_tangent_layer_updater_schema::create_specific() const
+		layer_updater_schema_smart_ptr hyperbolic_tangent_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema_smart_ptr(new hyperbolic_tangent_layer_updater_schema());
 		}

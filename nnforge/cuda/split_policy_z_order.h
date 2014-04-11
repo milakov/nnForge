@@ -30,9 +30,9 @@ namespace nnforge
 			static void split_to_stack(
 				const space_filling_curve_tile<dimension_count>& tile_to_split,
 				std::stack<space_filling_curve_tile<dimension_count> >& st,
-				const std::tr1::array<int, dimension_count>& start_elems)
+				const nnforge_array<int, dimension_count>& start_elems)
 			{
-				std::tr1::array<std::tr1::array<int, 3>, dimension_count> boundary_elems;
+				nnforge_array<nnforge_array<int, 3>, dimension_count> boundary_elems;
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					boundary_elems[i][0] = tile_to_split.start_elems[i];

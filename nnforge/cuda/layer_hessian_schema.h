@@ -37,7 +37,7 @@ namespace nnforge
 		public:
 			virtual ~layer_hessian_schema();
 
-			std::tr1::shared_ptr<layer_hessian_schema> create(
+			nnforge_shared_ptr<layer_hessian_schema> create(
 				const_layer_smart_ptr layer_schema,
 				cuda_running_configuration_const_smart_ptr cuda_config) const;
 
@@ -52,7 +52,7 @@ namespace nnforge
 			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_schema_buffers() const;
 
 		protected:
-			virtual std::tr1::shared_ptr<layer_hessian_schema> create_specific() const = 0;
+			virtual nnforge_shared_ptr<layer_hessian_schema> create_specific() const = 0;
 
 			virtual layer_hessian_cuda_smart_ptr create_hessian_specific(
 				const layer_configuration_specific& input_configuration_specific,
@@ -68,8 +68,8 @@ namespace nnforge
 			layer_hessian_schema& operator =(const layer_hessian_schema&);
 		};
 
-		typedef std::tr1::shared_ptr<layer_hessian_schema> layer_hessian_schema_smart_ptr;
-		typedef std::tr1::shared_ptr<const layer_hessian_schema> const_layer_hessian_schema_smart_ptr;
+		typedef nnforge_shared_ptr<layer_hessian_schema> layer_hessian_schema_smart_ptr;
+		typedef nnforge_shared_ptr<const layer_hessian_schema> const_layer_hessian_schema_smart_ptr;
 		typedef std::vector<const_layer_hessian_schema_smart_ptr> const_layer_hessian_schema_list;
 	}
 }

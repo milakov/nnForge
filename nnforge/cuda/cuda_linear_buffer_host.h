@@ -44,7 +44,7 @@ namespace nnforge
 			size_t size;
 		};
 
-		typedef std::tr1::shared_ptr<cuda_linear_buffer_host> cuda_linear_buffer_host_smart_ptr;
-		typedef std::tr1::shared_ptr<const cuda_linear_buffer_host> const_cuda_linear_buffer_host_smart_ptr;
+		typedef nnforge_shared_ptr<cuda_linear_buffer_host> cuda_linear_buffer_host_smart_ptr;
+		typedef nnforge_shared_ptr<const cuda_linear_buffer_host> const_cuda_linear_buffer_host_smart_ptr;
 	}
 }

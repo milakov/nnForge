@@ -20,6 +20,7 @@
 #include "output_neuron_value_set.h"
 #include "neuron_data_type.h"
 #include "feature_map_data_stat.h"
+#include "nn_types.h"
 
 #include <vector>
 
@@ -59,5 +60,5 @@ namespace nnforge
 		unsigned int max_entries_to_read;
 	};
 
-	typedef std::tr1::shared_ptr<unsupervised_data_reader> unsupervised_data_reader_smart_ptr;
+	typedef nnforge_shared_ptr<unsupervised_data_reader> unsupervised_data_reader_smart_ptr;
 }

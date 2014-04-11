@@ -52,6 +52,8 @@
 #include "squared_hinge_loss_error_function.h"
 #include "cross_entropy_error_function.h"
 
+#include "nn_types.h"
+
 namespace nnforge
 {
 	class nnforge

@@ -1066,7 +1066,7 @@ namespace nnforge
 
 		void convolution_2d_layer_hessian_cuda_fermi::hessian_configured()
 		{
-			std::tr1::shared_ptr<const convolution_layer> layer_derived = std::tr1::dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)
 				window_sizes.push_back(static_cast<int>(*it));
@@ -1078,13 +1078,13 @@ namespace nnforge
 			updater_output_feature_map_block_count = (output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE;
 			updater_window_x_block_count = (window_sizes[0] <= MAX_WINDOW_WIDTH) ? 1 : (window_sizes[0] + WINDOW_WIDTH_LOCAL - 1) / WINDOW_WIDTH_LOCAL;
 			{
-				std::tr1::array<int, 2> size_list;
+				nnforge_array<int, 2> size_list;
 				size_list[0] = window_sizes[1];
 				size_list[1] = input_configuration_specific.feature_map_count;
 				space_filling_curve<2>::fill_pattern(size_list, updater_config_ordered_list1);
 			}
 			{
-				std::tr1::array<int, 2> size_list;
+				nnforge_array<int, 2> size_list;
 				size_list[0] = output_configuration_specific.dimension_sizes[1];
 				size_list[1] = updater_output_feature_map_block_count;
 				space_filling_curve<2>::fill_pattern(size_list, updater_config_ordered_list2);
@@ -1171,11 +1171,11 @@ namespace nnforge
 			{
 				std::vector<packed_config<4> > task_list;
 				packed_config<4> new_elem;
-				for(std::vector<std::tr1::array<int, 2> >::const_iterator it2 = updater_config_ordered_list2.begin(); it2 != updater_config_ordered_list2.end(); ++it2)
+				for(std::vector<nnforge_array<int, 2> >::const_iterator it2 = updater_config_ordered_list2.begin(); it2 != updater_config_ordered_list2.end(); ++it2)
 				{
 					new_elem.set_val(2, it2->at(0));
 					new_elem.set_val(3, it2->at(1) * FEATURE_MAP_BLOCK_SIZE);
-					for(std::vector<std::tr1::array<int, 2> >::const_iterator it1 = updater_config_ordered_list1.begin(); it1 != updater_config_ordered_list1.end(); ++it1)
+					for(std::vector<nnforge_array<int, 2> >::const_iterator it1 = updater_config_ordered_list1.begin(); it1 != updater_config_ordered_list1.end(); ++it1)
 					{
 						new_elem.set_val(0, it1->at(0));
 						new_elem.set_val(1, it1->at(1));

@@ -21,8 +21,8 @@
 #include "buffer_cuda_size_configuration.h"
 #include "cuda_memobject.h"
 #include "cuda_linear_buffer_device.h"
+#include "../nn_types.h"
 
-#include <memory>
 #include <vector>
 #include <string>
 #include <cuda_runtime.h>
@@ -117,6 +117,6 @@ namespace nnforge
 			layer_hessian_cuda& operator =(const layer_hessian_cuda&);
 		};
 
-		typedef std::tr1::shared_ptr<layer_hessian_cuda> layer_hessian_cuda_smart_ptr;
+		typedef nnforge_shared_ptr<layer_hessian_cuda> layer_hessian_cuda_smart_ptr;
 	}
 }

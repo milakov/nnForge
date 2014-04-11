@@ -23,7 +23,7 @@
 
 namespace nnforge
 {
-	unsupervised_data_stream_reader::unsupervised_data_stream_reader(std::tr1::shared_ptr<std::istream> input_stream)
+	unsupervised_data_stream_reader::unsupervised_data_stream_reader(nnforge_shared_ptr<std::istream> input_stream)
 		: in_stream(input_stream)
 		, entry_read_count(0)
 	{

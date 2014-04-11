@@ -17,7 +17,7 @@
 #pragma once
 
 #include "network_analyzer.h"
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -32,5 +32,5 @@ namespace nnforge
 		network_analyzer_factory();
 	};
 
-	typedef std::tr1::shared_ptr<network_analyzer_factory> network_analyzer_factory_smart_ptr;
+	typedef nnforge_shared_ptr<network_analyzer_factory> network_analyzer_factory_smart_ptr;
 }

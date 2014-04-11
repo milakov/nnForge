@@ -17,6 +17,7 @@
 #pragma once
 
 #include "cuda_linear_buffer.h"
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -46,7 +47,7 @@ namespace nnforge
 			size_t size;
 		};
 
-		typedef std::tr1::shared_ptr<cuda_linear_buffer_device> cuda_linear_buffer_device_smart_ptr;
-		typedef std::tr1::shared_ptr<const cuda_linear_buffer_device> const_cuda_linear_buffer_device_smart_ptr;
+		typedef nnforge_shared_ptr<cuda_linear_buffer_device> cuda_linear_buffer_device_smart_ptr;
+		typedef nnforge_shared_ptr<const cuda_linear_buffer_device> const_cuda_linear_buffer_device_smart_ptr;
 	}
 }

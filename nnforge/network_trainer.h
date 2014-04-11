@@ -19,11 +19,10 @@
 #include "network_data_peeker.h"
 #include "network_data_pusher.h"
 #include "training_task_state.h"
-
 #include "network_schema.h"
 #include "supervised_data_reader.h"
+#include "nn_types.h"
 
-#include <memory>
 #include <map>
 
 namespace nnforge
@@ -71,5 +70,5 @@ namespace nnforge
 		network_trainer& operator =(const network_trainer&);
 	};
 
-	typedef std::tr1::shared_ptr<network_trainer> network_trainer_smart_ptr;
+	typedef nnforge_shared_ptr<network_trainer> network_trainer_smart_ptr;
 }

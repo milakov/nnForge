@@ -22,7 +22,9 @@
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
+
 #include "../convolution_layer.h"
+#include "../nn_types.h"
 
 texture<float, cudaTextureType1D, cudaReadModeElementType> input_tex_ref;
 texture<float, cudaTextureType1D, cudaReadModeElementType> output_tex_ref;
@@ -974,7 +976,7 @@ namespace nnforge
 
 		void convolution_1d_layer_hessian_cuda_fermi::hessian_configured()
 		{
-			std::tr1::shared_ptr<const convolution_layer> layer_derived = std::tr1::dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)
 				window_sizes.push_back(static_cast<int>(*it));

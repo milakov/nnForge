@@ -30,11 +30,11 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_testing_schema> layer_testing_schema::create(
+		layer_testing_schema_smart_ptr layer_testing_schema::create(
 			const_layer_smart_ptr layer_schema,
 			cuda_running_configuration_const_smart_ptr cuda_config) const
 		{
-			std::tr1::shared_ptr<layer_testing_schema> res = create_specific();
+			layer_testing_schema_smart_ptr res = create_specific();
 
 			res->layer_schema = layer_schema;
 			res->cuda_config = cuda_config;

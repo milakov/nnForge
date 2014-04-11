@@ -20,6 +20,8 @@
 #include <boost/uuid/uuid.hpp>
 
 #include "../layer.h"
+#include "../nn_types.h"
+
 #include "plain_running_configuration.h"
 #include "buffer_plain_size_configuration.h"
 
@@ -27,7 +29,7 @@ namespace nnforge
 {
 	namespace plain
 	{
-		typedef std::tr1::shared_ptr<std::vector<float> > additional_buffer_smart_ptr;
+		typedef nnforge_shared_ptr<std::vector<float> > additional_buffer_smart_ptr;
 		typedef std::vector<additional_buffer_smart_ptr> additional_buffer_set;
 
 		class layer_tester_plain
@@ -79,8 +81,8 @@ namespace nnforge
 			layer_tester_plain& operator =(const layer_tester_plain&);
 		};
 
-		typedef std::tr1::shared_ptr<layer_tester_plain> layer_tester_plain_smart_ptr;
-		typedef std::tr1::shared_ptr<const layer_tester_plain> const_layer_tester_plain_smart_ptr;
+		typedef nnforge_shared_ptr<layer_tester_plain> layer_tester_plain_smart_ptr;
+		typedef nnforge_shared_ptr<const layer_tester_plain> const_layer_tester_plain_smart_ptr;
 		typedef std::vector<const_layer_tester_plain_smart_ptr> const_layer_tester_plain_list;
 	}
 }

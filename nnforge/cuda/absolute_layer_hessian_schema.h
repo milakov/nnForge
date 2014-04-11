@@ -18,8 +18,6 @@
 
 #include "layer_hessian_schema.h"
 
-#include <memory>
-
 namespace nnforge
 {
 	namespace cuda
@@ -34,7 +32,7 @@ namespace nnforge
 			virtual const boost::uuids::uuid& get_uuid() const;
 
 		protected:
-			virtual std::tr1::shared_ptr<layer_hessian_schema> create_specific() const;
+			virtual layer_hessian_schema_smart_ptr create_specific() const;
 
 			virtual layer_hessian_cuda_smart_ptr create_hessian_specific(
 				const layer_configuration_specific& input_configuration_specific,

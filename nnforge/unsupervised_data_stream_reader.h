@@ -20,8 +20,8 @@
 #include "unsupervised_data_stream_schema.h"
 #include "neural_network_exception.h"
 #include "neuron_data_type.h"
+#include "nn_types.h"
 
-#include <memory>
 #include <vector>
 #include <istream>
 #include <ostream>
@@ -32,7 +32,7 @@ namespace nnforge
 	{
 	public:
 		// The constructor modifies input_stream to throw exceptions in case of failure
-		unsupervised_data_stream_reader(std::tr1::shared_ptr<std::istream> input_stream);
+		unsupervised_data_stream_reader(nnforge_shared_ptr<std::istream> input_stream);
 
 		virtual ~unsupervised_data_stream_reader();
 
@@ -59,7 +59,7 @@ namespace nnforge
 		bool entry_available();
 
 	protected:
-		std::tr1::shared_ptr<std::istream> in_stream;
+		nnforge_shared_ptr<std::istream> in_stream;
 		unsigned int input_neuron_count;
 		layer_configuration_specific input_configuration;
 		neuron_data_type::input_type type_code;
@@ -73,5 +73,5 @@ namespace nnforge
 		unsupervised_data_stream_reader& operator =(const unsupervised_data_stream_reader&);
 	};
 
-	typedef std::tr1::shared_ptr<unsupervised_data_stream_reader> unsupervised_data_stream_reader_smart_ptr;
+	typedef nnforge_shared_ptr<unsupervised_data_stream_reader> unsupervised_data_stream_reader_smart_ptr;
 }

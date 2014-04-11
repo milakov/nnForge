@@ -17,9 +17,9 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
+#include "nn_types.h"
 
 #include <vector>
-#include <memory>
 
 namespace nnforge
 {
@@ -34,5 +34,5 @@ namespace nnforge
 		std::vector<float> data;
 	};
 
-	typedef std::tr1::shared_ptr<layer_configuration_specific_snapshot> layer_configuration_specific_snapshot_smart_ptr;
+	typedef nnforge_shared_ptr<layer_configuration_specific_snapshot> layer_configuration_specific_snapshot_smart_ptr;
 }

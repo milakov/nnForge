@@ -28,11 +28,11 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<weight_vector_bound_cuda> weight_vector_bound_cuda::create(
+		nnforge_shared_ptr<weight_vector_bound_cuda> weight_vector_bound_cuda::create(
 			const_layer_smart_ptr layer_schema,
 			cuda_running_configuration_const_smart_ptr cuda_config) const
 		{
-			std::tr1::shared_ptr<weight_vector_bound_cuda> res = create_specific();
+			nnforge_shared_ptr<weight_vector_bound_cuda> res = create_specific();
 
 			res->layer_schema = layer_schema;
 			res->cuda_config = cuda_config;

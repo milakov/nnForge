@@ -19,6 +19,7 @@
 #include <cuda_runtime.h>
 
 #include "cuda_memobject.h"
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -68,7 +69,7 @@ namespace nnforge
 			virtual const void * get_buf() const = 0;
 		};
 
-		typedef std::tr1::shared_ptr<cuda_linear_buffer> cuda_linear_buffer_smart_ptr;
-		typedef std::tr1::shared_ptr<const cuda_linear_buffer> const_cuda_linear_buffer_smart_ptr;
+		typedef nnforge_shared_ptr<cuda_linear_buffer> cuda_linear_buffer_smart_ptr;
+		typedef nnforge_shared_ptr<const cuda_linear_buffer> const_cuda_linear_buffer_smart_ptr;
 	}
 }

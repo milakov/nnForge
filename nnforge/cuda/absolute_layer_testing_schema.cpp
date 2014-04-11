@@ -36,7 +36,7 @@ namespace nnforge
 			return absolute_layer::layer_guid;
 		}
 
-		std::tr1::shared_ptr<layer_testing_schema> absolute_layer_testing_schema::create_specific() const
+		layer_testing_schema_smart_ptr absolute_layer_testing_schema::create_specific() const
 		{
 			return layer_testing_schema_smart_ptr(new absolute_layer_testing_schema());
 		}

@@ -22,8 +22,8 @@
 #include "rnd.h"
 #include "dropout_layer_config.h"
 #include "layer_data_configuration.h"
+#include "nn_types.h"
 
-#include <memory>
 #include <boost/uuid/uuid.hpp>
 #include <ostream>
 #include <istream>
@@ -37,7 +37,7 @@ namespace nnforge
 	public:
 		virtual ~layer();
 
-		virtual std::tr1::shared_ptr<layer> clone() const = 0;
+		virtual nnforge_shared_ptr<layer> clone() const = 0;
 
 		virtual layer_configuration get_layer_configuration(const layer_configuration& input_configuration) const;
 
@@ -90,7 +90,7 @@ namespace nnforge
 		virtual data_config get_data_config() const;
 	};
 
-	typedef std::tr1::shared_ptr<layer> layer_smart_ptr;
-	typedef std::tr1::shared_ptr<const layer> const_layer_smart_ptr;
+	typedef nnforge_shared_ptr<layer> layer_smart_ptr;
+	typedef nnforge_shared_ptr<const layer> const_layer_smart_ptr;
 	typedef std::vector<const_layer_smart_ptr> const_layer_list;
 }

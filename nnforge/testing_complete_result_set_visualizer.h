@@ -17,7 +17,7 @@
 #pragma once
 
 #include "testing_complete_result_set.h"
-#include <memory>
+#include "nn_types.h"
 #include <ostream>
 
 namespace nnforge
@@ -34,5 +34,5 @@ namespace nnforge
 			const testing_complete_result_set& val) const;
 	};
 
-	typedef std::tr1::shared_ptr<testing_complete_result_set_visualizer> testing_complete_result_set_visualizer_smart_ptr;
+	typedef nnforge_shared_ptr<testing_complete_result_set_visualizer> testing_complete_result_set_visualizer_smart_ptr;
 }

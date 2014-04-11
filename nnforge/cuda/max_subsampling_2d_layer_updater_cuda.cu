@@ -20,7 +20,9 @@
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
+
 #include "../max_subsampling_layer.h"
+#include "../nn_types.h"
 
 struct __align__(4) window_x_x_config
 {
@@ -304,7 +306,7 @@ namespace nnforge
 			if (!different_input)
 				throw neural_network_exception("max_subsampling_2d_layer_updater_cuda is not able to run using the same input");
 
-			std::tr1::shared_ptr<const max_subsampling_layer> layer_derived = std::tr1::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 			subsampling_sizes = layer_derived->subsampling_sizes;
 		}

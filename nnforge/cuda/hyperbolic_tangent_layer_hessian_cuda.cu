@@ -19,7 +19,9 @@
 #include <cuda_runtime.h>
 
 #include "util_cuda.h"
+
 #include "../hyperbolic_tangent_layer.h"
+#include "../nn_types.h"
 
 static __forceinline__ __device__ float hyperbolic_tangent(
 	float x,
@@ -144,7 +146,7 @@ namespace nnforge
 
 		void hyperbolic_tangent_layer_hessian_cuda::hessian_configured()
 		{
-			std::tr1::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::tr1::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
+			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 
 			hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
 			hyperbolic_tangent_major_multiplier = layer_derived->major_multiplier;

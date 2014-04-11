@@ -38,7 +38,7 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_updater_schema> convolution_layer_updater_schema::create_specific() const
+		layer_updater_schema_smart_ptr convolution_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema_smart_ptr(new convolution_layer_updater_schema());
 		}

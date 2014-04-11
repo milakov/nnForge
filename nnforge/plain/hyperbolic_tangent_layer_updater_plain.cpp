@@ -18,6 +18,7 @@
 
 #include "../hyperbolic_tangent_layer.h"
 #include "../neural_network_exception.h"
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -55,7 +56,7 @@ namespace nnforge
 			const std::vector<float>::const_iterator in_it = input_buffer->begin();
 			const std::vector<float>::iterator out_it = output_buffer->begin();
 
-			std::tr1::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::tr1::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
+			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 			const float hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
 			const float hyperbolic_tangent_major_multiplier = layer_derived->major_multiplier;
 
@@ -86,7 +87,7 @@ namespace nnforge
 			const std::vector<float>::iterator in_err_it = input_errors->begin();
 			const std::vector<float>::const_iterator out_it = output_neurons->begin();
 
-			std::tr1::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::tr1::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
+			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 			const float hyperbolic_tangent_major_multiplier_reverse = 1.0F / layer_derived->major_multiplier;
 			const float hyperbolic_tangent_steepness3 = layer_derived->steepness * layer_derived->major_multiplier;
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)

@@ -36,7 +36,7 @@ namespace nnforge
 			return rectified_linear_layer::layer_guid;
 		}
 
-		std::tr1::shared_ptr<layer_testing_schema> rectified_linear_layer_testing_schema::create_specific() const
+		layer_testing_schema_smart_ptr rectified_linear_layer_testing_schema::create_specific() const
 		{
 			return layer_testing_schema_smart_ptr(new rectified_linear_layer_testing_schema());
 		}

@@ -18,7 +18,8 @@
 
 #include "layer_updater_cuda.h"
 
-#include <array>
+#include "../nn_types.h"
+
 #include <vector>
 
 namespace nnforge
@@ -98,8 +99,8 @@ namespace nnforge
 			int updater_output_y_group_size;
 			int updater_output_feature_map_block_count;
 			int updater_window_x_block_count;
-			std::vector<std::tr1::array<int, 2> > updater_config_ordered_list1;
-			std::vector<std::tr1::array<int, 2> > updater_config_ordered_list2;
+			std::vector<nnforge_array<int, 2> > updater_config_ordered_list1;
+			std::vector<nnforge_array<int, 2> > updater_config_ordered_list2;
 
 		private:
 			static int get_block_size(int width);

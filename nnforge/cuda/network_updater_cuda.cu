@@ -27,6 +27,8 @@
 #include "supervised_data_reader_async_helper.h"
 #include "error_function_updater_cuda_factory.h"
 
+#include "../nn_types.h"
+
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
 #include <stack>
@@ -265,7 +267,7 @@ namespace nnforge
 			}
 
 			random_generator gen = rnd::get_random_generator();
-			std::tr1::uniform_int<unsigned int> dist(0, static_cast<unsigned int>(random_uniform_list.size() - 1));
+			nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(random_uniform_list.size() - 1));
 			unsigned int mask = static_cast<unsigned int>(random_uniform_list.size() - 1);
 			unsigned int entries_processed_count = 0;
 			while((entries_available_for_copy_in_count > 0) || (entries_available_for_processing_count > 0))

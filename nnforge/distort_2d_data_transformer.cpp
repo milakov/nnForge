@@ -37,14 +37,14 @@ namespace nnforge
 	{
 		generator = rnd::get_random_generator();
 
-		rotate_angle_distribution = std::tr1::uniform_real<float>(-max_absolute_rotation_angle_in_degrees, max_absolute_rotation_angle_in_degrees);
-		scale_distribution = std::tr1::uniform_real<float>(1.0F / max_scale_factor, max_scale_factor);
-		shift_x_distribution = std::tr1::uniform_real<float>(min_shift_right_x, max_shift_right_x);
-		shift_y_distribution = std::tr1::uniform_real<float>(min_shift_down_y, max_shift_down_y);
-		flip_around_x_distribution = std::tr1::uniform_int<int>(0, flip_around_x_axis_allowed ? 1 : 0);
-		flip_around_y_distribution = std::tr1::uniform_int<int>(0, flip_around_y_axis_allowed ? 1 : 0);
-		stretch_distribution = std::tr1::uniform_real<float>(1.0F / max_stretch_factor, max_stretch_factor);
-		stretch_angle_distribution = std::tr1::uniform_real<float>(-180.0F, 180.0F);
+		rotate_angle_distribution = nnforge_uniform_real_distribution<float>(-max_absolute_rotation_angle_in_degrees, max_absolute_rotation_angle_in_degrees);
+		scale_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_scale_factor, max_scale_factor);
+		shift_x_distribution = nnforge_uniform_real_distribution<float>(min_shift_right_x, max_shift_right_x);
+		shift_y_distribution = nnforge_uniform_real_distribution<float>(min_shift_down_y, max_shift_down_y);
+		flip_around_x_distribution = nnforge_uniform_int_distribution<int>(0, flip_around_x_axis_allowed ? 1 : 0);
+		flip_around_y_distribution = nnforge_uniform_int_distribution<int>(0, flip_around_y_axis_allowed ? 1 : 0);
+		stretch_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_stretch_factor, max_stretch_factor);
+		stretch_angle_distribution = nnforge_uniform_real_distribution<float>(-180.0F, 180.0F);
 	}
 
 	distort_2d_data_transformer::~distort_2d_data_transformer()

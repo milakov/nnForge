@@ -19,8 +19,10 @@
 #include <cuda_runtime.h>
 
 #include "util_cuda.h"
+
 #include "../rgb_to_yuv_convert_layer.h"
 #include "../neural_network_exception.h"
+#include "../nn_types.h"
 
 #define w_r 0.299F
 #define w_b 0.114F
@@ -184,7 +186,7 @@ namespace nnforge
 			if (!different_input)
 				throw neural_network_exception("rgb_to_yuv_convert_layer_updater_cuda is not able to run using the same input");
 
-			std::tr1::shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = std::tr1::dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
+			nnforge_shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = nnforge_dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
 
 			color_feature_map_config_count = layer_derived->color_feature_map_config_list.size();
 		}

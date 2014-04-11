@@ -17,6 +17,7 @@
 #include "convolution_weight_vector_bound_plain.h"
 
 #include "../convolution_layer.h"
+#include "../nn_types.h"
 
 #include <numeric>
 
@@ -44,7 +45,7 @@ namespace nnforge
 			const_layer_smart_ptr layer_schema,
 			unsigned int updater_count) const
 		{
-			std::tr1::shared_ptr<const convolution_layer> layer_derived = std::tr1::dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			unsigned int weight_count = 1;
 			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)

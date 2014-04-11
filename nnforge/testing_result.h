@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <memory>
+#include "nn_types.h"
+#include "error_function.h"
+
 #include <vector>
 #include <ostream>
-
-#include "error_function.h"
 
 namespace nnforge
 {
@@ -56,5 +56,5 @@ namespace nnforge
 
 	std::ostream& operator<< (std::ostream& out, const testing_result& val);
 
-	typedef std::tr1::shared_ptr<testing_result> testing_result_smart_ptr;
+	typedef nnforge_shared_ptr<testing_result> testing_result_smart_ptr;
 }

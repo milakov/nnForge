@@ -30,8 +30,8 @@ namespace nnforge
 	{
 		generator = rnd::get_random_generator();
 
-		contrast_distribution = std::tr1::uniform_real<float>(1.0F / max_contrast_factor, max_contrast_factor);
-		brightness_shift_distribution = std::tr1::uniform_real<float>(-max_absolute_brightness_shift, max_absolute_brightness_shift);
+		contrast_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_contrast_factor, max_contrast_factor);
+		brightness_shift_distribution = nnforge_uniform_real_distribution<float>(-max_absolute_brightness_shift, max_absolute_brightness_shift);
 	}
 
 	intensity_2d_data_transformer::~intensity_2d_data_transformer()

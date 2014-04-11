@@ -53,5 +53,5 @@ namespace nnforge
 		supervised_data_reader& operator =(const supervised_data_reader&);
 	};
 
-	typedef std::tr1::shared_ptr<supervised_data_reader> supervised_data_reader_smart_ptr;
+	typedef nnforge_shared_ptr<supervised_data_reader> supervised_data_reader_smart_ptr;
 }

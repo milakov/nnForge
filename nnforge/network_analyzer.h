@@ -20,6 +20,7 @@
 #include "network_data.h"
 #include "neuron_data_type.h"
 #include "layer_configuration_specific_snapshot.h"
+#include "nn_types.h"
 
 #include <vector>
 #include <utility>
@@ -80,5 +81,5 @@ namespace nnforge
 		network_analyzer& operator =(const network_analyzer&);
 	};
 
-	typedef std::tr1::shared_ptr<network_analyzer> network_analyzer_smart_ptr;
+	typedef nnforge_shared_ptr<network_analyzer> network_analyzer_smart_ptr;
 }

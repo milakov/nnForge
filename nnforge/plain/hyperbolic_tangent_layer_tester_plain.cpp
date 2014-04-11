@@ -17,6 +17,7 @@
 #include "hyperbolic_tangent_layer_tester_plain.h"
 
 #include "../hyperbolic_tangent_layer.h"
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -48,7 +49,7 @@ namespace nnforge
 			const int elem_count = static_cast<int>(entry_count * input_configuration_specific.get_neuron_count());
 			const std::vector<float>::iterator in_it = input_buffer->begin();
 
-			std::tr1::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::tr1::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
+			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 			const float hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
 			const float hyperbolic_tangent_major_multiplier = layer_derived->major_multiplier;
 

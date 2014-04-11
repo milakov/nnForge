@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <memory>
+#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -38,7 +38,7 @@ namespace nnforge
 			
 		};
 
-		typedef std::tr1::shared_ptr<cuda_memobject> cuda_memobject_smart_ptr;
-		typedef std::tr1::shared_ptr<const cuda_memobject> const_cuda_memobject_smart_ptr;
+		typedef nnforge_shared_ptr<cuda_memobject> cuda_memobject_smart_ptr;
+		typedef nnforge_shared_ptr<const cuda_memobject> const_cuda_memobject_smart_ptr;
 	}
 }

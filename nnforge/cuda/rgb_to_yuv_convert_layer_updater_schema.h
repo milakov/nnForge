@@ -36,7 +36,7 @@ namespace nnforge
 			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_schema_buffers() const;
 
 		protected:
-			virtual std::tr1::shared_ptr<layer_updater_schema> create_specific() const;
+			virtual layer_updater_schema_smart_ptr create_specific() const;
 
 			virtual layer_updater_cuda_smart_ptr create_updater_specific(
 				const layer_configuration_specific& input_configuration_specific,

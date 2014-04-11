@@ -31,7 +31,7 @@ namespace nnforge
 		{
 		}
 
-		std::tr1::shared_ptr<layer_hessian_schema> soft_rectified_linear_layer_hessian_schema::create_specific() const
+		layer_hessian_schema_smart_ptr soft_rectified_linear_layer_hessian_schema::create_specific() const
 		{
 			return layer_hessian_schema_smart_ptr(new soft_rectified_linear_layer_hessian_schema());
 		}

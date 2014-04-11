@@ -17,12 +17,13 @@
 #pragma once
 
 #include "../layer.h"
+#include "../nn_types.h"
+
 #include "cuda_running_configuration.h"
 #include "buffer_cuda_size_configuration.h"
 #include "cuda_memobject.h"
 #include "cuda_linear_buffer_device.h"
 
-#include <memory>
 #include <vector>
 #include <string>
 #include <cuda_runtime.h>
@@ -136,6 +137,6 @@ namespace nnforge
 			layer_updater_cuda& operator =(const layer_updater_cuda&);
 		};
 
-		typedef std::tr1::shared_ptr<layer_updater_cuda> layer_updater_cuda_smart_ptr;
+		typedef nnforge_shared_ptr<layer_updater_cuda> layer_updater_cuda_smart_ptr;
 	}
 }

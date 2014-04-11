@@ -39,7 +39,7 @@ namespace nnforge
 			return average_subsampling_layer::layer_guid;
 		}
 
-		std::tr1::shared_ptr<layer_testing_schema> average_subsampling_layer_testing_schema::create_specific() const
+		layer_testing_schema_smart_ptr average_subsampling_layer_testing_schema::create_specific() const
 		{
 			return layer_testing_schema_smart_ptr(new average_subsampling_layer_testing_schema());
 		}

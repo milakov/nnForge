@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <memory>
+#include "../nn_types.h"
+
 #include <cuda_runtime.h>
 
 namespace nnforge
@@ -40,6 +41,6 @@ namespace nnforge
 			cuda_stream& operator =(const cuda_stream&);
 		};
 
-		typedef std::tr1::shared_ptr<cuda_stream> cuda_stream_smart_ptr;
+		typedef nnforge_shared_ptr<cuda_stream> cuda_stream_smart_ptr;
 	}
 }

@@ -39,7 +39,7 @@ namespace nnforge
 				unsigned int entry_count);
 
 		protected:
-			virtual std::tr1::shared_ptr<weight_vector_bound_cuda> create_specific() const;
+			virtual weight_vector_bound_cuda_smart_ptr create_specific() const;
 
 			// The method is called when configuration is finished
 			virtual void weight_vector_bound_configured();

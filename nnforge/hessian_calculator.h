@@ -20,8 +20,7 @@
 #include "network_data.h"
 #include "layer_configuration_specific.h"
 #include "supervised_data_reader.h"
-
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -67,5 +66,5 @@ namespace nnforge
 		hessian_calculator& operator =(const hessian_calculator&);
 	};
 
-	typedef std::tr1::shared_ptr<hessian_calculator> hessian_calculator_smart_ptr;
+	typedef nnforge_shared_ptr<hessian_calculator> hessian_calculator_smart_ptr;
 }

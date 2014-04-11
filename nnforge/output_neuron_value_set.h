@@ -17,7 +17,7 @@
 #pragma once
 
 #include <vector>
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -37,7 +37,7 @@ namespace nnforge
 			unsigned int neuron_count);
 
 		output_neuron_value_set(
-			const std::vector<std::tr1::shared_ptr<output_neuron_value_set> >& source_output_neuron_value_set_list,
+			const std::vector<nnforge_shared_ptr<output_neuron_value_set> >& source_output_neuron_value_set_list,
 			merge_type_enum merge_type);
 
 		void clamp(
@@ -49,5 +49,5 @@ namespace nnforge
 		std::vector<std::vector<float> > neuron_value_list;
 	};
 
-	typedef std::tr1::shared_ptr<output_neuron_value_set> output_neuron_value_set_smart_ptr;
+	typedef nnforge_shared_ptr<output_neuron_value_set> output_neuron_value_set_smart_ptr;
 }

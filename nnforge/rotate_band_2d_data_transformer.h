@@ -43,7 +43,7 @@ namespace nnforge
 	protected:
 		random_generator generator;
 
-		std::tr1::uniform_int<int> rotate_band_x_distribution;
-		std::tr1::uniform_int<int> rotate_band_y_distribution;
+		nnforge_uniform_int_distribution<int> rotate_band_x_distribution;
+		nnforge_uniform_int_distribution<int> rotate_band_y_distribution;
 	};
 }

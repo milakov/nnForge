@@ -21,6 +21,7 @@
 #include "hessian_calculator_factory.h"
 #include "network_analyzer_factory.h"
 #include "config_options.h"
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -53,5 +54,5 @@ namespace nnforge
 		factory_generator();
 	};
 
-	typedef std::tr1::shared_ptr<factory_generator> factory_generator_smart_ptr;
+	typedef nnforge_shared_ptr<factory_generator> factory_generator_smart_ptr;
 }

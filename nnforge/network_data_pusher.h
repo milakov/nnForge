@@ -17,8 +17,8 @@
 #pragma once
 
 #include "training_task_state.h"
-
 #include "network_data.h"
+#include "nn_types.h"
 
 #include <vector>
 
@@ -39,5 +39,5 @@ namespace nnforge
 		network_data_pusher& operator =(const network_data_pusher&);
 	};
 
-	typedef std::tr1::shared_ptr<network_data_pusher> network_data_pusher_smart_ptr;
+	typedef nnforge_shared_ptr<network_data_pusher> network_data_pusher_smart_ptr;
 }

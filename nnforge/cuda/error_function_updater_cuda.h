@@ -16,8 +16,9 @@
 
 #pragma once
 
-#include <memory>
 #include <boost/uuid/uuid.hpp>
+
+#include "../nn_types.h"
 
 #include "cuda_running_configuration.h"
 #include "cuda_linear_buffer_device.h"
@@ -51,7 +52,7 @@ namespace nnforge
 			error_function_updater_cuda& operator =(const error_function_updater_cuda&);
 		};
 
-		typedef std::tr1::shared_ptr<error_function_updater_cuda> error_function_updater_cuda_smart_ptr;
-		typedef std::tr1::shared_ptr<const error_function_updater_cuda> const_error_function_updater_cuda_smart_ptr;
+		typedef nnforge_shared_ptr<error_function_updater_cuda> error_function_updater_cuda_smart_ptr;
+		typedef nnforge_shared_ptr<const error_function_updater_cuda> const_error_function_updater_cuda_smart_ptr;
 	}
 }

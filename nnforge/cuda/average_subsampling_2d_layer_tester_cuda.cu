@@ -19,9 +19,10 @@
 #include <cuda_runtime.h>
 
 #include "util_cuda.h"
+#include "neural_network_cuda_exception.h"
 
 #include "../average_subsampling_layer.h"
-#include "neural_network_cuda_exception.h"
+#include "../nn_types.h"
 
 texture<float, cudaTextureType1D, cudaReadModeElementType> input_tex_ref;
 
@@ -230,7 +231,7 @@ namespace nnforge
 
 		void average_subsampling_2d_layer_tester_cuda::tester_configured()
 		{
-			std::tr1::shared_ptr<const average_subsampling_layer> layer_derived = std::tr1::dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
+			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 
 			subsampling_sizes = layer_derived->subsampling_sizes;
 			subsampling_weight = 1.0F / static_cast<float>(subsampling_sizes[0] * subsampling_sizes[1]);

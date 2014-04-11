@@ -20,6 +20,8 @@
 #include <boost/uuid/uuid.hpp>
 
 #include "../layer.h"
+#include "../nn_types.h"
+
 #include "plain_running_configuration.h"
 #include "buffer_plain_size_configuration.h"
 
@@ -27,8 +29,8 @@ namespace nnforge
 {
 	namespace plain
 	{
-		typedef std::tr1::shared_ptr<std::vector<float> > additional_buffer_smart_ptr;
-		typedef std::tr1::shared_ptr<const std::vector<float> > const_additional_buffer_smart_ptr;
+		typedef nnforge_shared_ptr<std::vector<float> > additional_buffer_smart_ptr;
+		typedef nnforge_shared_ptr<const std::vector<float> > const_additional_buffer_smart_ptr;
 		struct hessian_additional_buffer_set
 		{
 			additional_buffer_smart_ptr output_neurons_buffer;
@@ -110,8 +112,8 @@ namespace nnforge
 			layer_hessian_plain& operator =(const layer_hessian_plain&);
 		};
 
-		typedef std::tr1::shared_ptr<layer_hessian_plain> layer_hessian_plain_smart_ptr;
-		typedef std::tr1::shared_ptr<const layer_hessian_plain> const_layer_hessian_plain_smart_ptr;
+		typedef nnforge_shared_ptr<layer_hessian_plain> layer_hessian_plain_smart_ptr;
+		typedef nnforge_shared_ptr<const layer_hessian_plain> const_layer_hessian_plain_smart_ptr;
 		typedef std::vector<const_layer_hessian_plain_smart_ptr> const_layer_hessian_plain_list;
 	}
 }

@@ -17,10 +17,8 @@
 #pragma once
 
 #include "data_transformer.h"
-
 #include "rnd.h"
-
-#include <memory>
+#include "nn_types.h"
 
 namespace nnforge
 {
@@ -43,7 +41,7 @@ namespace nnforge
 	protected:
 		random_generator generator;
 
-		std::tr1::uniform_real<float> contrast_distribution;
-		std::tr1::uniform_real<float> brightness_shift_distribution;
+		nnforge_uniform_real_distribution<float> contrast_distribution;
+		nnforge_uniform_real_distribution<float> brightness_shift_distribution;
 	};
 }
