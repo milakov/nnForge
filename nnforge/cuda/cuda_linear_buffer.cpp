@@ -58,6 +58,16 @@ namespace nnforge
 			return (double *)(get_buf());
 		}
 
+		cuda_linear_buffer::operator float2 *()
+		{
+			return (float2 *)(get_buf());
+		}
+
+		cuda_linear_buffer::operator const float2 *() const
+		{
+			return (float2 *)(get_buf());
+		}
+
 		cuda_linear_buffer::operator float4 *()
 		{
 			return (float4 *)(get_buf());

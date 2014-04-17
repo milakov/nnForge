@@ -15,92 +15,149 @@
  */
 
 #include "util_cuda.h"
+
 #include "../neural_network_exception.h"
+#include "../layer_configuration_specific.h"
 
 #include <boost/format.hpp>
 
 #include <utility>
 
-__global__ void set_with_value_util_kernel(
-	float4 * __restrict buf,
-	float v,
-	int elem_count)
-{
-	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
-	if (elem_id < elem_count)
-	{
-		float4 val;
-		val.x = v;
-		val.y = v;
-		val.z = v;
-		val.w = v;
-		buf[elem_id] = val;
-	}
-}
-
-__global__ void set_with_value_util_kernel(
-	double2 * __restrict buf,
-	double v,
-	int elem_count)
-{
-	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
-	if (elem_id < elem_count)
-	{
-		double2 val;
-		val.x = v;
-		val.y = v;
-		buf[elem_id] = val;
-	}
-}
-
-__global__ void multiply_by_value_util_kernel(
-	float4 * __restrict buf,
-	float v,
-	int elem_count)
-{
-	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
-	if (elem_id < elem_count)
-	{
-		float4 val = buf[elem_id];
-		val.x *= v;
-		val.y *= v;
-		val.z *= v;
-		val.w *= v;
-		buf[elem_id] = val;
-	}
-}
-
-__global__ void multiply_by_itself_training_util_kernel(
-	const float4 * __restrict input_buf,
-	float4 * __restrict output_buf,
-	int elem_count)
-{
-	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
-	if (elem_id < elem_count)
-	{
-		float4 val = input_buf[elem_id];
-		val.x *= val.x;
-		val.y *= val.y;
-		val.z *= val.z;
-		val.w *= val.w;
-		output_buf[elem_id] = val;
-	}
-}
-
-__global__ void copy_buffer_util_kernel(
-	const float4 * __restrict input_buf,
-	float4 * __restrict output_buf,
-	int elem_count)
-{
-	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
-	if (elem_id < elem_count)
-		output_buf[elem_id] = input_buf[elem_id];
-}
-
 namespace nnforge
 {
 	namespace cuda
 	{
+		__global__ void set_with_value_util_kernel(
+			float4 * __restrict buf,
+			float v,
+			int elem_count)
+		{
+			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			if (elem_id < elem_count)
+			{
+				float4 val;
+				val.x = v;
+				val.y = v;
+				val.z = v;
+				val.w = v;
+				buf[elem_id] = val;
+			}
+		}
+
+		__global__ void set_with_value_util_kernel(
+			double2 * __restrict buf,
+			double v,
+			int elem_count)
+		{
+			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			if (elem_id < elem_count)
+			{
+				double2 val;
+				val.x = v;
+				val.y = v;
+				buf[elem_id] = val;
+			}
+		}
+
+		__global__ void multiply_by_value_util_kernel(
+			float4 * __restrict buf,
+			float v,
+			int elem_count)
+		{
+			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			if (elem_id < elem_count)
+			{
+				float4 val = buf[elem_id];
+				val.x *= v;
+				val.y *= v;
+				val.z *= v;
+				val.w *= v;
+				buf[elem_id] = val;
+			}
+		}
+
+		__global__ void multiply_by_itself_training_util_kernel(
+			const float4 * __restrict input_buf,
+			float4 * __restrict output_buf,
+			int elem_count)
+		{
+			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			if (elem_id < elem_count)
+			{
+				float4 val = input_buf[elem_id];
+				val.x *= val.x;
+				val.y *= val.y;
+				val.z *= val.z;
+				val.w *= val.w;
+				output_buf[elem_id] = val;
+			}
+		}
+
+		__global__ void copy_buffer_util_kernel(
+			const float4 * __restrict input_buf,
+			float4 * __restrict output_buf,
+			int elem_count)
+		{
+			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			if (elem_id < elem_count)
+				output_buf[elem_id] = input_buf[elem_id];
+		}
+
+		__global__ void copy_to_striped_kernel(
+			const float * __restrict source_buf,
+			float2 * __restrict dest_buf,
+			int elem_count_per_feature_map,
+			int feature_map_count,
+			int entry_count)
+		{
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
+			int strided_feature_map_id = blockDim.y * blockIdx.y + threadIdx.y;
+			int entry_id = blockDim.z * blockIdx.z + threadIdx.z;
+
+			int first_feature_map_id = strided_feature_map_id * 2;
+			if ((elem_id < elem_count_per_feature_map) && (first_feature_map_id < feature_map_count) && (entry_id < entry_count))
+			{
+				int tt = entry_id * elem_count_per_feature_map;
+				int base_src_offset = tt * feature_map_count + elem_id;
+				int base_dst_offset = tt * ((feature_map_count + 1) >> 1) + elem_id;
+				float2 pack;
+				pack.x = source_buf[first_feature_map_id * elem_count_per_feature_map + base_src_offset];
+				pack.y = 0.0F;
+				int second_feature_map_id = first_feature_map_id + 1;
+				if (second_feature_map_id < feature_map_count)
+					pack.y = source_buf[second_feature_map_id * elem_count_per_feature_map + base_src_offset];
+
+				dest_buf[strided_feature_map_id * elem_count_per_feature_map + base_dst_offset] = pack;
+			}
+		}
+
+		__global__ void copy_from_striped_kernel(
+			const float2 * __restrict source_buf,
+			float * __restrict dest_buf,
+			int elem_count_per_feature_map,
+			int feature_map_count,
+			int entry_count)
+		{
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
+			int strided_feature_map_id = blockDim.y * blockIdx.y + threadIdx.y;
+			int entry_id = blockDim.z * blockIdx.z + threadIdx.z;
+
+			int first_feature_map_id = strided_feature_map_id * 2;
+			if ((elem_id < elem_count_per_feature_map) && (first_feature_map_id < feature_map_count) && (entry_id < entry_count))
+			{
+				int tt = entry_id * elem_count_per_feature_map;
+				int base_dst_offset = tt * feature_map_count + elem_id;
+				int base_src_offset = tt * ((feature_map_count + 1) >> 1) + elem_id;
+
+				float2 pack = source_buf[strided_feature_map_id * elem_count_per_feature_map + base_src_offset];
+
+				dest_buf[first_feature_map_id * elem_count_per_feature_map + base_dst_offset] = pack.x;
+				int second_feature_map_id = first_feature_map_id + 1;
+				if (second_feature_map_id < feature_map_count)
+					dest_buf[second_feature_map_id * elem_count_per_feature_map + base_dst_offset] = pack.y;
+			}
+		}
+
 		const unsigned int cuda_util::preferred_width_2d_access = 16;
 		const unsigned int cuda_util::preferred_height_2d_access = 16;
 		const unsigned int cuda_util::preferred_threadblocksize_sequential_access = 256;
@@ -379,6 +436,52 @@ namespace nnforge
 			}
 
 			return current_div;
+		}
+
+		unsigned int cuda_util::get_feature_map_count_striped(unsigned int feature_map_count)
+		{
+			return ((feature_map_count + 1) >> 1);
+		}
+
+		layer_configuration_specific cuda_util::get_layer_configuration_specific_striped(const layer_configuration_specific& original_layer_config)
+		{
+			layer_configuration_specific res = original_layer_config;
+			res.feature_map_count = get_feature_map_count_striped(res.feature_map_count);
+			return res;
+		}
+
+		void cuda_util::copy_to_striped(
+			const cuda_running_configuration& cuda_config,
+			const float * source_buf,
+			float2 * dest_buf,
+			unsigned int elem_count_per_feature_map,
+			unsigned int feature_map_count,
+			unsigned int entry_count,
+			cudaStream_t cuda_stream)
+		{
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				elem_count_per_feature_map,
+				get_feature_map_count_striped(feature_map_count),
+				entry_count);
+			copy_to_striped_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(source_buf, dest_buf, elem_count_per_feature_map, feature_map_count, entry_count);
+		}
+
+		void cuda_util::copy_from_striped(
+			const cuda_running_configuration& cuda_config,
+			const float2 * source_buf,
+			float * dest_buf,
+			unsigned int elem_count_per_feature_map,
+			unsigned int feature_map_count,
+			unsigned int entry_count,
+			cudaStream_t cuda_stream)
+		{
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				elem_count_per_feature_map,
+				get_feature_map_count_striped(feature_map_count),
+				entry_count);
+			copy_from_striped_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(source_buf, dest_buf, elem_count_per_feature_map, feature_map_count, entry_count);
 		}
 	}
 }

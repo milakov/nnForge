@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <stack>
-#include <array>
 #include <algorithm>
 
 #include "space_filling_curve_tile.h"

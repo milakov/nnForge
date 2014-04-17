@@ -23,6 +23,8 @@
 
 #include "cuda_running_configuration.h"
 
+#include "../layer_configuration_specific.h"
+
 static __forceinline__ __device__ float __load_nc(const float * ptr)
 {
 #if __CUDA_ARCH__ >= 350
@@ -31,6 +33,23 @@ static __forceinline__ __device__ float __load_nc(const float * ptr)
 	return *ptr;
 #endif
 }
+
+template<typename element_type, int length>
+class array_by_val
+{
+public:
+	element_type vals[length];
+
+	__forceinline__ __host__ __device__ const element_type& operator[] (int index) const
+	{
+		return vals[index];
+	}
+
+	__forceinline__ __host__ __device__ element_type& operator[] (int index)
+	{
+		return vals[index];
+	}
+};
 
 namespace nnforge
 {
@@ -112,6 +131,28 @@ namespace nnforge
 				const cuda_running_configuration& cuda_config,
 				int total_thread_count,
 				int divisible);
+
+			static unsigned int get_feature_map_count_striped(unsigned int feature_map_count);
+
+			static layer_configuration_specific get_layer_configuration_specific_striped(const layer_configuration_specific& original_layer_config);
+
+			static void copy_to_striped(
+				const cuda_running_configuration& cuda_config,
+				const float * source_buf,
+				float2 * dest_buf,
+				unsigned int elem_count_per_feature_map,
+				unsigned int feature_map_count,
+				unsigned int entry_count,
+				cudaStream_t cuda_stream);
+
+			static void copy_from_striped(
+				const cuda_running_configuration& cuda_config,
+				const float2 * source_buf,
+				float * dest_buf,
+				unsigned int elem_count_per_feature_map,
+				unsigned int feature_map_count,
+				unsigned int entry_count,
+				cudaStream_t cuda_stream);
 
 		private:
 			cuda_util();

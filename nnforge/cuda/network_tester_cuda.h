@@ -69,9 +69,13 @@ namespace nnforge
 
 			void update_buffers_configuration_testing(buffer_cuda_size_configuration& buffer_configuration) const;
 
+			void update_data();
+
 			cuda_running_configuration_const_smart_ptr cuda_config;
 
 			const_layer_testing_schema_list testing_schemas;
+
+			network_data_smart_ptr host_net_data;
 
 			cuda_stream_smart_ptr command_stream;
 			cuda_stream_smart_ptr data_stream;

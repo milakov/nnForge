@@ -82,21 +82,22 @@ namespace nnforge
 		// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
 		void network_tester_cuda::actual_set_data(network_data_smart_ptr data)
 		{
+			host_net_data = data;
+
+			update_data();
+		}
+
+		void network_tester_cuda::update_data()
+		{
 			net_data.clear();
 
-			for(layer_data_list::const_iterator it2 = data->begin(); it2 != data->end(); ++it2)
+			if (tester_list.empty() || (host_net_data == 0))
+				return;
+
+			for(int i = 0; i < std::min(host_net_data->size(), tester_list.size()); ++i)
 			{
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
-
-				for(std::vector<std::vector<float> >::iterator it = (*it2)->begin(); it != (*it2)->end(); ++it)
-				{
-					size_t buffer_size = it->size() * sizeof(float);
-					cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
-					cuda_safe_call(cudaMemcpy(*new_buf, &(*it->begin()), buffer_size, cudaMemcpyHostToDevice));
-					res.push_back(new_buf);
-				}
-
-				net_data.push_back(res);
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = tester_list[i]->get_data(host_net_data->at(i));
+				net_data.push_back(device_data);
 			}
 		}
 
@@ -114,6 +115,8 @@ namespace nnforge
 						*it_conf,
 						*(it_conf + 1)));
 			}
+
+			update_data();
 		}
 
 		void network_tester_cuda::update_buffers_configuration_testing(buffer_cuda_size_configuration& buffer_configuration) const
@@ -193,12 +196,13 @@ namespace nnforge
 			cuda_event output_copied_event;
 			cuda_event data_processed_event;
 			cuda_event input_copied_event;
+			int power_of_two_spinup = 3;
 			while((entries_available_for_copy_in_count > 0) || (entries_available_for_processing_count > 0) || (entries_available_for_copy_out_count > 0))
 			{
 				unsupervised_data_reader_async_helper async_reader;
 				if (entries_available_for_copy_in_count > 0)
 				{
-					unsigned int entries_to_read_count = std::min<unsigned int>(max_entry_count, entries_available_for_copy_in_count);
+					unsigned int entries_to_read_count = std::min<unsigned int>(std::max(max_entry_count >> power_of_two_spinup, 1U), entries_available_for_copy_in_count);
 					async_reader.fun = unsupervised_data_reader_functor(
 						entries_to_read_count,
 						&reader,
@@ -206,6 +210,7 @@ namespace nnforge
 						*(input_buf[current_data_slot]),
 						*data_stream);
 					async_reader.start();
+					power_of_two_spinup = (power_of_two_spinup > 0) ? (power_of_two_spinup - 1) : 0;
 				}
 
 				if (entries_available_for_processing_count > 0)

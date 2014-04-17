@@ -29,13 +29,9 @@ namespace nnforge
 		class cuda_texture : public cuda_memobject
 		{
 		public:
-			cuda_texture(const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr);
-
 			cuda_texture(
 				const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr,
-				int elem_offset,
-				int elem_count,
-				const cuda_running_configuration& cuda_config);
+				int vector_size = 1);
 
 			virtual ~cuda_texture();
 
@@ -43,12 +39,9 @@ namespace nnforge
 
 			virtual size_t get_size() const;
 
-			int get_texture_offset_elems() const;
-
 		protected:
 			cudaTextureObject_t tex;
 			const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr;
-			int texture_offset_elems;
 		};
 
 		typedef nnforge_shared_ptr<cuda_texture> cuda_texture_smart_ptr;

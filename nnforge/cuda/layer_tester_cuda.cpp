@@ -17,6 +17,7 @@
 #include "layer_tester_cuda.h"
 
 #include "util_cuda.h"
+#include "neural_network_cuda_exception.h"
 
 namespace nnforge
 {
@@ -114,6 +115,21 @@ namespace nnforge
 
 		void layer_tester_cuda::fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const
 		{
+		}
+
+		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_tester_cuda::get_data(layer_data_smart_ptr host_data) const
+		{
+			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
+
+			for(std::vector<std::vector<float> >::iterator it = host_data->begin(); it != host_data->end(); ++it)
+			{
+				size_t buffer_size = it->size() * sizeof(float);
+				cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
+				cuda_safe_call(cudaMemcpy(*new_buf, &(*it->begin()), buffer_size, cudaMemcpyHostToDevice));
+				res.push_back(new_buf);
+			}
+
+			return res;
 		}
 	}
 }

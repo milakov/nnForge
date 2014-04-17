@@ -24,6 +24,15 @@ namespace nnforge
 {
 	namespace cuda
 	{
+		class packed_config_util
+		{
+		public:
+			static size_t get_packed_config_size(int dimension_size)
+			{
+				return ((dimension_size + 1) >> 1) * 4;
+			}
+		};
+
 		template <int dimension_count>
 		class __align__(4) packed_config
 		{

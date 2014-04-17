@@ -58,6 +58,8 @@ namespace nnforge
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				unsigned int entry_count) = 0;
 
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(layer_data_smart_ptr host_data) const;
+
 		protected:
 			layer_tester_cuda();
 
