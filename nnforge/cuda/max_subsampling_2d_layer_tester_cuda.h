@@ -52,6 +52,8 @@ namespace nnforge
 
 		private:
 			std::vector<unsigned int> subsampling_sizes;
+
+			int feature_map_block_count;
 		};
 	}
 }
