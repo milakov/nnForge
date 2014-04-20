@@ -16,7 +16,7 @@ BOOST_LIBS=-lboost_thread-mt -lboost_regex-mt -lboost_chrono-mt -lboost_filesyst
 OPENCV_LIBS=-lopencv_highgui -lopencv_imgproc -lopencv_core
 NETCDF_LIBS=-lnetcdf
 
-CPP_FLAGS_CPP11=-std=c++0x # You will probably want to replace it with -std=c++11
+CPP_FLAGS_CPP11=-std=c++11
 CPP_FLAGS_COMMON=-ffast-math -march=native -mfpmath=sse -msse2 # -mavx
 CPP_FLAGS_DEBUG_MODE=-g
 CPP_FLAGS_RELEASE_MODE=-O3
