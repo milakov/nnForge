@@ -17,7 +17,8 @@ OPENCV_LIBS=-lopencv_highgui -lopencv_imgproc -lopencv_core
 NETCDF_LIBS=-lnetcdf
 
 CPP_FLAGS_CPP11=-std=c++11
-CPP_FLAGS_COMMON=-ffast-math -march=native -mfpmath=sse -msse2 # -mavx
+CPP_HW_ARCHITECTURE=-march=native
+CPP_FLAGS_COMMON=-ffast-math $(CPP_HW_ARCHITECTURE) -mfpmath=sse -msse2 # -mavx
 CPP_FLAGS_DEBUG_MODE=-g
 CPP_FLAGS_RELEASE_MODE=-O3
 
