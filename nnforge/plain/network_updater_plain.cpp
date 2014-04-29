@@ -129,7 +129,7 @@ namespace nnforge
 			unsigned int max_entry_count = std::min<unsigned int>(std::min<unsigned int>(plain_config->get_max_entry_count(buffers_config), reader.get_entry_count()), max_entry_count_in_single_batch);
 
 			std::vector<unsigned char> input_buf(max_entry_count * input_neuron_count * input_neuron_elem_size);
-			std::vector<float> actual_output_buf(max_entry_count * input_neuron_count);
+			std::vector<float> actual_output_buf(max_entry_count * output_neuron_count);
 			additional_buffer_smart_ptr initial_error_buf(new std::vector<float>(updater_entry_count * output_neuron_count));
 			additional_buffer_smart_ptr input_converted_buf(new std::vector<float>(input_neuron_count * max_entry_count));
 
