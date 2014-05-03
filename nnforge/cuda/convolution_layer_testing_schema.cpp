@@ -59,9 +59,9 @@ namespace nnforge
 			else
 			{
 				if (cuda_config->get_compute_capability() >= 300)
-					return convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(input_configuration_specific, output_configuration_specific);
+					res = convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(input_configuration_specific, output_configuration_specific);
 				else
-					return convolution_layer_testing_schema_helper_cuda_fermi::create_tester_specific(input_configuration_specific, output_configuration_specific);
+					res = convolution_layer_testing_schema_helper_cuda_fermi::create_tester_specific(input_configuration_specific, output_configuration_specific);
 			}
 
 			return res;

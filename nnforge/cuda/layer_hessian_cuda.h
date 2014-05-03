@@ -83,6 +83,10 @@ namespace nnforge
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				unsigned int entry_count);
 
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
+
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data_squared(const_layer_data_smart_ptr host_data) const;
+
 		protected:
 			layer_hessian_cuda();
 

@@ -132,6 +132,8 @@ namespace nnforge
 				int total_thread_count,
 				int divisible);
 
+			static int get_thread_count_per_wave(const cuda_running_configuration& cuda_config);
+
 			static unsigned int get_feature_map_count_striped(unsigned int feature_map_count);
 
 			static layer_configuration_specific get_layer_configuration_specific_striped(const layer_configuration_specific& original_layer_config);

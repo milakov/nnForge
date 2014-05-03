@@ -117,11 +117,11 @@ namespace nnforge
 		{
 		}
 
-		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_tester_cuda::get_data(layer_data_smart_ptr host_data) const
+		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_tester_cuda::get_data(const_layer_data_smart_ptr host_data) const
 		{
 			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
 
-			for(std::vector<std::vector<float> >::iterator it = host_data->begin(); it != host_data->end(); ++it)
+			for(std::vector<std::vector<float> >::const_iterator it = host_data->begin(); it != host_data->end(); ++it)
 			{
 				size_t buffer_size = it->size() * sizeof(float);
 				cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));

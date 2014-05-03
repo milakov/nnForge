@@ -124,8 +124,8 @@ namespace nnforge
 			neuron_data_type::input_type type_code = reader.get_input_type();
 			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > net_data = enqueue_get_data(data, *command_stream);
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > net_data_squared = enqueue_get_data_squared(net_data, *command_stream);
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > net_data = get_data(data);
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > net_data_squared = get_data_squared(data);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > hessian_data = enqueue_get_hessian(data, *command_stream);
 
 			buffer_cuda_size_configuration buffers_config;
@@ -294,6 +294,15 @@ namespace nnforge
 						std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator schema_data_it = hessian_schema_data.rbegin();
 						for(std::vector<layer_hessian_cuda_smart_ptr>::reverse_iterator it = hessian_list.rbegin(); it != hessian_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++hessian_data_it, ++output_errors_it, ++net_data_squared_it)
 						{
+							(*it)->enqueue_update_hessian(
+								*command_stream,
+								*schema_data_it,
+								*hessian_data_it,
+								*output_errors_it,
+								input_and_all_buffers_pack_it->first,
+								input_and_all_buffers_pack_it->second.additional_buffers,
+								entries_available_for_processing_count);
+
 							if (it != (hessian_list.rend() - 1))
 								(*it)->enqueue_backprop(
 									*command_stream,
@@ -304,15 +313,6 @@ namespace nnforge
 									input_and_all_buffers_pack_it->second.input_errors_buffer,
 									input_and_all_buffers_pack_it->second.additional_buffers,
 									entries_available_for_processing_count);
-
-							(*it)->enqueue_update_hessian(
-								*command_stream,
-								*schema_data_it,
-								*hessian_data_it,
-								*output_errors_it,
-								input_and_all_buffers_pack_it->first,
-								input_and_all_buffers_pack_it->second.additional_buffers,
-								entries_available_for_processing_count);
 						}
 					}
 
@@ -368,54 +368,27 @@ namespace nnforge
 			}
 		}
 
-		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > hessian_calculator_cuda::enqueue_get_data(
-			network_data_smart_ptr data,
-			cudaStream_t stream_id) const
+		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > hessian_calculator_cuda::get_data(network_data_smart_ptr data) const
 		{
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > res;
 
-			for(layer_data_list::const_iterator it = data->begin() + testing_layer_count; it != data->end(); ++it)
+			for(int i = 0; i < hessian_list.size(); ++i)
 			{
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> buffer_list;
-				const_layer_data_smart_ptr current_layer_data = *it;
-				for(layer_data::const_iterator it2 = current_layer_data->begin(); it2 != current_layer_data->end(); ++it2)
-				{
-					const std::vector<float>& current_data = *it2;
-					buffer_list.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-						&(*current_data.begin()),
-						current_data.size() * sizeof(float),
-						stream_id)));
-				}
-				res.push_back(buffer_list);
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = hessian_list[i]->get_data(data->at(i + testing_layer_count));
+				res.push_back(device_data);
 			}
 
 			return res;
 		}
 
-		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > hessian_calculator_cuda::enqueue_get_data_squared(
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > data,
-			cudaStream_t stream_id) const
+		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > hessian_calculator_cuda::get_data_squared(network_data_smart_ptr data) const
 		{
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > res;
 
-			for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator it = data.begin(); it != data.end(); ++it)
+			for(int i = 0; i < hessian_list.size(); ++i)
 			{
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> buffer_list;
-				for(std::vector<const_cuda_linear_buffer_device_smart_ptr>::iterator it2 = it->begin(); it2 != it->end(); ++it2)
-				{
-					const_cuda_linear_buffer_device_smart_ptr current_data = *it2;
-					cuda_linear_buffer_device_smart_ptr new_buf(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(current_data->get_size())));
-
-					cuda_util::multiply_by_itself(
-						*cuda_config,
-						*current_data,
-						*new_buf,
-						current_data->get_size() / sizeof(float),
-						stream_id);
-
-					buffer_list.push_back(new_buf);
-				}
-				res.push_back(buffer_list);
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = hessian_list[i]->get_data_squared(data->at(i + testing_layer_count));
+				res.push_back(device_data);
 			}
 
 			return res;

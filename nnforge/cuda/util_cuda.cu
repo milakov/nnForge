@@ -438,6 +438,11 @@ namespace nnforge
 			return current_div;
 		}
 
+		int cuda_util::get_thread_count_per_wave(const cuda_running_configuration& cuda_config)
+		{
+			return cuda_config.multiprocessor_count * 4 * 256;
+		}
+
 		unsigned int cuda_util::get_feature_map_count_striped(unsigned int feature_map_count)
 		{
 			return ((feature_map_count + 1) >> 1);

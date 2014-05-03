@@ -387,6 +387,62 @@ namespace nnforge
 				return additional_buffers[0];
 			}
 
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const
+			{
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
+
+				if (host_data->size() != 2)
+					return res;
+
+				unsigned int window_total_size = 1;
+				for(int i = 0; i < dimension_count; ++i)
+					window_total_size *= window_sizes[i];
+				unsigned int weight_count = output_configuration_specific.feature_map_count * input_configuration_specific.feature_map_count * window_total_size;
+				if (host_data->at(0).size() != weight_count)
+					return res;
+
+				if (host_data->at(1).size() != output_configuration_specific.feature_map_count)
+					return res;
+
+				unsigned int input_feature_map_count_striped = input_configuration_specific_striped.feature_map_count;
+				unsigned int weight_count_striped = output_configuration_specific.feature_map_count * input_feature_map_count_striped * 2 * window_total_size;
+
+				std::vector<float> weights_striped(weight_count_striped, 0.0F);
+				const std::vector<float>& src = host_data->at(0);
+				unsigned int src_offset = 0;
+				unsigned int dst_offset = 0;
+				for(unsigned int output_feature_map_id = 0; output_feature_map_id < output_configuration_specific.feature_map_count; ++output_feature_map_id)
+				{
+					for(unsigned int input_feature_map_id_striped = 0; input_feature_map_id_striped < input_feature_map_count_striped; ++input_feature_map_id_striped, dst_offset += window_total_size * 2)
+					{
+						bool second_feature_map_present = (input_feature_map_id_striped * 2 + 1 < input_configuration_specific.feature_map_count);
+						for(int dst_elem_id = 0; dst_elem_id < window_total_size; ++dst_elem_id)
+						{
+							weights_striped[dst_offset + dst_elem_id * 2] = src[src_offset + dst_elem_id];
+							if (second_feature_map_present)
+								weights_striped[dst_offset + dst_elem_id * 2 + 1] = src[src_offset + dst_elem_id + window_total_size];
+						}
+
+						src_offset += window_total_size * (second_feature_map_present ? 2 : 1);
+					}
+				}
+				{
+					size_t buffer_size = weights_striped.size() * sizeof(float);
+					cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
+					cuda_safe_call(cudaMemcpy(*new_buf, &(*weights_striped.begin()), buffer_size, cudaMemcpyHostToDevice));
+					res.push_back(new_buf);
+				}
+
+				{
+					size_t buffer_size = host_data->at(1).size() * sizeof(float);
+					cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
+					cuda_safe_call(cudaMemcpy(*new_buf, &(*host_data->at(1).begin()), buffer_size, cudaMemcpyHostToDevice));
+					res.push_back(new_buf);
+				}
+
+				return res;
+			}
+
 		protected:
 			virtual void tester_configured()
 			{
@@ -465,62 +521,6 @@ namespace nnforge
 					}
 				}
 				cuda_safe_call(cudaMemcpy(*additional_buffers[2], &(*task_list.begin()), sizeof(packed_config<dimension_count>) * task_list.size(), cudaMemcpyHostToDevice));
-			}
-
-			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(layer_data_smart_ptr host_data) const
-			{
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
-
-				if (host_data->size() != 2)
-					return res;
-
-				unsigned int window_total_size = 1;
-				for(int i = 0; i < dimension_count; ++i)
-					window_total_size *= window_sizes[i];
-				unsigned int weight_count = output_configuration_specific.feature_map_count * input_configuration_specific.feature_map_count * window_total_size;
-				if (host_data->at(0).size() != weight_count)
-					return res;
-
-				if (host_data->at(1).size() != output_configuration_specific.feature_map_count)
-					return res;
-
-				unsigned int input_feature_map_count_striped = cuda_util::get_feature_map_count_striped(input_configuration_specific.feature_map_count);
-				unsigned int weight_count_striped = output_configuration_specific.feature_map_count * input_feature_map_count_striped * 2 * window_total_size;
-
-				std::vector<float> weights_striped(weight_count_striped, 0.0F);
-				const std::vector<float>& src = host_data->at(0);
-				unsigned int src_offset = 0;
-				unsigned int dst_offset = 0;
-				for(unsigned int output_feature_map_id = 0; output_feature_map_id < output_configuration_specific.feature_map_count; ++output_feature_map_id)
-				{
-					for(unsigned int input_feature_map_id_striped = 0; input_feature_map_id_striped < input_feature_map_count_striped; ++input_feature_map_id_striped, dst_offset += window_total_size * 2)
-					{
-						bool second_feature_map_present = (input_feature_map_id_striped * 2 + 1 < input_configuration_specific.feature_map_count);
-						for(int dst_elem_id = 0; dst_elem_id < window_total_size; ++dst_elem_id)
-						{
-							weights_striped[dst_offset + dst_elem_id * 2] = src[src_offset + dst_elem_id];
-							if (second_feature_map_present)
-								weights_striped[dst_offset + dst_elem_id * 2 + 1] = src[src_offset + dst_elem_id + window_total_size];
-						}
-
-						src_offset += window_total_size * (second_feature_map_present ? 2 : 1);
-					}
-				}
-				{
-					size_t buffer_size = weights_striped.size() * sizeof(float);
-					cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
-					cuda_safe_call(cudaMemcpy(*new_buf, &(*weights_striped.begin()), buffer_size, cudaMemcpyHostToDevice));
-					res.push_back(new_buf);
-				}
-
-				{
-					size_t buffer_size = host_data->at(1).size() * sizeof(float);
-					cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
-					cuda_safe_call(cudaMemcpy(*new_buf, &(*host_data->at(1).begin()), buffer_size, cudaMemcpyHostToDevice));
-					res.push_back(new_buf);
-				}
-
-				return res;
 			}
 
 		private:

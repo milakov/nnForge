@@ -18,13 +18,9 @@
 
 #include "../convolution_layer.h"
 #include "../neural_network_exception.h"
-#include "convolution_1d_layer_hessian_cuda_fermi.h"
-#include "convolution_1d_layer_hessian_cuda_kepler.h"
-#include "convolution_2d_layer_hessian_cuda_fermi.h"
-#include "convolution_2d_layer_hessian_cuda_kepler.h"
-#include "convolution_3d_layer_hessian_cuda_fermi.h"
-#include "convolution_3d_layer_hessian_cuda_kepler.h"
 #include "fully_connected_layer_hessian_cuda.h"
+#include "convolution_layer_hessian_schema_helper_cuda_kepler.h"
+#include "convolution_layer_hessian_schema_helper_cuda_fermi.h"
 
 #include <boost/format.hpp>
 
@@ -62,30 +58,10 @@ namespace nnforge
 			}
 			else
 			{
-				switch (output_configuration_specific.dimension_sizes.size())
-				{
-				case 1:
-					if (cuda_config->get_compute_capability() >= 300)
-						res = layer_hessian_cuda_smart_ptr(new convolution_1d_layer_hessian_cuda_kepler());
-					else
-						res = layer_hessian_cuda_smart_ptr(new convolution_1d_layer_hessian_cuda_fermi());
-					break;
-				case 2:
-					if (cuda_config->get_compute_capability() >= 300)
-						res = layer_hessian_cuda_smart_ptr(new convolution_2d_layer_hessian_cuda_kepler());
-					else
-						res = layer_hessian_cuda_smart_ptr(new convolution_2d_layer_hessian_cuda_fermi());
-					break;
-				case 3:
-					if (cuda_config->get_compute_capability() >= 300)
-						res = layer_hessian_cuda_smart_ptr(new convolution_3d_layer_hessian_cuda_kepler());
-					else
-						res = layer_hessian_cuda_smart_ptr(new convolution_3d_layer_hessian_cuda_fermi());
-					break;
-				default:
-					throw neural_network_exception((boost::format("No CUDA hessian for the convolutional layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
-					break;
-				}
+				if (cuda_config->get_compute_capability() >= 300)
+					res = convolution_layer_hessian_schema_helper_cuda_kepler::create_hessian_specific(input_configuration_specific, output_configuration_specific);
+				else
+					res = convolution_layer_hessian_schema_helper_cuda_fermi::create_hessian_specific(input_configuration_specific, output_configuration_specific);
 			}
 
 			return res;

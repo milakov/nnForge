@@ -55,13 +55,9 @@ namespace nnforge
 
 			void update_buffers_configuration(buffer_cuda_size_configuration& buffer_configuration) const;
 
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > enqueue_get_data(
-				network_data_smart_ptr data,
-				cudaStream_t stream_id) const;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_data(network_data_smart_ptr data) const;
 
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > enqueue_get_data_squared(
-				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > data,
-				cudaStream_t stream_id) const;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_data_squared(network_data_smart_ptr data) const;
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > enqueue_get_hessian(
 				network_data_smart_ptr data_use_schema_only,
