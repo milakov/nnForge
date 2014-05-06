@@ -49,7 +49,7 @@ namespace nnforge
 		, input_data_list_float(input_data_list)
 		, output_data_list(output_data_list)
 		, entry_read_count(0)
-		, type_code(neuron_data_type::type_byte)
+		, type_code(neuron_data_type::type_float)
 		, entry_count(static_cast<unsigned int>(input_data_list.size()))
 		, input_neuron_count(input_configuration.get_neuron_count())
 		, output_neuron_count(output_configuration.get_neuron_count())
