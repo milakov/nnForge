@@ -18,6 +18,7 @@
 
 #include "dropout_layer_config.h"
 #include "nn_types.h"
+#include "rnd.h"
 
 #include <vector>
 #include <ostream>
@@ -43,6 +44,11 @@ namespace nnforge
 			bool is_direct);
 
 		void fill(float val);
+
+		void random_fill(
+			float min,
+			float max,
+			random_generator& gen);
 
 	private:
 		class mult_transform

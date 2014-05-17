@@ -169,9 +169,9 @@ namespace nnforge
 					*new_buf,
 					new_buf->get_size() / sizeof(float),
 					0);
-				cuda_safe_call(cudaStreamSynchronize(0));
 				res.push_back(new_buf);
 			}
+			cuda_safe_call(cudaStreamSynchronize(0));
 
 			return res;
 		}

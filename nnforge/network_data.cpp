@@ -118,6 +118,15 @@ namespace nnforge
 			(*it)->fill(val);
 	}
 
+	void network_data::random_fill(
+		float min,
+		float max,
+		random_generator& gen)
+	{
+		for(layer_data_list::iterator it = begin(); it != end(); ++it)
+			(*it)->random_fill(min, max, gen);
+	}
+
 	std::string network_data::get_stat() const
 	{
 		std::string stat = "";

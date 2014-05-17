@@ -17,6 +17,7 @@
 #include "layer_updater_cuda.h"
 
 #include "util_cuda.h"
+#include "neural_network_cuda_exception.h"
 
 namespace nnforge
 {
@@ -167,6 +168,99 @@ namespace nnforge
 		int layer_updater_cuda::get_dynamic_memobject_count() const
 		{
 			return 0;
+		}
+
+		std::vector<cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_data(const std::vector<layer_data_smart_ptr>& host_data_list) const
+		{
+			std::vector<cuda_linear_buffer_device_smart_ptr> res;
+
+			unsigned int part_count = host_data_list.front()->size();
+			for(unsigned int subindex = 0; subindex< part_count; ++subindex)
+			{
+				unsigned int single_size = get_data_elem_count(subindex, host_data_list.front()->at(subindex).size());
+				std::vector<float> pack(single_size * host_data_list.size());
+
+				std::vector<float>::iterator fill_it = pack.begin();
+				for(std::vector<layer_data_smart_ptr>::const_iterator sample_it = host_data_list.begin(); sample_it != host_data_list.end(); ++sample_it, fill_it += single_size)
+				{
+					const std::vector<float>& inp_buf = (*sample_it)->at(subindex);
+					fill_data_for_device(subindex, &(*inp_buf.begin()), &(*fill_it), inp_buf.size());
+				}
+
+				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
+					&(*pack.begin()),
+					pack.size() * sizeof(float))));
+			}
+
+			return res;
+		}
+
+		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_learning_rate(const std::vector<const_layer_data_smart_ptr>& host_learning_rate_list) const
+		{
+			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
+
+			unsigned int part_count = host_learning_rate_list.front()->size();
+			for(unsigned int subindex = 0; subindex< part_count; ++subindex)
+			{
+				unsigned int single_size = get_data_elem_count(subindex, host_learning_rate_list.front()->at(subindex).size());
+				std::vector<float> pack(single_size * host_learning_rate_list.size());
+
+				std::vector<float>::iterator fill_it = pack.begin();
+				for(std::vector<const_layer_data_smart_ptr>::const_iterator sample_it = host_learning_rate_list.begin(); sample_it != host_learning_rate_list.end(); ++sample_it, fill_it += single_size)
+				{
+					const std::vector<float>& inp_buf = (*sample_it)->at(subindex);
+					fill_data_for_device(subindex, &(*inp_buf.begin()), &(*fill_it), inp_buf.size());
+				}
+
+				res.push_back(const_cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
+					&(*pack.begin()),
+					pack.size() * sizeof(float))));
+			}
+
+			return res;
+		}
+
+		void layer_updater_cuda::get_data_from_device(const std::vector<cuda_linear_buffer_device_smart_ptr>& device_data, std::vector<layer_data_smart_ptr>& host_data) const
+		{
+			unsigned int part_count = host_data.front()->size();
+			std::vector<cuda_linear_buffer_device_smart_ptr>::const_iterator src_it = device_data.begin();
+			for(unsigned int subindex = 0; subindex< part_count; ++subindex, ++src_it)
+			{
+				unsigned int single_size = get_data_elem_count(subindex, host_data.front()->at(subindex).size());
+				cuda_linear_buffer_device_smart_ptr src = *src_it;
+				std::vector<float> pack(src->get_size() / sizeof(float));
+				cuda_safe_call(cudaMemcpy(&(*pack.begin()), *src, pack.size() * sizeof(float), cudaMemcpyDeviceToHost));
+
+				std::vector<float>::const_iterator src_buf_it = pack.begin();
+				for(std::vector<layer_data_smart_ptr>::const_iterator sample_it = host_data.begin(); sample_it != host_data.end(); ++sample_it, src_buf_it += single_size)
+				{
+					std::vector<float>& dst_buf = (*sample_it)->at(subindex);
+					fill_data_for_host(subindex, &(*src_buf_it), &(*dst_buf.begin()), single_size);
+				}
+			}
+		}
+
+		unsigned int layer_updater_cuda::get_data_elem_count(unsigned int part_id, unsigned int source_elem_count) const
+		{
+			return source_elem_count;
+		}
+
+		void layer_updater_cuda::fill_data_for_device(
+			unsigned int part_id,
+			const float * src,
+			float * dst,
+			unsigned int count) const
+		{
+			std::copy(src, src + count, dst);
+		}
+
+		void layer_updater_cuda::fill_data_for_host(
+			unsigned int part_id,
+			const float * src,
+			float * dst,
+			unsigned int count) const
+		{
+			std::copy(src, src + count, dst);
 		}
 	}
 }

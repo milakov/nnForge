@@ -419,7 +419,8 @@ namespace nnforge
 			int total_thread_count,
 			int divisible)
 		{
-			int threadblock_count = (total_thread_count + 255) / 256;
+			const int assume_threadblock_size = 256;
+			int threadblock_count = (total_thread_count + assume_threadblock_size - 1) / assume_threadblock_size;
 			float wave_count = static_cast<float>(threadblock_count) / static_cast<float>(cuda_config.multiprocessor_count * 4);
 			if (wave_count >= 4.0F)
 				return 1;
@@ -427,15 +428,19 @@ namespace nnforge
 			int current_div;
 			for(int wave_count = 1; wave_count <= 4; ++wave_count)
 			{
-				current_div = std::min((cuda_config.multiprocessor_count * 4 * wave_count * 256) / total_thread_count, divisible);
-				int current_threadblock_count = (total_thread_count * current_div + 255) / 256;
+				current_div = std::min((cuda_config.multiprocessor_count * 4 * wave_count * assume_threadblock_size) / total_thread_count, divisible);
+				if (current_div == 0)
+					continue;
+				int group_size = (divisible + current_div - 1) / current_div;
+				current_div = (divisible + group_size - 1) / group_size;
+				int current_threadblock_count = (total_thread_count * current_div + assume_threadblock_size - 1) / assume_threadblock_size;
 				float current_wave_count = static_cast<float>(current_threadblock_count) / static_cast<float>(cuda_config.multiprocessor_count * 4);
 				float remaining_part = wave_count - current_wave_count;
 				if (remaining_part < 0.2F)
 					return current_div;
 			}
 
-			return current_div;
+			return std::min(std::max(current_div, 1), divisible);
 		}
 
 		int cuda_util::get_thread_count_per_wave(const cuda_running_configuration& cuda_config)

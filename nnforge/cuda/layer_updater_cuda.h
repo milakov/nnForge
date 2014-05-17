@@ -98,6 +98,12 @@ namespace nnforge
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count);
 
+			std::vector<cuda_linear_buffer_device_smart_ptr> get_data(const std::vector<layer_data_smart_ptr>& host_data_list) const;
+
+			std::vector<const_cuda_linear_buffer_device_smart_ptr> get_learning_rate(const std::vector<const_layer_data_smart_ptr>& host_learning_rate_list) const;
+
+			void get_data_from_device(const std::vector<cuda_linear_buffer_device_smart_ptr>& device_data, std::vector<layer_data_smart_ptr>& host_data) const;
+
 		protected:
 			layer_updater_cuda();
 
@@ -117,6 +123,20 @@ namespace nnforge
 			virtual int get_dynamic_memobject_count() const;
 
 			virtual bool is_in_place_backprop() const = 0;
+
+			virtual unsigned int get_data_elem_count(unsigned int part_id, unsigned int source_elem_count) const;
+
+			virtual void fill_data_for_device(
+				unsigned int part_id,
+				const float * src,
+				float * dst,
+				unsigned int count) const;
+
+			virtual void fill_data_for_host(
+				unsigned int part_id,
+				const float * src,
+				float * dst,
+				unsigned int count) const;
 
 			const_layer_smart_ptr layer_schema;
 			cuda_running_configuration_const_smart_ptr cuda_config;

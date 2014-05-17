@@ -186,6 +186,7 @@ namespace nnforge
 			("batch_offset", boost::program_options::value<unsigned int>(&batch_offset)->default_value(0), "shift initial ANN ID when batch training.")
 			("test_validate_ann_index", boost::program_options::value<int>(&test_validate_ann_index)->default_value(-1), "Index of ANN to test/validate. -1 indicates all ANNs, batch mode.")
 			("snapshot_data_set", boost::program_options::value<std::string>(&snapshot_data_set)->default_value("training"), "Type of the dataset to use for snapshots (training, validating, testing).")
+			("profile_updater_entry_count", boost::program_options::value<unsigned int>(&profile_updater_entry_count)->default_value(2000), "The number of entries to process when profiling updater.")
 			;
 
 		{
@@ -1160,21 +1161,29 @@ namespace nnforge
 			get_weight_vector_bound_map());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
-		training_data_reader->set_max_entries_to_read(2000);
+		training_data_reader->set_max_entries_to_read(profile_updater_entry_count);
 
-		std::vector<network_data_smart_ptr> learning_rates;
-		std::vector<network_data_smart_ptr> data;
+		std::vector<network_data_smart_ptr> learning_rates(ann_count);
+		std::vector<network_data_smart_ptr> data(ann_count);
 
-		random_generator data_gen = rnd::get_random_generator(47597);
-		for(unsigned int i = 0; i < ann_count; ++i)
 		{
-			network_data_smart_ptr ts(new network_data(*schema));
-			ts->fill(learning_rate);
-			learning_rates.push_back(ts);
+			random_generator data_gen = rnd::get_random_generator(47597);
+			for(int i = ann_count - 1; i >= 0; --i)
+			{
+				network_data_smart_ptr data_elem(new network_data(*schema));
+				data_elem->randomize(*schema, data_gen);
+				data[i] = data_elem;
+			}
+		}
 
-			network_data_smart_ptr data_elem(new network_data(*schema));
-			data_elem->randomize(*schema, data_gen);
-			data.push_back(data_elem);
+		{
+			random_generator data_gen = rnd::get_random_generator(674578);
+			for(int i = ann_count - 1; i >= 0; --i)
+			{
+				network_data_smart_ptr ts(new network_data(*schema));
+				ts->random_fill(learning_rate * 0.5F, learning_rate * 1.5F, data_gen);
+				learning_rates[i] = ts;
+			}
 		}
 
 		std::vector<float> random_uniform_list(1 << 10);

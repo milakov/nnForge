@@ -20,6 +20,7 @@
 #include "layer.h"
 #include "dropout_layer_config.h"
 #include "nn_types.h"
+#include "rnd.h"
 
 #include <vector>
 #include <ostream>
@@ -55,6 +56,11 @@ namespace nnforge
 			random_generator& gen);
 
 		void fill(float val);
+
+		void random_fill(
+			float min,
+			float max,
+			random_generator& gen);
 
 		void apply_dropout_layer_config(
 			const std::map<unsigned int, dropout_layer_config>& layer_id_to_dropout_config_map,

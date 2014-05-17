@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "layer_tester_cuda.h"
+#include "layer_hessian_cuda.h"
 
 #include <cuda_runtime.h>
 
@@ -277,7 +277,7 @@ namespace nnforge
 
 		template<int DIMENSION_COUNT, int WINDOW_WIDTH, int BLOCK_SIZE>
 		__launch_bounds__(256, 4)
-		__global__ void convolution_bbrpop_tex_exact_blocked_hess_kernel_kepler(
+		__global__ void convolution_bbprop_tex_exact_blocked_hess_kernel_kepler(
 			float * __restrict input_errors,
 			cudaTextureObject_t output_tex,
 			cudaTextureObject_t weights_squared_tex,
@@ -327,10 +327,6 @@ namespace nnforge
 				for(int i = 0; i < DIMENSION_COUNT; ++i)
 					max_inclusive[i] = xyzw[i];
 
-				unsigned int mask = 0;
-				for(int i = BLOCK_SIZE + WINDOW_WIDTH - 2; i >= 0; --i)
-					mask = mask << 1 | (((i > min_exclusive[0]) && (i <= max_inclusive[0])) ? 1 : 0);
-
 				for(int output_layer_id = 0; output_layer_id < output_feature_map_count_striped; ++output_layer_id)
 				{
 					for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? window_sizes[3] : 1); ++input_w)
@@ -347,11 +343,8 @@ namespace nnforge
 								#pragma unroll
 								for(int i = 0; i < BLOCK_SIZE + WINDOW_WIDTH - 1; ++i)
 								{
-									bool b_fit0 = b_fit1 && (((1 << i) & mask) != 0);
-									if (b_fit0)
-										output_vals[i] = tex1Dfetch<float2>(output_tex, output_elem_id - i);
-									else
-										output_vals[i] = make_float2(0.0F, 0.0F);
+									bool b_fit0 = b_fit1 && (i > min_exclusive[0]) && (i <= max_inclusive[0]);
+									output_vals[i] = tex1Dfetch<float2>(output_tex, b_fit0 ? (output_elem_id - i) : -1);
 								}
 
 								#pragma unroll
@@ -420,7 +413,7 @@ namespace nnforge
 
 		template<int DIMENSION_COUNT, int BLOCK_SIZE>
 		__launch_bounds__(256, 4)
-		__global__ void convolution_bbrpop_tex_generic_blocked_hess_kernel_kepler(
+		__global__ void convolution_bbprop_tex_generic_blocked_hess_kernel_kepler(
 			float * __restrict input_errors,
 			cudaTextureObject_t output_tex,
 			cudaTextureObject_t weights_squared_tex,
@@ -491,15 +484,12 @@ namespace nnforge
 									for(int i = 0; i < BLOCK_SIZE + WINDOW_WIDTH_LOCAL - 1; ++i)
 									{
 										bool b_fit0 = b_fit1 && (input_x + i > min_exclusive[0]) && (input_x + i <= max_inclusive[0]);
-										if (b_fit0)
-											output_vals[i] = tex1Dfetch<float2>(output_tex, output_elem_id - i);
-										else
-											output_vals[i] = make_float2(0.0F, 0.0F);
+										output_vals[i] = tex1Dfetch<float2>(output_tex, b_fit0 ? (output_elem_id - i) : -1);
 									}
 									output_elem_id -= WINDOW_WIDTH_LOCAL;
 
 									#pragma unroll
-									for(int input_x = 0; input_x < WINDOW_WIDTH_LOCAL; ++input_x)
+									for(int input_x_local = 0; input_x_local < WINDOW_WIDTH_LOCAL; ++input_x_local)
 									{
 										float2 weight_list[FEATURE_MAP_BLOCK_SIZE];
 										#pragma unroll
@@ -512,8 +502,8 @@ namespace nnforge
 											#pragma unroll
 											for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 											{
-												sums[i * BLOCK_SIZE + j] += output_vals[input_x + j].x * weight_list[i].x;
-												sums[i * BLOCK_SIZE + j] += output_vals[input_x + j].y * weight_list[i].y;
+												sums[i * BLOCK_SIZE + j] += output_vals[input_x_local + j].x * weight_list[i].x;
+												sums[i * BLOCK_SIZE + j] += output_vals[input_x_local + j].y * weight_list[i].y;
 											}
 										}
 										weights_offset++;
@@ -526,16 +516,13 @@ namespace nnforge
 									for(int j = 0; j < BLOCK_SIZE; ++j)
 									{
 										bool b_fit0 = b_fit1 && (input_x + j > min_exclusive[0]) && (input_x + j <= max_inclusive[0]);
-										if (b_fit0)
+										float2 inp = tex1Dfetch<float2>(output_tex, b_fit0 ? (output_elem_id - j) : -1);
+										#pragma unroll
+										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										{
-											float2 inp = tex1Dfetch<float2>(output_tex, output_elem_id - j);
-											#pragma unroll
-											for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-											{
-												float2 w = tex1Dfetch<float2>(weights_squared_tex, weights_offset + weight_count_per_input_feature_map * i);
-												sums[i * BLOCK_SIZE + j] += inp.x * w.x;
-												sums[i * BLOCK_SIZE + j] += inp.y * w.y;
-											}
+											float2 w = tex1Dfetch<float2>(weights_squared_tex, weights_offset + weight_count_per_input_feature_map * i);
+											sums[i * BLOCK_SIZE + j] += inp.x * w.x;
+											sums[i * BLOCK_SIZE + j] += inp.y * w.y;
 										}
 									}
 									weights_offset++;
@@ -963,10 +950,10 @@ namespace nnforge
 		};
 
 #define launch_backprop_exact_kernel_const_const_const(dimension_count_const, window_width_const, block_size_const) \
-	convolution_bbrpop_tex_exact_blocked_hess_kernel_kepler<dimension_count_const,window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, weights_squared_tex, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific_striped.feature_map_count, entry_count, backward_packed_config_count);
+	convolution_bbprop_tex_exact_blocked_hess_kernel_kepler<dimension_count_const,window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, weights_squared_tex, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific_striped.feature_map_count, entry_count, backward_packed_config_count);
 
 #define launch_backprop_generic_kernel_const_const(dimension_count_const, block_size_const) \
-	convolution_bbrpop_tex_generic_blocked_hess_kernel_kepler<dimension_count_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, weights_squared_tex, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific_striped.feature_map_count, entry_count, backward_packed_config_count);
+	convolution_bbprop_tex_generic_blocked_hess_kernel_kepler<dimension_count_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, weights_squared_tex, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific_striped.feature_map_count, entry_count, backward_packed_config_count);
 
 #define launch_backprop_kernel_const_const(dimension_count_const, window_width, block_size_const) \
 	switch (window_width) \
@@ -1027,10 +1014,10 @@ namespace nnforge
 		};
 
 #define launch_update_exact_kernel_const_const(dimension_count_const, window_width_const) \
-	convolution_update_weights_exact_hess_kernel_kepler<dimension_count, window_width_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*hessian_data[0], input_squared_tex, output_tex, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, block_size, updater_packed_config_count);
+	convolution_update_weights_exact_hess_kernel_kepler<dimension_count_const, window_width_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*hessian_data[0], input_squared_tex, output_tex, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, block_size, updater_packed_config_count);
 
 #define launch_update_generic_kernel_const(dimension_count_const) \
-	convolution_update_weights_generic_hess_kernel_kepler<dimension_count><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*hessian_data[0], input_squared_tex, output_tex, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, block_size, updater_packed_config_count);
+	convolution_update_weights_generic_hess_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*hessian_data[0], input_squared_tex, output_tex, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, block_size, updater_packed_config_count);
 
 #define launch_update_kernel(dimension_count_const, window_width) \
 	switch (window_width) \
@@ -1334,7 +1321,6 @@ namespace nnforge
 			}
 
 		protected:
-			static const int updater_packed_config_dimension_count = dimension_count * 2;
 			static const int updater_dimension_count = (dimension_count * 2 + 2);
 
 			virtual void hessian_configured()
@@ -1394,8 +1380,8 @@ namespace nnforge
 			{
 				std::vector<size_t> res;
 
-				res.push_back(input_configuration_specific_striped.get_neuron_count() * sizeof(float2));
-				res.push_back(output_configuration_specific_striped.get_neuron_count() * sizeof(float2));
+				res.push_back(input_elem_count_per_entry_striped * sizeof(float2));
+				res.push_back(output_elem_count_per_entry_striped * sizeof(float2));
 
 				return res;
 			}
@@ -1404,8 +1390,8 @@ namespace nnforge
 			{
 				std::vector<unsigned int> res;
 
-				res.push_back(input_configuration_specific_striped.get_neuron_count());
-				res.push_back(output_configuration_specific_striped.get_neuron_count());
+				res.push_back(input_elem_count_per_entry_striped);
+				res.push_back(output_elem_count_per_entry_striped);
 
 				return res;
 			}

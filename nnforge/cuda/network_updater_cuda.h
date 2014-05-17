@@ -64,13 +64,9 @@ namespace nnforge
 				buffer_cuda_size_configuration& buffer_configuration,
 				unsigned int updater_entry_count) const;
 
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > enqueue_get_learning_rate(
-				const std::vector<network_data_smart_ptr>& learning_rate_list,
-				cudaStream_t stream_id) const;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_learning_rate(const std::vector<network_data_smart_ptr>& learning_rate_list) const;
 
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > enqueue_get_data(
-				const std::vector<network_data_smart_ptr>& data_list,
-				cudaStream_t stream_id) const;
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data(const std::vector<network_data_smart_ptr>& data_list) const;
 
 			void read_data(
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data_list,

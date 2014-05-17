@@ -18,11 +18,9 @@
 
 #include "../convolution_layer.h"
 #include "../neural_network_exception.h"
-#include "convolution_2d_layer_updater_cuda_fermi.h"
-#include "convolution_2d_layer_updater_cuda_kepler.h"
-#include "convolution_3d_layer_updater_cuda_fermi.h"
-#include "convolution_3d_layer_updater_cuda_kepler.h"
 #include "fully_connected_layer_updater_cuda.h"
+#include "convolution_layer_updater_schema_helper_cuda_kepler.h"
+#include "convolution_layer_updater_schema_helper_cuda_fermi.h"
 
 #include <boost/format.hpp>
 
@@ -60,24 +58,10 @@ namespace nnforge
 			}
 			else
 			{
-				switch (output_configuration_specific.dimension_sizes.size())
-				{
-				case 2:
-					if (cuda_config->get_compute_capability() >= 300)
-						res = layer_updater_cuda_smart_ptr(new convolution_2d_layer_updater_cuda_kepler());
-					else
-						res = layer_updater_cuda_smart_ptr(new convolution_2d_layer_updater_cuda_fermi());
-					break;
-				case 3:
-					if (cuda_config->get_compute_capability() >= 300)
-						res = layer_updater_cuda_smart_ptr(new convolution_3d_layer_updater_cuda_kepler());
-					else
-						res = layer_updater_cuda_smart_ptr(new convolution_3d_layer_updater_cuda_fermi());
-					break;
-				default:
-					throw neural_network_exception((boost::format("No CUDA updater for the convolution layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
-					break;
-				}
+				if (cuda_config->get_compute_capability() >= 300)
+					res = convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific, output_configuration_specific);
+				else
+					res = convolution_layer_updater_schema_helper_cuda_fermi::create_updater_specific(input_configuration_specific, output_configuration_specific);
 			}
 
 			return res;

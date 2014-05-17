@@ -87,6 +87,20 @@ namespace nnforge
 			std::fill(it->begin(), it->end(), val);
 	}
 
+	void layer_data::random_fill(
+		float min,
+		float max,
+		random_generator& gen)
+	{
+		for(std::vector<std::vector<float> >::iterator it = begin(); it != end(); ++it)
+		{
+			nnforge_uniform_real_distribution<float> nd(min, max);
+
+			for(std::vector<float>::iterator it2 = it->begin(); it2 != it->end(); ++it2)
+				*it2 = nd(gen);
+		}
+	}
+
 	layer_data::mult_transform::mult_transform(float mult)
 		: mult(mult)
 	{

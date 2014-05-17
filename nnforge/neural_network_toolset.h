@@ -163,6 +163,7 @@ namespace nnforge
 		int test_validate_ann_index;
 		unsigned int snapshot_ann_index;
 		std::string snapshot_data_set;
+		unsigned int profile_updater_entry_count;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(

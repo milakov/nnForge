@@ -34,6 +34,15 @@ static __forceinline__ __device__ float __load_nc(const float * ptr)
 #endif
 }
 
+static __forceinline__ __device__ float2 __load_nc(const float2 * ptr)
+{
+#if __CUDA_ARCH__ >= 350
+	return __ldg(ptr);
+#else
+	return *ptr;
+#endif
+}
+
 template<typename element_type, int length>
 class array_by_val
 {

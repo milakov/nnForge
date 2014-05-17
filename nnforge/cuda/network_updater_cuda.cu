@@ -158,8 +158,8 @@ namespace nnforge
 			for(unsigned int i = 0; i < learning_rate_vector_list.size(); ++i)
 				res.push_back(testing_result_smart_ptr(new testing_result(ef)));
 
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data = enqueue_get_data(data_list, *command_stream);
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > learning_rate_data = enqueue_get_learning_rate(learning_rate_vector_list, *command_stream);
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data = get_data(data_list);
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > learning_rate_data = get_learning_rate(learning_rate_vector_list);
 
 			buffer_cuda_size_configuration buffers_config;
 			update_buffers_configuration(buffers_config, updater_entry_count);
@@ -553,71 +553,33 @@ namespace nnforge
 			}
 		}
 
-		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::enqueue_get_learning_rate(
-			const std::vector<network_data_smart_ptr>& learning_rate_list,
-			cudaStream_t stream_id) const
+		std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::get_data(const std::vector<network_data_smart_ptr>& data) const
 		{
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > res;
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > res;
 
-			const network_data_smart_ptr& first_data = learning_rate_list[0];
-
-			for(unsigned int layer_id = testing_layer_count; layer_id < updater_schemas.size() + testing_layer_count; ++layer_id)
+			for(int i = 0; i < updater_list.size(); ++i)
 			{
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> buffer_list;
-				unsigned int subindex = 0;
-				for(std::vector<std::vector<float> >::iterator it = (*first_data)[layer_id]->begin(); it != (*first_data)[layer_id]->end(); ++it, ++subindex)
-				{
-					size_t single_size = it->size();
-					std::vector<float> pack(single_size * learning_rate_list.size());
-
-					std::vector<float>::iterator fill_it = pack.begin();
-					for(std::vector<network_data_smart_ptr>::const_iterator sample_it = learning_rate_list.begin(); sample_it != learning_rate_list.end(); sample_it++)
-					{
-						const std::vector<float>& inp_buf = (*sample_it)->at(layer_id)->at(subindex);
-						fill_it = std::copy(inp_buf.begin(), inp_buf.end(), fill_it);
-					}
-
-					buffer_list.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-						&(*pack.begin()),
-						pack.size() * sizeof(float),
-						stream_id)));
-				}
-				res.push_back(buffer_list);
+				std::vector<layer_data_smart_ptr> data_list; 
+				for(int j = 0; j < data.size(); ++j)
+					data_list.push_back(data[j]->at(i + testing_layer_count));
+				std::vector<cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->get_data(data_list);
+				res.push_back(device_data);
 			}
 
 			return res;
 		}
 
-		std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::enqueue_get_data(
-			const std::vector<network_data_smart_ptr>& data_list,
-			cudaStream_t stream_id) const
+		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::get_learning_rate(const std::vector<network_data_smart_ptr>& learning_rate) const
 		{
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > res;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > res;
 
-			const network_data_smart_ptr& first_data = data_list[0];
-
-			for(unsigned int layer_id = testing_layer_count; layer_id < updater_schemas.size() + testing_layer_count; ++layer_id)
+			for(int i = 0; i < updater_list.size(); ++i)
 			{
-				std::vector<cuda_linear_buffer_device_smart_ptr> buffer_list;
-				unsigned int subindex = 0;
-				for(std::vector<std::vector<float> >::iterator it = (*first_data)[layer_id]->begin(); it != (*first_data)[layer_id]->end(); ++it, ++subindex)
-				{
-					size_t single_size = it->size();
-					std::vector<float> pack(single_size * data_list.size());
-
-					std::vector<float>::iterator fill_it = pack.begin();
-					for(std::vector<network_data_smart_ptr>::const_iterator sample_it = data_list.begin(); sample_it != data_list.end(); sample_it++)
-					{
-						const std::vector<float>& inp_buf = (*sample_it)->at(layer_id)->at(subindex);
-						fill_it = std::copy(inp_buf.begin(), inp_buf.end(), fill_it);
-					}
-
-					buffer_list.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-						&(*pack.begin()),
-						pack.size() * sizeof(float),
-						stream_id)));
-				}
-				res.push_back(buffer_list);
+				std::vector<const_layer_data_smart_ptr> data_list; 
+				for(int j = 0; j < learning_rate.size(); ++j)
+					data_list.push_back(learning_rate[j]->at(i + testing_layer_count));
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->get_learning_rate(data_list);
+				res.push_back(device_data);
 			}
 
 			return res;
@@ -628,10 +590,17 @@ namespace nnforge
 			std::vector<network_data_smart_ptr>& res,
 			cudaStream_t stream_id) const
 		{
-			const network_data_smart_ptr& first_data = res[0];
+			const network_data_smart_ptr& first_data = res.front();
 			unsigned int layer_id = testing_layer_count;
 			for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator src_it = data_list.begin(); src_it != data_list.end(); ++src_it, ++layer_id)
 			{
+				std::vector<layer_data_smart_ptr> host_data_list;
+				for(std::vector<network_data_smart_ptr>::const_iterator sample_it = res.begin(); sample_it != res.end(); sample_it++)
+					host_data_list.push_back((*sample_it)->at(layer_id));
+				updater_list[layer_id]->get_data_from_device(*src_it, host_data_list);
+			}
+
+			/*
 				unsigned int subindex = 0;
 				for(std::vector<cuda_linear_buffer_device_smart_ptr>::iterator src_it2 = src_it->begin(); src_it2 != src_it->end(); ++src_it2, ++subindex)
 				{
@@ -649,6 +618,7 @@ namespace nnforge
 					}
 				}
 			}
+			*/
 		}
 
 		void network_updater_cuda::update_buffers_configuration(
