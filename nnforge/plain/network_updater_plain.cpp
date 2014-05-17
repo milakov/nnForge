@@ -324,7 +324,7 @@ namespace nnforge
 						for(int updater_entry_id = 0; updater_entry_id < elem_count; ++updater_entry_id)
 						{
 							const float * predicted_vals = &(*(output_buffer_it + (updater_entry_id * output_neuron_count)));
-							const float * actual_vals = &(*(actual_output_buf_it + (updater_entry_id * output_neuron_count)));
+							const float * actual_vals = &(*actual_output_buf_it);
 							float * initial_errors = &(*(initial_error_it + (updater_entry_id * output_neuron_count)));
 							testing_result& tr = **(testing_res_it + updater_entry_id);
 
