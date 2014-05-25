@@ -591,34 +591,14 @@ namespace nnforge
 			cudaStream_t stream_id) const
 		{
 			const network_data_smart_ptr& first_data = res.front();
-			unsigned int layer_id = testing_layer_count;
+			unsigned int layer_id = 0;
 			for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator src_it = data_list.begin(); src_it != data_list.end(); ++src_it, ++layer_id)
 			{
 				std::vector<layer_data_smart_ptr> host_data_list;
 				for(std::vector<network_data_smart_ptr>::const_iterator sample_it = res.begin(); sample_it != res.end(); sample_it++)
-					host_data_list.push_back((*sample_it)->at(layer_id));
+					host_data_list.push_back((*sample_it)->at(layer_id + testing_layer_count));
 				updater_list[layer_id]->get_data_from_device(*src_it, host_data_list);
 			}
-
-			/*
-				unsigned int subindex = 0;
-				for(std::vector<cuda_linear_buffer_device_smart_ptr>::iterator src_it2 = src_it->begin(); src_it2 != src_it->end(); ++src_it2, ++subindex)
-				{
-					cuda_linear_buffer_device_smart_ptr src = *src_it2;
-					std::vector<float> pack(src->get_size() / sizeof(float));
-					cuda_safe_call(cudaMemcpyAsync(&(*pack.begin()), *src, pack.size() * sizeof(float), cudaMemcpyDeviceToHost, stream_id));
-					cuda_safe_call(cudaStreamSynchronize(stream_id));
-
-					std::vector<float>::const_iterator src_buf_it = pack.begin();
-					for(std::vector<network_data_smart_ptr>::const_iterator sample_it = res.begin(); sample_it != res.end(); sample_it++)
-					{
-						std::vector<float>& dst_buf = (*sample_it)->at(layer_id)->at(subindex);
-						std::copy(src_buf_it, src_buf_it + dst_buf.size(), dst_buf.begin());
-						src_buf_it += dst_buf.size();
-					}
-				}
-			}
-			*/
 		}
 
 		void network_updater_cuda::update_buffers_configuration(
