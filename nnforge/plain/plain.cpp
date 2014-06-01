@@ -28,6 +28,7 @@
 #include "soft_rectified_linear_layer_tester_plain.h"
 #include "softmax_layer_tester_plain.h"
 #include "maxout_layer_tester_plain.h"
+#include "rgb_to_yuv_convert_layer_tester_plain.h"
 
 #include "layer_hessian_plain_factory.h"
 #include "absolute_layer_hessian_plain.h"
@@ -74,6 +75,7 @@ namespace nnforge
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new soft_rectified_linear_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new softmax_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new maxout_layer_tester_plain()));
+			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new rgb_to_yuv_convert_layer_tester_plain()));
 
 			single_layer_hessian_plain_factory::get_mutable_instance().register_layer_hessian_plain(layer_hessian_plain_smart_ptr(new absolute_layer_hessian_plain()));
 			single_layer_hessian_plain_factory::get_mutable_instance().register_layer_hessian_plain(layer_hessian_plain_smart_ptr(new hyperbolic_tangent_layer_hessian_plain()));
