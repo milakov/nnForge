@@ -33,9 +33,11 @@ namespace nnforge
 			const output_neuron_class_set& neuron_class_set_predicted,
 			const output_neuron_class_set& neuron_class_set_actual);
 
-		float get_invalid_ratio() const;
+		std::vector<float> get_invalid_ratio_list() const;
 
-		std::vector<std::pair<unsigned int, unsigned int> > predicted_and_actual_class_pair_id_list;
+		std::vector<unsigned int> predicted_class_id_list;
+		std::vector<unsigned int> actual_class_id_list;
+		unsigned int top_n;
 	};
 
 	std::ostream& operator<< (std::ostream& out, const classifier_result& val);

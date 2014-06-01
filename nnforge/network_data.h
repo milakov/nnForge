@@ -38,7 +38,7 @@ namespace nnforge
 		const boost::uuids::uuid& get_uuid() const;
 
 		// All data values are initialized to 0.0F
-		network_data(const const_layer_list& layer_list);
+		network_data(const const_layer_list& layer_list, float val = 0.0F);
 
 		// The stream should be created with std::ios_base::binary flag
 		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "data_writer.h"
 #include "supervised_data_stream_schema.h"
 #include "layer_configuration_specific.h"
 #include "neuron_data_type.h"
@@ -26,7 +27,7 @@
 
 namespace nnforge
 {
-	class supervised_data_stream_writer
+	class supervised_data_stream_writer : public data_writer
 	{
 	public:
 		// The constructor modifies output_stream to throw exceptions in case of failure
@@ -34,7 +35,8 @@ namespace nnforge
 		supervised_data_stream_writer(
 			nnforge_shared_ptr<std::ostream> output_stream,
 			const layer_configuration_specific& input_configuration,
-			const layer_configuration_specific& output_configuration);
+			const layer_configuration_specific& output_configuration,
+			neuron_data_type::input_type type_code = neuron_data_type::type_unknown);
 
 		virtual ~supervised_data_stream_writer();
 
@@ -50,6 +52,10 @@ namespace nnforge
 		void write(
 			const unsigned char * input_neurons,
 			const float * output_neurons);
+
+		virtual void raw_write(
+			const void * all_entry_data,
+			size_t data_length);
 
 	private:
 		nnforge_shared_ptr<std::ostream> out_stream;

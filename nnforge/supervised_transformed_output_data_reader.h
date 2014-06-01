@@ -38,7 +38,13 @@ namespace nnforge
 			void * input_elems,
 			float * output_elems);
 
+		virtual bool raw_read(std::vector<unsigned char>& all_elems);
+
+		virtual void rewind(unsigned int entry_id);
+
 		virtual void reset();
+
+		virtual void next_epoch();
 
 		virtual layer_configuration_specific get_input_configuration() const;
 
@@ -46,12 +52,10 @@ namespace nnforge
 
 		virtual neuron_data_type::input_type get_input_type() const;
 
-		virtual void set_max_entries_to_read(unsigned int max_entries_to_read);
+		virtual unsigned int get_entry_count() const;
 
 	protected:
 		supervised_transformed_output_data_reader();
-
-		virtual unsigned int get_actual_entry_count() const;
 
 	protected:
 		supervised_data_reader_smart_ptr original_reader;

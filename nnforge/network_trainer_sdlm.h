@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ namespace nnforge
 		float hessian_entry_to_process_ratio;
 		float max_mu;
 		float mu_increase_factor;
-		float speed;
 		bool per_layer_mu;
 
 	protected:
@@ -96,4 +95,6 @@ namespace nnforge
 			const char * filename_prefix) const;
 #endif
 	};
+
+	typedef nnforge_shared_ptr<network_trainer_sdlm> network_trainer_sdlm_smart_ptr;
 }

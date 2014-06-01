@@ -27,6 +27,7 @@ namespace nnforge
 		, epoch_count(50)
 		, learning_rate_decay_tail_epoch_count(0)
 		, learning_rate_decay_rate(0.5F)
+		, learning_rate(0.02F)
 	{
 	}
 
@@ -87,6 +88,8 @@ namespace nnforge
 					task_list.erase(task_list.begin() + i);
 				}
 			}
+
+			reader.next_epoch();
 		}
 	}
 
@@ -102,13 +105,23 @@ namespace nnforge
 		return !sanity_check;
 	}
 
-	float network_trainer::get_tail_decay_factor(unsigned int epoch) const
+	float network_trainer::get_global_learning_rate(unsigned int epoch) const
 	{
-		int first_iteration_with_decay = std::max(static_cast<int>(epoch_count) - static_cast<int>(learning_rate_decay_tail_epoch_count), 1);
-		int tail_degradation_epoch = static_cast<int>(epoch) - first_iteration_with_decay + 1;
-		if (tail_degradation_epoch <= 0)
-			return 1.0F;
-		else
-			return powf(learning_rate_decay_rate, static_cast<float>(tail_degradation_epoch));
+		float tail_degradation_factor = 1.0F;
+		{
+			int first_iteration_with_decay = std::max(static_cast<int>(epoch_count) - static_cast<int>(learning_rate_decay_tail_epoch_count), 1);
+			int tail_degradation_epoch = static_cast<int>(epoch) - first_iteration_with_decay + 1;
+			if (tail_degradation_epoch > 0)
+				tail_degradation_factor = powf(learning_rate_decay_rate, static_cast<float>(tail_degradation_epoch));
+		}
+
+		float head_degradation_factor = 1.0F;
+		{
+			int head_rise_epoch = static_cast<int>(learning_rate_rise_head_epoch_count) - static_cast<int>(epoch);
+			if (head_rise_epoch > 0)
+				head_degradation_factor = powf(learning_rate_rise_rate, static_cast<float>(head_rise_epoch));
+		}
+
+		return tail_degradation_factor * head_degradation_factor * learning_rate;
 	}
 }

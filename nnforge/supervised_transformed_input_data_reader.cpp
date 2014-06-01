@@ -90,6 +90,13 @@ namespace nnforge
 		original_reader->reset();
 	}
 
+	void supervised_transformed_input_data_reader::next_epoch()
+	{
+		current_sample_id = 0;
+		transformer->reset();
+		original_reader->next_epoch();
+	}
+
 	layer_configuration_specific supervised_transformed_input_data_reader::get_input_configuration() const
 	{
 		return transformer->get_transformed_configuration(original_reader->get_input_configuration());
@@ -100,7 +107,7 @@ namespace nnforge
 		return original_reader->get_output_configuration();
 	}
 
-	unsigned int supervised_transformed_input_data_reader::get_actual_entry_count() const
+	unsigned int supervised_transformed_input_data_reader::get_entry_count() const
 	{
 		return original_reader->get_entry_count() * transformer_sample_count;
 	}
@@ -110,8 +117,13 @@ namespace nnforge
 		return original_reader->get_input_type();
 	}
 
-	void supervised_transformed_input_data_reader::set_max_entries_to_read(unsigned int max_entries_to_read)
+	void supervised_transformed_input_data_reader::rewind(unsigned int entry_id)
 	{
-		original_reader->set_max_entries_to_read(max_entries_to_read);
+		throw std::runtime_error("rewind not implemented for supervised_transformed_input_data_reader");
+	}
+
+	bool supervised_transformed_input_data_reader::raw_read(std::vector<unsigned char>& all_elems)
+	{
+		throw std::runtime_error("raw_read not implemented for supervised_transformed_input_data_reader");
 	}
 }

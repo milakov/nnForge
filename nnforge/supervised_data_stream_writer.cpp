@@ -25,8 +25,9 @@ namespace nnforge
 	supervised_data_stream_writer::supervised_data_stream_writer(
 		nnforge_shared_ptr<std::ostream> output_stream,
 		const layer_configuration_specific& input_configuration,
-		const layer_configuration_specific& output_configuration)
-		: out_stream(output_stream), entry_count(0), type_code(neuron_data_type::type_unknown)
+		const layer_configuration_specific& output_configuration,
+		neuron_data_type::input_type type_code)
+		: out_stream(output_stream), entry_count(0), type_code(type_code)
 	{
 		out_stream->exceptions(std::ostream::failbit | std::ostream::badbit);
 
@@ -115,6 +116,17 @@ namespace nnforge
 
 		out_stream->write(reinterpret_cast<const char*>(input_neurons), input_elem_size * input_neuron_count);
 		out_stream->write(reinterpret_cast<const char*>(output_neurons), sizeof(*output_neurons) * output_neuron_count);
+		entry_count++;
+	}
+
+ 	void supervised_data_stream_writer::raw_write(
+		const void * all_entry_data,
+		size_t data_length)
+	{
+		if (type_code == neuron_data_type::type_unknown)
+			throw neural_network_exception("Type for input elements is not specified for supervised_data_stream_writer");
+
+		out_stream->write(reinterpret_cast<const char*>(all_entry_data), data_length);
 		entry_count++;
 	}
 }

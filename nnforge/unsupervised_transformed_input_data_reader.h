@@ -36,18 +36,22 @@ namespace nnforge
 		// If any parameter is null the method should just discard corresponding data
 		virtual bool read(void * input_elems);
 
+		virtual bool raw_read(std::vector<unsigned char>& all_elems);
+
+		virtual void rewind(unsigned int entry_id);
+
 		virtual void reset();
+
+		virtual void next_epoch();
 
 		virtual layer_configuration_specific get_input_configuration() const;
 
 		virtual neuron_data_type::input_type get_input_type() const;
 
-		virtual void set_max_entries_to_read(unsigned int max_entries_to_read);
+		virtual unsigned int get_entry_count() const;
 
 	protected:
 		unsupervised_transformed_input_data_reader();
-
-		virtual unsigned int get_actual_entry_count() const;
 
 	protected:
 		unsupervised_data_reader_smart_ptr original_reader;

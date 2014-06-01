@@ -129,4 +129,73 @@ namespace nnforge
 
 		return res;
 	}
+
+	void supervised_data_reader::fill_class_buckets_entry_id_lists(std::vector<randomized_classifier_keeper>& class_buckets_entry_id_lists)
+	{
+		unsigned int output_neuron_count = get_output_configuration().get_neuron_count();
+
+		class_buckets_entry_id_lists.resize(output_neuron_count + 1);
+
+		std::vector<float> output(output_neuron_count);
+
+		unsigned int entry_id = 0;
+		while (read(0, &(*output.begin())))
+		{
+			float min_value = *std::min_element(output.begin(), output.end());
+			std::vector<float>::iterator max_elem = std::max_element(output.begin(), output.end());
+
+			if ((min_value < *max_elem) || (*max_elem > 0.0F))
+				class_buckets_entry_id_lists[max_elem - output.begin()].push(entry_id);
+			else
+				class_buckets_entry_id_lists[output.size()].push(entry_id);
+
+			++entry_id;
+		}
+	}
+
+	randomized_classifier_keeper::randomized_classifier_keeper()
+		: pushed_count(0)
+		, remaining_ratio(0.0F)
+	{
+	}
+
+	bool randomized_classifier_keeper::is_empty()
+	{
+		return entry_id_list.empty();
+	}
+
+	float randomized_classifier_keeper::get_ratio()
+	{
+		return remaining_ratio;
+	}
+
+	void randomized_classifier_keeper::push(unsigned int entry_id)
+	{
+		entry_id_list.push_back(entry_id);
+		++pushed_count;
+
+		update_ratio();
+	}
+
+	unsigned int randomized_classifier_keeper::peek_random(random_generator& rnd)
+	{
+		nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(entry_id_list.size()) - 1);
+
+		unsigned int index = dist(rnd);
+		unsigned int entry_id = entry_id_list[index];
+
+		unsigned int leftover_entry_id = entry_id_list[entry_id_list.size() - 1];
+		entry_id_list[index] = leftover_entry_id;
+
+		entry_id_list.pop_back();
+
+		update_ratio();
+
+		return entry_id;
+	}
+
+	void randomized_classifier_keeper::update_ratio()
+	{
+		remaining_ratio = pushed_count > 0 ? static_cast<float>(entry_id_list.size()) / static_cast<float>(pushed_count) : 0.0F;
+	}
 }

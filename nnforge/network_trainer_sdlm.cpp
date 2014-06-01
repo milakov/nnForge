@@ -37,7 +37,6 @@ namespace nnforge
 		, hessian_entry_to_process_ratio(0.05F)
 		, max_mu(1.0F)
 		, mu_increase_factor(1.0F)
-		, speed(0.02F)
 		, per_layer_mu(false)
 	{
 	}
@@ -209,7 +208,7 @@ namespace nnforge
 				for(layer_data::iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++, ah_it2++)
 				{
 					float mu = *ah_it2;
-					float eta = mu * speed * get_tail_decay_factor(static_cast<unsigned int>(history.size()));
+					float eta = mu * get_global_learning_rate(static_cast<unsigned int>(history.size()));
 					hessian_transform ht(mu, eta);
 					std::transform(it2->begin(), it2->end(), it2->begin(), ht);
 
@@ -260,7 +259,7 @@ namespace nnforge
 		float mu = min_hessian * 0.5F * powf(mu_increase_factor, static_cast<float>(history.size()));
 		mu = std::min(mu, max_mu_current);
 
-		float eta = mu * speed * get_tail_decay_factor(static_cast<unsigned int>(history.size()));
+		float eta = mu * get_global_learning_rate(static_cast<unsigned int>(history.size()));
 
 		std::vector<std::vector<float> > avg_lr_lists;
 		for(network_data::iterator it = hessian->begin(); it != hessian->end(); it++)
@@ -306,5 +305,6 @@ namespace nnforge
 	void network_trainer_sdlm::initialize_train(supervised_data_reader& reader)
 	{
 		updater->set_input_configuration_specific(reader.get_input_configuration());
+		hessian_calc->set_input_configuration_specific(reader.get_input_configuration());
 	}
 }

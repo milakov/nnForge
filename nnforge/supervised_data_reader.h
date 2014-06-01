@@ -21,11 +21,33 @@
 #include "neuron_data_type.h"
 #include "unsupervised_data_reader.h"
 #include "feature_map_data_stat.h"
+#include "rnd.h"
 
 #include <vector>
 
 namespace nnforge
 {
+	class randomized_classifier_keeper
+	{
+	public:
+		randomized_classifier_keeper();
+
+		bool is_empty();
+
+		float get_ratio();
+
+		void push(unsigned int entry_id);
+
+		unsigned int peek_random(random_generator& rnd);
+
+	protected:
+		std::vector<unsigned int> entry_id_list;
+		unsigned int pushed_count;
+		float remaining_ratio;
+
+		void update_ratio();
+	};
+
 	class supervised_data_reader : public unsupervised_data_reader
 	{
 	public:
@@ -44,6 +66,8 @@ namespace nnforge
 		output_neuron_value_set_smart_ptr get_output_neuron_value_set(unsigned int sample_count);
 
 		std::vector<feature_map_data_stat> get_feature_map_output_data_stat_list();
+
+		void fill_class_buckets_entry_id_lists(std::vector<randomized_classifier_keeper>& class_buckets_entry_id_lists);
 
 	protected:
 		supervised_data_reader();

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,13 +40,16 @@ namespace nnforge
 			network_data_pusher& pusher);
 
 		unsigned int epoch_count;
+		float learning_rate;
 		unsigned int learning_rate_decay_tail_epoch_count;
 		float learning_rate_decay_rate;
+		unsigned int learning_rate_rise_head_epoch_count;
+		float learning_rate_rise_rate;
 
 	protected:
 		network_trainer(network_schema_smart_ptr schema);
 
-		float get_tail_decay_factor(unsigned int epoch) const;
+		float get_global_learning_rate(unsigned int epoch) const;
 
 		virtual void initialize_train(supervised_data_reader& reader) = 0;
 

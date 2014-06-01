@@ -73,9 +73,26 @@ namespace nnforge
 		return true;
 	}
 
-	bool unsupervised_data_stream_reader::entry_available()
+	bool unsupervised_data_stream_reader::raw_read(std::vector<unsigned char>& all_elems)
 	{
-		return (entry_read_count < get_entry_count());
+		if (!entry_available())
+			return false;
+
+		all_elems.resize(get_input_neuron_elem_size() * input_neuron_count);
+		in_stream->read(reinterpret_cast<char*>(&(*all_elems.begin())), get_input_neuron_elem_size() * input_neuron_count);
+
+		return true;
 	}
 
+	bool unsupervised_data_stream_reader::entry_available()
+	{
+		return (entry_read_count < entry_count);
+	}
+
+	void unsupervised_data_stream_reader::rewind(unsigned int entry_id)
+	{
+		in_stream->seekg(reset_pos + (std::istream::off_type)entry_id * (std::istream::off_type)(get_input_neuron_elem_size() * input_neuron_count), std::ios::cur);
+
+		entry_read_count = entry_id;
+	}
 }

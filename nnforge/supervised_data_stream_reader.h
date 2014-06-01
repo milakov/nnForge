@@ -18,9 +18,7 @@
 
 #include "supervised_data_reader.h"
 #include "supervised_data_stream_schema.h"
-#include "supervised_data_stream_writer.h"
 #include "neural_network_exception.h"
-#include "rnd.h"
 #include "neuron_data_type.h"
 #include "nn_types.h"
 
@@ -30,27 +28,6 @@
 
 namespace nnforge
 {
-	class randomized_classifier_keeper
-	{
-	public:
-		randomized_classifier_keeper();
-
-		bool is_empty();
-
-		float get_ratio();
-
-		void push(unsigned int entry_id);
-
-		unsigned int peek_random(random_generator& rnd);
-
-	protected:
-		std::vector<unsigned int> entry_id_list;
-		unsigned int pushed_count;
-		float remaining_ratio;
-
-		void update_ratio();
-	};
-
 	class supervised_data_stream_reader : public supervised_data_reader
 	{
 	public:
@@ -64,6 +41,8 @@ namespace nnforge
 		virtual bool read(
 			void * input_neurons,
 			float * output_neurons);
+
+		virtual bool raw_read(std::vector<unsigned char>& all_elems);
 
 		virtual layer_configuration_specific get_input_configuration() const
 		{
@@ -80,21 +59,15 @@ namespace nnforge
 			return type_code;
 		}
 
-		void write_randomized(nnforge_shared_ptr<std::ostream> output_stream);
-
-		void write_randomized_classifier(nnforge_shared_ptr<std::ostream> output_stream);
-
-	protected:
-		virtual unsigned int get_actual_entry_count() const
+		virtual unsigned int get_entry_count() const
 		{
 			return entry_count;
 		}
 
+		virtual void rewind(unsigned int entry_id);
+
+	protected:
 		bool entry_available();
-
-		void rewind(unsigned int entry_id);
-
-		void fill_class_buckets_entry_id_lists(std::vector<randomized_classifier_keeper>& class_buckets_entry_id_lists);
 
 	protected:
 		nnforge_shared_ptr<std::istream> in_stream;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,24 +16,27 @@
 
 #pragma once
 
-#include <vector>
-
-#include "output_neuron_value_set.h"
-#include "nn_types.h"
+#include "unsupervised_data_reader.h"
+#include "supervised_data_reader.h"
 
 namespace nnforge
 {
-	class output_neuron_class_set
+	class data_writer
 	{
 	public:
-		output_neuron_class_set(unsigned int top_n);
+		virtual ~data_writer();
 
-		output_neuron_class_set(const output_neuron_value_set& neuron_value_set, unsigned int top_n);
+		virtual void raw_write(
+			const void * all_entry_data,
+			size_t data_length) = 0;
 
-		std::vector<unsigned int> class_id_list;
+		void write_randomized(unsupervised_data_reader& reader);
 
-		unsigned int top_n;
+		void write_randomized_classifier(supervised_data_reader& reader);
+
+	protected:
+		data_writer();
 	};
 
-	typedef nnforge_shared_ptr<output_neuron_class_set> output_neuron_class_set_smart_ptr;
+	typedef nnforge_shared_ptr<data_writer> data_writer_smart_ptr;
 }

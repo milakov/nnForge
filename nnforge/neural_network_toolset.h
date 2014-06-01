@@ -21,6 +21,8 @@
 #include "network_data_pusher.h"
 #include "testing_complete_result_set_visualizer.h"
 #include "network_output_type.h"
+#include "supervised_data_reader.h"
+#include "data_writer.h"
 #include "unsupervised_data_reader.h"
 #include "output_neuron_value_set.h"
 #include "output_neuron_class_set.h"
@@ -30,6 +32,7 @@
 #include "weight_vector_bound.h"
 #include "normalize_data_transformer.h"
 #include "error_function.h"
+#include "network_trainer.h"
 
 #include <boost/filesystem.hpp>
 
@@ -108,14 +111,6 @@ namespace nnforge
 
 		virtual const_error_function_smart_ptr get_error_function() const;
 
-		virtual supervised_data_reader_smart_ptr get_data_reader_for_training() const;
-
-		virtual supervised_data_reader_smart_ptr get_data_reader_for_validating() const;
-
-		virtual supervised_data_reader_smart_ptr get_data_reader_for_testing_supervised() const;
-
-		virtual unsupervised_data_reader_smart_ptr get_data_reader_for_testing_unsupervised() const;
-
 		virtual std::pair<unsupervised_data_reader_smart_ptr, unsigned int> get_data_reader_and_sample_count_for_snapshots() const;
 
 		virtual std::vector<std::vector<std::pair<unsigned int, unsigned int> > > get_samples_for_snapshot(
@@ -124,6 +119,24 @@ namespace nnforge
 			unsigned int sample_count);
 
 		virtual bool is_rgb_input() const;
+
+		virtual supervised_data_reader_smart_ptr get_original_training_data_reader(const boost::filesystem::path& path) const;
+
+		virtual data_writer_smart_ptr get_randomized_training_data_writer(
+			supervised_data_reader& reader,
+			const boost::filesystem::path& path) const;
+
+		virtual unsigned int get_epoch_count_for_training_set() const;
+
+		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_training() const;
+
+		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_validating() const;
+
+		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_testing_supervised() const;
+
+		virtual unsupervised_data_reader_smart_ptr get_initial_data_reader_for_testing_unsupervised() const;
+
+		virtual unsigned int get_classifier_visualizer_top_n() const;
 
 	protected:
 		static const char * training_data_filename;
@@ -135,6 +148,7 @@ namespace nnforge
 		static const char * normalizer_input_filename;
 		static const char * normalizer_output_filename;
 		static const char * snapshot_subfolder_name;
+		static const char * snapshot_data_subfolder_name;
 		static const char * ann_snapshot_subfolder_name;
 		static const char * snapshot_invalid_subfolder_name;
 		static const char * ann_subfolder_name;
@@ -147,13 +161,14 @@ namespace nnforge
 
 		std::string action;
 		std::string snapshot_extension;
-		std::string ann_snapshot_extension;
 		unsigned int ann_count;
 		unsigned int training_epoch_count;
 		unsigned int snapshot_count;
 		float learning_rate;
 		unsigned int learning_rate_decay_tail_epoch_count;
 		float learning_rate_decay_rate;
+		unsigned int learning_rate_rise_head_epoch_count;
+		float learning_rate_rise_rate;
 		float max_mu;
 		bool per_layer_mu;
 		float mu_increase_factor;
@@ -164,6 +179,8 @@ namespace nnforge
 		unsigned int snapshot_ann_index;
 		std::string snapshot_data_set;
 		unsigned int profile_updater_entry_count;
+		unsigned int profile_hessian_entry_count;
+		std::string training_algo;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
@@ -185,6 +202,8 @@ namespace nnforge
 		void validate(bool is_validate);
 
 		void snapshot();
+
+		void snapshot_data();
 
 		void snapshot_invalid();
 
@@ -209,6 +228,8 @@ namespace nnforge
 
 		normalize_data_transformer_smart_ptr get_reverse_output_data_normalize_transformer() const;
 
+		supervised_data_reader_smart_ptr get_data_reader_for_training() const;
+
 		std::pair<supervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_validating_and_sample_count() const;
 
 		std::pair<supervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_testing_supervised_and_sample_count() const;
@@ -221,6 +242,8 @@ namespace nnforge
 			unsigned int feature_map_id,
 			const std::vector<unsigned int>& location_list,
 			unsigned int feature_map_count) const;
+
+		network_trainer_smart_ptr get_network_trainer(network_schema_smart_ptr schema) const;
 
 	private:
 		factory_generator_smart_ptr factory;

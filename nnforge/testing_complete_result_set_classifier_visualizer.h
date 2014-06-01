@@ -23,13 +23,16 @@ namespace nnforge
 	class testing_complete_result_set_classifier_visualizer : public testing_complete_result_set_visualizer
 	{
 	public:
-		testing_complete_result_set_classifier_visualizer();
+		testing_complete_result_set_classifier_visualizer(unsigned int top_n);
 
 		~testing_complete_result_set_classifier_visualizer();
 
 		virtual void dump(
 			std::ostream& out,
 			const testing_complete_result_set& val) const;
+
+	protected:
+		unsigned int top_n;
 	};
 }
 

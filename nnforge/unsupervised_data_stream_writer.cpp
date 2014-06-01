@@ -105,4 +105,12 @@ namespace nnforge
 		out_stream->write(reinterpret_cast<const char*>(input_neurons), input_elem_size * input_neuron_count);
 		entry_count++;
 	}
+
+ 	void unsupervised_data_stream_writer::raw_write(
+		const void * all_entry_data,
+		size_t data_length)
+	{
+		out_stream->write(reinterpret_cast<const char*>(all_entry_data), data_length);
+		entry_count++;
+	}
 }

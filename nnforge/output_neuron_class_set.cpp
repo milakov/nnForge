@@ -16,65 +16,59 @@
 
 #include "output_neuron_class_set.h"
 
+#include "neural_network_exception.h"
+
 #include <algorithm>
 #include <map>
+#include <limits>
+#include <boost/format.hpp>
 
 namespace nnforge
 {
-	output_neuron_class_set::output_neuron_class_set()
+	output_neuron_class_set::output_neuron_class_set(unsigned int top_n)
+		: top_n(top_n)
 	{
 	}
 
-	output_neuron_class_set::output_neuron_class_set(const output_neuron_value_set& neuron_value_set)
-		: class_id_list(neuron_value_set.neuron_value_list.size())
+	output_neuron_class_set::output_neuron_class_set(const output_neuron_value_set& neuron_value_set, unsigned int top_n)
+		: top_n(top_n)
+		, class_id_list(neuron_value_set.neuron_value_list.size() * top_n)
 	{
+		if (neuron_value_set.neuron_value_list.empty())
+			throw neural_network_exception("Empty neuron_value_set passed to output_neuron_class_set");
+		unsigned int class_count = neuron_value_set.neuron_value_list.front().size();
+		if (class_count < top_n)
+			throw neural_network_exception((boost::format("Class count is %1%, it smaller than top %2% requested from output_neuron_class_set") % class_count % top_n).str());
+
 		std::vector<unsigned int>::iterator dest_it = class_id_list.begin();
+		std::vector<std::pair<float, unsigned int> > current_best_elems(top_n);
 		for(std::vector<std::vector<float> >::const_iterator it = neuron_value_set.neuron_value_list.begin(); it != neuron_value_set.neuron_value_list.end(); it++)
 		{
 			const std::vector<float>& neuron_values = *it;
+			std::fill_n(current_best_elems.begin(), top_n, std::make_pair(-std::numeric_limits<float>::max(), class_count));
 
-			unsigned int max_neuron_id = static_cast<unsigned int>(std::max_element(neuron_values.begin(), neuron_values.end()) - neuron_values.begin());
-
-			*dest_it = max_neuron_id;
-			dest_it++;
-		}
-	}
-
-	output_neuron_class_set::output_neuron_class_set(const std::vector<nnforge_shared_ptr<output_neuron_class_set> >& source_output_neuron_class_set_list)
-		: class_id_list(source_output_neuron_class_set_list[0]->class_id_list.size())
-	{
-		for(unsigned int i = 0; i < class_id_list.size(); i++)
-		{
-			std::map<unsigned int, unsigned int> dest_map;
-
-			for(std::vector<output_neuron_class_set_smart_ptr>::const_iterator it = source_output_neuron_class_set_list.begin();
-				it != source_output_neuron_class_set_list.end();
-				it++)
+			for(int class_id = 0; class_id < class_count; ++class_id)
 			{
-				unsigned int predicted_class_id = (*it)->class_id_list[i];
+				float neuron_val = neuron_values[class_id];
+				if (neuron_val <= current_best_elems.back().first)
+					continue;
 
-				std::map<unsigned int, unsigned int>::iterator it3 = dest_map.find(predicted_class_id);
-				if (it3 == dest_map.end())
-					dest_map.insert(std::make_pair(predicted_class_id, 1));
-				else
-					it3->second++;
-			}
-
-			unsigned int predicted_class_id = 0;
-			unsigned int predicted_count = 0;
-			for(std::map<unsigned int, unsigned int>::iterator it2 = dest_map.begin(); it2 != dest_map.end(); it2++)
-			{
-				unsigned int current_predicted_class_id = it2->first;
-				unsigned int current_predicted_count = it2->second;
-
-				if ((current_predicted_count > predicted_count) || ((current_predicted_count == predicted_count) && (current_predicted_class_id < predicted_class_id)))
+				unsigned int target_position = top_n - 1;
+				for(;target_position >= 1; --target_position)
 				{
-					predicted_class_id = current_predicted_class_id;
-					predicted_count = current_predicted_count;
+					if (current_best_elems[target_position - 1].first >= neuron_val)
+						break;
+
+					current_best_elems[target_position] = current_best_elems[target_position - 1];
 				}
+				current_best_elems[target_position] = std::make_pair(neuron_val, class_id);
 			}
 
-			class_id_list[i] = predicted_class_id;
+			for(int i = 0; i < top_n; ++i)
+			{
+				*dest_it = current_best_elems[i].second;
+				++dest_it;
+			}
 		}
 	}
 }

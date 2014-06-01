@@ -29,6 +29,7 @@
 #define nnforge_regex std::regex
 #define nnforge_cmatch std::cmatch
 #define nnforge_regex_search std::regex_search
+#define nnforge_regex_match std::regex_match
 #define nnforge_dynamic_pointer_cast std::dynamic_pointer_cast
 #define nnforge_array std::array
 #else
@@ -40,6 +41,7 @@
 #define nnforge_regex std::tr1::regex
 #define nnforge_cmatch std::tr1::cmatch
 #define nnforge_regex_search std::tr1::regex_search
+#define nnforge_regex_match std::tr1::regex_match
 #define nnforge_dynamic_pointer_cast std::tr1::dynamic_pointer_cast
 #define nnforge_array std::tr1::array
 #endif

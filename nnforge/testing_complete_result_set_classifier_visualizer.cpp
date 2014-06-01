@@ -23,7 +23,8 @@
 
 namespace nnforge
 {
-	testing_complete_result_set_classifier_visualizer::testing_complete_result_set_classifier_visualizer()
+	testing_complete_result_set_classifier_visualizer::testing_complete_result_set_classifier_visualizer(unsigned int top_n)
+		: top_n(top_n)
 	{
 	}
 
@@ -37,8 +38,8 @@ namespace nnforge
 	{
 		testing_complete_result_set_visualizer::dump(out, val);
 
-		output_neuron_class_set predicted_cs(*val.predicted_output_neuron_value_set);
-		output_neuron_class_set actual_cs(*val.actual_output_neuron_value_set);
+		output_neuron_class_set predicted_cs(*val.predicted_output_neuron_value_set, top_n);
+		output_neuron_class_set actual_cs(*val.actual_output_neuron_value_set, 1);
 		classifier_result cr(predicted_cs, actual_cs);
 		out << ", " << cr;
 	}

@@ -36,12 +36,13 @@ namespace nnforge
 	{
 	}
 
-	network_data::network_data(const const_layer_list& layer_list)
+	network_data::network_data(const const_layer_list& layer_list, float val)
 	{
 		resize(layer_list.size());
 		for(unsigned int i = 0; i < size(); ++i)
 		{
 			at(i) = layer_list[i]->create_layer_data();
+			at(i)->fill(val);
 		}
 	}
 
@@ -140,7 +141,7 @@ namespace nnforge
 			{
 				const std::vector<float>& data = *it2;
 
-				float sum = std::accumulate(data.begin(), data.end(), 0.0F);
+				double sum = std::accumulate(data.begin(), data.end(), 0.0);
 				float avg = sum / data.size();
 
 				if (!layer_stat.empty())

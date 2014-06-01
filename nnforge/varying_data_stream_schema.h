@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,24 +16,18 @@
 
 #pragma once
 
-#include <vector>
-
-#include "output_neuron_value_set.h"
-#include "nn_types.h"
+#include <boost/uuid/uuid.hpp>
 
 namespace nnforge
 {
-	class output_neuron_class_set
+	class varying_data_stream_schema
 	{
 	public:
-		output_neuron_class_set(unsigned int top_n);
+		static const boost::uuids::uuid varying_data_stream_guid;
 
-		output_neuron_class_set(const output_neuron_value_set& neuron_value_set, unsigned int top_n);
-
-		std::vector<unsigned int> class_id_list;
-
-		unsigned int top_n;
+	private:
+		varying_data_stream_schema();
+		varying_data_stream_schema(const varying_data_stream_schema&);
+		varying_data_stream_schema& operator =(const varying_data_stream_schema&);
 	};
-
-	typedef nnforge_shared_ptr<output_neuron_class_set> output_neuron_class_set_smart_ptr;
 }

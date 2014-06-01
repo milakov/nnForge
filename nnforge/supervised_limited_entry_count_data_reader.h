@@ -17,20 +17,19 @@
 #pragma once
 
 #include "supervised_data_reader.h"
-#include "data_transformer.h"
 
 #include <memory>
 
 namespace nnforge
 {
-	class supervised_transformed_input_data_reader : public supervised_data_reader
+	class supervised_limited_entry_count_data_reader : public supervised_data_reader
 	{
 	public:
-		supervised_transformed_input_data_reader(
+		supervised_limited_entry_count_data_reader(
 			supervised_data_reader_smart_ptr original_reader,
-			data_transformer_smart_ptr transformer);
+			unsigned int max_entry_count);
 
-		virtual ~supervised_transformed_input_data_reader();
+		virtual ~supervised_limited_entry_count_data_reader();
 
 		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
 		// If any parameter is null the method should just discard corresponding data
@@ -44,8 +43,6 @@ namespace nnforge
 
 		virtual void reset();
 
-		virtual void next_epoch();
-
 		virtual layer_configuration_specific get_input_configuration() const;
 
 		virtual layer_configuration_specific get_output_configuration() const;
@@ -55,18 +52,15 @@ namespace nnforge
 		virtual unsigned int get_entry_count() const;
 
 	protected:
-		supervised_transformed_input_data_reader();
+		supervised_limited_entry_count_data_reader();
+
+	private:
+		bool entry_available();
 
 	protected:
 		supervised_data_reader_smart_ptr original_reader;
-		data_transformer_smart_ptr transformer;
+		unsigned int max_entry_count;
 
-		std::vector<unsigned char> input_buf;
-		std::vector<float> output_buf;
-		void * local_input_ptr;
-		float * local_output_ptr;
-		size_t output_buf_size;
-		unsigned int current_sample_id;
-		unsigned int transformer_sample_count;
+		unsigned int entry_read_count;
 	};
 }

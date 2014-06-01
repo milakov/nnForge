@@ -66,15 +66,15 @@ namespace nnforge
 			return type_code;
 		}
 
-	protected:
-		virtual unsigned int get_actual_entry_count() const
+		virtual unsigned int get_entry_count() const
 		{
 			return entry_count;
 		}
 
+	protected:
 		bool entry_available()
 		{
-			return (entry_read_count < get_entry_count());
+			return (entry_read_count < entry_count);
 		}
 
 	protected:

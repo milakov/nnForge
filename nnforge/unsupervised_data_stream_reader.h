@@ -40,6 +40,8 @@ namespace nnforge
 
 		virtual bool read(void * input_neurons);
 
+		virtual bool raw_read(std::vector<unsigned char>& all_elems);
+
 		virtual layer_configuration_specific get_input_configuration() const
 		{
 			return input_configuration;
@@ -50,12 +52,14 @@ namespace nnforge
 			return type_code;
 		}
 
-	protected:
-		virtual unsigned int get_actual_entry_count() const
+		virtual void rewind(unsigned int entry_id);
+
+		virtual unsigned int get_entry_count() const
 		{
 			return entry_count;
 		}
 
+	protected:
 		bool entry_available();
 
 	protected:

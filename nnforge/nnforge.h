@@ -33,9 +33,13 @@
 #include "neural_network_toolset.h"
 #include "supervised_data_stream_reader.h"
 #include "supervised_data_stream_writer.h"
+#include "varying_data_stream_writer.h"
+#include "varying_data_stream_schema.h"
 #include "unsupervised_data_stream_reader.h"
 #include "unsupervised_data_stream_writer.h"
 #include "supervised_data_mem_reader.h"
+#include "supervised_limited_entry_count_data_reader.h"
+#include "supervised_multiple_epoch_data_reader.h"
 #include "rnd.h"
 
 #include "data_transformer_util.h"
