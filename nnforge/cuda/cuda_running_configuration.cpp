@@ -162,7 +162,7 @@ namespace nnforge
 			size_t memory_left = static_cast<size_t>(static_cast<float>(global_memory_size) * max_global_memory_usage_ratio * ratio) - buffers_config.constant_buffer_size;
 			size_t entry_count_limited_by_global = memory_left / buffers_config.per_entry_buffer_size;
 
-			unsigned int entry_count_limited_by_linear_texture = buffers_config.max_tex_per_entry > 0 ? max_texture_1d_linear / buffers_config.max_tex_per_entry : std::numeric_limits<unsigned int>::max();
+			unsigned int entry_count_limited_by_linear_texture = buffers_config.max_tex_per_entry > 0 ? (max_texture_1d_linear - 1) / buffers_config.max_tex_per_entry : std::numeric_limits<int>::max();
 
 			unsigned int entry_count = std::min<unsigned int>(entry_count_limited_by_global, entry_count_limited_by_linear_texture);
 
