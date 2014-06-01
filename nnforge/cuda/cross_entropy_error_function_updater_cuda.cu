@@ -60,7 +60,7 @@ namespace nnforge
 			int lane_id = thread_id & 31;
 		#if __CUDA_ARCH__ < 300
 			volatile float * arr = arr_sh;
-			arr[neuron_id] = err;
+			arr[thread_id] = err;
 		#endif
 			#pragma unroll
 			for(int tx = 16; tx > 0; tx >>= 1)
@@ -88,7 +88,6 @@ namespace nnforge
 			{
 				for(int i = 1; i < (blockDim.x >> 5); ++i)
 					err += arr_sh[i];
-				err *= 0.5F;
 				double err_d = (double)err;
 
 				if (multiple_blocks)
