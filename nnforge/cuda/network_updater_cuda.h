@@ -97,6 +97,7 @@ namespace nnforge
 			const_layer_updater_schema_list updater_schemas;
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > updater_schema_data;
 			std::vector<layer_updater_cuda_smart_ptr> updater_list;
+			std::vector<std::vector<unsigned int> > incoming_weight_count_per_output_neuron_list_list;
 
 			weight_vector_bound_map weight_vector_bounds;
 

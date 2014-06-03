@@ -350,5 +350,15 @@ namespace nnforge
 
 			return threadblock_size;
 		}
+
+		std::vector<unsigned int> fully_connected_layer_updater_cuda::get_incoming_weight_count_per_output_neuron_list() const
+		{
+			std::vector<unsigned int> res;
+
+			res.push_back(input_elem_count_per_entry);
+			res.push_back(1);
+
+			return res;
+		}
 	}
 }

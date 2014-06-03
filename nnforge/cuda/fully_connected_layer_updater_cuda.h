@@ -64,6 +64,8 @@ namespace nnforge
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count);
 
+			virtual std::vector<unsigned int> get_incoming_weight_count_per_output_neuron_list() const;
+
 		protected:
 			virtual bool is_in_place_backprop() const;
 

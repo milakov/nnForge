@@ -262,5 +262,10 @@ namespace nnforge
 		{
 			std::copy(src, src + count, dst);
 		}
+
+		std::vector<unsigned int> layer_updater_cuda::get_incoming_weight_count_per_output_neuron_list() const
+		{
+			return std::vector<unsigned int>();
+		}
 	}
 }

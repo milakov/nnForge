@@ -1644,6 +1644,20 @@ namespace nnforge
 				return weight_elem_count_striped_per_entry * 2;
 			}
 
+			virtual std::vector<unsigned int> get_incoming_weight_count_per_output_neuron_list() const
+			{
+				std::vector<unsigned int> res;
+
+				unsigned int weight_elem_count = input_configuration_specific_striped.feature_map_count * 2;
+				for(int i = 0; i < dimension_count; ++i)
+					weight_elem_count *= window_sizes[i];
+
+				res.push_back(weight_elem_count);
+				res.push_back(1);
+
+				return res;
+			}
+
 			virtual void fill_data_for_device(
 				unsigned int part_id,
 				const float * src,

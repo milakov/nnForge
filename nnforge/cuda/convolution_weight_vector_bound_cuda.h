@@ -36,7 +36,8 @@ namespace nnforge
 				const weight_vector_bound& bound,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				const std::vector<unsigned int>& incoming_weight_count_per_output_neuron_list);
 
 		protected:
 			virtual weight_vector_bound_cuda_smart_ptr create_specific() const;
@@ -44,7 +45,6 @@ namespace nnforge
 			// The method is called when configuration is finished
 			virtual void weight_vector_bound_configured();
 
-			int incoming_weight_count_per_output_neuron;
 			int output_feature_map_count;
 
 		private:

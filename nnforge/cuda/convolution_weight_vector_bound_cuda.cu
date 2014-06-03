@@ -109,22 +109,23 @@ namespace nnforge
 			const weight_vector_bound& bound,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			const std::vector<unsigned int>& incoming_weight_count_per_output_neuron_list)
 		{
-			int threadblock_size = get_threadblock_size(incoming_weight_count_per_output_neuron);
+			int threadblock_size = get_threadblock_size(incoming_weight_count_per_output_neuron_list[0]);
 			dim3 grid_size(1, output_feature_map_count, entry_count);
 			dim3 block_size(threadblock_size, 1, 1);
-			int min_iteration_count = incoming_weight_count_per_output_neuron / threadblock_size;
+			int min_iteration_count = incoming_weight_count_per_output_neuron_list[0] / threadblock_size;
 			int smem_size = threadblock_size * sizeof(float);
 			float max_l2_norm_squared = bound.max_l2_norm * bound.max_l2_norm;
 
-			if (incoming_weight_count_per_output_neuron <= threadblock_size)
+			if (incoming_weight_count_per_output_neuron_list[0] <= threadblock_size)
 			{
 				convolution_normalize_weights_to_max_l2_norm_kernel<true><<<grid_size, block_size, smem_size, stream_id>>>(
 					*data[0],
 					*data[0],
 					max_l2_norm_squared,
-					incoming_weight_count_per_output_neuron,
+					incoming_weight_count_per_output_neuron_list[0],
 					output_feature_map_count,
 					min_iteration_count);
 			}
@@ -134,7 +135,7 @@ namespace nnforge
 					*data[0],
 					*data[0],
 					max_l2_norm_squared,
-					incoming_weight_count_per_output_neuron,
+					incoming_weight_count_per_output_neuron_list[0],
 					output_feature_map_count,
 					min_iteration_count);
 			}
@@ -149,9 +150,6 @@ namespace nnforge
 		{
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
-			incoming_weight_count_per_output_neuron = layer_derived->input_feature_map_count;
-			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)
-				incoming_weight_count_per_output_neuron *= *it;
 			output_feature_map_count = layer_derived->output_feature_map_count;
 		}
 

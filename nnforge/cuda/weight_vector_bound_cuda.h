@@ -25,6 +25,7 @@
 #include "../nn_types.h"
 
 #include <map>
+#include <vector>
 
 namespace nnforge
 {
@@ -54,7 +55,8 @@ namespace nnforge
 				const weight_vector_bound& bound,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				unsigned int entry_count) = 0;
+				unsigned int entry_count,
+				const std::vector<unsigned int>& incoming_weight_count_per_output_neuron_list) = 0;
 
 		protected:
 			weight_vector_bound_cuda();

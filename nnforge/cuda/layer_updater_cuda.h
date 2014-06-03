@@ -98,6 +98,8 @@ namespace nnforge
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count);
 
+			virtual std::vector<unsigned int> get_incoming_weight_count_per_output_neuron_list() const;
+
 			std::vector<cuda_linear_buffer_device_smart_ptr> get_data(const std::vector<layer_data_smart_ptr>& host_data_list) const;
 
 			std::vector<const_cuda_linear_buffer_device_smart_ptr> get_learning_rate(const std::vector<const_layer_data_smart_ptr>& host_learning_rate_list) const;

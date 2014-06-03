@@ -427,7 +427,8 @@ namespace nnforge
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator schema_data_it = updater_schema_data.rbegin();
 							unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1;
 							layer_configuration_specific_list::const_reverse_iterator layer_config_it = layer_config_list.rbegin() + 1;
-							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++learning_rate_data_it, ++output_errors_it, ++net_data_it, --reverse_layer_id, ++layer_config_it)
+							std::vector<std::vector<unsigned int> >::reverse_iterator incoming_weight_count_it = incoming_weight_count_per_output_neuron_list_list.rbegin();
+							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++learning_rate_data_it, ++output_errors_it, ++net_data_it, --reverse_layer_id, ++layer_config_it, ++incoming_weight_count_it)
 							{
 								if (it != (updater_list.rend() - 1))
 								{
@@ -481,7 +482,8 @@ namespace nnforge
 										bound,
 										*net_data_it,
 										additional_buffers,
-										updater_entry_count);
+										updater_entry_count,
+										*incoming_weight_count_it);
 								}
 							}
 						}
@@ -542,6 +544,7 @@ namespace nnforge
 			}
 
 			updater_list.clear();
+			incoming_weight_count_per_output_neuron_list_list.clear();
 			for(const_layer_updater_schema_list::const_iterator it = updater_schemas.begin(); it != updater_schemas.end(); ++it, ++it_conf)
 			{
 				updater_list.push_back(
@@ -550,6 +553,7 @@ namespace nnforge
 						*(it_conf + 1),
 						(it_conf > layer_config_list.begin() + testing_layer_count),
 						(it_conf > layer_config_list.begin() + testing_layer_count)));
+				incoming_weight_count_per_output_neuron_list_list.push_back(updater_list.back()->get_incoming_weight_count_per_output_neuron_list());
 			}
 		}
 
