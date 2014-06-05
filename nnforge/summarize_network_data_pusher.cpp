@@ -23,7 +23,8 @@
 
 namespace nnforge
 {
-	summarize_network_data_pusher::summarize_network_data_pusher()
+	summarize_network_data_pusher::summarize_network_data_pusher(const boost::filesystem::path& folder_path)
+		: folder_path(folder_path)
 	{
 	}
 
@@ -33,20 +34,12 @@ namespace nnforge
 
 	void summarize_network_data_pusher::push(const training_task_state& task_state)
 	{
-		task_state_list.push_back(task_state);
-	}
+		unsigned int index = task_state.index_peeked;
+		network_data_smart_ptr data = task_state.data;
 
-	void summarize_network_data_pusher::save_all(const boost::filesystem::path& folder_path) const
-	{
-		for(std::vector<training_task_state>::const_iterator it = task_state_list.begin(); it != task_state_list.end(); it++)
-		{
-			unsigned int index = it->index_peeked;
-			network_data_smart_ptr data = it->data;
+		std::string filename = (boost::format("ann_trained_%|1$03d|.data") % index).str();
 
-			std::string filename = (boost::format("ann_trained_%|1$03d|.data") % index).str();
-
-			boost::filesystem::ofstream file_with_data(folder_path / filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			data->write(file_with_data);
-		}
+		boost::filesystem::ofstream file_with_data(folder_path / filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+		data->write(file_with_data);
 	}
 }

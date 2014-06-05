@@ -30,9 +30,9 @@ namespace nnforge
 
 		virtual ~network_data_peeker_random();
 
-		// The method should return empty smart pointer in case no more layer data are available
+		// The method should return empty data smart pointer in case no more layer data are available
 		// The caller is free to modify the data returned
-		virtual std::pair<unsigned int, network_data_smart_ptr> peek(network_schema_smart_ptr schema);
+		virtual network_data_peek_entry peek(network_schema_smart_ptr schema);
 
 	protected:
 		unsigned int max_network_data_count;

@@ -28,13 +28,19 @@ namespace nnforge
 	{
 	}
 
-	std::pair<unsigned int, network_data_smart_ptr> network_data_peeker_single::peek(network_schema_smart_ptr schema)
+	network_data_peek_entry network_data_peeker_single::peek(network_schema_smart_ptr schema)
 	{
+		network_data_peek_entry res;
+
 		if (is_peeked)
-			return std::make_pair(0, network_data_smart_ptr());
+			return res;
 
 		is_peeked = true;
 
-		return std::make_pair(0, data);
+		res.index  = 0;
+		res.data = data;
+		res.start_epoch = 0;
+
+		return res;
 	}
 }

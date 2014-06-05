@@ -51,6 +51,8 @@
 #include "supervised_multiple_epoch_data_reader.h"
 #include "supervised_limited_entry_count_data_reader.h"
 #include "network_trainer_sgd.h"
+#include "save_resume_network_data_pusher.h"
+#include "network_data_peeker_load_resume.h"
 
 namespace nnforge
 {
@@ -67,6 +69,7 @@ namespace nnforge
 	const char * neural_network_toolset::ann_snapshot_subfolder_name = "ann_snapshot";
 	const char * neural_network_toolset::snapshot_invalid_subfolder_name = "invalid";
 	const char * neural_network_toolset::ann_subfolder_name = "batch";
+	const char * neural_network_toolset::ann_resume_subfolder_name = "resume";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
 
 	neural_network_toolset::neural_network_toolset(factory_generator_smart_ptr factory)
@@ -199,6 +202,8 @@ namespace nnforge
 			("profile_updater_entry_count", boost::program_options::value<unsigned int>(&profile_updater_entry_count)->default_value(1), "The number of entries to process when profiling updater.")
 			("profile_hessian_entry_count", boost::program_options::value<unsigned int>(&profile_hessian_entry_count)->default_value(0), "The number of entries to process when profiling hessian (0 means no limitation).")
 			("training_algo", boost::program_options::value<std::string>(&training_algo)->default_value("sdlm"), "Training algorithm (sdlm, sgd).")
+			("dump_resume", boost::program_options::value<bool>(&dump_resume)->default_value(true), "Dump neural network data after each epoch.")
+			("load_resume,R", boost::program_options::value<bool>(&load_resume)->default_value(false), "Resume neural network training strating from saved.")
 			;
 
 		{
@@ -1248,29 +1253,41 @@ namespace nnforge
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
 
-		nnforge_shared_ptr<network_data_peeker> peeker;
-		boost::filesystem::path batch_folder;
-		batch_folder = get_working_data_folder() / get_ann_subfolder_name();
+		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
+		boost::filesystem::path batch_resume_folder = batch_folder / ann_resume_subfolder_name;
+		boost::filesystem::create_directories(batch_resume_folder);
 
-		unsigned int starting_index = get_starting_index_for_batch_training();
-		peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index));
+		nnforge_shared_ptr<network_data_peeker> peeker;
+		if (load_resume)
+		{
+			peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_load_resume(batch_folder, batch_resume_folder));
+		}
+		else
+		{
+			unsigned int starting_index = get_starting_index_for_batch_training();
+			peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index));
+		}
 
 		complex_network_data_pusher progress;
+
+		if (dump_resume)
+		{
+			progress.push_back(network_data_pusher_smart_ptr(new save_resume_network_data_pusher(batch_resume_folder)));
+		}
+
 		progress.push_back(network_data_pusher_smart_ptr(new report_progress_network_data_pusher()));
 
 		std::vector<network_data_pusher_smart_ptr> validators_for_training = get_validators_for_training(schema);
 		progress.insert(progress.end(), validators_for_training.begin(), validators_for_training.end());
 
-		summarize_network_data_pusher res;
+		summarize_network_data_pusher res(batch_folder);
 
 		trainer->train(
 			*training_data_reader,
 			*peeker,
 			progress,
 			res);
-
-		res.save_all(batch_folder);
 	}
 
 	void neural_network_toolset::profile_updater()

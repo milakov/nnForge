@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,23 +16,22 @@
 
 #pragma once
 
-#include "network_data_peeker.h"
+#include "network_data_pusher.h"
+
+#include <boost/filesystem.hpp>
 
 namespace nnforge
 {
-	class network_data_peeker_single : public network_data_peeker
+	class save_resume_network_data_pusher : public network_data_pusher
 	{
 	public:
-		network_data_peeker_single(network_data_smart_ptr data);
+		save_resume_network_data_pusher(const boost::filesystem::path& folder_path);
 
-		virtual ~network_data_peeker_single();
+		virtual ~save_resume_network_data_pusher();
 
-		// The method should return empty data smart pointer in case no more layer data are available
-		// The caller is free to modify the data returned
-		virtual network_data_peek_entry peek(network_schema_smart_ptr schema);
+		virtual void push(const training_task_state& task_state);
 
-	protected:
-		network_data_smart_ptr data;
-		bool is_peeked;
+	private:
+		boost::filesystem::path folder_path;
 	};
 }

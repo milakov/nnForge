@@ -56,7 +56,6 @@ namespace nnforge
 		virtual unsigned int get_max_batch_size() const = 0;
 
 		// The method should add testing result to the training history of each element
-		// Size of random_uniform_list is a power of 2
 		virtual void train_step(
 			supervised_data_reader& reader,
 			std::vector<training_task_state>& task_list) = 0;

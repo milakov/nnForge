@@ -45,7 +45,7 @@ namespace nnforge
 		std::vector<network_data_smart_ptr> learning_rate_vector_list;
 		for(unsigned int i = 0; i < task_list.size(); ++i)
 		{
-			std::pair<network_data_smart_ptr, std::string> lr_and_comment = prepare_learning_rates(task_list[i].history.size());
+			std::pair<network_data_smart_ptr, std::string> lr_and_comment = prepare_learning_rates(task_list[i].get_current_epoch());
 
 			learning_rate_vector_list.push_back(lr_and_comment.first);
 

@@ -32,5 +32,11 @@ namespace nnforge
 		network_data_smart_ptr data;
 		std::vector<testing_result_smart_ptr> history;
 		std::vector<std::string> comments;
+		unsigned int initial_epoch;
+
+		unsigned int get_current_epoch() const
+		{
+			return history.size() + initial_epoch;
+		}
 	};
 }

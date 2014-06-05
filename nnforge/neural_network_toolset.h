@@ -152,6 +152,7 @@ namespace nnforge
 		static const char * ann_snapshot_subfolder_name;
 		static const char * snapshot_invalid_subfolder_name;
 		static const char * ann_subfolder_name;
+		static const char * ann_resume_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
 
 		network_tester_factory_smart_ptr tester_factory;
@@ -181,6 +182,8 @@ namespace nnforge
 		unsigned int profile_updater_entry_count;
 		unsigned int profile_hessian_entry_count;
 		std::string training_algo;
+		bool dump_resume;
+		bool load_resume;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(

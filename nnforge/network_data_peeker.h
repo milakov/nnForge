@@ -21,14 +21,21 @@
 
 namespace nnforge
 {
+	struct network_data_peek_entry
+	{
+		unsigned int index;
+		network_data_smart_ptr data;
+		unsigned int start_epoch;
+	};
+
 	class network_data_peeker
 	{
 	public:
 		virtual ~network_data_peeker();
 
-		// The method should return empty smart pointer in case no more layer data are available
+		// The method should return empty data smart pointer in case no more layer data are available
 		// The caller is free to modify the data returned
-		virtual std::pair<unsigned int, network_data_smart_ptr> peek(network_schema_smart_ptr schema) = 0;
+		virtual network_data_peek_entry peek(network_schema_smart_ptr schema) = 0;
 
 	protected:
 		network_data_peeker();

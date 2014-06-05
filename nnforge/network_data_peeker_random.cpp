@@ -32,10 +32,12 @@ namespace nnforge
 	{
 	}
 
-	std::pair<unsigned int, network_data_smart_ptr> network_data_peeker_random::peek(network_schema_smart_ptr schema)
+	network_data_peek_entry network_data_peeker_random::peek(network_schema_smart_ptr schema)
 	{
+		network_data_peek_entry res;
+
 		if (generated_network_data_count >= max_network_data_count)
-			return std::make_pair(base_index, network_data_smart_ptr());
+			return res;
 
 		network_data_smart_ptr data(new network_data(*schema));
 
@@ -43,7 +45,9 @@ namespace nnforge
 			*schema,
 			gen);
 
-		std::pair<unsigned int, network_data_smart_ptr> res(generated_network_data_count + base_index, data);
+		res.index = generated_network_data_count + base_index;
+		res.data = data;
+		res.start_epoch = 0;
 
 		++generated_network_data_count;
 

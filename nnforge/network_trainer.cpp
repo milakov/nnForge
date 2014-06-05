@@ -41,6 +41,8 @@ namespace nnforge
 		network_data_pusher& progress_pusher,
 		network_data_pusher& pusher)
 	{
+		unsigned int reader_epoch_id = 0;
+
 		initialize_train(reader);
 		unsigned int max_batch_size = get_max_batch_size();
 
@@ -53,14 +55,34 @@ namespace nnforge
 		{
 			while (task_list.size() < max_batch_size)
 			{
-				training_task_state new_task;
-				std::pair<unsigned int, network_data_smart_ptr> data_with_key = peeker.peek(schema);
-				if (data_with_key.second == 0)
+				network_data_peek_entry entry_peeked = peeker.peek(schema);
+				if (entry_peeked.data == 0)
 					break;
 
-				new_task.index_peeked = data_with_key.first;
-				new_task.data = data_with_key.second;
+				training_task_state new_task;
+				new_task.index_peeked = entry_peeked.index;
+				new_task.data = entry_peeked.data;
+				new_task.initial_epoch = entry_peeked.start_epoch;
+
+				if (is_last_epoch(new_task))
+				{
+					std::cout << "Warning: Task is allocated which is already complete. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
+					continue;
+				}
+
 				task_list.push_back(new_task);
+
+				if (new_task.initial_epoch > reader_epoch_id)
+				{
+					if (task_list.size() > 1)
+						std::cout << "Warning: scrolling through reader requested (and done) while task_list is not empty. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
+
+					for(int i = reader_epoch_id; i < new_task.initial_epoch; ++i)
+						reader.next_epoch();
+					reader_epoch_id += (new_task.initial_epoch - reader_epoch_id);
+				}
+				else if (new_task.initial_epoch < reader_epoch_id)
+					std::cout << "Warning: negative scrolling through reader requested. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
 			}
 
 			if (task_list.size() == 0)
@@ -90,12 +112,13 @@ namespace nnforge
 			}
 
 			reader.next_epoch();
+			++reader_epoch_id;
 		}
 	}
 
 	bool network_trainer::is_last_epoch(const training_task_state& state) const
 	{
-		return (state.history.size() >= epoch_count);
+		return (state.get_current_epoch() >= epoch_count);
 	}
 
 	bool network_trainer::is_broken(const training_task_state& state) const

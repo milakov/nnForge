@@ -26,7 +26,7 @@ namespace nnforge
 	class summarize_network_data_pusher : public network_data_pusher
 	{
 	public:
-		summarize_network_data_pusher();
+		summarize_network_data_pusher(const boost::filesystem::path& folder_path);
 
 		virtual ~summarize_network_data_pusher();
 
@@ -34,6 +34,7 @@ namespace nnforge
 
 		void save_all(const boost::filesystem::path& folder_path) const;
 
-		std::vector<training_task_state> task_state_list;
+	private:
+		boost::filesystem::path folder_path;
 	};
 }
