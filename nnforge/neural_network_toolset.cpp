@@ -71,6 +71,7 @@ namespace nnforge
 	const char * neural_network_toolset::ann_subfolder_name = "batch";
 	const char * neural_network_toolset::ann_resume_subfolder_name = "resume";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
+	const char * neural_network_toolset::logfile_name = "log.txt";
 
 	neural_network_toolset::neural_network_toolset(factory_generator_smart_ptr factory)
 		: factory(factory)
@@ -302,6 +303,19 @@ namespace nnforge
 		{
 			std::cout << visible << "\n";
 			return false;
+		}
+
+		boost::filesystem::path logfile_path = get_working_data_folder() / logfile_name;
+		out_to_log_duplicator_smart_ptr = nnforge_shared_ptr<stream_duplicator>(new stream_duplicator(logfile_path));
+
+		{
+			time_t rawtime;
+			struct tm * timeinfo;
+			char buffer[80];
+			time(&rawtime);
+			timeinfo = localtime(&rawtime);
+			strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", timeinfo);
+			std::cout << buffer << std::endl;
 		}
 
 		factory->initialize();

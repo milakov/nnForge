@@ -33,6 +33,7 @@
 #include "normalize_data_transformer.h"
 #include "error_function.h"
 #include "network_trainer.h"
+#include "stream_duplicator.h"
 
 #include <boost/filesystem.hpp>
 
@@ -154,6 +155,7 @@ namespace nnforge
 		static const char * ann_subfolder_name;
 		static const char * ann_resume_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
+		static const char * logfile_name;
 
 		network_tester_factory_smart_ptr tester_factory;
 		network_updater_factory_smart_ptr updater_factory;
@@ -253,6 +255,8 @@ namespace nnforge
 
 		boost::filesystem::path input_data_folder;
 		boost::filesystem::path working_data_folder;
+
+		nnforge_shared_ptr<stream_duplicator> out_to_log_duplicator_smart_ptr;
 
 	private:
 		neural_network_toolset();
