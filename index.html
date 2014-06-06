@@ -45,7 +45,7 @@
 <li>Convolutional (1D, 2D, 3D, and 4D)</li>
 <li>Fully connected</li>
 <li>Local contrast subtractive (CPU backend - no limitations, GPU backend - 2D only)</li>
-<li>RGB-&gt;YUV conversion (forward propagation only)</li>
+<li>RGB-&gt;YUV conversion (CPU backend: forward propagation only, GPU backend - forward + backward prop)</li>
 <li>Max spatial subsampling (CPU backend - no limitations, GPU backend - 2D and 3D only)</li>
 <li>Average spatial subsampling (CPU backend - no limitations, GPU backend - 2D only)</li>
 <li>Maxout - <a href="http://arxiv.org/abs/1302.4389">arXiv:1302.4389</a>
@@ -58,16 +58,12 @@
 </ul><h2>
 <a name="training" class="anchor" href="#training"><span class="octicon octicon-link"></span></a>Training</h2>
 
-<p>The library implements Stochastic Diagonal Levenberg-Marquardt training algorithm, well described in:</p>
+<p>The library implements the following training algorithms:</p>
 
 <ul>
-<li>Y. LeCun, L. Bottou, Y. Bengio and P. Haffner: Gradient-Based Learning Applied to Document Recognition, <em>Proceedings of the IEEE, 86(11):2278-2324, November 1998</em>
-</li>
-<li>Y. LeCun, L. Bottou, G. Orr and K. Muller: Efficient BackProp, in Orr, G. and Muller K. (Eds), <em>Neural Networks: Tricks of the trade, Springer, 1998</em>
-</li>
-</ul><p>You will find these papers at <a href="http://yann.lecun.com/exdb/publis/index.html">Yann LeCun site</a>.</p>
-
-<h2>
+<li>Stochastic Gradient Descent</li>
+<li>Stochastic Diagonal Levenberg-Marquardt, well described in Y. LeCun, L. Bottou, Y. Bengio and P. Haffner: Gradient-Based Learning Applied to Document Recognition, <em>Proceedings of the IEEE, 86(11):2278-2324, November 1998</em> and Y. LeCun, L. Bottou, G. Orr and K. Muller: Efficient BackProp, in Orr, G. and Muller K. (Eds), <em>Neural Networks: Tricks of the trade, Springer, 1998</em>. You will find these papers at <a href="http://yann.lecun.com/exdb/publis/index.html">Yann LeCun site</a>.</li>
+</ul><h2>
 <a name="regularization" class="anchor" href="#regularization"><span class="octicon octicon-link"></span></a>Regularization</h2>
 
 <p>The library also has "dropout" and "Upper bound on L2 norm of the weight vector" regularizations implemented:</p>
@@ -78,11 +74,12 @@
 </ul><h2>
 <a name="error-functions" class="anchor" href="#error-functions"><span class="octicon octicon-link"></span></a>Error functions</h2>
 
-<p>2 error functions are available:</p>
+<p>Error functions available:</p>
 
 <ul>
 <li>MSE - Mean Squared Error</li>
 <li>SHL - Squared Hinge Loss</li>
+<li>CE - Cross Entropy</li>
 </ul><h2>
 <a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
