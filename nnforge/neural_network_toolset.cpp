@@ -318,6 +318,9 @@ namespace nnforge
 			std::cout << buffer << std::endl;
 		}
 
+		dump_settings();
+		std::cout << "----------------------------------------" << std::endl;
+
 		factory->initialize();
 
 		tester_factory = factory->create_tester_factory();
@@ -326,6 +329,65 @@ namespace nnforge
 		analyzer_factory = factory->create_analyzer_factory();
 
 		return (action.size() > 0);
+	}
+
+	void neural_network_toolset::dump_settings()
+	{
+		{
+			std::cout << "input_data_folder" << "=" << input_data_folder << std::endl;
+			std::cout << "working_data_folder" << "=" << working_data_folder << std::endl;
+			std::cout << "ann_count" << "=" << ann_count << std::endl;
+			std::cout << "training_epoch_count" << "=" << training_epoch_count << std::endl;
+			std::cout << "snapshot_count" << "=" << snapshot_count << std::endl;
+			std::cout << "snapshot_extension" << "=" << snapshot_extension << std::endl;
+			std::cout << "snapshot_mode" << "=" << snapshot_mode << std::endl;
+			std::cout << "snapshot_video_fps" << "=" << snapshot_video_fps << std::endl;
+			std::cout << "snapshot_ann_index" << "=" << snapshot_ann_index << std::endl;
+			std::cout << "mu_increase_factor" << "=" << mu_increase_factor << std::endl;
+			std::cout << "max_mu" << "=" << max_mu << std::endl;
+			std::cout << "per_layer_mu" << "=" << per_layer_mu << std::endl;
+			std::cout << "learning_rate" << "=" << learning_rate << std::endl;
+			std::cout << "learning_rate_decay_tail" << "=" << learning_rate_decay_tail_epoch_count << std::endl;
+			std::cout << "learning_rate_decay_rate" << "=" << learning_rate_decay_rate << std::endl;
+			std::cout << "learning_rate_rise_head" << "=" << learning_rate_rise_head_epoch_count << std::endl;
+			std::cout << "learning_rate_rise_rate" << "=" << learning_rate_rise_rate << std::endl;
+			std::cout << "batch_offset" << "=" << batch_offset << std::endl;
+			std::cout << "test_validate_ann_index" << "=" << test_validate_ann_index << std::endl;
+			std::cout << "snapshot_data_set" << "=" << snapshot_data_set << std::endl;
+			std::cout << "profile_updater_entry_count" << "=" << profile_updater_entry_count << std::endl;
+			std::cout << "profile_hessian_entry_count" << "=" << profile_hessian_entry_count << std::endl;
+			std::cout << "training_algo" << "=" << training_algo << std::endl;
+			std::cout << "dump_resume" << "=" << dump_resume << std::endl;
+			std::cout << "load_resume" << "=" << load_resume << std::endl;
+		}
+		{
+			std::vector<string_option> additional_string_options = get_string_options();
+			for(std::vector<string_option>::iterator it = additional_string_options.begin(); it != additional_string_options.end(); it++)
+				std::cout << it->name << "=" << *it->var << std::endl;
+			std::vector<bool_option> additional_bool_options = get_bool_options();
+			for(std::vector<bool_option>::iterator it = additional_bool_options.begin(); it != additional_bool_options.end(); it++)
+				std::cout << it->name << "=" << *it->var << std::endl;
+			std::vector<float_option> additional_float_options = get_float_options();
+			for(std::vector<float_option>::iterator it = additional_float_options.begin(); it != additional_float_options.end(); it++)
+				std::cout << it->name << "=" << *it->var << std::endl;
+			std::vector<int_option> additional_int_options = get_int_options();
+			for(std::vector<int_option>::iterator it = additional_int_options.begin(); it != additional_int_options.end(); it++)
+				std::cout << it->name << "=" << *it->var << std::endl;
+		}
+		{
+			std::vector<string_option> additional_string_options = factory->get_string_options();
+			for(std::vector<string_option>::iterator it = additional_string_options.begin(); it != additional_string_options.end(); it++)
+				std::cout << it->name << "=" << *it->var << std::endl;
+			std::vector<bool_option> additional_bool_options = factory->get_bool_options();
+			for(std::vector<bool_option>::iterator it = additional_bool_options.begin(); it != additional_bool_options.end(); it++)
+				std::cout << it->name << "=" << *it->var << std::endl;
+			std::vector<float_option> additional_float_options = factory->get_float_options();
+			for(std::vector<float_option>::iterator it = additional_float_options.begin(); it != additional_float_options.end(); it++)
+				std::cout << it->name << "=" << *it->var << std::endl;
+			std::vector<int_option> additional_int_options = factory->get_int_options();
+			for(std::vector<int_option>::iterator it = additional_int_options.begin(); it != additional_int_options.end(); it++)
+				std::cout << it->name << "=" << *it->var << std::endl;
+		}
 	}
 
 	std::string neural_network_toolset::get_action() const

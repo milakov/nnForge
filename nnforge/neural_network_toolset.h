@@ -250,6 +250,8 @@ namespace nnforge
 
 		network_trainer_smart_ptr get_network_trainer(network_schema_smart_ptr schema) const;
 
+		void dump_settings();
+
 	private:
 		factory_generator_smart_ptr factory;
 

@@ -27,12 +27,12 @@ namespace nnforge
 		, ts(td)
 	{
 		std::cout.rdbuf(ts.rdbuf());
-		std::cout << "####################" << std::endl;
+		std::cout << "########################################" << std::endl;
 	}
 
 	stream_duplicator::~stream_duplicator()
 	{
-		std::cout << "####################" << std::endl;
+		std::cout << "########################################" << std::endl;
 		ts.flush();
 		std::cout.rdbuf(cout_stream.rdbuf());
 		ts.close();
