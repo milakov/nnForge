@@ -334,6 +334,7 @@ namespace nnforge
 	void neural_network_toolset::dump_settings()
 	{
 		{
+			std::cout << "action" << "=" << action << std::endl;
 			std::cout << "input_data_folder" << "=" << input_data_folder << std::endl;
 			std::cout << "working_data_folder" << "=" << working_data_folder << std::endl;
 			std::cout << "ann_count" << "=" << ann_count << std::endl;
