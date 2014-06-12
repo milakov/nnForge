@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class cross_entropy_error_function_updater_cuda : public error_function_updater_cuda
+		class negative_log_likelihood_error_function_updater_cuda : public error_function_updater_cuda
 		{
 		public:
-			cross_entropy_error_function_updater_cuda();
+			negative_log_likelihood_error_function_updater_cuda();
 
-			virtual ~cross_entropy_error_function_updater_cuda();
+			virtual ~negative_log_likelihood_error_function_updater_cuda();
 
 			virtual const boost::uuids::uuid& get_uuid() const;
 

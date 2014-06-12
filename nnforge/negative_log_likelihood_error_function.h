@@ -21,12 +21,12 @@
 // E = -sum(y_i * log(x_i))
 namespace nnforge
 {
-	class cross_entropy_error_function : public error_function
+	class negative_log_likelihood_error_function : public error_function
 	{
 	public:
-		cross_entropy_error_function();
+		negative_log_likelihood_error_function();
 
-		virtual ~cross_entropy_error_function();
+		virtual ~negative_log_likelihood_error_function();
 
 		virtual const boost::uuids::uuid& get_uuid() const;
 

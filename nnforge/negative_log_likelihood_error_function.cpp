@@ -14,39 +14,39 @@
  *  limitations under the License.
  */
 
-#include "cross_entropy_error_function.h"
+#include "negative_log_likelihood_error_function.h"
 
 #include <cmath>
 
 namespace nnforge
 {
 	// {1955940E-D494-4776-BFAA-48974D9652F2}
-	const boost::uuids::uuid cross_entropy_error_function::function_guid =
+	const boost::uuids::uuid negative_log_likelihood_error_function::function_guid =
 		{ 0x19, 0x55, 0x94, 0x0e
 		, 0xd4, 0x94
 		, 0x47, 0x76
 		, 0xbf, 0xaa
 		, 0x48, 0x97, 0x4d, 0x96, 0x52, 0xf2 };
 
-	cross_entropy_error_function::cross_entropy_error_function()
+	negative_log_likelihood_error_function::negative_log_likelihood_error_function()
 	{
 	}
 
-	cross_entropy_error_function::~cross_entropy_error_function()
+	negative_log_likelihood_error_function::~negative_log_likelihood_error_function()
 	{
 	}
 
-	const boost::uuids::uuid& cross_entropy_error_function::get_uuid() const
+	const boost::uuids::uuid& negative_log_likelihood_error_function::get_uuid() const
 	{
 		return function_guid;
 	}
 
-	std::string cross_entropy_error_function::get_function_name() const
+	std::string negative_log_likelihood_error_function::get_function_name() const
 	{
-		return "CE";
+		return "NLL";
 	}
 
-	float cross_entropy_error_function::calculate_error(
+	float negative_log_likelihood_error_function::calculate_error(
 		const float * actual_values,
 		const float * predicted_values,
 		unsigned int neuron_count) const
@@ -62,7 +62,7 @@ namespace nnforge
 		return sum;
 	}
 
-	void cross_entropy_error_function::calculate_gradient(
+	void negative_log_likelihood_error_function::calculate_gradient(
 		const float * actual_values,
 		const float * predicted_values,
 		float * gradient,
