@@ -205,6 +205,7 @@ namespace nnforge
 			("training_algo", boost::program_options::value<std::string>(&training_algo)->default_value("sdlm"), "Training algorithm (sdlm, sgd).")
 			("dump_resume", boost::program_options::value<bool>(&dump_resume)->default_value(true), "Dump neural network data after each epoch.")
 			("load_resume,R", boost::program_options::value<bool>(&load_resume)->default_value(false), "Resume neural network training strating from saved.")
+			("epoch_count_in_training_set", boost::program_options::value<unsigned int>(&epoch_count_in_training_set)->default_value(1), "The whole should be split in this amount of epochs.")
 			;
 
 		{
@@ -360,6 +361,7 @@ namespace nnforge
 			std::cout << "training_algo" << "=" << training_algo << std::endl;
 			std::cout << "dump_resume" << "=" << dump_resume << std::endl;
 			std::cout << "load_resume" << "=" << load_resume << std::endl;
+			std::cout << "epoch_count_in_training_set" << "=" << epoch_count_in_training_set << std::endl;
 		}
 		{
 			std::vector<string_option> additional_string_options = get_string_options();
@@ -434,11 +436,6 @@ namespace nnforge
 	boost::filesystem::path neural_network_toolset::get_ann_subfolder_name() const
 	{
 		return ann_subfolder_name;
-	}
-
-	unsigned int neural_network_toolset::get_epoch_count_for_training_set() const
-	{
-		return 1;
 	}
 
 	network_trainer_smart_ptr neural_network_toolset::get_network_trainer(network_schema_smart_ptr schema) const
@@ -1194,7 +1191,7 @@ namespace nnforge
 	{
 		supervised_data_reader_smart_ptr current_reader = get_initial_data_reader_for_training();
 
-		unsigned int epoch_count = get_epoch_count_for_training_set();
+		unsigned int epoch_count = epoch_count_in_training_set;
 		if (epoch_count > 1)
 		{
 			supervised_data_reader_smart_ptr new_reader(new supervised_multiple_epoch_data_reader(current_reader, epoch_count));

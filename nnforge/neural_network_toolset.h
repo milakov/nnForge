@@ -127,8 +127,6 @@ namespace nnforge
 			supervised_data_reader& reader,
 			const boost::filesystem::path& path) const;
 
-		virtual unsigned int get_epoch_count_for_training_set() const;
-
 		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_training() const;
 
 		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_validating() const;
@@ -186,6 +184,7 @@ namespace nnforge
 		std::string training_algo;
 		bool dump_resume;
 		bool load_resume;
+		unsigned int epoch_count_in_training_set;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
