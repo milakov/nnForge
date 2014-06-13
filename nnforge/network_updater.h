@@ -55,7 +55,8 @@ namespace nnforge
 			network_schema_smart_ptr schema,
 			const_error_function_smart_ptr ef,
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map);
+			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
+			float weight_decay);
 
 		// schema, data and reader are guaranteed to be compatible
 		virtual std::vector<testing_result_smart_ptr> actual_update(
@@ -77,6 +78,7 @@ namespace nnforge
 		std::vector<float> random_uniform_list;
 		float flops;
 		std::map<unsigned int, weight_vector_bound> layer_to_weight_vector_bound_map;
+		float weight_decay;
 
 	private:
 		network_updater();

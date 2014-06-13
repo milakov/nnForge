@@ -701,7 +701,7 @@ namespace nnforge
 			}
 		}
 
-		template<int DIMENSION_COUNT, int WINDOW_WIDTH, bool single_elem_per_destimation>
+		template<int DIMENSION_COUNT, int WINDOW_WIDTH, bool single_elem_per_destination>
 		__launch_bounds__(256, 4)
 		__global__ void convolution_update_weights_exact_upd_kernel_kepler(
 			float2 * __restrict weights,
@@ -721,7 +721,8 @@ namespace nnforge
 			int entry_count,
 			bool different_input,
 			int packed_config_count,
-			int last_dimension_group_count)
+			int last_dimension_group_count,
+			float weight_decay)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int entry_id = blockIdx.y * blockDim.y + threadIdx.y;
@@ -825,11 +826,11 @@ namespace nnforge
 						{
 							int weights_offset3 = weights_offset1 + k;
 							float2 lr = learning_rate[weights_offset3];
-							if (single_elem_per_destimation)
+							if (single_elem_per_destination)
 							{
 								float2 current_w = __load_nc(weights + weights_offset3);
-								float new_val1 = lr.x * sums[k * 4 + i * 2] + current_w.x;
-								float new_val2 = lr.y * sums[k * 4 + i * 2 + 1] + current_w.y;
+								float new_val1 = current_w.x + lr.x * (sums[k * 4 + i * 2] - weight_decay * current_w.x);
+								float new_val2 = current_w.y + lr.y * (sums[k * 4 + i * 2 + 1] - weight_decay * current_w.y);
 								weights[weights_offset3] = make_float2(new_val1, new_val2);
 							}
 							else
@@ -845,7 +846,7 @@ namespace nnforge
 			}
 		}
 
-		template<int DIMENSION_COUNT>
+		template<int DIMENSION_COUNT, bool single_elem_per_destination>
 		__launch_bounds__(256, 4)
 		__global__ void convolution_update_weights_generic_upd_kernel_kepler(
 			float2 * __restrict weights,
@@ -865,7 +866,8 @@ namespace nnforge
 			int entry_count,
 			bool different_input,
 			int packed_config_count,
-			int last_dimension_group_count)
+			int last_dimension_group_count,
+			float weight_decay)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int entry_id = blockIdx.y * blockDim.y + threadIdx.y;
@@ -971,10 +973,20 @@ namespace nnforge
 							{
 								int weights_offset3 = weights_offset1 + k;
 								float2 lr = learning_rate[weights_offset3];
-								float upd_val1 = lr.x * sums[k * 4 + i * 2];
-								float upd_val2 = lr.y * sums[k * 4 + i * 2 + 1];
-								atomicAdd((float *)(weights + weights_offset3), upd_val1);
-								atomicAdd((float *)(weights + weights_offset3) + 1, upd_val2);
+								if (single_elem_per_destination)
+								{
+									float2 current_w = __load_nc(weights + weights_offset3);
+									float new_val1 = current_w.x + lr.x * (sums[k * 4 + i * 2] - weight_decay * current_w.x);
+									float new_val2 = current_w.y + lr.y * (sums[k * 4 + i * 2 + 1] - weight_decay * current_w.y);
+									weights[weights_offset3] = make_float2(new_val1, new_val2);
+								}
+								else
+								{
+									float upd_val1 = lr.x * sums[k * 4 + i * 2];
+									float upd_val2 = lr.y * sums[k * 4 + i * 2 + 1];
+									atomicAdd((float *)(weights + weights_offset3), upd_val1);
+									atomicAdd((float *)(weights + weights_offset3) + 1, upd_val2);
+								}
 							}
 						}
 					}
@@ -1133,52 +1145,52 @@ namespace nnforge
 		};
 
 
-#define launch_update_exact_kernel_const_const_const(dimension_count_const, window_width_const, single_elem_per_destimation_const) \
-	convolution_update_weights_exact_upd_kernel_kepler<dimension_count_const,window_width_const,single_elem_per_destimation_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], input_tex, output_tex, *learning_rate[0], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, different_input, updater_packed_config_count, updater_last_dimension_group_count);
+#define launch_update_exact_kernel_const_const_const(dimension_count_const, window_width_const, single_elem_per_destination_const) \
+	convolution_update_weights_exact_upd_kernel_kepler<dimension_count_const,window_width_const,single_elem_per_destination_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], input_tex, output_tex, *learning_rate[0], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, different_input, updater_packed_config_count, updater_last_dimension_group_count, weight_decay);
 
-#define launch_update_generic_kernel_const(dimension_count_const) \
-	convolution_update_weights_generic_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], input_tex, output_tex, *learning_rate[0], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, different_input, updater_packed_config_count, updater_last_dimension_group_count);
+#define launch_update_generic_kernel_const(dimension_count_const, single_elem_per_destination_const) \
+	convolution_update_weights_generic_upd_kernel_kepler<dimension_count_const,single_elem_per_destination_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], input_tex, output_tex, *learning_rate[0], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, different_input, updater_packed_config_count, updater_last_dimension_group_count, weight_decay);
 
-#define launch_update_kernel_const_const(dimension_count_const, window_width, single_elem_per_destimation_const) \
+#define launch_update_kernel_const_const(dimension_count_const, window_width, single_elem_per_destination_const) \
 	switch (window_width) \
 		{ \
 		case 1: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 1, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 1, single_elem_per_destination_const); \
 			break; \
 		case 2: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 2, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 2, single_elem_per_destination_const); \
 			break; \
 		case 3: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 3, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 3, single_elem_per_destination_const); \
 			break; \
 		case 4: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 4, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 4, single_elem_per_destination_const); \
 			break; \
 		case 5: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 5, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 5, single_elem_per_destination_const); \
 			break; \
 		case 6: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 6, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 6, single_elem_per_destination_const); \
 			break; \
 		case 7: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 7, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 7, single_elem_per_destination_const); \
 			break; \
 		case 8: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 8, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 8, single_elem_per_destination_const); \
 			break; \
 		case 9: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 9, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 9, single_elem_per_destination_const); \
 			break; \
 		case 10: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 10, single_elem_per_destimation_const); \
+			launch_update_exact_kernel_const_const_const(dimension_count_const, 10, single_elem_per_destination_const); \
 			break; \
 		default: \
-			launch_update_generic_kernel_const(dimension_count_const); \
+			launch_update_generic_kernel_const(dimension_count_const, single_elem_per_destination_const); \
 			break; \
 		};
 
-#define launch_update_kernel(dimension_count_const, window_width, single_elem_per_destimation) \
-	switch (single_elem_per_destimation) \
+#define launch_update_kernel(dimension_count_const, window_width, single_elem_per_destination) \
+	switch (single_elem_per_destination) \
 		{ \
 		case false: \
 			launch_update_kernel_const_const(dimension_count_const, window_width, false); \
@@ -1316,7 +1328,8 @@ namespace nnforge
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count)
+				unsigned int entry_count,
+				float weight_decay)
 			{
 				// Update biases
 				{
@@ -1356,13 +1369,24 @@ namespace nnforge
 
 				const packed_config<updater_dimension_count> * packed_config_list = static_cast<const packed_config<updater_dimension_count> *>((const void *)*additional_buffers[3]);
 
+				if (!updater_single_elem_per_destination)
+				{
+					cuda_util::apply_weight_decay(
+						*cuda_config,
+						*learning_rate[0],
+						*data[0],
+						weight_decay,
+						entry_count * weight_elem_count,
+						stream_id);
+				}
+
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
 					updater_packed_config_count,
 					entry_count,
 					1);
 
-				launch_update_kernel(dimension_count, window_sizes[0], updater_single_elem_per_destimation);
+				launch_update_kernel(dimension_count, window_sizes[0], updater_single_elem_per_destination);
 			}
 
 		protected:
@@ -1422,6 +1446,10 @@ namespace nnforge
 					}
 					updater_last_dimension_group_count = (dimension_count > 1) ? output_sizes[dimension_count - 1] : 1;
 				}
+
+				weight_elem_count = output_configuration_specific.feature_map_count * input_configuration_specific_striped.feature_map_count * 2;
+				for(int i = 0; i < dimension_count; ++i)
+					weight_elem_count *= window_sizes[i];
 			}
 
 			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const
@@ -1480,9 +1508,9 @@ namespace nnforge
 					else
 						updater_last_dimension_group_count = 1;
 
-					updater_single_elem_per_destimation = (updater_window_x_block_count == 1) && (updater_last_dimension_group_count == 1);
+					updater_single_elem_per_destination = (updater_window_x_block_count == 1) && (updater_last_dimension_group_count == 1);
 					for(int i = 1; i < dimension_count - 1; ++i)
-						updater_single_elem_per_destimation = updater_single_elem_per_destimation && (output_sizes[i] == 1);
+						updater_single_elem_per_destination = updater_single_elem_per_destination && (output_sizes[i] == 1);
 				}
 
 				if (backprop_required)
@@ -1616,9 +1644,6 @@ namespace nnforge
 				if (part_id != 0)
 					return layer_updater_cuda::get_data_elem_count(part_id, source_elem_count);
 
-				unsigned int weight_elem_count = output_configuration_specific.feature_map_count * input_configuration_specific_striped.feature_map_count * 2;
-				for(int i = 0; i < dimension_count; ++i)
-					weight_elem_count *= window_sizes[i];
 				return weight_elem_count;
 			}
 
@@ -1732,7 +1757,9 @@ namespace nnforge
 			int updater_packed_config_count;
 			int updater_window_x_block_count;
 			int updater_last_dimension_group_count;
-			bool updater_single_elem_per_destimation;
+			bool updater_single_elem_per_destination;
+
+			unsigned int weight_elem_count;
 
 		private:
 			static int get_block_size(int width)

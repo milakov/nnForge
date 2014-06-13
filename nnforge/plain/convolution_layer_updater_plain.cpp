@@ -265,7 +265,8 @@ namespace nnforge
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int updater_count,
-			int offset_input_entry_id) const
+			int offset_input_entry_id,
+			const float weight_decay) const
 		{
 			const bool same_input = (offset_input_entry_id >= 0);
 			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
@@ -362,7 +363,13 @@ namespace nnforge
 					std::vector<float>::iterator weights_local_it = weights_local.begin();
 					std::vector<float>::const_iterator learning_rates_it = learning_rates_it_base;
 					for(std::vector<float>::iterator it = weights_it_base; it != weights_it_base + const_window_elem_count; ++it, ++weights_local_it, ++learning_rates_it)
-						*it += (*weights_local_it) * (*learning_rates_it);
+					{
+						float current_weight = *it;
+						float grd = *weights_local_it;
+						float lr = *learning_rates_it;
+						float new_weight = current_weight + lr * (grd - weight_decay * current_weight);
+						*it = new_weight;
+					}
 				}
 			}
 

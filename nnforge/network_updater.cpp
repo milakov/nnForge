@@ -30,12 +30,14 @@ namespace nnforge
 		network_schema_smart_ptr schema,
 		const_error_function_smart_ptr ef,
 		const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-		const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map)
+		const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
+		float weight_decay)
 		: schema(schema)
 		, ef(ef)
 		, layer_to_dropout_rate_map(layer_to_dropout_rate_map)
 		, random_uniform_list(1 << random_list_bits)
 		, layer_to_weight_vector_bound_map(layer_to_weight_vector_bound_map)
+		, weight_decay(weight_decay)
 		, gen(rnd::get_random_generator())
 	{
 		const const_layer_list& layer_list = *schema;

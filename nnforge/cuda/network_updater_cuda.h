@@ -37,6 +37,7 @@ namespace nnforge
 				const_error_function_smart_ptr ef,
 				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
+				float weight_decay,
 				cuda_running_configuration_const_smart_ptr cuda_config);
 
 			virtual ~network_updater_cuda();

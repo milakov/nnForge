@@ -148,7 +148,8 @@ namespace nnforge
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			float weight_decay)
 		{
 		}
 

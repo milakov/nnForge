@@ -142,7 +142,8 @@ __global__ void fully_connected_update_weights_upd_kernel(
 	const float * __restrict learning_rate,
 	int input_neuron_count,
 	int output_neuron_count,
-	int entry_count)
+	int entry_count,
+	float weight_decay)
 {
 	int input_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
 	int output_neuron_id = blockIdx.y * blockDim.y + threadIdx.y;
@@ -152,8 +153,11 @@ __global__ void fully_connected_update_weights_upd_kernel(
 	{
 		int input_offset = (different_input ? entry_id * input_neuron_count : 0) + input_neuron_id;
 		int offset = (entry_id * output_neuron_count + output_neuron_id) * input_neuron_count + input_neuron_id;
-		float upd_val = input_neurons[input_offset] * output_errors[entry_id * output_neuron_count + output_neuron_id] * learning_rate[offset] + weights[offset];
-		weights[offset] = upd_val;
+		float current_weight = weights[offset];
+		float grd = input_neurons[input_offset] * output_errors[entry_id * output_neuron_count + output_neuron_id];
+		float lr = learning_rate[offset];
+		float new_weight = current_weight + lr * (grd - weight_decay * current_weight);
+		weights[offset] = new_weight;
 	}
 }
 
@@ -282,7 +286,8 @@ namespace nnforge
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			float weight_decay)
 		{
 			// Update biases
 			{
@@ -313,7 +318,8 @@ namespace nnforge
 					*learning_rate[0],
 					input_elem_count_per_entry,
 					output_elem_count_per_entry,
-					entry_count);
+					entry_count,
+					weight_decay);
 			}
 			else
 			{
@@ -324,7 +330,8 @@ namespace nnforge
 					*learning_rate[0],
 					input_elem_count_per_entry,
 					output_elem_count_per_entry,
-					entry_count);
+					entry_count,
+					weight_decay);
 			}
 		}
 

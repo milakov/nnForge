@@ -76,6 +76,32 @@ namespace nnforge
 			}
 		}
 
+		__global__ void apply_weight_decay_util_kernel(
+			const float4 * __restrict learning_rates,
+			float4 * __restrict weights,
+			float weight_decay,
+			int elem_count)
+		{
+			if (weight_decay != 0.0F)
+			{
+				int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+				if (elem_id < elem_count)
+				{
+					float4 val = learning_rates[elem_id];
+					float4 current_weight = weights[elem_id];
+					val.x = 1.0F - val.x * weight_decay;
+					val.y = 1.0F - val.y * weight_decay;
+					val.z = 1.0F - val.z * weight_decay;
+					val.w = 1.0F - val.w * weight_decay;
+					current_weight.x *= val.x;
+					current_weight.y *= val.y;
+					current_weight.z *= val.z;
+					current_weight.w *= val.w;
+					weights[elem_id] = current_weight;
+				}
+			}
+		}
+
 		__global__ void multiply_by_itself_training_util_kernel(
 			const float4 * __restrict input_buf,
 			float4 * __restrict output_buf,
@@ -398,6 +424,21 @@ namespace nnforge
 				cuda_config,
 				new_elem_count);
 			multiply_by_itself_training_util_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((const float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, new_elem_count);
+		}
+
+		void cuda_util::apply_weight_decay(
+			const cuda_running_configuration& cuda_config,
+			const float * learning_rates_with_aligned_size,
+			float * weights_with_aligned_size,
+			float weight_decay,
+			int elem_count,
+			cudaStream_t cuda_stream)
+		{
+			int new_elem_count = (elem_count + 3) / 4;
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				new_elem_count);
+			apply_weight_decay_util_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((const float4 *)learning_rates_with_aligned_size, (float4 *)weights_with_aligned_size, weight_decay, new_elem_count);
 		}
 
 		void cuda_util::copy_buffer(

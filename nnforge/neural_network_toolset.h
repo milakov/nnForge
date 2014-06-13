@@ -185,6 +185,7 @@ namespace nnforge
 		bool dump_resume;
 		bool load_resume;
 		unsigned int epoch_count_in_training_set;
+		float weight_decay;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
