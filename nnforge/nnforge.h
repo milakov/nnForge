@@ -56,6 +56,7 @@
 #include "mse_error_function.h"
 #include "squared_hinge_loss_error_function.h"
 #include "negative_log_likelihood_error_function.h"
+#include "cross_entropy_error_function.h"
 
 #include "nn_types.h"
 

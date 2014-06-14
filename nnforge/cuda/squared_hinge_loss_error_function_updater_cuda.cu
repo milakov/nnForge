@@ -15,28 +15,29 @@
  */
 
 #include "squared_hinge_loss_error_function_updater_cuda.h"
+
 #include "../squared_hinge_loss_error_function.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		__device__ __forceinline__ double atomicAdd(double* address, double val)
+		__forceinline__ __device__ double atomicAdd(double* address, double val)
 		{
-			 unsigned long long int* address_as_ull = (unsigned long long int*)address;
-			 unsigned long long int old = *address_as_ull, assumed;
-			 do {
-				  assumed = old;
-				  old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
-			 } while (assumed != old);
-			 return __longlong_as_double(old);
+				unsigned long long int* address_as_ull = (unsigned long long int*)address;
+				unsigned long long int old = *address_as_ull, assumed;
+				do {
+					assumed = old;
+					old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+				} while (assumed != old);
+				return __longlong_as_double(old);
 		}
 
 		extern __shared__ float arr_sh[];
 		template <bool multiple_blocks>
 		__global__ void squared_hinge_loss_update_error_and_gradient_kernel(
 			float * __restrict gradients,
-			double * __restrict mse,
+			double * __restrict total_error,
 			const float * __restrict actual_output_neurons,
 			const float * __restrict predicted_output_neurons,
 			int output_entry_id,
@@ -94,11 +95,11 @@ namespace nnforge
 
 				if (multiple_blocks)
 				{
-					atomicAdd(mse + updater_entry_id, err_d);
+					atomicAdd(total_error + updater_entry_id, err_d);
 				}
 				else
 				{
-					mse[updater_entry_id] += err_d;
+					total_error[updater_entry_id] += err_d;
 				}
 			}
 		}

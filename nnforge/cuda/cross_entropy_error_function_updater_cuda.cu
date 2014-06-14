@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-#include "mse_error_function_updater_cuda.h"
+#include "cross_entropy_error_function_updater_cuda.h"
 
-#include "../mse_error_function.h"
+#include "../cross_entropy_error_function.h"
 
 namespace nnforge
 {
@@ -35,7 +35,7 @@ namespace nnforge
 
 		extern __shared__ float arr_sh[];
 		template <bool multiple_blocks>
-		__global__ void mse_update_error_and_gradient_kernel(
+		__global__ void cross_entropy_update_error_and_gradient_kernel(
 			float * __restrict gradients,
 			double * __restrict total_error,
 			const float * __restrict actual_output_neurons,
@@ -53,16 +53,25 @@ namespace nnforge
 			{
 				float actual_val = actual_output_neurons[output_entry_id * neuron_count + neuron_id];
 				float predicted_val = predicted_output_neurons[offset];
-				err = actual_val - predicted_val;
-				gradients[offset] = err;
+				float gradient = 0.0F;
+				if (actual_val > 0.0F)
+				{
+					err = -actual_val * __logf(predicted_val);
+					gradient = __fdividef(actual_val, predicted_val);
+				}
+				if (actual_val < 1.0F)
+				{
+					err -= (1.0F - actual_val) * __logf(1.0F - predicted_val);
+					gradient -= __fdividef(1.0F - actual_val, 1.0F - predicted_val);
+				}
+				gradients[offset] = gradient;
 			}
 
-			err *= err;
 			int thread_id = threadIdx.x;
 			int lane_id = thread_id & 31;
 		#if __CUDA_ARCH__ < 300
 			volatile float * arr = arr_sh;
-			arr[neuron_id] = err;
+			arr[thread_id] = err;
 		#endif
 			#pragma unroll
 			for(int tx = 16; tx > 0; tx >>= 1)
@@ -90,7 +99,6 @@ namespace nnforge
 			{
 				for(int i = 1; i < (blockDim.x >> 5); ++i)
 					err += arr_sh[i];
-				err *= 0.5F;
 				double err_d = (double)err;
 
 				if (multiple_blocks)
@@ -104,20 +112,20 @@ namespace nnforge
 			}
 		}
 
-		mse_error_function_updater_cuda::mse_error_function_updater_cuda()
+		cross_entropy_error_function_updater_cuda::cross_entropy_error_function_updater_cuda()
 		{
 		}
 
-		mse_error_function_updater_cuda::~mse_error_function_updater_cuda()
+		cross_entropy_error_function_updater_cuda::~cross_entropy_error_function_updater_cuda()
 		{
 		}
 
-		const boost::uuids::uuid& mse_error_function_updater_cuda::get_uuid() const
+		const boost::uuids::uuid& cross_entropy_error_function_updater_cuda::get_uuid() const
 		{
-			return mse_error_function::function_guid;
+			return cross_entropy_error_function::function_guid;
 		}
 
-		void mse_error_function_updater_cuda::enqueue_update_error_and_gradient(
+		void cross_entropy_error_function_updater_cuda::enqueue_update_error_and_gradient(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device_smart_ptr gradient_buffer,
 			cuda_linear_buffer_device_smart_ptr error_buffer,
@@ -134,7 +142,7 @@ namespace nnforge
 
 			int smem_size = threadblock_size * sizeof(float);
 			if (block_count > 1)
-				mse_update_error_and_gradient_kernel<true><<<grid_size, block_size, smem_size, stream_id>>>(
+				cross_entropy_update_error_and_gradient_kernel<true><<<grid_size, block_size, smem_size, stream_id>>>(
 					*gradient_buffer,
 					*error_buffer,
 					*actual_output_buffer,
@@ -143,7 +151,7 @@ namespace nnforge
 					neuron_count,
 					updater_entry_count);
 			else
-				mse_update_error_and_gradient_kernel<false><<<grid_size, block_size, smem_size, stream_id>>>(
+				cross_entropy_update_error_and_gradient_kernel<false><<<grid_size, block_size, smem_size, stream_id>>>(
 					*gradient_buffer,
 					*error_buffer,
 					*actual_output_buffer,
@@ -153,7 +161,7 @@ namespace nnforge
 					updater_entry_count);
 		}
 
-		int mse_error_function_updater_cuda::get_threadblock_size(int output_neuron_count)
+		int cross_entropy_error_function_updater_cuda::get_threadblock_size(int output_neuron_count)
 		{
 			int threadblock_size;
 

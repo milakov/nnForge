@@ -27,6 +27,9 @@
 #include "../neural_network_exception.h"
 #include "../nn_types.h"
 
+#include "../debug_util.h"
+#include <boost/filesystem.hpp>
+
 namespace nnforge
 {
 	namespace plain
@@ -359,6 +362,17 @@ namespace nnforge
 									*(input_config_it + 1),
 									*input_config_it,
 									updater_entry_count);
+								/*
+								{
+									boost::filesystem::path dir = "Debug";
+									dir /= "CPU";
+									boost::filesystem::create_directories(dir);
+									debug_util::dump_list(
+										&(*updater_buffers_it->second.input_errors_buffer->begin()),
+										updater_buffers_it->second.input_errors_buffer->size(),
+										(dir / (boost::format("input_errors_%1%.txt") % reverse_layer_id).str()).string().c_str());
+								}
+								*/
 
 								std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(reverse_layer_id);
 								if (dropout_it != layer_to_dropout_rate_map.end())

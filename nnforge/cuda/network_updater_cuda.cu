@@ -33,6 +33,9 @@
 #include <boost/format.hpp>
 #include <stack>
 
+#include "../debug_util.h"
+#include <boost/filesystem.hpp>
+
 namespace nnforge
 {
 	namespace cuda
@@ -444,6 +447,23 @@ namespace nnforge
 										input_and_all_buffers_pack_it->second.additional_buffers,
 										input_and_all_buffers_pack_it->second.dynamic_memobjects,
 										updater_entry_count);
+
+									/*
+									{
+										cuda_linear_buffer_device_smart_ptr buf = (input_and_all_buffers_pack_it->second.input_errors_buffer == 0) ? *output_errors_it : input_and_all_buffers_pack_it->second.input_errors_buffer;
+										std::vector<float> inp_err(buf->get_size() / sizeof(float));
+										cuda_safe_call(cudaMemcpyAsync(&(*inp_err.begin()), *buf, inp_err.size() * sizeof(float), cudaMemcpyDeviceToHost, *command_stream));
+										cuda_safe_call(cudaStreamSynchronize(*command_stream));
+										
+										boost::filesystem::path dir = "Debug";
+										dir /= "GPU";
+										boost::filesystem::create_directories(dir);
+										debug_util::dump_list(
+											&(*inp_err.begin()),
+											inp_err.size(),
+											(dir / (boost::format("input_errors_%1%.txt") % reverse_layer_id).str()).string().c_str());
+									}
+									*/
 
 									std::map<unsigned int, float>::const_iterator dropout_it = layer_to_dropout_rate_map.find(reverse_layer_id);
 									if (dropout_it != layer_to_dropout_rate_map.end())
