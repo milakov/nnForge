@@ -17,5 +17,6 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new soft_rectified_linear_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new softmax_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new maxout_layer(2)));
+		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new sigmoid_layer()));
 	}
 }
