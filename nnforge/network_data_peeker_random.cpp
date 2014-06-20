@@ -19,9 +19,11 @@
 namespace nnforge
 {
 	network_data_peeker_random::network_data_peeker_random(
+		network_output_type::output_type network_type,
 		unsigned int max_network_data_count,
 		unsigned int base_index)
-		: max_network_data_count(max_network_data_count)
+		: network_type(network_type)
+		, max_network_data_count(max_network_data_count)
 		, base_index(base_index)
 		, generated_network_data_count(0)
 		, gen(rnd::get_random_generator())
@@ -44,6 +46,10 @@ namespace nnforge
 		data->randomize(
 			*schema,
 			gen);
+		init.initialize(
+			*data,
+			*schema,
+			network_type);
 
 		res.index = generated_network_data_count + base_index;
 		res.data = data;

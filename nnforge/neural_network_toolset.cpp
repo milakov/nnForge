@@ -1343,7 +1343,7 @@ namespace nnforge
 		else
 		{
 			unsigned int starting_index = get_starting_index_for_batch_training();
-			peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index));
+			peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_random(get_network_output_type(), ann_count, starting_index));
 		}
 
 		complex_network_data_pusher progress;

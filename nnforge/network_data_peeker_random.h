@@ -18,6 +18,8 @@
 
 #include "network_data_peeker.h"
 #include "rnd.h"
+#include "network_data_initializer.h"
+#include "network_output_type.h"
 
 namespace nnforge
 {
@@ -25,6 +27,7 @@ namespace nnforge
 	{
 	public:
 		network_data_peeker_random(
+			network_output_type::output_type network_type,
 			unsigned int max_network_data_count = 1,
 			unsigned int base_index = 0);
 
@@ -39,5 +42,7 @@ namespace nnforge
 		unsigned int generated_network_data_count;
 		unsigned int base_index;
 		random_generator gen;
+		network_data_initializer init;
+		network_output_type::output_type network_type;
 	};
 }
