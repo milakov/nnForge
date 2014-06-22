@@ -6,6 +6,8 @@ BOOST_PATH=/usr/local
 OPENCV_PATH=/usr/local
 NETCDF_INSTALLED=yes
 NETCDF_PATH=
+MATIO_INSTALLED=yes
+MATIO_PATH=
 CUDA_PATH=/usr/local/cuda
 NVCC=nvcc
 NNFORGE_PATH=../..
@@ -15,6 +17,7 @@ NNFORGE_WORKING_DATA_PATH=/home/max/nnforge/working_data
 BOOST_LIBS=-lboost_thread-mt -lboost_regex-mt -lboost_chrono-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_random-mt -lboost_system-mt -lboost_date_time-mt
 OPENCV_LIBS=-lopencv_highgui -lopencv_imgproc -lopencv_core
 NETCDF_LIBS=-lnetcdf
+MATIO_LIBS=-lmatio
 
 CPP_FLAGS_CPP11=-std=c++11
 CPP_HW_ARCHITECTURE=-march=native

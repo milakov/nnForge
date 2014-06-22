@@ -18,8 +18,7 @@
 
 #include "../neural_network_exception.h"
 #include "../max_subsampling_layer.h"
-#include "max_subsampling_2d_layer_hessian_cuda.h"
-#include "max_subsampling_3d_layer_hessian_cuda.h"
+#include "max_subsampling_layer_hessian_cuda.cuh"
 
 #include <boost/format.hpp>
 
@@ -53,15 +52,20 @@ namespace nnforge
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
-			case 2:
-				res = layer_hessian_cuda_smart_ptr(new max_subsampling_2d_layer_hessian_cuda());
-				break;
-			case 3:
-				res = layer_hessian_cuda_smart_ptr(new max_subsampling_3d_layer_hessian_cuda());
-				break;
-			default:
-				throw neural_network_exception((boost::format("No CUDA hessian for the max subsampling layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
-				break;
+				case 1: 
+					res = layer_hessian_cuda_smart_ptr(new max_subsampling_layer_hessian_cuda<1>());
+					break;
+				case 2:
+					res = layer_hessian_cuda_smart_ptr(new max_subsampling_layer_hessian_cuda<2>());
+					break;
+				case 3:
+					res = layer_hessian_cuda_smart_ptr(new max_subsampling_layer_hessian_cuda<3>());
+					break;
+				case 4:
+					res = layer_hessian_cuda_smart_ptr(new max_subsampling_layer_hessian_cuda<4>());
+					break;
+				default:
+					throw neural_network_exception((boost::format("No CUDA hessian for the max subsampling of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
 			}
 
 			return res;

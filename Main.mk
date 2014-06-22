@@ -25,6 +25,14 @@ endif
 LDFLAGS+=$(NETCDF_LIBS)
 endif
 
+ifeq ($(USE_MATIO),yes)
+ifneq ($(MATIO_PATH),)
+GENERIC_CXXFLAGS+=-I$(MATIO_PATH)/include
+LDFLAGS+=-L$(MATIO_PATH)/lib
+endif
+LDFLAGS+=$(MATIO_LIBS)
+endif
+
 ifeq ($(USE_CUDA),yes)
 GENERIC_CXXFLAGS+=-I$(CUDA_PATH)/include
 LDFLAGS+=-L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib -lcublas -lcudart
