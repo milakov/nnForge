@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,14 +24,12 @@
 
 namespace nnforge
 {
-	class rotate_band_2d_data_transformer : public data_transformer
+	class rotate_band_data_transformer : public data_transformer
 	{
 	public:
-		rotate_band_2d_data_transformer(
-			unsigned int max_absolute_band_rotation_x,
-			unsigned int max_absolute_band_rotation_y);
+		rotate_band_data_transformer(const std::vector<unsigned int>& max_absolute_band_rotations);
 
-		virtual ~rotate_band_2d_data_transformer();
+		virtual ~rotate_band_data_transformer();
 
 		virtual void transform(
 			const void * data,
@@ -40,10 +38,10 @@ namespace nnforge
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
+		virtual bool is_in_place() const;
+
 	protected:
 		random_generator generator;
-
-		nnforge_uniform_int_distribution<int> rotate_band_x_distribution;
-		nnforge_uniform_int_distribution<int> rotate_band_y_distribution;
+		std::vector<nnforge_uniform_int_distribution<int> > rotate_band_distributions;
 	};
 }
