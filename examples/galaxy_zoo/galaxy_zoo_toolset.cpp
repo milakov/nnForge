@@ -329,11 +329,13 @@ std::vector<nnforge::data_transformer_smart_ptr> galaxy_zoo_toolset::get_input_d
 		max_shift,
 		false,
 		true)));
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::extract_2d_data_transformer(
-		image_width,
-		image_height,
-		image_width,
-		image_height)));
+
+	std::vector<unsigned int> image_sizes;
+	image_sizes.push_back(image_width);
+	image_sizes.push_back(image_height);
+	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::extract_data_transformer(
+		image_sizes,
+		image_sizes)));
 
 	return res;
 }
@@ -354,11 +356,12 @@ std::vector<nnforge::data_transformer_smart_ptr> galaxy_zoo_toolset::get_input_d
 	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::flip_2d_data_sampler_transformer(1)));
 	*/
 
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::extract_2d_data_transformer(
-		image_width,
-		image_height,
-		image_width,
-		image_height)));
+	std::vector<unsigned int> image_sizes;
+	image_sizes.push_back(image_width);
+	image_sizes.push_back(image_height);
+	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::extract_data_transformer(
+		image_sizes,
+		image_sizes)));
 
 	return res;
 }
@@ -377,11 +380,12 @@ std::vector<nnforge::data_transformer_smart_ptr> galaxy_zoo_toolset::get_input_d
 		std::vector<float>(1, 0.0F))));
 	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::flip_2d_data_sampler_transformer(1)));
 
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::extract_2d_data_transformer(
-		image_width,
-		image_height,
-		image_width,
-		image_height)));
+	std::vector<unsigned int> image_sizes;
+	image_sizes.push_back(image_width);
+	image_sizes.push_back(image_height);
+	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::extract_data_transformer(
+		image_sizes,
+		image_sizes)));
 
 	return res;
 }

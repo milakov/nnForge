@@ -22,16 +22,14 @@
 
 namespace nnforge
 {
-	class extract_2d_data_transformer : public data_transformer
+	class extract_data_transformer : public data_transformer
 	{
 	public:
-		extract_2d_data_transformer(
-			unsigned int input_window_width,
-			unsigned int input_window_height,
-			unsigned int output_window_width,
-			unsigned int output_window_height);
+		extract_data_transformer(
+			const std::vector<unsigned int>& input_window_sizes,
+			const std::vector<unsigned int>& output_window_sizes);
 
-		virtual ~extract_2d_data_transformer();
+		virtual ~extract_data_transformer();
 
 		virtual void transform(
 			const void * data,
@@ -45,9 +43,7 @@ namespace nnforge
 		virtual bool is_in_place() const;
 
 	protected:
-		unsigned int input_window_width;
-		unsigned int input_window_height;
-		unsigned int output_window_width;
-		unsigned int output_window_height;
+		std::vector<unsigned int> input_window_sizes;
+		std::vector<unsigned int> output_window_sizes;
 	};
 }
