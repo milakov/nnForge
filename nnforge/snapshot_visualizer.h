@@ -42,7 +42,18 @@ namespace nnforge
 			const layer_configuration_specific_snapshot& snapshot,
 			const char * file_path,
 			bool is_rgb,
-			bool should_normalize);
+			bool should_normalize,
+			unsigned int scale,
+			const std::vector<unsigned int>& snapshot_data_dimension_list);
+
+		static void save_3d_snapshot(
+			const layer_configuration_specific_snapshot& snapshot,
+			const char * file_path,
+			bool is_rgb,
+			bool should_normalize,
+			unsigned int fps,
+			unsigned int scale,
+			const std::vector<unsigned int>& snapshot_data_dimension_list);
 
 	private:
 		struct normalize_pixel_helper

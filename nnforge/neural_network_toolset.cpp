@@ -185,8 +185,9 @@ namespace nnforge
 			("ann_count,N", boost::program_options::value<unsigned int>(&ann_count)->default_value(1), "amount of networks to train.")
 			("training_epoch_count,E", boost::program_options::value<unsigned int>(&training_epoch_count)->default_value(50), "amount of epochs to perform during single ANN training.")
 			("snapshot_count", boost::program_options::value<unsigned int>(&snapshot_count)->default_value(100), "amount of snapshots to generate.")
-			("snapshot_extension", boost::program_options::value<std::string>(&snapshot_extension)->default_value("jpg"), "Extension (type) of the files for neuron values snapshots.")
-			("snapshot_mode", boost::program_options::value<std::string>(&snapshot_mode)->default_value("image"), "Type of the neuron values snapshot to generate (image, video).")
+			("snapshot_extension", boost::program_options::value<std::string>(&snapshot_extension)->default_value("jpg"), "Extension (type) of the files for neuron values snapshots stored as images.")
+			("snapshot_extension_video", boost::program_options::value<std::string>(&snapshot_extension_video)->default_value("avi"), "Extension (type) of the files for neuron values snapshots stored as videos.")
+			("snapshot_scale", boost::program_options::value<unsigned int>(&snapshot_scale)->default_value(1), "Scale snapshots by this value.")
 			("snapshot_video_fps", boost::program_options::value<unsigned int>(&snapshot_video_fps)->default_value(5), "Frames per second when saving video snapshot.")
 			("snapshot_ann_index", boost::program_options::value<unsigned int>(&snapshot_ann_index)->default_value(0), "Index of ANN for snapshots.")
 			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.0F), "Mu increases by this ratio each epoch.")
@@ -343,7 +344,8 @@ namespace nnforge
 			std::cout << "training_epoch_count" << "=" << training_epoch_count << std::endl;
 			std::cout << "snapshot_count" << "=" << snapshot_count << std::endl;
 			std::cout << "snapshot_extension" << "=" << snapshot_extension << std::endl;
-			std::cout << "snapshot_mode" << "=" << snapshot_mode << std::endl;
+			std::cout << "snapshot_extension_video" << "=" << snapshot_extension_video << std::endl;
+			std::cout << "snapshot_scale" << "=" << snapshot_scale << std::endl;
 			std::cout << "snapshot_video_fps" << "=" << snapshot_video_fps << std::endl;
 			std::cout << "snapshot_ann_index" << "=" << snapshot_ann_index << std::endl;
 			std::cout << "mu_increase_factor" << "=" << mu_increase_factor << std::endl;
@@ -922,14 +924,46 @@ namespace nnforge
 					sn.data[i] = static_cast<float>(buf[i]) * (1.0F / 255.0F);
 			}
 
-			boost::filesystem::path snapshot_file_path = snapshot_folder / (boost::format("snapshot_%|1$05d|.%2%") % i % snapshot_extension).str();
+			std::vector<unsigned int> snapshot_data_dimension_list = get_snapshot_data_dimension_list(sn.config.dimension_sizes.size());
 
-			snapshot_visualizer::save_2d_snapshot(
-				sn,
-				snapshot_file_path.string().c_str(),
-				is_rgb_input() && (sn.config.feature_map_count == 3),
-				true);
+			if (snapshot_data_dimension_list.size() == 2)
+			{
+				boost::filesystem::path snapshot_file_path = snapshot_folder / (boost::format("snapshot_%|1$05d|.%2%") % i % snapshot_extension).str();
+
+				snapshot_visualizer::save_2d_snapshot(
+					sn,
+					snapshot_file_path.string().c_str(),
+					is_rgb_input() && (sn.config.feature_map_count == 3),
+					true,
+					snapshot_scale,
+					snapshot_data_dimension_list);
+			}
+			else if (snapshot_data_dimension_list.size() == 3)
+			{
+				boost::filesystem::path snapshot_file_path = snapshot_folder / (boost::format("snapshot_%|1$05d|.%2%") % i % snapshot_extension_video).str();
+
+				snapshot_visualizer::save_3d_snapshot(
+					sn,
+					snapshot_file_path.string().c_str(),
+					is_rgb_input() && (sn.config.feature_map_count == 3),
+					true,
+					snapshot_video_fps,
+					snapshot_scale,
+					snapshot_data_dimension_list);
+			}
+			else
+				throw neural_network_exception((boost::format("Saving snapshot for %1% dimensions is not implemented") % snapshot_data_dimension_list.size()).str());
 		}
+	}
+
+	std::vector<unsigned int> neural_network_toolset::get_snapshot_data_dimension_list(unsigned int original_dimension_count) const
+	{
+		std::vector<unsigned int> res;
+		
+		for(unsigned int i = 0; i < original_dimension_count; ++i)
+			res.push_back(i);
+
+		return res;
 	}
 
 	void neural_network_toolset::snapshot()
@@ -1017,9 +1051,6 @@ namespace nnforge
 					boost::filesystem::path snapshot_layer_folder = snapshot_folder / (boost::format("%|1$03d|") % layer_id).str();
 					boost::filesystem::create_directories(snapshot_layer_folder);
 
-					boost::filesystem::path snapshot_file_path = snapshot_layer_folder / ((boost::format("snapshot_layer_%|1$03d|_fm_%|2$04d|_%3%_sample_%4%") % layer_id % feature_map_id % snapshot_data_set % current_sample_id).str() + "." + snapshot_extension);
-					boost::filesystem::path original_snapshot_file_path = snapshot_layer_folder / ((boost::format("snapshot_layer_%|1$03d|_fm_%|2$04d|_%3%_sample_%4%_original") % layer_id % feature_map_id % snapshot_data_set % current_sample_id).str() + "." + snapshot_extension);
-
 					std::pair<layer_configuration_specific_snapshot_smart_ptr, layer_configuration_specific_snapshot_smart_ptr> input_image_pair = run_analyzer_for_single_neuron(
 						*analyzer,
 						layer_id,
@@ -1027,17 +1058,31 @@ namespace nnforge
 						layer_config_list[layer_id + 1].get_offsets(offset),
 						layer_config_list[layer_id + 1].feature_map_count);
 
-					snapshot_visualizer::save_2d_snapshot(
-						*(input_image_pair.first),
-						snapshot_file_path.string().c_str(),
-						is_rgb_input() && (input_image_pair.first->config.feature_map_count == 3),
-						true);
+					std::vector<unsigned int> snapshot_data_dimension_list = get_snapshot_data_dimension_list(input_image_pair.first->config.dimension_sizes.size());
 
-					snapshot_visualizer::save_2d_snapshot(
-						*(input_image_pair.second),
-						original_snapshot_file_path.string().c_str(),
-						is_rgb_input() && (input_image_pair.second->config.feature_map_count == 3),
-						false);
+					if (snapshot_data_dimension_list.size() == 2)
+					{
+						boost::filesystem::path snapshot_file_path = snapshot_layer_folder / ((boost::format("snapshot_layer_%|1$03d|_fm_%|2$04d|_%3%_sample_%4%") % layer_id % feature_map_id % snapshot_data_set % current_sample_id).str() + "." + snapshot_extension);
+						boost::filesystem::path original_snapshot_file_path = snapshot_layer_folder / ((boost::format("snapshot_layer_%|1$03d|_fm_%|2$04d|_%3%_sample_%4%_original") % layer_id % feature_map_id % snapshot_data_set % current_sample_id).str() + "." + snapshot_extension);
+
+						snapshot_visualizer::save_2d_snapshot(
+							*(input_image_pair.first),
+							snapshot_file_path.string().c_str(),
+							is_rgb_input() && (input_image_pair.first->config.feature_map_count == 3),
+							true,
+							snapshot_scale,
+							snapshot_data_dimension_list);
+
+						snapshot_visualizer::save_2d_snapshot(
+							*(input_image_pair.second),
+							original_snapshot_file_path.string().c_str(),
+							is_rgb_input() && (input_image_pair.second->config.feature_map_count == 3),
+							false,
+							snapshot_scale,
+							snapshot_data_dimension_list);
+					}
+					else
+						throw neural_network_exception((boost::format("Saving snapshot for %1% dimensions is not implemented") % snapshot_data_dimension_list.size()).str());
 				}
 			}
 
