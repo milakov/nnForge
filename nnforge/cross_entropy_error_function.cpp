@@ -16,6 +16,8 @@
 
 #include "cross_entropy_error_function.h"
 
+#include "sigmoid_layer.h"
+
 #include <cmath>
 
 namespace nnforge
@@ -56,30 +58,75 @@ namespace nnforge
 		{
 			float actual_val = actual_values[i];
 			if (actual_val > 0.0F)
-				sum -= actual_val * logf(predicted_values[i]);
+				sum -= actual_val * logf(std::max(predicted_values[i], 1.0e-20F));
 			if (actual_val < 1.0F)
-				sum -= (1.0F - actual_val) * logf(1.0F - predicted_values[i]);
+				sum -= (1.0F - actual_val) * logf(std::max(1.0F - predicted_values[i], 1.0e-20F));
 		}
 
 		return sum;
 	}
 
-	void cross_entropy_error_function::calculate_gradient(
+	float cross_entropy_error_function::calculate_gradient_and_error(
 		const float * actual_values,
 		const float * predicted_values,
 		float * gradient,
 		unsigned int neuron_count) const
 	{
+		float sum = 0.0F;
 		for(unsigned int i = 0; i < neuron_count; ++i)
 		{
 			float actual_val = actual_values[i];
+			float predicted_val = predicted_values[i];
 			float gradient_val = 0.0F;
 			if (actual_val > 0.0F)
-				gradient_val += actual_val / predicted_values[i];
+			{
+				sum -= actual_val * logf(std::max(predicted_val, 1.0e-20F));
+				gradient_val = actual_val / predicted_val;
+			}
 			if (actual_val < 1.0F)
-				gradient_val -= (1.0F - actual_val) / (1.0F - predicted_values[i]);
+			{
+				sum -= (1.0F - actual_val) * logf(std::max(1.0F - predicted_val, 1.0e-20F));
+				gradient_val -= (1.0F - actual_val) / (1.0F - predicted_val);
+			}
 
 			gradient[i] = gradient_val;
 		}
+
+		return sum;
+	}
+
+	float cross_entropy_error_function::calculate_gradient_and_error_fused_with_activation(
+		const float * actual_values,
+		const float * predicted_values,
+		float * gradient,
+		unsigned int neuron_count) const
+	{
+		float sum = 0.0F;
+		for(unsigned int i = 0; i < neuron_count; ++i)
+		{
+			float actual_val = actual_values[i];
+			float raw_val = predicted_values[i];
+			float predicted_val = 1.0F / (expf(-raw_val) + 1.0F);
+			float gradient_val = 0.0F;
+			if (actual_val > 0.0F)
+			{
+				sum -= actual_val * logf(std::max(predicted_val, 1.0e-20F));
+				gradient_val = actual_val * (1.0F - predicted_val);
+			}
+			if (actual_val < 1.0F)
+			{
+				sum -= (1.0F - actual_val) * logf(std::max(1.0F - predicted_val, 1.0e-20F));
+				gradient_val -= (1.0F - actual_val) * predicted_val;
+			}
+
+			gradient[i] = gradient_val;
+		}
+
+		return sum;
+	}
+
+	const boost::uuids::uuid& cross_entropy_error_function::get_fusable_activation_uuid() const
+	{
+		return sigmoid_layer::layer_guid;
 	}
 }

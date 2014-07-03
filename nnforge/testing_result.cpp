@@ -36,13 +36,10 @@ namespace nnforge
 		return static_cast<float>(static_cast<double>(cumulative_error) / static_cast<double>(entry_count));
 	}
 
-	void testing_result::add_error(
-		const float * actual_values,
-		const float * predicted_values,
-		unsigned int neuron_count)
+	void testing_result::add_error(float sample_error)
 	{
 		++entry_count;
-		cumulative_error += static_cast<double>(ef->calculate_error(actual_values, predicted_values, neuron_count));
+		cumulative_error += static_cast<double>(sample_error);
 	}
 
 	unsigned int testing_result::get_entry_count() const

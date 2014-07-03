@@ -59,13 +59,20 @@ namespace nnforge
 		return sum * 0.5F;
 	}
 
-	void mse_error_function::calculate_gradient(
+	float mse_error_function::calculate_gradient_and_error(
 		const float * actual_values,
 		const float * predicted_values,
 		float * gradient,
 		unsigned int neuron_count) const
 	{
+		float sum = 0.0F;
 		for(unsigned int i = 0; i < neuron_count; ++i)
-			gradient[i] = actual_values[i] - predicted_values[i];
+		{
+			float diff = actual_values[i] - predicted_values[i];
+			sum += diff * diff;
+			gradient[i] = diff;
+		}
+
+		return sum * 0.5F;
 	}
 }

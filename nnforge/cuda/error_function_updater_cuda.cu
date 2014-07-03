@@ -16,16 +16,38 @@
 
 #include "error_function_updater_cuda.h"
 
+#include "../neural_network_exception.h"
+
 namespace nnforge
 {
 	namespace cuda
 	{
+		boost::uuids::uuid error_function_updater_cuda::empty_guid = boost::uuids::uuid();
+
 		error_function_updater_cuda::error_function_updater_cuda()
 		{
 		}
 
 		error_function_updater_cuda::~error_function_updater_cuda()
 		{
+		}
+
+		void error_function_updater_cuda::enqueue_update_error_and_gradient_fused_with_activation(
+			cudaStream_t stream_id,
+			cuda_linear_buffer_device_smart_ptr gradient_buffer,
+			cuda_linear_buffer_device_smart_ptr error_buffer,
+			const_cuda_linear_buffer_device_smart_ptr actual_output_buffer,
+			const_cuda_linear_buffer_device_smart_ptr predicted_output_buffer,
+			unsigned int input_entry_id,
+			unsigned int neuron_count,
+			unsigned int updater_entry_count) const
+		{
+			throw neural_network_exception("enqueue_update_error_and_gradient_fused_with_activation not implemented for this error function");
+		}
+
+		const boost::uuids::uuid& error_function_updater_cuda::get_fusable_activation_uuid() const
+		{
+			return empty_guid;
 		}
 	}
 }

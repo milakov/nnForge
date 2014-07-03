@@ -104,6 +104,8 @@ namespace nnforge
 
 			const_error_function_updater_cuda_smart_ptr ef_updater;
 
+			bool error_function_fused_with_activation;
+
 			static unsigned int max_entry_count_in_single_batch;
 		};
 	}

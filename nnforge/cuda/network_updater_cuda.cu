@@ -101,11 +101,18 @@ namespace nnforge
 				testing_layer_count++;
 			}
 
+			ef_updater = single_error_function_updater_cuda_factory::get_const_instance().get_error_function_updater_cuda(ef->get_uuid());
+
+			error_function_fused_with_activation = (ef_updater->get_fusable_activation_uuid() == layer_list.back()->get_uuid());
+
 			for(const_layer_list::const_iterator it = layer_list.begin(); it != start_layer_nonempty_weights_iterator; ++it)
 				testing_schemas.push_back(single_layer_testing_schema_factory::get_const_instance().create_testing_schema_layer(*it, cuda_config));
 
 			for(const_layer_list::const_iterator it = start_layer_nonempty_weights_iterator; it != layer_list.end(); ++it)
-				updater_schemas.push_back(single_layer_updater_schema_factory::get_const_instance().create_updater_schema_layer(*it, cuda_config));
+			{
+				if ((it != layer_list.end() - 1) || (!error_function_fused_with_activation))
+					updater_schemas.push_back(single_layer_updater_schema_factory::get_const_instance().create_updater_schema_layer(*it, cuda_config));
+			}
 
 			for(std::map<unsigned int, weight_vector_bound>::const_iterator it = this->layer_to_weight_vector_bound_map.begin(); it != this->layer_to_weight_vector_bound_map.end(); ++it)
 			{
@@ -115,8 +122,6 @@ namespace nnforge
 
 				weight_vector_bounds.insert(std::make_pair(layer_id, single_weight_vector_bound_factory::get_const_instance().create_weight_vector_bound(layer_list[layer_id], cuda_config)));
 			}
-
-			ef_updater = single_error_function_updater_cuda_factory::get_const_instance().get_error_function_updater_cuda(ef->get_uuid());
 
 			setup_network_cuda();
 
@@ -250,7 +255,7 @@ namespace nnforge
 			cuda_linear_buffer_host_smart_ptr output_host_buf(new cuda_linear_buffer_host(output_neuron_count * max_entry_count * sizeof(float)));
 			float * output = *output_host_buf;
 
-			// zero mse
+			// set error to zero
 			cuda_util::set_with_value(
 				*cuda_config,
 				(double *)(*error_buf),
@@ -411,15 +416,26 @@ namespace nnforge
 
 						// Compute errors
 						{
-							ef_updater->enqueue_update_error_and_gradient(
-								*command_stream,
-								initial_error_buf,
-								error_buf,
-								output_buf[current_command_slot],
-								output_buffer,
-								input_entry_id,
-								output_neuron_count,
-								updater_entry_count);
+							if (error_function_fused_with_activation)
+								ef_updater->enqueue_update_error_and_gradient_fused_with_activation(
+									*command_stream,
+									initial_error_buf,
+									error_buf,
+									output_buf[current_command_slot],
+									output_buffer,
+									input_entry_id,
+									output_neuron_count,
+									updater_entry_count);
+							else
+								ef_updater->enqueue_update_error_and_gradient(
+									*command_stream,
+									initial_error_buf,
+									error_buf,
+									output_buf[current_command_slot],
+									output_buffer,
+									input_entry_id,
+									output_neuron_count,
+									updater_entry_count);
 						}
 
 						// Backward updater
@@ -429,7 +445,7 @@ namespace nnforge
 							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator net_data_it = net_data.rbegin();
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator learning_rate_data_it = learning_rate_data.rbegin();
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator schema_data_it = updater_schema_data.rbegin();
-							unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1;
+							unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1 - (error_function_fused_with_activation ? 1 : 0);
 							layer_configuration_specific_list::const_reverse_iterator layer_config_it = layer_config_list.rbegin() + 1;
 							std::vector<std::vector<unsigned int> >::reverse_iterator incoming_weight_count_it = incoming_weight_count_per_output_neuron_list_list.rbegin();
 							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++learning_rate_data_it, ++output_errors_it, ++net_data_it, --reverse_layer_id, ++layer_config_it, ++incoming_weight_count_it)

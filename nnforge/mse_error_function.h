@@ -37,7 +37,7 @@ namespace nnforge
 			const float * predicted_values,
 			unsigned int neuron_count) const;
 
-		virtual void calculate_gradient(
+		virtual float calculate_gradient_and_error(
 			const float * actual_values,
 			const float * predicted_values,
 			float * gradient,

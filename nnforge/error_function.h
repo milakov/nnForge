@@ -37,14 +37,25 @@ namespace nnforge
 			const float * predicted_values,
 			unsigned int neuron_count) const = 0;
 
-		virtual void calculate_gradient(
+		virtual float calculate_gradient_and_error(
 			const float * actual_values,
 			const float * predicted_values,
 			float * gradient,
 			unsigned int neuron_count) const = 0;
 
+		virtual float calculate_gradient_and_error_fused_with_activation(
+			const float * actual_values,
+			const float * predicted_values,
+			float * gradient,
+			unsigned int neuron_count) const;
+
+		virtual const boost::uuids::uuid& get_fusable_activation_uuid() const;
+
 	protected:
 		error_function();
+
+	private:
+		static boost::uuids::uuid empty_guid;
 	};
 
 	typedef nnforge_shared_ptr<error_function> error_function_smart_ptr;

@@ -48,6 +48,8 @@ namespace nnforge
 		{
 			const const_layer_list& layer_list = *schema;
 
+			error_function_fused_with_activation = (layer_list.back()->get_uuid() == ef->get_fusable_activation_uuid());
+
 			testing_layer_count = 0;
 			start_layer_nonempty_weights_iterator = layer_list.begin();
 			for(const_layer_list::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
@@ -64,7 +66,10 @@ namespace nnforge
 				tester_list.push_back(single_layer_tester_plain_factory::get_const_instance().get_tester_plain_layer((*it)->get_uuid()));
 
 			for(const_layer_list::const_iterator it = start_layer_nonempty_weights_iterator; it != layer_list.end(); ++it)
-				updater_list.push_back(single_layer_updater_plain_factory::get_const_instance().get_updater_plain_layer((*it)->get_uuid()));
+			{
+				if ((it != layer_list.end() - 1) || (!error_function_fused_with_activation))
+					updater_list.push_back(single_layer_updater_plain_factory::get_const_instance().get_updater_plain_layer((*it)->get_uuid()));
+			}
 
 			for(std::map<unsigned int, weight_vector_bound>::const_iterator it = this->layer_to_weight_vector_bound_map.begin(); it != this->layer_to_weight_vector_bound_map.end(); ++it)
 			{
@@ -332,20 +337,24 @@ namespace nnforge
 							float * initial_errors = &(*(initial_error_it + (updater_entry_id * output_neuron_count)));
 							testing_result& tr = **(testing_res_it + updater_entry_id);
 
-							tr.add_error(actual_vals, predicted_vals, output_neuron_count);
-							tr.ef->calculate_gradient(actual_vals, predicted_vals, initial_errors, output_neuron_count);
+							float error;
+							if (error_function_fused_with_activation)
+								error = tr.ef->calculate_gradient_and_error_fused_with_activation(actual_vals, predicted_vals, initial_errors, output_neuron_count);
+							else
+								error = tr.ef->calculate_gradient_and_error(actual_vals, predicted_vals, initial_errors, output_neuron_count);
+							tr.add_error(error);
 						}
 					}
 
 					// Run backward and update weights
 					{
-						const_layer_list::const_reverse_iterator layer_it = layer_list.rbegin();
+						const_layer_list::const_reverse_iterator layer_it = layer_list.rbegin() + (error_function_fused_with_activation ? 1 : 0);
 						std::vector<std::pair<additional_buffer_smart_ptr, updater_additional_buffer_set> >::reverse_iterator updater_buffers_it = input_buffer_and_additional_updater_buffers_pack.rbegin();
-						layer_configuration_specific_list::const_reverse_iterator input_config_it = layer_config_list.rbegin();
-						std::vector<layer_data_list>::reverse_iterator data_it = data_list_reorganized.rbegin();
-						std::vector<layer_data_list>::const_reverse_iterator learning_rate_it = learning_rate_vector_list_reorganized.rbegin();
+						layer_configuration_specific_list::const_reverse_iterator input_config_it = layer_config_list.rbegin() + (error_function_fused_with_activation ? 1 : 0);
+						std::vector<layer_data_list>::reverse_iterator data_it = data_list_reorganized.rbegin() + (error_function_fused_with_activation ? 1 : 0);
+						std::vector<layer_data_list>::const_reverse_iterator learning_rate_it = learning_rate_vector_list_reorganized.rbegin() + (error_function_fused_with_activation ? 1 : 0);
 						additional_buffer_smart_ptr output_errors = initial_error_buf;
-						unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1;
+						unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1 - (error_function_fused_with_activation ? 1 : 0);
 						for(std::vector<const_layer_updater_plain_smart_ptr>::const_reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++learning_rate_it, --reverse_layer_id)
 						{
 							if (it != updater_list.rend() - 1)

@@ -16,13 +16,31 @@
 
 #include "error_function.h"
 
+#include "neural_network_exception.h"
+
 namespace nnforge
 {
+	boost::uuids::uuid error_function::empty_guid = boost::uuids::uuid();
+
 	error_function::error_function()
 	{
 	}
 
 	error_function::~error_function()
 	{
+	}
+
+	const boost::uuids::uuid& error_function::get_fusable_activation_uuid() const
+	{
+		return empty_guid;
+	}
+
+	float error_function::calculate_gradient_and_error_fused_with_activation(
+		const float * actual_values,
+		const float * predicted_values,
+		float * gradient,
+		unsigned int neuron_count) const
+	{
+		throw neural_network_exception("calculate_gradient_and_error_fused_with_activation not implemented for this error function");
 	}
 }

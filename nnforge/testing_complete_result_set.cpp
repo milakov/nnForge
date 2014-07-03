@@ -48,7 +48,7 @@ namespace nnforge
 		{
 			const float * it_actual = &(*it1->begin());
 			const float * it_predicted = &(*it2->begin());
-			tr->add_error(it_actual, it_predicted, it1->size());
+			tr->add_error(tr->ef->calculate_error(it_actual, it_predicted, it1->size()));
 		}
 	}
 }

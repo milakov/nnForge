@@ -78,6 +78,8 @@ namespace nnforge
 			const_layer_updater_plain_list updater_list;
 			weight_vector_bound_map weight_vector_bounds;
 
+			bool error_function_fused_with_activation;
+
 			static unsigned int max_entry_count_in_single_batch;
 		};
 	}
