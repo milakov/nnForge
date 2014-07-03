@@ -88,12 +88,10 @@ namespace nnforge
 				current_input_elem_id += window_x;
 
 				#pragma unroll
-				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-					res[i] = -1.0e37F;
-				#pragma unroll
 				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 					item_valid[i - 1] = (base_feature_map_id + i < feature_map_count);
 
+				bool init_required = true;
 				for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? subsampling_sizes[3] : 1); ++input_w)
 				{
 					for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? subsampling_sizes[2] : 1); ++input_z)
@@ -111,13 +109,14 @@ namespace nnforge
 								#pragma unroll
 								for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 								{
-									if (new_val[i] > res[i])
+									if (init_required || (new_val[i] > res[i]))
 									{
 										res[i] = new_val[i];
 										max_pos[i] = current_input_elem_id + input_neuron_count_per_feature_map * i;
 									}
 								}
 								current_input_elem_id += input_sizes[0];
+								init_required = false;
 							}
 							else
 							{
