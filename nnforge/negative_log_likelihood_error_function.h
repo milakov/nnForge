@@ -43,6 +43,17 @@ namespace nnforge
 			float * gradient,
 			unsigned int neuron_count) const;
 
+		// Works correctly only when:
+		// 1) Actual_values are all 0 except for single value which is 1
+		// 2) Feature map contains exactly 1 element
+		virtual float calculate_gradient_and_error_fused_with_activation(
+			const float * actual_values,
+			const float * predicted_values,
+			float * gradient,
+			unsigned int neuron_count) const;
+
 		static const boost::uuids::uuid function_guid;
+
+		virtual const boost::uuids::uuid& get_fusable_activation_uuid() const;
 	};
 }

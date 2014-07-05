@@ -16,6 +16,8 @@
 
 #include "negative_log_likelihood_error_function.h"
 
+#include "softmax_layer.h"
+
 #include <cmath>
 
 namespace nnforge
@@ -83,5 +85,38 @@ namespace nnforge
 		}
 
 		return sum;
+	}
+
+	// Works correctly only when:
+	// 1) Actual_values are all 0 except for single value which is 1
+	// 2) Feature map contains exactly 1 element
+	float negative_log_likelihood_error_function::calculate_gradient_and_error_fused_with_activation(
+		const float * actual_values,
+		const float * predicted_values,
+		float * gradient,
+		unsigned int neuron_count) const
+	{
+		float predicted_sum = 0.0F;
+		for(unsigned int i = 0; i < neuron_count; ++i)
+			predicted_sum += expf(predicted_values[i]);
+
+		float mult = 1.0F / predicted_sum;
+
+		float error_sum = 0.0F;
+		for(unsigned int i = 0; i < neuron_count; ++i)
+		{
+			float actual_val = actual_values[i];
+			float predicted_val = expf(predicted_values[i]) * mult;
+			gradient[i] = actual_val - predicted_val;
+			if (actual_val > 0.0F)
+				error_sum -= actual_val * logf(std::max(predicted_val, 1.0e-20F));
+		}
+
+		return error_sum;
+	}
+
+	const boost::uuids::uuid& negative_log_likelihood_error_function::get_fusable_activation_uuid() const
+	{
+		return softmax_layer::layer_guid;
 	}
 }
