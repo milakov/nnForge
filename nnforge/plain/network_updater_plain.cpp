@@ -83,7 +83,8 @@ namespace nnforge
 			network_data_const_smart_ptr learning_rate,
 			network_data_smart_ptr data,
 			unsigned int batch_size,
-			float weight_decay)
+			float weight_decay,
+			float momentum)
 		{
 			testing_result_smart_ptr res(new testing_result(ef));
 
@@ -118,6 +119,12 @@ namespace nnforge
 
 			network_data_smart_ptr gradient(new network_data(*schema));
 			gradient->fill(0.0F);
+			network_data_smart_ptr previous_upd;
+			if (momentum > 0.0F)
+			{
+				previous_upd = network_data_smart_ptr(new network_data(*schema));
+				previous_upd->fill(0.0F);
+			}
 
 			{
 				buffer_plain_size_configuration buffers_config;
@@ -448,17 +455,14 @@ namespace nnforge
 					if (entry_gradient_calculated_count >= batch_size)
 					{
 						float gradient_normalizer = 1.0F / static_cast<float>(std::max(batch_size, entry_gradient_calculated_count));
-						layer_data_list::iterator gradient_it = gradient->begin() + testing_layer_count;
-						layer_data_list::const_iterator learning_rate_it = learning_rate->begin() + testing_layer_count;
-						for(layer_data_list::iterator data_it = data->begin() + testing_layer_count; data_it != data->end(); ++data_it, ++gradient_it, ++learning_rate_it)
-						{
-							apply_gradient(
-								*data_it,
-								*gradient_it,
-								*learning_rate_it,
-								gradient_normalizer,
-								weight_decay);
-						}
+						apply_gradient(
+							*data,
+							*gradient,
+							*previous_upd,
+							*learning_rate,
+							gradient_normalizer,
+							weight_decay,
+							momentum);
 						entry_gradient_calculated_count = 0;
 					}
 				}
@@ -467,17 +471,14 @@ namespace nnforge
 			if (entry_gradient_calculated_count > 0)
 			{
 				float gradient_normalizer = 1.0F / static_cast<float>(std::max(batch_size, entry_gradient_calculated_count));
-				layer_data_list::iterator gradient_it = gradient->begin() + testing_layer_count;
-				layer_data_list::const_iterator learning_rate_it = learning_rate->begin() + testing_layer_count;
-				for(layer_data_list::iterator data_it = data->begin() + testing_layer_count; data_it != data->end(); ++data_it, ++gradient_it, ++learning_rate_it)
-				{
-					apply_gradient(
-						*data_it,
-						*gradient_it,
-						*learning_rate_it,
-						gradient_normalizer,
-						weight_decay);
-				}
+				apply_gradient(
+					*data,
+					*gradient,
+					*previous_upd,
+					*learning_rate,
+					gradient_normalizer,
+					weight_decay,
+					momentum);
 				entry_gradient_calculated_count = 0;
 			}
 
@@ -489,26 +490,66 @@ namespace nnforge
 		}
 
 		void network_updater_plain::apply_gradient(
-			layer_data_smart_ptr data,
-			layer_data_smart_ptr gradient,
-			const_layer_data_smart_ptr learning_rate,
+			std::vector<layer_data_smart_ptr>& data,
+			std::vector<layer_data_smart_ptr>& gradient,
+			std::vector<layer_data_smart_ptr>& previous_upd,
+			const std::vector<layer_data_smart_ptr>& learning_rate,
 			float normalizer,
-			float weight_decay) const
+			float weight_decay,
+			float momentum) const
 		{
-			layer_data::iterator gradient_it = gradient->begin();
-			layer_data::const_iterator learning_rate_it = learning_rate->begin();
-			for(layer_data::iterator data_it = data->begin(); data_it != data->end(); ++data_it, ++gradient_it, ++learning_rate_it)
+			if (momentum > 0.0F)
 			{
-				std::vector<float>::iterator gradient_it2 = gradient_it->begin();
-				std::vector<float>::const_iterator learning_rate_it2 = learning_rate_it->begin();
-				for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++learning_rate_it2)
+				layer_data_list::iterator gradient_it0 = gradient.begin() + testing_layer_count;
+				layer_data_list::iterator previous_upd_it0 = previous_upd.begin() + testing_layer_count;
+				layer_data_list::const_iterator learning_rate_it0 = learning_rate.begin() + testing_layer_count;
+				for(layer_data_list::iterator data_it0 = data.begin() + testing_layer_count; data_it0 != data.end(); ++data_it0, ++gradient_it0, ++previous_upd_it0, ++learning_rate_it0)
 				{
-					float current_weight = *data_it2;
-					float lr = *learning_rate_it2;
-					float gr = *gradient_it2;
-					float new_weight = current_weight + lr * (gr * normalizer - current_weight * weight_decay);
-					*data_it2 = new_weight;
-					*gradient_it2 = 0.0F;
+					layer_data::iterator gradient_it = (*gradient_it0)->begin();
+					layer_data::iterator previous_upd_it = (*previous_upd_it0)->begin();
+					layer_data::const_iterator learning_rate_it = (*learning_rate_it0)->begin();
+					for(layer_data::iterator data_it = (*data_it0)->begin(); data_it != (*data_it0)->end(); ++data_it, ++gradient_it, ++previous_upd_it, ++learning_rate_it)
+					{
+						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
+						std::vector<float>::iterator previous_upd_it2 = previous_upd_it->begin();
+						std::vector<float>::const_iterator learning_rate_it2 = learning_rate_it->begin();
+						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2, ++learning_rate_it2)
+						{
+							float current_weight = *data_it2;
+							float lr = *learning_rate_it2;
+							float gr = *gradient_it2;
+							float prev_upd = *previous_upd_it2;
+							float upd = prev_upd * momentum + lr * (gr * normalizer - current_weight * weight_decay);
+							float new_weight = current_weight + upd;
+							*data_it2 = new_weight;
+							*gradient_it2 = 0.0F;
+							*previous_upd_it2 = upd;
+						}
+					}
+				}
+			}
+			else
+			{
+				layer_data_list::iterator gradient_it0 = gradient.begin() + testing_layer_count;
+				layer_data_list::const_iterator learning_rate_it0 = learning_rate.begin() + testing_layer_count;
+				for(layer_data_list::iterator data_it0 = data.begin() + testing_layer_count; data_it0 != data.end(); ++data_it0, ++gradient_it0, ++learning_rate_it0)
+				{
+					layer_data::iterator gradient_it = (*gradient_it0)->begin();
+					layer_data::const_iterator learning_rate_it = (*learning_rate_it0)->begin();
+					for(layer_data::iterator data_it = (*data_it0)->begin(); data_it != (*data_it0)->end(); ++data_it, ++gradient_it, ++learning_rate_it)
+					{
+						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
+						std::vector<float>::const_iterator learning_rate_it2 = learning_rate_it->begin();
+						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++learning_rate_it2)
+						{
+							float current_weight = *data_it2;
+							float lr = *learning_rate_it2;
+							float gr = *gradient_it2;
+							float new_weight = current_weight + lr * (gr * normalizer - current_weight * weight_decay);
+							*data_it2 = new_weight;
+							*gradient_it2 = 0.0F;
+						}
+					}
 				}
 			}
 		}

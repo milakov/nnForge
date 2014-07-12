@@ -79,7 +79,8 @@ namespace nnforge
 		network_data_const_smart_ptr learning_rate,
 		network_data_smart_ptr data,
 		unsigned int batch_size,
-		float weight_decay)
+		float weight_decay,
+		float momentum)
 	{
 		// Check data-schema consistency
 		data->check_network_data_consistency(*schema);
@@ -96,7 +97,7 @@ namespace nnforge
 
 		data->apply_dropout_layer_config(layer_id_to_dropout_config_map, false);
 
-		testing_result_smart_ptr res = actual_update(reader, learning_rate, data, batch_size, weight_decay);
+		testing_result_smart_ptr res = actual_update(reader, learning_rate, data, batch_size, weight_decay, momentum);
 
 		data->apply_dropout_layer_config(layer_id_to_dropout_config_map, true);
 

@@ -187,6 +187,7 @@ namespace nnforge
 		float weight_decay;
 		unsigned int snapshot_scale;
 		unsigned int batch_size;
+		float momentum;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(

@@ -43,7 +43,8 @@ namespace nnforge
 			network_data_const_smart_ptr learning_rate,
 			network_data_smart_ptr data,
 			unsigned int batch_size,
-			float weight_decay);
+			float weight_decay,
+			float momentum);
 
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
 		float get_flops_for_single_entry() const;
@@ -60,7 +61,8 @@ namespace nnforge
 			network_data_const_smart_ptr learning_rate,
 			network_data_smart_ptr data,
 			unsigned int batch_size,
-			float weight_decay) = 0;
+			float weight_decay,
+			float momentum) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 		// The layer_config_list is guaranteed to be compatible with schema

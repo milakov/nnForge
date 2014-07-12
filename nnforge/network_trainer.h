@@ -47,6 +47,7 @@ namespace nnforge
 		unsigned int learning_rate_rise_head_epoch_count;
 		float learning_rate_rise_rate;
 		float weight_decay;
+		float momentum;
 
 	protected:
 		network_trainer(network_schema_smart_ptr schema);

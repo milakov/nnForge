@@ -46,7 +46,8 @@ namespace nnforge
 				network_data_const_smart_ptr learning_rate,
 				network_data_smart_ptr data,
 				unsigned int batch_size,
-				float weight_decay);
+				float weight_decay,
+				float momentum);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 			// The layer_config_list is guaranteed to be compatible with schema
@@ -88,9 +89,11 @@ namespace nnforge
 				cudaStream_t stream_id,
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data,
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& gradient,
+				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& prev_upd,
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >& learning_rate,
 				float gradient_normalizer,
-				float weight_decay);
+				float weight_decay,
+				float momentum);
 
 			cuda_running_configuration_const_smart_ptr cuda_config;
 

@@ -50,7 +50,8 @@ namespace nnforge
 			lr_and_comment.first,
 			task.data,
 			batch_size,
-			weight_decay);
+			weight_decay,
+			momentum);
 
 		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start);
 

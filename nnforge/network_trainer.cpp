@@ -28,6 +28,8 @@ namespace nnforge
 		, learning_rate_decay_tail_epoch_count(0)
 		, learning_rate_decay_rate(0.5F)
 		, learning_rate(0.02F)
+		, batch_size(1)
+		, momentum(0.0F)
 	{
 	}
 

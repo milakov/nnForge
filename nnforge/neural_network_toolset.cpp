@@ -209,6 +209,7 @@ namespace nnforge
 			("epoch_count_in_training_set", boost::program_options::value<unsigned int>(&epoch_count_in_training_set)->default_value(1), "The whole should be split in this amount of epochs.")
 			("weight_decay", boost::program_options::value<float>(&weight_decay)->default_value(0.0F), "Weight decay.")
 			("batch_size,B", boost::program_options::value<unsigned int>(&batch_size)->default_value(1), "Training mini-batch size.")
+			("momentum,M", boost::program_options::value<float>(&momentum)->default_value(0.0F), "Momentum in training.")
 			;
 
 		{
@@ -369,6 +370,7 @@ namespace nnforge
 			std::cout << "epoch_count_in_training_set" << "=" << epoch_count_in_training_set << std::endl;
 			std::cout << "weight_decay" << "=" << weight_decay << std::endl;
 			std::cout << "batch_size" << "=" << batch_size << std::endl;
+			std::cout << "momentum" << "=" << momentum << std::endl;
 		}
 		{
 			std::vector<string_option> additional_string_options = get_string_options();
@@ -490,6 +492,7 @@ namespace nnforge
 		res->learning_rate_rise_rate = learning_rate_rise_rate;
 		res->weight_decay = weight_decay;
 		res->batch_size = batch_size;
+		res->momentum = momentum;
 
 		return res;
 	}
@@ -1456,7 +1459,8 @@ namespace nnforge
 			learning_rates,
 			data,
 			batch_size,
-			weight_decay);
+			weight_decay,
+			momentum);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		/*
 		{

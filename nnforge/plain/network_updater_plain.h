@@ -45,7 +45,8 @@ namespace nnforge
 				network_data_const_smart_ptr learning_rate,
 				network_data_smart_ptr data,
 				unsigned int batch_size,
-				float weight_decay);
+				float weight_decay,
+				float momentum);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 			// The layer_config_list is guaranteed to be compatible with schema
@@ -69,11 +70,13 @@ namespace nnforge
 				const unsigned int offset_in_random_list) const;
 
 			void apply_gradient(
-				layer_data_smart_ptr data,
-				layer_data_smart_ptr gradient,
-				const_layer_data_smart_ptr learning_rate,
+				std::vector<layer_data_smart_ptr>& data,
+				std::vector<layer_data_smart_ptr>& gradient,
+				std::vector<layer_data_smart_ptr>& previous_upd,
+				const std::vector<layer_data_smart_ptr>& learning_rate,
 				float normalizer,
-				float weight_decay) const;
+				float weight_decay,
+				float momentum) const;
 
 			plain_running_configuration_const_smart_ptr plain_config;
 
