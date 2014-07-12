@@ -31,7 +31,7 @@ __global__ void copy_bias_hess_kernel(
 	int output_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
 	int entry_id = (blockIdx.y * blockDim.y + threadIdx.y) * 4;
 
-	if ((output_neuron_id < output_neuron_count))
+	if ((output_neuron_id < output_neuron_count) && (entry_id < entry_count))
 	{
 		float bias = biases[output_neuron_id];
 		float * current_output = output + (int)(entry_id * output_neuron_count + output_neuron_id);
@@ -51,20 +51,24 @@ __global__ void fully_connected_update_biases_hess_kernel(
 	const float * __restrict output_errors,
 	int block_size,
 	int output_elem_count_per_entry,
-	int entry_count)
+	int entry_count,
+	int block_count)
 {
 	int output_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
 	int block_id = blockIdx.y * blockDim.y + threadIdx.y;
-	int base_entry_id = block_size * block_id;
-	int iteration_count = min(entry_count - base_entry_id, block_size);
-	const float * current_error = output_errors + (base_entry_id * output_elem_count_per_entry + output_neuron_id);
-	float sum = 0.0F;
-	for(int i = 0; i < iteration_count; ++i)
+	if ((output_neuron_id < output_elem_count_per_entry) && (block_id < block_count))
 	{
-		sum += *current_error;
-		current_error += output_elem_count_per_entry;
+		int base_entry_id = block_size * block_id;
+		int iteration_count = min(entry_count - base_entry_id, block_size);
+		const float * current_error = output_errors + (base_entry_id * output_elem_count_per_entry + output_neuron_id);
+		float sum = 0.0F;
+		for(int i = 0; i < iteration_count; ++i)
+		{
+			sum += *current_error;
+			current_error += output_elem_count_per_entry;
+		}
+		atomicAdd(hessian_biases + output_neuron_id, sum);
 	}
-	atomicAdd(hessian_biases + output_neuron_id, sum);
 }
 
 namespace nnforge
@@ -202,7 +206,8 @@ namespace nnforge
 					*output_errors_buffer,
 					block_size,
 					output_elem_count_per_entry,
-					entry_count);
+					entry_count,
+					block_count);
 			}
 		}
 
@@ -222,7 +227,7 @@ namespace nnforge
 
 		int fully_connected_layer_hessian_cuda::get_block_size(int entry_count)
 		{
-			int block_size = std::min<int>(std::max<int>(static_cast<int>(sqrtf(static_cast<float>(entry_count))), 1), entry_count);
+			int block_size = std::min(std::max(static_cast<int>(sqrtf(static_cast<float>(entry_count))), 1), entry_count);
 			return block_size;
 		}
 	}

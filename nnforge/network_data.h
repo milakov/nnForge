@@ -49,7 +49,7 @@ namespace nnforge
 		void read(std::istream& binary_stream_to_read_from);
 
 		// The method throws exception in case the data is not suitable for the layers
-		void check_network_data_consistency(const const_layer_list& layer_list);
+		void check_network_data_consistency(const const_layer_list& layer_list) const;
 
 		void randomize(
 			const const_layer_list& layer_list,
@@ -73,4 +73,5 @@ namespace nnforge
 	};
 
 	typedef nnforge_shared_ptr<network_data> network_data_smart_ptr;
+	typedef nnforge_shared_ptr<const network_data> network_data_const_smart_ptr;
 }

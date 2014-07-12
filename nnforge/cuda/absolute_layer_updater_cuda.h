@@ -53,8 +53,6 @@ namespace nnforge
 				unsigned int entry_count);
 
 		protected:
-			virtual void updater_configured();
-
 			virtual bool is_in_place_backprop() const;
 		};
 	}

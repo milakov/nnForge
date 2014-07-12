@@ -112,6 +112,9 @@ namespace nnforge
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
+			if (offset_input_entry_id > 0)
+				throw neural_network_exception("softmax_layer_updater_cuda is not able to run using offset");
+
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
 				input_elem_count_per_feature_map,
@@ -155,12 +158,6 @@ namespace nnforge
 		bool softmax_layer_updater_cuda::is_in_place_backprop() const
 		{
 			return true;
-		}
-
-		void softmax_layer_updater_cuda::updater_configured()
-		{
-			if (!different_input)
-				throw neural_network_exception("softmax_layer_updater_cuda is not able to run using the same input");
 		}
 	}
 }

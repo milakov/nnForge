@@ -46,8 +46,6 @@ public:
 protected:
 	virtual std::map<unsigned int, float> get_dropout_rate_map() const;
 
-	virtual std::map<unsigned int, nnforge::weight_vector_bound> get_weight_vector_bound_map() const;
-
 	virtual nnforge::network_schema_smart_ptr get_schema() const;
 
 	virtual void prepare_training_data();

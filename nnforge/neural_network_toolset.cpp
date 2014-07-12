@@ -208,6 +208,7 @@ namespace nnforge
 			("load_resume,R", boost::program_options::value<bool>(&load_resume)->default_value(false), "Resume neural network training strating from saved.")
 			("epoch_count_in_training_set", boost::program_options::value<unsigned int>(&epoch_count_in_training_set)->default_value(1), "The whole should be split in this amount of epochs.")
 			("weight_decay", boost::program_options::value<float>(&weight_decay)->default_value(0.0F), "Weight decay.")
+			("batch_size,B", boost::program_options::value<unsigned int>(&batch_size)->default_value(1), "Training mini-batch size.")
 			;
 
 		{
@@ -309,6 +310,7 @@ namespace nnforge
 		}
 
 		boost::filesystem::path logfile_path = get_working_data_folder() / logfile_name;
+		std::cout << "Forking output log to " << logfile_path.string() << "..." << std::endl;
 		out_to_log_duplicator_smart_ptr = nnforge_shared_ptr<stream_duplicator>(new stream_duplicator(logfile_path));
 
 		{
@@ -366,6 +368,7 @@ namespace nnforge
 			std::cout << "load_resume" << "=" << load_resume << std::endl;
 			std::cout << "epoch_count_in_training_set" << "=" << epoch_count_in_training_set << std::endl;
 			std::cout << "weight_decay" << "=" << weight_decay << std::endl;
+			std::cout << "batch_size" << "=" << batch_size << std::endl;
 		}
 		{
 			std::vector<string_option> additional_string_options = get_string_options();
@@ -449,9 +452,7 @@ namespace nnforge
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
 			get_error_function(),
-			get_dropout_rate_map(),
-			get_weight_vector_bound_map(),
-			weight_decay);
+			get_dropout_rate_map());
 
 		if (training_algo == "sdlm")
 		{
@@ -487,6 +488,8 @@ namespace nnforge
 		res->learning_rate_decay_rate = learning_rate_decay_rate;
 		res->learning_rate_rise_head_epoch_count = learning_rate_rise_head_epoch_count;
 		res->learning_rate_rise_rate = learning_rate_rise_rate;
+		res->weight_decay = weight_decay;
+		res->batch_size = batch_size;
 
 		return res;
 	}
@@ -1423,35 +1426,22 @@ namespace nnforge
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
 			get_error_function(),
-			get_dropout_rate_map(),
-			get_weight_vector_bound_map(),
-			weight_decay);
+			get_dropout_rate_map());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
 		training_data_reader = supervised_data_reader_smart_ptr(new supervised_limited_entry_count_data_reader(training_data_reader, profile_updater_entry_count));
 
-		std::vector<network_data_smart_ptr> learning_rates(ann_count);
-		std::vector<network_data_smart_ptr> data(ann_count);
-
+		network_data_smart_ptr data(new network_data(*schema));
 		{
 			random_generator data_gen = rnd::get_random_generator(47597);
-			for(int i = ann_count - 1; i >= 0; --i)
-			{
-				network_data_smart_ptr data_elem(new network_data(*schema));
-				data_elem->randomize(*schema, data_gen);
-				data[i] = data_elem;
-			}
+			data->randomize(*schema, data_gen);
 		}
 
+		network_data_smart_ptr learning_rates(new network_data(*schema));
 		{
 			random_generator data_gen = rnd::get_random_generator(674578);
-			for(int i = ann_count - 1; i >= 0; --i)
-			{
-				network_data_smart_ptr ts(new network_data(*schema));
-				ts->random_fill(learning_rate * 0.5F, learning_rate * 1.5F, data_gen);
-				//ts->fill(learning_rate);
-				learning_rates[i] = ts;
-			}
+			learning_rates->random_fill(learning_rate * 0.5F, learning_rate * 1.5F, data_gen);
+			//learning_rates->fill(learning_rate);
 		}
 
 		std::vector<float> random_uniform_list(1 << 10);
@@ -1464,7 +1454,9 @@ namespace nnforge
 		updater->update(
 			*training_data_reader,
 			learning_rates,
-			data);
+			data,
+			batch_size,
+			weight_decay);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		/*
 		{
@@ -1493,7 +1485,7 @@ namespace nnforge
 			std::cout << (boost::format("%|1$.1f| GFLOPs, %|2$.2f| seconds") % gflops % time_to_complete_seconds) << std::endl;
 		}
 
-		std::cout << data[data.size()-1]->get_stat() << std::endl;
+		std::cout << data->get_stat() << std::endl;
 	}
 
 	void neural_network_toolset::profile_hessian()
@@ -1564,11 +1556,6 @@ namespace nnforge
 	std::map<unsigned int, float> neural_network_toolset::get_dropout_rate_map() const
 	{
 		return std::map<unsigned int, float>();
-	}
-
-	std::map<unsigned int, weight_vector_bound> neural_network_toolset::get_weight_vector_bound_map() const
-	{
-		return std::map<unsigned int, weight_vector_bound>();
 	}
 
 	std::vector<data_transformer_smart_ptr> neural_network_toolset::get_input_data_transformer_list_for_training() const

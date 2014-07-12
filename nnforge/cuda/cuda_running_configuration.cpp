@@ -84,7 +84,7 @@ namespace nnforge
 			texture_alignment = device_prop.textureAlignment;
 			pci_bus_id = device_prop.pciBusID;
 			pci_device_id = device_prop.pciDeviceID;
-		#ifdef WIN32
+		#ifdef _WIN32
 			tcc_mode = (device_prop.tccDriver != 0);
 		#endif
 
@@ -160,6 +160,9 @@ namespace nnforge
 			float ratio) const
 		{
 			size_t memory_left = static_cast<size_t>(static_cast<float>(global_memory_size) * max_global_memory_usage_ratio * ratio) - buffers_config.constant_buffer_size;
+			if (memory_left< 0)
+				memory_left = 0;
+
 			size_t entry_count_limited_by_global = memory_left / buffers_config.per_entry_buffer_size;
 
 			unsigned int entry_count_limited_by_linear_texture = buffers_config.max_tex_per_entry > 0 ? (max_texture_1d_linear - 1) / buffers_config.max_tex_per_entry : std::numeric_limits<int>::max();

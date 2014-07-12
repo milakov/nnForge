@@ -46,8 +46,7 @@ namespace nnforge
 			layer_updater_cuda_smart_ptr create_updater(
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
-				bool backprop_required,
-				bool different_input) const;
+				bool backprop_required) const;
 
 			virtual const boost::uuids::uuid& get_uuid() const = 0;
 

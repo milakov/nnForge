@@ -22,7 +22,6 @@
 #include "cuda_stream.h"
 #include "layer_testing_schema.h"
 #include "layer_updater_schema.h"
-#include "weight_vector_bound_cuda.h"
 #include "error_function_updater_cuda.h"
 
 namespace nnforge
@@ -36,20 +35,18 @@ namespace nnforge
 				network_schema_smart_ptr schema,
 				const_error_function_smart_ptr ef,
 				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
-				float weight_decay,
 				cuda_running_configuration_const_smart_ptr cuda_config);
 
 			virtual ~network_updater_cuda();
 
-			virtual unsigned int get_max_batch_size() const;
-
 		protected:
 			// schema, data and reader are guaranteed to be compatible
-			virtual std::vector<testing_result_smart_ptr> actual_update(
+			virtual testing_result_smart_ptr actual_update(
 				supervised_data_reader& reader,
-				const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
-				std::vector<network_data_smart_ptr>& data_list);
+				network_data_const_smart_ptr learning_rate,
+				network_data_smart_ptr data,
+				unsigned int batch_size,
+				float weight_decay);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 			// The layer_config_list is guaranteed to be compatible with schema
@@ -65,13 +62,17 @@ namespace nnforge
 				buffer_cuda_size_configuration& buffer_configuration,
 				unsigned int updater_entry_count) const;
 
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_learning_rate(const std::vector<network_data_smart_ptr>& learning_rate_list) const;
+			unsigned int get_updater_max_count() const;
 
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data(const std::vector<network_data_smart_ptr>& data_list) const;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_learning_rate(network_data_const_smart_ptr learning_rate) const;
+
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data(network_data_const_smart_ptr data) const;
+
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_zero_gradient(const std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data) const;
 
 			void read_data(
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data_list,
-				std::vector<network_data_smart_ptr>& res,
+				network_data_smart_ptr res,
 				cudaStream_t stream_id) const;
 
 			void enqueue_dropout(
@@ -82,6 +83,14 @@ namespace nnforge
 				unsigned int mask,
 				unsigned int elem_count,
 				unsigned int offset_in_random_list);
+
+			void enqueue_apply_gradient(
+				cudaStream_t stream_id,
+				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data,
+				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& gradient,
+				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >& learning_rate,
+				float gradient_normalizer,
+				float weight_decay);
 
 			cuda_running_configuration_const_smart_ptr cuda_config;
 
@@ -98,9 +107,6 @@ namespace nnforge
 			const_layer_updater_schema_list updater_schemas;
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > updater_schema_data;
 			std::vector<layer_updater_cuda_smart_ptr> updater_list;
-			std::vector<std::vector<unsigned int> > incoming_weight_count_per_output_neuron_list_list;
-
-			weight_vector_bound_map weight_vector_bounds;
 
 			const_error_function_updater_cuda_smart_ptr ef_updater;
 

@@ -137,6 +137,15 @@ namespace nnforge
 				int elem_count,
 				cudaStream_t cuda_stream);
 
+			static void apply_gradient_with_weight_decay(
+				const cuda_running_configuration& cuda_config,
+				const float * gradient_with_aligned_size,
+				const float * learning_rates_with_aligned_size,
+				float * weights_with_aligned_size,
+				float weight_decay,
+				int elem_count,
+				cudaStream_t cuda_stream);
+
 			static void multiply_by_itself(
 				const cuda_running_configuration& cuda_config,
 				const float * input_buf_with_aligned_size,

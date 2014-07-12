@@ -51,8 +51,7 @@ namespace nnforge
 				const layer_configuration_specific& output_configuration_specific,
 				const_layer_smart_ptr layer_schema,
 				cuda_running_configuration_const_smart_ptr cuda_config,
-				bool backprop_required,
-				bool different_input);
+				bool backprop_required);
 
 			buffer_set allocate_all_buffers(unsigned int max_entry_count);
 
@@ -89,23 +88,19 @@ namespace nnforge
 			virtual void enqueue_update_weights(
 				unsigned int offset_input_entry_id,
 				cudaStream_t stream_id,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& learning_rate,
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				float weight_decay);
+				unsigned int entry_count);
 
-			virtual std::vector<unsigned int> get_incoming_weight_count_per_output_neuron_list() const;
+			std::vector<cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
 
-			std::vector<cuda_linear_buffer_device_smart_ptr> get_data(const std::vector<layer_data_smart_ptr>& host_data_list) const;
+			std::vector<const_cuda_linear_buffer_device_smart_ptr> get_learning_rate(const_layer_data_smart_ptr host_learning_rate) const;
 
-			std::vector<const_cuda_linear_buffer_device_smart_ptr> get_learning_rate(const std::vector<const_layer_data_smart_ptr>& host_learning_rate_list) const;
-
-			void get_data_from_device(const std::vector<cuda_linear_buffer_device_smart_ptr>& device_data, std::vector<layer_data_smart_ptr>& host_data) const;
+			void get_data_from_device(const std::vector<cuda_linear_buffer_device_smart_ptr>& device_data, layer_data_smart_ptr host_data) const;
 
 		protected:
 			layer_updater_cuda();
@@ -148,7 +143,6 @@ namespace nnforge
 			layer_configuration_specific output_configuration_specific;
 
 			bool backprop_required;
-			bool different_input;
 
 			unsigned int input_elem_count_per_entry;
 			unsigned int output_elem_count_per_entry;

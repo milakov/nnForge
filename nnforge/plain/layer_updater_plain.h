@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -76,11 +76,11 @@ namespace nnforge
 				std::vector<additional_buffer_smart_ptr>& additional_buffers,
 				plain_running_configuration_const_smart_ptr plain_config,
 				const_layer_smart_ptr layer_schema,
-				const layer_data_list& data,
+				const_layer_data_smart_ptr data,
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int updater_count,
-				int offset_input_entry_id) const = 0;
+				unsigned int offset_input_entry_id) const = 0;
 
 			virtual void backprop(
 				additional_buffer_smart_ptr input_errors,
@@ -90,7 +90,7 @@ namespace nnforge
 				std::vector<additional_buffer_smart_ptr>& additional_buffers,
 				plain_running_configuration_const_smart_ptr plain_config,
 				const_layer_smart_ptr layer_schema,
-				const layer_data_list& data,
+				const_layer_data_smart_ptr data,
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int updater_count) const = 0;
@@ -99,15 +99,13 @@ namespace nnforge
 				const_additional_buffer_smart_ptr input_neurons,
 				const_additional_buffer_smart_ptr output_errors,
 				std::vector<additional_buffer_smart_ptr>& additional_buffers,
-				layer_data_list& data,
-				const layer_data_list& learning_rate,
+				layer_data_smart_ptr gradient,
 				plain_running_configuration_const_smart_ptr plain_config,
 				const_layer_smart_ptr layer_schema,
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int updater_count,
-				int offset_input_entry_id,
-				const float weight_decay) const;
+				unsigned int offset_input_entry_id) const;
 
 		protected:
 			layer_updater_plain();

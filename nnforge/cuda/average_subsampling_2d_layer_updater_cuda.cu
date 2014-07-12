@@ -344,6 +344,9 @@ namespace nnforge
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
+			if (offset_input_entry_id > 0)
+				throw neural_network_exception("average_subsampling_2d_layer_updater_cuda is not able to run using offset");
+
 			cudaChannelFormatDesc desc = cudaCreateChannelDesc<float>();
 			cuda_safe_call(cudaBindTexture(0, input_tex_ref, *input_neurons_buffer, desc, input_elem_count_per_entry * entry_count * sizeof(float)));
 
@@ -430,9 +433,6 @@ namespace nnforge
 
 		void average_subsampling_2d_layer_updater_cuda::updater_configured()
 		{
-			if (!different_input)
-				throw neural_network_exception("average_subsampling_2d_layer_updater_cuda is not able to run using the same input");
-
 			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 
 			subsampling_sizes = layer_derived->subsampling_sizes;

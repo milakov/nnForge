@@ -55,23 +55,19 @@ namespace nnforge
 			virtual void enqueue_update_weights(
 				unsigned int offset_input_entry_id,
 				cudaStream_t stream_id,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& learning_rate,
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				float weight_decay);
-
-			virtual std::vector<unsigned int> get_incoming_weight_count_per_output_neuron_list() const;
+				unsigned int entry_count);
 
 		protected:
 			virtual bool is_in_place_backprop() const;
 
 		private:
-			static int get_threadblock_size_forward(int input_neuron_count);
+			static int get_block_size(int entry_count);
 		};
 	}
 }

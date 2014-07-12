@@ -37,11 +37,9 @@ namespace nnforge
 		// The method should add testing result to the training history of each element
 		virtual void train_step(
 			supervised_data_reader& reader,
-			std::vector<training_task_state>& task_list);
+			training_task_state& task);
 
 		virtual void initialize_train(supervised_data_reader& reader);
-
-		virtual unsigned int get_max_batch_size() const;
 
 		std::pair<network_data_smart_ptr, std::string> prepare_learning_rates(unsigned int epoch);
 

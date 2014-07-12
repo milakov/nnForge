@@ -205,6 +205,7 @@ namespace nnforge
 					std::vector<float>::const_iterator out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
 
 					std::fill_n(current_output_position.begin(), dimension_count, 0);
+					std::fill_n(in_err_it_base, input_neuron_count_per_feature_map, 0.0F);
 					for(std::vector<float>::const_iterator out_it = out_err_it_base; out_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
 						// Define the starting position of the first input elem

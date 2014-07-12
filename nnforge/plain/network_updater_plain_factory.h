@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,9 +33,7 @@ namespace nnforge
 			virtual network_updater_smart_ptr create(
 				network_schema_smart_ptr schema,
 				const_error_function_smart_ptr ef,
-				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
-				float weight_decay) const;
+				const std::map<unsigned int, float>& layer_to_dropout_rate_map) const;
 
 		protected:
 			plain_running_configuration_const_smart_ptr plain_config;

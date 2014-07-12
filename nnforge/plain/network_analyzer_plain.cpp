@@ -84,9 +84,7 @@ namespace nnforge
 
 		void network_analyzer_plain::actual_set_data(network_data_smart_ptr data)
 		{
-			data_list_reorganized = std::vector<layer_data_list>(data->size());
-			for(unsigned int layer_id = 0; layer_id < data->size(); ++layer_id)
-				data_list_reorganized[layer_id].push_back((*data)[layer_id]);
+			this->data = data;
 		}
 
 		void network_analyzer_plain::actual_set_input_data(
@@ -118,7 +116,7 @@ namespace nnforge
 			const_layer_list::const_iterator layer_it = layer_list.begin();
 			layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
 			std::vector<std::pair<additional_buffer_smart_ptr, updater_additional_buffer_set> >::iterator updater_buffers_it = input_buffer_and_additional_updater_buffers_pack.begin();
-			std::vector<layer_data_list>::const_iterator data_it = data_list_reorganized.begin();
+			layer_data_list::const_iterator data_it = data->begin();
 			for(std::vector<const_layer_updater_plain_smart_ptr>::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it)
 			{
 				(*it)->test(
@@ -131,7 +129,7 @@ namespace nnforge
 					*input_config_it,
 					*(input_config_it + 1),
 					1,
-					-1);
+					0);
 			}
 		}
 
@@ -209,7 +207,7 @@ namespace nnforge
 				const_layer_list::const_reverse_iterator layer_it = layer_list.rbegin() + (layer_list.size() - output_layer_id - 1);
 				std::vector<std::pair<additional_buffer_smart_ptr, updater_additional_buffer_set> >::reverse_iterator updater_buffers_it = input_buffer_and_additional_updater_buffers_pack.rbegin() + (input_buffer_and_additional_updater_buffers_pack.size() - output_layer_id - 1);
 				layer_configuration_specific_list::const_reverse_iterator input_config_it = layer_config_list.rbegin() + (layer_config_list.size() - output_layer_id - 2);
-				std::vector<layer_data_list>::reverse_iterator data_it = data_list_reorganized.rbegin() + (data_list_reorganized.size() - output_layer_id - 1);
+				layer_data_list::reverse_iterator data_it = data->rbegin() + (data->size() - output_layer_id - 1);
 				for(std::vector<const_layer_updater_plain_smart_ptr>::const_reverse_iterator it = updater_list.rbegin() + (updater_list.size() - output_layer_id - 1); it != updater_list.rend(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++output_errors_it)
 				{
 					(*it)->backprop(

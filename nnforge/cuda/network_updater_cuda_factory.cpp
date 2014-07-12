@@ -34,16 +34,12 @@ namespace nnforge
 		network_updater_smart_ptr network_updater_cuda_factory::create(
 			network_schema_smart_ptr schema,
 			const_error_function_smart_ptr ef,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
-			float weight_decay) const
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map) const
 		{
 			return network_updater_smart_ptr(new network_updater_cuda(
 				schema,
 				ef,
 				layer_to_dropout_rate_map,
-				layer_to_weight_vector_bound_map,
-				weight_decay,
 				cuda_config));
 		}
 	}

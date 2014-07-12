@@ -346,6 +346,9 @@ namespace nnforge
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
+			if (offset_input_entry_id > 0)
+				throw neural_network_exception("local_contrast_subtractive_2d_layer_updater_cuda is not able to run using offset");
+
 			std::pair<dim3, dim3> kernel_1st_dims = cuda_util::get_grid_and_threadblock_sizes_2d_access(
 				*cuda_config,
 				input_configuration_specific.dimension_sizes[0],
@@ -588,9 +591,6 @@ namespace nnforge
 
 		void local_contrast_subtractive_2d_layer_updater_cuda::updater_configured()
 		{
-			if (!different_input)
-				throw neural_network_exception("hyperbolic_tangent_layer_updater_cuda is not able to run using the same input");
-
 			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 
 			affected_feature_map_count = static_cast<int>(layer_derived->feature_maps_affected.size());

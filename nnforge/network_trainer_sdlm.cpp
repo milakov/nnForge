@@ -47,51 +47,42 @@ namespace nnforge
 
 	void network_trainer_sdlm::train_step(
 		supervised_data_reader& reader,
-		std::vector<training_task_state>& task_list)
+		training_task_state& task)
 	{
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 
 		unsigned int hessian_entry_to_process_count = std::min<unsigned int>(std::max<unsigned int>(static_cast<unsigned int>(hessian_entry_to_process_ratio * reader.get_entry_count()), min_hessian_entry_to_process_count), reader.get_entry_count());
 
-		std::vector<network_data_smart_ptr> learning_rate_vector_list;
-		for(unsigned int i = 0; i < task_list.size(); ++i)
-		{
-			network_data_smart_ptr hessian = hessian_calc->get_hessian(
-				reader,
-				task_list[i].data,
-				hessian_entry_to_process_count);
+		network_data_smart_ptr learning_rate;
 
-			std::string comment = convert_hessian_to_training_vector(
-				hessian,
-				task_list[i].get_current_epoch());
-
-			learning_rate_vector_list.push_back(hessian);
-
-			task_list[i].comments.push_back(comment);
-		}
-
-		std::vector<network_data_smart_ptr> data_list;
-		for(std::vector<training_task_state>::iterator it = task_list.begin(); it != task_list.end(); ++it)
-			data_list.push_back(it->data);
-
-		std::vector<testing_result_smart_ptr> train_result = updater->update(
+		network_data_smart_ptr hessian = hessian_calc->get_hessian(
 			reader,
-			learning_rate_vector_list,
-			data_list);
+			task.data,
+			hessian_entry_to_process_count);
 
-		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start) / task_list.size();
+		std::string comment = convert_hessian_to_training_vector(
+			hessian,
+			task.get_current_epoch());
+		task.comments.push_back(comment);
+
+		learning_rate = hessian;
+
+		testing_result_smart_ptr train_result = updater->update(
+			reader,
+			learning_rate,
+			task.data,
+			batch_size,
+			weight_decay);
+
+		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start);
 
 		float flops = updater->get_flops_for_single_entry();
 		float flops_hessian = hessian_calc->get_flops_for_single_entry();
 
-		for(unsigned int i = 0; i < task_list.size(); ++i)
-		{
-			testing_result_smart_ptr res = train_result[i];
-			res->time_to_complete_seconds = sec.count();
-			res->flops = (static_cast<float>(res->get_entry_count()) * flops) + (static_cast<float>(hessian_entry_to_process_count) * flops_hessian);
+		train_result->time_to_complete_seconds = sec.count();
+		train_result->flops = (static_cast<float>(train_result->get_entry_count()) * flops) + (static_cast<float>(hessian_entry_to_process_count) * flops_hessian);
 
-			task_list[i].history.push_back(res);
-		}
+		task.history.push_back(train_result);
 	}
 
 #ifdef NNFORGE_DEBUG_HESSIAN
@@ -291,11 +282,6 @@ namespace nnforge
 		}
 
 		return (boost::format("Eta = %|1$.2e|, Mu = %|2$.2e|, LR (%|3$s|)") % eta % mu % average_lr_str).str();
-	}
-
-	unsigned int network_trainer_sdlm::get_max_batch_size() const
-	{
-		return updater->get_max_batch_size();
 	}
 
 	void network_trainer_sdlm::initialize_train(supervised_data_reader& reader)

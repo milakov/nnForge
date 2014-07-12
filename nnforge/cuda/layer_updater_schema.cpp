@@ -48,8 +48,7 @@ namespace nnforge
 		layer_updater_cuda_smart_ptr layer_updater_schema::create_updater(
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
-			bool backprop_required,
-			bool different_input) const
+			bool backprop_required) const
 		{
 			layer_updater_cuda_smart_ptr res = create_updater_specific(
 				input_configuration_specific,
@@ -60,8 +59,7 @@ namespace nnforge
 				output_configuration_specific,
 				layer_schema,
 				cuda_config,
-				backprop_required,
-				different_input);
+				backprop_required);
 
 			return res;
 		}

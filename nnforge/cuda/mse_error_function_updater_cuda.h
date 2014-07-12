@@ -37,7 +37,7 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr error_buffer,
 				const_cuda_linear_buffer_device_smart_ptr actual_output_buffer,
 				const_cuda_linear_buffer_device_smart_ptr predicted_output_buffer,
-				unsigned int input_entry_id,
+				unsigned int offset_entry_id,
 				unsigned int neuron_count,
 				unsigned int updater_entry_count) const;
 

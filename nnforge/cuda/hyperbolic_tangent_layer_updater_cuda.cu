@@ -108,6 +108,9 @@ namespace nnforge
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
+			if (offset_input_entry_id > 0)
+				throw neural_network_exception("hyperbolic_tangent_layer_updater_cuda is not able to run using offset");
+
 			int elem_count = (input_elem_count_per_entry * entry_count + 3) / 4;
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
@@ -151,9 +154,6 @@ namespace nnforge
 
 		void hyperbolic_tangent_layer_updater_cuda::updater_configured()
 		{
-			if (!different_input)
-				throw neural_network_exception("hyperbolic_tangent_layer_updater_cuda is not able to run using the same input");
-
 			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 
 			hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;

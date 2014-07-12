@@ -22,7 +22,6 @@
 #include "supervised_data_reader.h"
 #include "testing_result.h"
 #include "dropout_layer_config.h"
-#include "weight_vector_bound.h"
 #include "error_function.h"
 #include "nn_types.h"
 
@@ -39,13 +38,12 @@ namespace nnforge
 		void set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific);
 
 		// Size of random_uniform_list is a power of 2
-		std::vector<testing_result_smart_ptr> update(
+		testing_result_smart_ptr update(
 			supervised_data_reader& reader,
-			const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
-			std::vector<network_data_smart_ptr>& data_list);
-
-		// set_input_configuration_specific should be called prior to this method call for this method to succeed
-		virtual unsigned int get_max_batch_size() const = 0;
+			network_data_const_smart_ptr learning_rate,
+			network_data_smart_ptr data,
+			unsigned int batch_size,
+			float weight_decay);
 
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
 		float get_flops_for_single_entry() const;
@@ -54,15 +52,15 @@ namespace nnforge
 		network_updater(
 			network_schema_smart_ptr schema,
 			const_error_function_smart_ptr ef,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
-			float weight_decay);
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map);
 
 		// schema, data and reader are guaranteed to be compatible
-		virtual std::vector<testing_result_smart_ptr> actual_update(
+		virtual testing_result_smart_ptr actual_update(
 			supervised_data_reader& reader,
-			const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
-			std::vector<network_data_smart_ptr>& data_list) = 0;
+			network_data_const_smart_ptr learning_rate,
+			network_data_smart_ptr data,
+			unsigned int batch_size,
+			float weight_decay) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 		// The layer_config_list is guaranteed to be compatible with schema
@@ -77,8 +75,6 @@ namespace nnforge
 		layer_configuration_specific_list layer_config_list;
 		std::vector<float> random_uniform_list;
 		float flops;
-		std::map<unsigned int, weight_vector_bound> layer_to_weight_vector_bound_map;
-		float weight_decay;
 
 	private:
 		network_updater();

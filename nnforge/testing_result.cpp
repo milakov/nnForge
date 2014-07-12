@@ -42,6 +42,14 @@ namespace nnforge
 		cumulative_error += static_cast<double>(sample_error);
 	}
 
+	void testing_result::add_error(
+		double cumulative_error,
+		unsigned int entry_count)
+	{
+		cumulative_error += cumulative_error;
+		this->entry_count += entry_count;
+	}
+
 	unsigned int testing_result::get_entry_count() const
 	{
 		return entry_count;

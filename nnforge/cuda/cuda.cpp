@@ -59,9 +59,6 @@
 #include "maxout_layer_updater_schema.h"
 #include "sigmoid_layer_updater_schema.h"
 
-#include "weight_vector_bound_cuda_factory.h"
-#include "convolution_weight_vector_bound_cuda.h"
-
 #include "error_function_updater_cuda_factory.h"
 #include "mse_error_function_updater_cuda.h"
 #include "squared_hinge_loss_error_function_updater_cuda.h"
@@ -113,8 +110,6 @@ namespace nnforge
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new rgb_to_yuv_convert_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new maxout_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new sigmoid_layer_updater_schema()));
-
-			single_weight_vector_bound_factory::get_mutable_instance().register_weight_vector_bound(weight_vector_bound_cuda_smart_ptr(new convolution_weight_vector_bound_cuda()));
 
 			single_error_function_updater_cuda_factory::get_mutable_instance().register_error_function_updater_cuda(error_function_updater_cuda_smart_ptr(new mse_error_function_updater_cuda()));
 			single_error_function_updater_cuda_factory::get_mutable_instance().register_error_function_updater_cuda(error_function_updater_cuda_smart_ptr(new squared_hinge_loss_error_function_updater_cuda()));

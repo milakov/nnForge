@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 #include "plain_running_configuration.h"
 #include "buffer_plain_size_configuration.h"
 #include "layer_tester_plain.h"
-#include "weight_vector_bound_plain.h"
 
 namespace nnforge
 {
@@ -35,20 +34,18 @@ namespace nnforge
 				network_schema_smart_ptr schema,
 				const_error_function_smart_ptr ef,
 				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-				const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
-				float weight_decay,
 				plain_running_configuration_const_smart_ptr plain_config);
 
 			~network_updater_plain();
 
-			virtual unsigned int get_max_batch_size() const;
-
 		protected:
 			// schema, data and reader are guaranteed to be compatible
-			virtual std::vector<testing_result_smart_ptr> actual_update(
+			virtual testing_result_smart_ptr actual_update(
 				supervised_data_reader& reader,
-				const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
-				std::vector<network_data_smart_ptr>& data_list);
+				network_data_const_smart_ptr learning_rate,
+				network_data_smart_ptr data,
+				unsigned int batch_size,
+				float weight_decay);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 			// The layer_config_list is guaranteed to be compatible with schema
@@ -57,6 +54,8 @@ namespace nnforge
 		private:
 			network_updater_plain(const network_updater_plain&);
 			network_updater_plain& operator =(const network_updater_plain&);
+
+			unsigned int get_updater_max_count() const;
 
 			void update_buffers_configuration(
 				buffer_plain_size_configuration& buffer_configuration,
@@ -69,6 +68,13 @@ namespace nnforge
 				const unsigned int updater_count,
 				const unsigned int offset_in_random_list) const;
 
+			void apply_gradient(
+				layer_data_smart_ptr data,
+				layer_data_smart_ptr gradient,
+				const_layer_data_smart_ptr learning_rate,
+				float normalizer,
+				float weight_decay) const;
+
 			plain_running_configuration_const_smart_ptr plain_config;
 
 			unsigned int testing_layer_count;
@@ -76,7 +82,6 @@ namespace nnforge
 
 			const_layer_tester_plain_list tester_list;
 			const_layer_updater_plain_list updater_list;
-			weight_vector_bound_map weight_vector_bounds;
 
 			bool error_function_fused_with_activation;
 

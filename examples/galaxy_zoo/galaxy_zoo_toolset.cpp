@@ -69,24 +69,6 @@ std::map<unsigned int, float> galaxy_zoo_toolset::get_dropout_rate_map() const
 	return res;
 }
 
-std::map<unsigned int, nnforge::weight_vector_bound> galaxy_zoo_toolset::get_weight_vector_bound_map() const
-{
-	std::map<unsigned int, nnforge::weight_vector_bound> res;
-
-	float bound = 3.0F;
-/*
-	res.insert(std::make_pair(2 - (is_color_input ? 0 : 1), bound));
-	res.insert(std::make_pair(5 - (is_color_input ? 0 : 1), bound));
-	res.insert(std::make_pair(8 - (is_color_input ? 0 : 1), bound));
-	res.insert(std::make_pair(11 - (is_color_input ? 0 : 1), bound));
-	res.insert(std::make_pair(14 - (is_color_input ? 0 : 1), bound));
-	res.insert(std::make_pair(17 - (is_color_input ? 0 : 1), bound));
-	res.insert(std::make_pair(19 - (is_color_input ? 0 : 1), bound));
-	res.insert(std::make_pair(21 - (is_color_input ? 0 : 1), bound));
-*/
-	return res;
-}
-
 nnforge::network_schema_smart_ptr galaxy_zoo_toolset::get_schema() const
 {
 	nnforge::network_schema_smart_ptr schema(new nnforge::network_schema());

@@ -29,7 +29,6 @@
 #include "layer_data_configuration.h"
 #include "data_transformer.h"
 #include "data_transformer_util.h"
-#include "weight_vector_bound.h"
 #include "normalize_data_transformer.h"
 #include "error_function.h"
 #include "network_trainer.h"
@@ -69,8 +68,6 @@ namespace nnforge
 		virtual network_schema_smart_ptr get_schema() const = 0;
 
 		virtual std::map<unsigned int, float> get_dropout_rate_map() const;
-
-		virtual std::map<unsigned int, weight_vector_bound> get_weight_vector_bound_map() const;
 
 		virtual boost::filesystem::path get_input_data_folder() const;
 
@@ -189,6 +186,7 @@ namespace nnforge
 		unsigned int epoch_count_in_training_set;
 		float weight_decay;
 		unsigned int snapshot_scale;
+		unsigned int batch_size;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(

@@ -38,41 +38,28 @@ namespace nnforge
 
 	void network_trainer_sgd::train_step(
 		supervised_data_reader& reader,
-		std::vector<training_task_state>& task_list)
+		training_task_state& task)
 	{
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 
-		std::vector<network_data_smart_ptr> learning_rate_vector_list;
-		for(unsigned int i = 0; i < task_list.size(); ++i)
-		{
-			std::pair<network_data_smart_ptr, std::string> lr_and_comment = prepare_learning_rates(task_list[i].get_current_epoch());
+		std::pair<network_data_smart_ptr, std::string> lr_and_comment = prepare_learning_rates(task.get_current_epoch());
+		task.comments.push_back(lr_and_comment.second);
 
-			learning_rate_vector_list.push_back(lr_and_comment.first);
-
-			task_list[i].comments.push_back(lr_and_comment.second);
-		}
-
-		std::vector<network_data_smart_ptr> data_list;
-		for(std::vector<training_task_state>::iterator it = task_list.begin(); it != task_list.end(); ++it)
-			data_list.push_back(it->data);
-
-		std::vector<testing_result_smart_ptr> train_result = updater->update(
+		testing_result_smart_ptr train_result = updater->update(
 			reader,
-			learning_rate_vector_list,
-			data_list);
+			lr_and_comment.first,
+			task.data,
+			batch_size,
+			weight_decay);
 
-		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start) / task_list.size();
+		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start);
 
 		float flops = updater->get_flops_for_single_entry();
 
-		for(unsigned int i = 0; i < task_list.size(); ++i)
-		{
-			testing_result_smart_ptr res = train_result[i];
-			res->time_to_complete_seconds = sec.count();
-			res->flops = static_cast<float>(res->get_entry_count()) * flops;
+		train_result->time_to_complete_seconds = sec.count();
+		train_result->flops = static_cast<float>(train_result->get_entry_count()) * flops;
 
-			task_list[i].history.push_back(res);
-		}
+		task.history.push_back(train_result);
 	}
 
 	std::pair<network_data_smart_ptr, std::string> network_trainer_sgd::prepare_learning_rates(unsigned int epoch)
@@ -85,11 +72,6 @@ namespace nnforge
 		std::string comment = (boost::format("LR %|1$.5e|") % learning_rate).str();
 
 		return std::make_pair(lr, comment);
-	}
-
-	unsigned int network_trainer_sgd::get_max_batch_size() const
-	{
-		return updater->get_max_batch_size();
 	}
 
 	void network_trainer_sgd::initialize_train(supervised_data_reader& reader)

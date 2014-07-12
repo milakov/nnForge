@@ -63,7 +63,7 @@ namespace nnforge
 			plain_running_configuration_const_smart_ptr plain_config;
 
 			const_layer_updater_plain_list updater_list;
-			std::vector<layer_data_list> data_list_reorganized;
+			network_data_smart_ptr data;
 			additional_buffer_smart_ptr input_converted_buf;
 			additional_buffer_smart_ptr initial_error_buf;
 			std::vector<std::pair<additional_buffer_smart_ptr, updater_additional_buffer_set> > input_buffer_and_additional_updater_buffers_pack;

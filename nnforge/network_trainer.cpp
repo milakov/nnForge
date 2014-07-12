@@ -44,75 +44,56 @@ namespace nnforge
 		unsigned int reader_epoch_id = 0;
 
 		initialize_train(reader);
-		unsigned int max_batch_size = get_max_batch_size();
-
-		if (max_batch_size == 0)
-			throw neural_network_exception("The trainer is unable to train even a single network");
-
-		std::vector<training_task_state> task_list;
 
 		while(true)
 		{
-			while (task_list.size() < max_batch_size)
-			{
-				network_data_peek_entry entry_peeked = peeker.peek(schema);
-				if (entry_peeked.data == 0)
-					break;
+			network_data_peek_entry entry_peeked = peeker.peek(schema);
+			if (entry_peeked.data == 0)
+				break;
 
-				training_task_state new_task;
-				new_task.index_peeked = entry_peeked.index;
-				new_task.data = entry_peeked.data;
-				new_task.initial_epoch = entry_peeked.start_epoch;
+			training_task_state new_task;
+			new_task.index_peeked = entry_peeked.index;
+			new_task.data = entry_peeked.data;
+			new_task.initial_epoch = entry_peeked.start_epoch;
+
+			if (is_last_epoch(new_task))
+			{
+				std::cout << "Warning: Task is allocated which is already complete. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
+				continue;
+			}
+
+			if (new_task.initial_epoch > reader_epoch_id)
+			{
+				for(int i = reader_epoch_id; i < new_task.initial_epoch; ++i)
+					reader.next_epoch();
+				reader_epoch_id += (new_task.initial_epoch - reader_epoch_id);
+			}
+			else if (new_task.initial_epoch < reader_epoch_id)
+				std::cout << "Warning: negative scrolling through reader requested. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
+
+			while(true)
+			{
+				train_step(
+					reader,
+					new_task);
+
+				progress_pusher.push(new_task);
+
+				if (is_broken(new_task))
+				{
+					std::cout << "# " << new_task.index_peeked << " - broken weights while training, discarding it." << std::endl;
+					break;
+				}
 
 				if (is_last_epoch(new_task))
 				{
-					std::cout << "Warning: Task is allocated which is already complete. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
-					continue;
+					pusher.push(new_task);
+					break;
 				}
 
-				task_list.push_back(new_task);
-
-				if (new_task.initial_epoch > reader_epoch_id)
-				{
-					if (task_list.size() > 1)
-						std::cout << "Warning: scrolling through reader requested (and done) while task_list is not empty. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
-
-					for(int i = reader_epoch_id; i < new_task.initial_epoch; ++i)
-						reader.next_epoch();
-					reader_epoch_id += (new_task.initial_epoch - reader_epoch_id);
-				}
-				else if (new_task.initial_epoch < reader_epoch_id)
-					std::cout << "Warning: negative scrolling through reader requested. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
+				reader.next_epoch();
+				++reader_epoch_id;
 			}
-
-			if (task_list.size() == 0)
-				break; // Nothing is left to be trained
-
-			train_step(
-				reader,
-				task_list);
-
-			for(int i = 0; i < task_list.size(); ++i)
-				progress_pusher.push(task_list[i]);
-
-			for(int i = static_cast<int>(task_list.size()) - 1; i >= 0; --i)
-			{
-				if (is_broken(task_list[i]))
-				{
-					std::cout << "# " << task_list[i].index_peeked << " - broken weights while training, discarding it." << std::endl;
-					task_list.erase(task_list.begin() + i);
-					continue;
-				}
-
-				if (is_last_epoch(task_list[i]))
-				{
-					pusher.push(task_list[i]);
-					task_list.erase(task_list.begin() + i);
-				}
-			}
-
-			reader.next_epoch();
-			++reader_epoch_id;
 		}
 	}
 

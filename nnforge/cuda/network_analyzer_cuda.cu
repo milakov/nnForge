@@ -87,7 +87,6 @@ namespace nnforge
 					(*it)->create_updater(
 						*it_conf,
 						*(it_conf + 1),
-						true,
 						true));
 			}
 

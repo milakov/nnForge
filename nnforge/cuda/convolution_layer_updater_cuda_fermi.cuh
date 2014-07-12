@@ -58,7 +58,6 @@ namespace nnforge
 			int entry_count,
 			int packed_config_count,
 			int input_feature_map_group_size,
-			bool different_input,
 			int weight_elem_count_striped_per_entry)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -79,11 +78,11 @@ namespace nnforge
 					xyzw[i] = conf.get_val(i);
 				int output_feature_map_id = conf.get_val(DIMENSION_COUNT);
 				int base_input_feature_map_id = conf.get_val(DIMENSION_COUNT + 1);
-				int input_elem_id = (different_input ? entry_id * input_feature_map_count_striped : 0) + base_input_feature_map_id;
+				int input_elem_id = entry_id * input_feature_map_count_striped + base_input_feature_map_id;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_elem_id = input_elem_id * input_sizes[i] + xyzw[i];
-				const float2 * current_weights = weights + (int)((output_feature_map_id * input_feature_map_count_striped + base_input_feature_map_id) * total_weight_count + entry_id * weight_elem_count_striped_per_entry);
+				const float2 * current_weights = weights + (int)((output_feature_map_id * input_feature_map_count_striped + base_input_feature_map_id) * total_weight_count);
 				int iteration_count = min(input_feature_map_group_size, input_feature_map_count_striped - base_input_feature_map_id);
 
 				float initial_values[FEATURE_MAP_BLOCK_SIZE];
@@ -95,7 +94,7 @@ namespace nnforge
 					#pragma unroll
 					for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 						if (i < output_feature_map_count - output_feature_map_id)
-							initial_values[i] = biases[entry_id * output_feature_map_count + output_feature_map_id + i];
+							initial_values[i] = biases[output_feature_map_id + i];
 				}
 				float sums[BLOCK_SIZE * FEATURE_MAP_BLOCK_SIZE];
 				#pragma unroll
@@ -198,7 +197,6 @@ namespace nnforge
 			int entry_count,
 			int packed_config_count,
 			int input_feature_map_group_size,
-			bool different_input,
 			int weight_elem_count_striped_per_entry)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -219,11 +217,11 @@ namespace nnforge
 					xyzw[i] = conf.get_val(i);
 				int output_feature_map_id = conf.get_val(DIMENSION_COUNT);
 				int base_input_feature_map_id = conf.get_val(DIMENSION_COUNT + 1);
-				int input_elem_id = (different_input ? entry_id * input_feature_map_count_striped : 0) + base_input_feature_map_id;
+				int input_elem_id = entry_id * input_feature_map_count_striped + base_input_feature_map_id;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_elem_id = input_elem_id * input_sizes[i] + xyzw[i];
-				const float2 * current_weights = weights + (int)((output_feature_map_id * input_feature_map_count_striped + base_input_feature_map_id) * total_weight_count + entry_id * weight_elem_count_striped_per_entry);
+				const float2 * current_weights = weights + (int)((output_feature_map_id * input_feature_map_count_striped + base_input_feature_map_id) * total_weight_count);
 				int iteration_count = min(input_feature_map_group_size, input_feature_map_count_striped - base_input_feature_map_id);
 
 				float initial_values[FEATURE_MAP_BLOCK_SIZE];
@@ -235,7 +233,7 @@ namespace nnforge
 					#pragma unroll
 					for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 						if (i < output_feature_map_count - output_feature_map_id)
-							initial_values[i] = biases[entry_id * output_feature_map_count + output_feature_map_id + i];
+							initial_values[i] = biases[output_feature_map_id + i];
 				}
 				float sums[BLOCK_SIZE * FEATURE_MAP_BLOCK_SIZE];
 				#pragma unroll
@@ -364,7 +362,7 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					output_elem_id = output_elem_id * output_sizes[i] + xyzw[i];
-				const float2 * current_weights = weights + (int)(((base_output_feature_map_id_striped << 1) * input_feature_map_count_striped + input_feature_map_id_striped) * total_weight_count + entry_id * weight_elem_count_striped_per_entry);
+				const float2 * current_weights = weights + (int)(((base_output_feature_map_id_striped << 1) * input_feature_map_count_striped + input_feature_map_id_striped) * total_weight_count);
 				int iteration_count = min(output_feature_map_group_size, output_feature_map_count_striped - base_output_feature_map_id_striped);
 
 				float sums[FEATURE_MAP_BLOCK_SIZE * BLOCK_SIZE];
@@ -530,7 +528,7 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					output_elem_id = output_elem_id * output_sizes[i] + xyzw[i];
-				const float2 * current_weights = weights + (int)(((base_output_feature_map_id_striped << 1) * input_feature_map_count_striped + input_feature_map_id_striped) * total_weight_count + entry_id * weight_elem_count_striped_per_entry);
+				const float2 * current_weights = weights + (int)(((base_output_feature_map_id_striped << 1) * input_feature_map_count_striped + input_feature_map_id_striped) * total_weight_count);
 				int iteration_count = min(output_feature_map_group_size, output_feature_map_count_striped - base_output_feature_map_id_striped);
 
 				float sums[FEATURE_MAP_BLOCK_SIZE * BLOCK_SIZE];
@@ -688,56 +686,56 @@ namespace nnforge
 			}
 		}
 
-		extern __shared__ float arr_sh[];
+		extern __shared__ float arr[];
 		__global__ void convolution_update_biases_upd_kernel_fermi(
-			float * __restrict biases,
+			float * __restrict gradient_biases,
 			const float * __restrict output_errors,
-			const float * __restrict learning_rate,
-			int output_feature_map_count,
+			int block_size,
 			int output_elem_count_per_feature_map,
-			int min_iteration_count)
+			int output_feature_map_count,
+			int entry_count)
 		{
-			int thread_id = threadIdx.x;
+			int output_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int output_feature_map_id = blockIdx.y;
-			int entry_id = blockIdx.z;
-			int threadblock_size = blockDim.x;
-
+			int block_id = blockIdx.z * blockDim.z + threadIdx.z;
+			int base_entry_id = block_size * block_id;
+			int thread_id = blockDim.x * threadIdx.z + threadIdx.x;
+			int threadblock_size = blockDim.x * blockDim.z;
 			float sum = 0.0F;
-			const float * current_error = output_errors + (entry_id * output_feature_map_count + output_feature_map_id) * output_elem_count_per_feature_map;
-			int current_output_neuron_id = thread_id;
-			for(int i = 0; i < min_iteration_count; ++i)
+			int iteration_count = min(entry_count - base_entry_id, block_size);
+			if (output_neuron_id < output_elem_count_per_feature_map)
 			{
-				sum += current_error[current_output_neuron_id];
-				current_output_neuron_id += threadblock_size;
+				const float * current_error = output_errors + (base_entry_id * output_feature_map_count + output_feature_map_id) * output_elem_count_per_feature_map + output_neuron_id;
+				int output_elem_count_per_entry = output_elem_count_per_feature_map * output_feature_map_count;
+				for(int i = 0; i < iteration_count; ++i)
+				{
+					sum += *current_error;
+					current_error += output_elem_count_per_entry;
+				}
 			}
-			if (current_output_neuron_id < output_elem_count_per_feature_map)
-				sum += current_error[current_output_neuron_id];
-
-			volatile float * arr = arr_sh;
 			arr[thread_id] = sum;
-			int lane_id = thread_id & 31;
-			#pragma unroll
-			for(int tx = 16; tx > 0; tx >>= 1)
-			{
-				if (lane_id < tx)
-					arr[thread_id] += arr[thread_id + tx];
-			}
-			sum = arr[thread_id];
+			__syncthreads();
 
-			if (lane_id == 0)
+			int t_add_elems = threadblock_size >> 1;
+			int t_working_elems = (threadblock_size + 1) >> 1;
+			while (t_add_elems > 0)
 			{
-				int offset = entry_id * output_feature_map_count + output_feature_map_id;
-				float current_learning_rate_val = learning_rate[offset];
-				atomicAdd(biases + offset, sum * current_learning_rate_val);
+				if (thread_id < t_add_elems)
+					arr[thread_id] += arr[thread_id + t_working_elems];
+				t_add_elems = t_working_elems >> 1;
+				t_working_elems = (t_working_elems + 1) >> 1;
+				__syncthreads();
 			}
+
+			if (thread_id == 0)
+				atomicAdd(gradient_biases + output_feature_map_id, arr[0]);
 		}
 
-		template<int DIMENSION_COUNT, int WINDOW_WIDTH, bool single_elem_per_destination>
+		template<int DIMENSION_COUNT, int WINDOW_WIDTH>
 		__launch_bounds__(256, 2)
 		__global__ void convolution_update_weights_exact_upd_kernel_fermi(
-			float2 * __restrict weights,
+			float2 * __restrict gradient_weights,
 			const float2 * __restrict output_errors,
-			const float2 * __restrict learning_rate,
 			const packed_config<DIMENSION_COUNT*2+2> * __restrict packed_config_list,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
@@ -749,11 +747,9 @@ namespace nnforge
 			int input_elem_count_per_entry_striped,
 			int output_elem_count_per_entry_striped,
 			int entry_count,
-			bool different_input,
 			int packed_config_count,
 			int last_dimension_group_count,
-			int weight_elem_count_striped_per_entry,
-			float weight_decay)
+			int weight_elem_count_striped_per_entry)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int entry_id = blockIdx.y * blockDim.y + threadIdx.y;
@@ -779,7 +775,7 @@ namespace nnforge
 					output_errors_offset = output_errors_offset * output_sizes[i] + xyzw[i];
 				const float2 * current_output_errors = output_errors + output_errors_offset;
 
-				int input_elem_id = (different_input ? entry_id * input_feature_map_count_striped : 0) + input_feature_map_striped_id;
+				int input_elem_id = entry_id * input_feature_map_count_striped + input_feature_map_striped_id;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_elem_id = input_elem_id * input_sizes[i] + xyzw[i] + weight_xyzw[i];
@@ -842,7 +838,6 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					weights_offset = weights_offset * window_sizes[i] + weight_xyzw[i];
-				weights_offset += weight_elem_count_striped_per_entry * entry_id;
 				int weight_count_per_feature_map_pair = window_sizes[0];
 				for(int i = 1; i < DIMENSION_COUNT; ++i)
 					weight_count_per_feature_map_pair *= window_sizes[i];
@@ -857,33 +852,21 @@ namespace nnforge
 						for(int k = 0; k < WINDOW_WIDTH; ++k)
 						{
 							int weights_offset3 = weights_offset1 + k;
-							float2 lr = learning_rate[weights_offset3];
-							if (single_elem_per_destination)
-							{
-								float2 current_w = weights[weights_offset3];
-								float new_val1 = current_w.x + lr.x * (sums[k * 4 + i * 2] - weight_decay * current_w.x);
-								float new_val2 = current_w.y + lr.y * (sums[k * 4 + i * 2 + 1] - weight_decay * current_w.y);
-								weights[weights_offset3] = make_float2(new_val1, new_val2);
-							}
-							else
-							{
-								float upd_val1 = lr.x * sums[k * 4 + i * 2];
-								float upd_val2 = lr.y * sums[k * 4 + i * 2 + 1];
-								atomicAdd((float *)(weights + weights_offset3), upd_val1);
-								atomicAdd((float *)(weights + weights_offset3) + 1, upd_val2);
-							}
+							float upd_val1 = sums[k * 4 + i * 2];
+							float upd_val2 = sums[k * 4 + i * 2 + 1];
+							atomicAdd((float *)(gradient_weights + weights_offset3), upd_val1);
+							atomicAdd((float *)(gradient_weights + weights_offset3) + 1, upd_val2);
 						}
 					}
 				}
 			}
 		}
 
-		template<int DIMENSION_COUNT, bool single_elem_per_destination>
+		template<int DIMENSION_COUNT>
 		__launch_bounds__(256, 2)
 		__global__ void convolution_update_weights_generic_upd_kernel_fermi(
-			float2 * __restrict weights,
+			float2 * __restrict gradient_weights,
 			const float2 * __restrict output_errors,
-			const float2 * __restrict learning_rate,
 			const packed_config<DIMENSION_COUNT*2+2> * __restrict packed_config_list,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
@@ -895,11 +878,9 @@ namespace nnforge
 			int input_elem_count_per_entry_striped,
 			int output_elem_count_per_entry_striped,
 			int entry_count,
-			bool different_input,
 			int packed_config_count,
 			int last_dimension_group_count,
-			int weight_elem_count_striped_per_entry,
-			float weight_decay)
+			int weight_elem_count_striped_per_entry)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int entry_id = blockIdx.y * blockDim.y + threadIdx.y;
@@ -925,7 +906,7 @@ namespace nnforge
 					output_errors_offset = output_errors_offset * output_sizes[i] + xyzw[i];
 				const float2 * current_output_errors = output_errors + output_errors_offset;
 
-				int input_elem_id = (different_input ? entry_id * input_feature_map_count_striped : 0) + input_feature_map_striped_id;
+				int input_elem_id = entry_id * input_feature_map_count_striped + input_feature_map_striped_id;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_elem_id = input_elem_id * input_sizes[i] + xyzw[i] + weight_xyzw[i];
@@ -988,7 +969,6 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					weights_offset = weights_offset * window_sizes[i] + weight_xyzw[i];
-				weights_offset += weight_elem_count_striped_per_entry * entry_id;
 				int weight_count_per_feature_map_pair = window_sizes[0];
 				for(int i = 1; i < DIMENSION_COUNT; ++i)
 					weight_count_per_feature_map_pair *= window_sizes[i];
@@ -1005,21 +985,10 @@ namespace nnforge
 							if (k < window_sizes[0] - weight_xyzw[0])
 							{
 								int weights_offset3 = weights_offset1 + k;
-								float2 lr = learning_rate[weights_offset3];
-								if (single_elem_per_destination)
-								{
-									float2 current_w = weights[weights_offset3];
-									float new_val1 = current_w.x + lr.x * (sums[k * 4 + i * 2] - weight_decay * current_w.x);
-									float new_val2 = current_w.y + lr.y * (sums[k * 4 + i * 2 + 1] - weight_decay * current_w.y);
-									weights[weights_offset3] = make_float2(new_val1, new_val2);
-								}
-								else
-								{
-									float upd_val1 = lr.x * sums[k * 4 + i * 2];
-									float upd_val2 = lr.y * sums[k * 4 + i * 2 + 1];
-									atomicAdd((float *)(weights + weights_offset3), upd_val1);
-									atomicAdd((float *)(weights + weights_offset3) + 1, upd_val2);
-								}
+								float upd_val1 = sums[k * 4 + i * 2];
+								float upd_val2 = sums[k * 4 + i * 2 + 1];
+								atomicAdd((float *)(gradient_weights + weights_offset3), upd_val1);
+								atomicAdd((float *)(gradient_weights + weights_offset3) + 1, upd_val2);
 							}
 						}
 					}
@@ -1028,10 +997,10 @@ namespace nnforge
 		}
 
 #define launch_exact_kernel_const_const_const_const(dimension_count_const, window_width_const, block_size_const, single_input_feature_map_group_count_const) \
-	convolution_tex_exact_blocked_upd_kernel_fermi<dimension_count_const,window_width_const,block_size_const,single_input_feature_map_group_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, *data[0], *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, forward_packed_config_count, forward_input_feature_map_group_size, different_input, weight_elem_count_striped_per_entry);
+	convolution_tex_exact_blocked_upd_kernel_fermi<dimension_count_const,window_width_const,block_size_const,single_input_feature_map_group_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, *data[0], *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, forward_packed_config_count, forward_input_feature_map_group_size, weight_elem_count_striped_per_entry);
 
 #define launch_generic_kernel_const_const_const(dimension_count_const, block_size_const, single_input_feature_map_group_count_const) \
-	convolution_tex_generic_blocked_upd_kernel_fermi<dimension_count_const,block_size_const,single_input_feature_map_group_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, *data[0], *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, forward_packed_config_count, forward_input_feature_map_group_size, different_input, weight_elem_count_striped_per_entry);
+	convolution_tex_generic_blocked_upd_kernel_fermi<dimension_count_const,block_size_const,single_input_feature_map_group_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, *data[0], *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, forward_packed_config_count, forward_input_feature_map_group_size, weight_elem_count_striped_per_entry);
 
 #define launch_kernel_const_const_cost(dimension_count_const, window_width, block_size_const, single_input_feature_map_group_count_const) \
 	switch (window_width) \
@@ -1178,60 +1147,49 @@ namespace nnforge
 		};
 
 
-#define launch_update_exact_kernel_const_const_const(dimension_count_const, window_width_const, single_elem_per_destination_const) \
-	convolution_update_weights_exact_upd_kernel_fermi<dimension_count_const,window_width_const,single_elem_per_destination_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], output_errors, *learning_rate[0], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, different_input, updater_packed_config_count, updater_last_dimension_group_count, weight_elem_count_striped_per_entry, weight_decay);
+#define launch_update_exact_kernel_const_const(dimension_count_const, window_width_const) \
+	convolution_update_weights_exact_upd_kernel_fermi<dimension_count_const,window_width_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], output_errors, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, updater_packed_config_count, updater_last_dimension_group_count, weight_elem_count_striped_per_entry);
 
-#define launch_update_generic_kernel_const(dimension_count_const, single_elem_per_destination_const) \
-	convolution_update_weights_generic_upd_kernel_fermi<dimension_count_const,single_elem_per_destination_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*data[0], output_errors, *learning_rate[0], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, different_input, updater_packed_config_count, updater_last_dimension_group_count, weight_elem_count_striped_per_entry, weight_decay);
+#define launch_update_generic_kernel_const(dimension_count_const) \
+	convolution_update_weights_generic_upd_kernel_fermi<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], output_errors, packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_configuration_specific_striped.feature_map_count, output_configuration_specific_striped.feature_map_count, input_elem_count_per_entry_striped, output_elem_count_per_entry_striped, entry_count, updater_packed_config_count, updater_last_dimension_group_count, weight_elem_count_striped_per_entry);
 
-#define launch_update_kernel_const_const(dimension_count_const, window_width, single_elem_per_destination_const) \
+#define launch_update_kernel(dimension_count_const, window_width) \
 	switch (window_width) \
 		{ \
 		case 1: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 1, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 1); \
 			break; \
 		case 2: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 2, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 2); \
 			break; \
 		case 3: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 3, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 3); \
 			break; \
 		case 4: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 4, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 4); \
 			break; \
 		case 5: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 5, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 5); \
 			break; \
 		case 6: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 6, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 6); \
 			break; \
 		case 7: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 7, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 7); \
 			break; \
 		case 8: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 8, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 8); \
 			break; \
 		case 9: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 9, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 9); \
 			break; \
 		case 10: \
-			launch_update_exact_kernel_const_const_const(dimension_count_const, 10, single_elem_per_destination_const); \
+			launch_update_exact_kernel_const_const(dimension_count_const, 10); \
 			break; \
 		default: \
-			launch_update_generic_kernel_const(dimension_count_const, single_elem_per_destination_const); \
+			launch_update_generic_kernel_const(dimension_count_const); \
 			break; \
 		};
-
-#define launch_update_kernel(dimension_count_const, window_width, single_elem_per_destination) \
-	switch (single_elem_per_destination) \
-		{ \
-		case false: \
-			launch_update_kernel_const_const(dimension_count_const, window_width, false); \
-			break; \
-		case true: \
-			launch_update_kernel_const_const(dimension_count_const, window_width, true); \
-			break; \
-		}
 
 		template<int dimension_count>
 		class convolution_layer_updater_cuda_fermi : public layer_updater_cuda
@@ -1270,7 +1228,7 @@ namespace nnforge
 					*additional_buffers[0],
 					input_elem_count_per_feature_map,
 					input_configuration_specific.feature_map_count,
-					different_input ? entry_count : 1,
+					entry_count,
 					stream_id);
 
 				if (forward_input_feature_map_group_count > 1)
@@ -1306,9 +1264,6 @@ namespace nnforge
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count)
 			{
-				if (!different_input)
-					throw neural_network_exception("convolution_layer_updater_cuda_fermi is not able to backprop to the same input");
-
 				if (!backprop_required)
 					throw neural_network_exception("convolution_layer_updater_cuda_fermi is not configured to do backprop but requested to");
 
@@ -1348,31 +1303,33 @@ namespace nnforge
 			virtual void enqueue_update_weights(
 				unsigned int offset_input_entry_id,
 				cudaStream_t stream_id,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& learning_rate,
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				float weight_decay)
+				unsigned int entry_count)
 			{
 				// Update biases
 				{
-					int threadblock_size = get_threadblock_size_biases(output_elem_count_per_feature_map);
-					dim3 grid_size(1, output_configuration_specific.feature_map_count, entry_count);
-					dim3 block_size(threadblock_size, 1, 1);
-					int smem_size = threadblock_size * sizeof(float);
-					int min_iteration_count = output_elem_count_per_feature_map / threadblock_size;
-
-					convolution_update_biases_upd_kernel_fermi<<<grid_size, block_size, smem_size, stream_id>>>(
-						*data[1],
-						*output_errors_buffer,
-						*learning_rate[1],
-						output_configuration_specific.feature_map_count,
+					int block_size = get_bias_update_block_size(entry_count);
+					int block_count = (entry_count + block_size - 1) / block_size;
+					std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+						*cuda_config,
 						output_elem_count_per_feature_map,
-						min_iteration_count);
+						1,
+						block_count);
+					kernel_dims.first.y = output_configuration_specific.feature_map_count;
+					int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+					int smem_size = threadblock_size * sizeof(float);
+					convolution_update_biases_upd_kernel_fermi<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+						*gradient[1],
+						*output_errors_buffer,
+						block_size,
+						output_elem_count_per_feature_map,
+						output_configuration_specific.feature_map_count,
+						entry_count);
 				}
 
 				if (!backprop_required)
@@ -1393,24 +1350,13 @@ namespace nnforge
 
 				const packed_config<updater_dimension_count> * packed_config_list = static_cast<const packed_config<updater_dimension_count> *>((const void *)*additional_buffers[3]);
 
-				if (!updater_single_elem_per_destination)
-				{
-					cuda_util::apply_weight_decay(
-						*cuda_config,
-						*learning_rate[0],
-						*data[0],
-						weight_decay,
-						entry_count * weight_elem_count_striped_per_entry * 2,
-						stream_id);
-				}
-
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
 					updater_packed_config_count,
 					entry_count,
 					1);
 
-				launch_update_kernel(dimension_count, window_sizes[0], updater_single_elem_per_destination);
+				launch_update_kernel(dimension_count, window_sizes[0]);
 			}
 
 		protected:
@@ -1668,20 +1614,6 @@ namespace nnforge
 				return weight_elem_count_striped_per_entry * 2;
 			}
 
-			virtual std::vector<unsigned int> get_incoming_weight_count_per_output_neuron_list() const
-			{
-				std::vector<unsigned int> res;
-
-				unsigned int weight_elem_count = input_configuration_specific_striped.feature_map_count * 2;
-				for(int i = 0; i < dimension_count; ++i)
-					weight_elem_count *= window_sizes[i];
-
-				res.push_back(weight_elem_count);
-				res.push_back(1);
-
-				return res;
-			}
-
 			virtual void fill_data_for_device(
 				unsigned int part_id,
 				const float * src,
@@ -1796,6 +1728,12 @@ namespace nnforge
 			{
 				int block_count = (width + MAX_BLOCK_SIZE - 1) / MAX_BLOCK_SIZE;
 				int block_size = (width + block_count - 1) / block_count;
+				return block_size;
+			}
+
+			static int get_bias_update_block_size(int entry_count)
+			{
+				int block_size = std::min(std::max(static_cast<int>(sqrtf(static_cast<float>(entry_count))), 1), entry_count);
 				return block_size;
 			}
 

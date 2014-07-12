@@ -57,9 +57,6 @@
 #include "maxout_layer_updater_plain.h"
 #include "sigmoid_layer_updater_plain.h"
 
-#include "weight_vector_bound_plain_factory.h"
-#include "convolution_weight_vector_bound_plain.h"
-
 namespace nnforge
 {
 	namespace plain
@@ -104,8 +101,6 @@ namespace nnforge
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new softmax_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new maxout_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new sigmoid_layer_updater_plain()));
-
-			single_weight_vector_bound_factory::get_mutable_instance().register_weight_vector_bound_plain(weight_vector_bound_plain_smart_ptr(new convolution_weight_vector_bound_plain()));
 		}
 	}
 }

@@ -46,7 +46,7 @@ namespace nnforge
 		}
 	}
 
-	void network_data::check_network_data_consistency(const const_layer_list& layer_list)
+	void network_data::check_network_data_consistency(const const_layer_list& layer_list) const
 	{
 		if (size() != layer_list.size())
 			throw neural_network_exception("data count is not equal layer count");

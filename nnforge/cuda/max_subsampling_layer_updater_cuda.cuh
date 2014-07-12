@@ -214,6 +214,9 @@ namespace nnforge
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 				unsigned int entry_count)
 			{
+				if (offset_input_entry_id > 0)
+					throw neural_network_exception("max_subsampling_layer_updater_cuda is not able to run using offset");
+
 				const float * input = *input_neurons_buffer;
 				float * output = *output_neurons_buffer;
 				int * max_positions = (int *)((void *)(*additional_buffers[0]));
@@ -286,9 +289,6 @@ namespace nnforge
 
 			virtual void updater_configured()
 			{
-				if (!different_input)
-					throw neural_network_exception("max_subsampling_layer_updater_cuda is not able to run using the same input");
-
 				nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 				for(int i = 0; i < dimension_count; ++i)

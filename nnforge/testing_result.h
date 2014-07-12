@@ -38,6 +38,10 @@ namespace nnforge
 
 		void add_error(float sample_error);
 
+		void add_error(
+			double cumulative_error,
+			unsigned int entry_count);
+
 		unsigned int get_entry_count() const;
 
 		void init(

@@ -29,15 +29,11 @@ namespace nnforge
 	network_updater::network_updater(
 		network_schema_smart_ptr schema,
 		const_error_function_smart_ptr ef,
-		const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-		const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
-		float weight_decay)
+		const std::map<unsigned int, float>& layer_to_dropout_rate_map)
 		: schema(schema)
 		, ef(ef)
 		, layer_to_dropout_rate_map(layer_to_dropout_rate_map)
 		, random_uniform_list(1 << random_list_bits)
-		, layer_to_weight_vector_bound_map(layer_to_weight_vector_bound_map)
-		, weight_decay(weight_decay)
 		, gen(rnd::get_random_generator())
 	{
 		const const_layer_list& layer_list = *schema;
@@ -60,21 +56,6 @@ namespace nnforge
 					layer_id_to_dropout_config_map.insert(std::make_pair(it->first, mult));
 			}
 		}
-
-		for(std::map<unsigned int, weight_vector_bound>::iterator it = this->layer_to_weight_vector_bound_map.begin(); it != this->layer_to_weight_vector_bound_map.end(); ++it)
-		{
-			if (it->first >= layer_count)
-				throw neural_network_exception("Weight bound is specified for the layer which doesn't exist in the schema");
-
-			std::map<unsigned int, dropout_layer_config>::const_iterator it2 = layer_id_to_dropout_config_map.find(it->first);
-			if (it2 != layer_id_to_dropout_config_map.end())
-			{
-				float val = 1.0F;
-				for(std::map<unsigned int, float>::const_iterator it3 = it2->second.weight_part_to_dropout_direct_multiplier_map.begin(); it3 != it2->second.weight_part_to_dropout_direct_multiplier_map.end(); ++it3)
-					val = std::min<float>(val, it3->second);
-				it->second.max_l2_norm = it->second.max_l2_norm / val;
-			}
-		}
 	}
 
 	network_updater::~network_updater()
@@ -93,16 +74,16 @@ namespace nnforge
 		layer_config_list_modified();
 	}
 
-	std::vector<testing_result_smart_ptr> network_updater::update(
+	testing_result_smart_ptr network_updater::update(
 		supervised_data_reader& reader,
-		const std::vector<network_data_smart_ptr>& learning_rate_vector_list,
-		std::vector<network_data_smart_ptr>& data_list)
+		network_data_const_smart_ptr learning_rate,
+		network_data_smart_ptr data,
+		unsigned int batch_size,
+		float weight_decay)
 	{
 		// Check data-schema consistency
-		for(std::vector<network_data_smart_ptr>::iterator it = data_list.begin(); it != data_list.end(); it++)
-			(*it)->check_network_data_consistency(*schema);
-		for(std::vector<network_data_smart_ptr>::const_iterator it = learning_rate_vector_list.begin(); it != learning_rate_vector_list.end(); it++)
-			(*it)->check_network_data_consistency(*schema);
+		data->check_network_data_consistency(*schema);
+		learning_rate->check_network_data_consistency(*schema);
 
 		set_input_configuration_specific(reader.get_input_configuration());
 
@@ -113,13 +94,11 @@ namespace nnforge
 		for(std::vector<float>::iterator it = random_uniform_list.begin(); it != random_uniform_list.end(); ++it)
 			*it = dist(gen);
 
-		for(std::vector<network_data_smart_ptr>::iterator it = data_list.begin(); it != data_list.end(); ++it)
-			(*it)->apply_dropout_layer_config(layer_id_to_dropout_config_map, false);
+		data->apply_dropout_layer_config(layer_id_to_dropout_config_map, false);
 
-		std::vector<testing_result_smart_ptr> res = actual_update(reader, learning_rate_vector_list, data_list);
+		testing_result_smart_ptr res = actual_update(reader, learning_rate, data, batch_size, weight_decay);
 
-		for(std::vector<network_data_smart_ptr>::iterator it = data_list.begin(); it != data_list.end(); ++it)
-			(*it)->apply_dropout_layer_config(layer_id_to_dropout_config_map, true);
+		data->apply_dropout_layer_config(layer_id_to_dropout_config_map, true);
 
 		return res;
 	}

@@ -17,7 +17,6 @@
 #pragma once
 
 #include "network_updater.h"
-#include "weight_vector_bound.h"
 #include "error_function.h"
 #include "nn_types.h"
 
@@ -31,9 +30,7 @@ namespace nnforge
 		virtual network_updater_smart_ptr create(
 			network_schema_smart_ptr schema,
 			const_error_function_smart_ptr ef,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
-			const std::map<unsigned int, weight_vector_bound>& layer_to_weight_vector_bound_map,
-			float weight_decay) const = 0;
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map) const = 0;
 
 	protected:
 		network_updater_factory();

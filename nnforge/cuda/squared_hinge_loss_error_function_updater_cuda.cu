@@ -34,13 +34,12 @@ namespace nnforge
 		}
 
 		extern __shared__ float arr_sh[];
-		template <bool multiple_blocks>
 		__global__ void squared_hinge_loss_update_error_and_gradient_kernel(
 			float * __restrict gradients,
 			double * __restrict total_error,
 			const float * __restrict actual_output_neurons,
 			const float * __restrict predicted_output_neurons,
-			int output_entry_id,
+			int offset_entry_id,
 			int neuron_count,
 			int updater_entry_count)
 		{
@@ -51,7 +50,7 @@ namespace nnforge
 			float err = 0.0F;
 			if (neuron_id < neuron_count)
 			{
-				float actual_val = actual_output_neurons[output_entry_id * neuron_count + neuron_id];
+				float actual_val = actual_output_neurons[(offset_entry_id + updater_entry_id) * neuron_count + neuron_id];
 				float predicted_val = predicted_output_neurons[offset];
 				err = ((actual_val > 0.0F) && (predicted_val < actual_val)) || ((actual_val <= 0.0F) && (predicted_val > actual_val)) ? actual_val - predicted_val : 0.0F;
 				gradients[offset] = err;
@@ -93,14 +92,7 @@ namespace nnforge
 				err *= 0.5F;
 				double err_d = (double)err;
 
-				if (multiple_blocks)
-				{
-					atomicAdd(total_error + updater_entry_id, err_d);
-				}
-				else
-				{
-					total_error[updater_entry_id] += err_d;
-				}
+				atomicAdd(total_error, err_d);
 			}
 		}
 
@@ -123,7 +115,7 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr error_buffer,
 			const_cuda_linear_buffer_device_smart_ptr actual_output_buffer,
 			const_cuda_linear_buffer_device_smart_ptr predicted_output_buffer,
-			unsigned int input_entry_id,
+			unsigned int offset_entry_id,
 			unsigned int neuron_count,
 			unsigned int updater_entry_count) const
 		{
@@ -133,24 +125,14 @@ namespace nnforge
 			dim3 block_size(threadblock_size, 1, 1);
 
 			int smem_size = threadblock_size * sizeof(float);
-			if (block_count > 1)
-				squared_hinge_loss_update_error_and_gradient_kernel<true><<<grid_size, block_size, smem_size, stream_id>>>(
-					*gradient_buffer,
-					*error_buffer,
-					*actual_output_buffer,
-					*predicted_output_buffer,
-					input_entry_id,
-					neuron_count,
-					updater_entry_count);
-			else
-				squared_hinge_loss_update_error_and_gradient_kernel<false><<<grid_size, block_size, smem_size, stream_id>>>(
-					*gradient_buffer,
-					*error_buffer,
-					*actual_output_buffer,
-					*predicted_output_buffer,
-					input_entry_id,
-					neuron_count,
-					updater_entry_count);
+			squared_hinge_loss_update_error_and_gradient_kernel<<<grid_size, block_size, smem_size, stream_id>>>(
+				*gradient_buffer,
+				*error_buffer,
+				*actual_output_buffer,
+				*predicted_output_buffer,
+				offset_entry_id,
+				neuron_count,
+				updater_entry_count);
 		}
 
 		int squared_hinge_loss_error_function_updater_cuda::get_threadblock_size(int output_neuron_count)

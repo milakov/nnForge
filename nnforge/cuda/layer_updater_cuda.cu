@@ -36,15 +36,13 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			const_layer_smart_ptr layer_schema,
 			cuda_running_configuration_const_smart_ptr cuda_config,
-			bool backprop_required,
-			bool different_input)
+			bool backprop_required)
 		{
 			this->layer_schema = layer_schema;
 			this->input_configuration_specific = input_configuration_specific;
 			this->output_configuration_specific = output_configuration_specific;
 			this->cuda_config = cuda_config;
 			this->backprop_required = backprop_required;
-			this->different_input = different_input;
 
 			input_elem_count_per_entry = input_configuration_specific.get_neuron_count();
 			output_elem_count_per_entry = output_configuration_specific.get_neuron_count();
@@ -141,15 +139,13 @@ namespace nnforge
 		void layer_updater_cuda::enqueue_update_weights(
 			unsigned int offset_input_entry_id,
 			cudaStream_t stream_id,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+			const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& learning_rate,
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			float weight_decay)
+			unsigned int entry_count)
 		{
 		}
 
@@ -171,23 +167,16 @@ namespace nnforge
 			return 0;
 		}
 
-		std::vector<cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_data(const std::vector<layer_data_smart_ptr>& host_data_list) const
+		std::vector<cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_data(const_layer_data_smart_ptr host_data) const
 		{
 			std::vector<cuda_linear_buffer_device_smart_ptr> res;
 
-			unsigned int part_count = host_data_list.front()->size();
-			for(unsigned int subindex = 0; subindex< part_count; ++subindex)
+			unsigned int part_id = 0;
+			for(layer_data::const_iterator it = host_data->begin(); it != host_data->end(); ++it, ++part_id)
 			{
-				unsigned int single_size = get_data_elem_count(subindex, host_data_list.front()->at(subindex).size());
-				std::vector<float> pack(single_size * host_data_list.size());
-
-				std::vector<float>::iterator fill_it = pack.begin();
-				for(std::vector<layer_data_smart_ptr>::const_iterator sample_it = host_data_list.begin(); sample_it != host_data_list.end(); ++sample_it, fill_it += single_size)
-				{
-					const std::vector<float>& inp_buf = (*sample_it)->at(subindex);
-					fill_data_for_device(subindex, &(*inp_buf.begin()), &(*fill_it), inp_buf.size());
-				}
-
+				unsigned int single_size = get_data_elem_count(part_id, it->size());
+				std::vector<float> pack(single_size);
+				fill_data_for_device(part_id, &(*it->begin()), &(*pack.begin()), single_size);
 				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
 					&(*pack.begin()),
 					pack.size() * sizeof(float))));
@@ -196,23 +185,16 @@ namespace nnforge
 			return res;
 		}
 
-		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_learning_rate(const std::vector<const_layer_data_smart_ptr>& host_learning_rate_list) const
+		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_learning_rate(const_layer_data_smart_ptr host_learning_rate) const
 		{
 			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
 
-			unsigned int part_count = host_learning_rate_list.front()->size();
-			for(unsigned int subindex = 0; subindex< part_count; ++subindex)
+			unsigned int part_id = 0;
+			for(layer_data::const_iterator it = host_learning_rate->begin(); it != host_learning_rate->end(); ++it, ++part_id)
 			{
-				unsigned int single_size = get_data_elem_count(subindex, host_learning_rate_list.front()->at(subindex).size());
-				std::vector<float> pack(single_size * host_learning_rate_list.size());
-
-				std::vector<float>::iterator fill_it = pack.begin();
-				for(std::vector<const_layer_data_smart_ptr>::const_iterator sample_it = host_learning_rate_list.begin(); sample_it != host_learning_rate_list.end(); ++sample_it, fill_it += single_size)
-				{
-					const std::vector<float>& inp_buf = (*sample_it)->at(subindex);
-					fill_data_for_device(subindex, &(*inp_buf.begin()), &(*fill_it), inp_buf.size());
-				}
-
+				unsigned int single_size = get_data_elem_count(part_id, it->size());
+				std::vector<float> pack(single_size);
+				fill_data_for_device(part_id, &(*it->begin()), &(*pack.begin()), single_size);
 				res.push_back(const_cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
 					&(*pack.begin()),
 					pack.size() * sizeof(float))));
@@ -221,23 +203,16 @@ namespace nnforge
 			return res;
 		}
 
-		void layer_updater_cuda::get_data_from_device(const std::vector<cuda_linear_buffer_device_smart_ptr>& device_data, std::vector<layer_data_smart_ptr>& host_data) const
+		void layer_updater_cuda::get_data_from_device(const std::vector<cuda_linear_buffer_device_smart_ptr>& device_data, layer_data_smart_ptr host_data) const
 		{
-			unsigned int part_count = host_data.front()->size();
-			std::vector<cuda_linear_buffer_device_smart_ptr>::const_iterator src_it = device_data.begin();
-			for(unsigned int subindex = 0; subindex< part_count; ++subindex, ++src_it)
+			unsigned int part_id = 0;
+			for(layer_data::iterator it = host_data->begin(); it != host_data->end(); ++it, ++part_id)
 			{
-				unsigned int single_size = get_data_elem_count(subindex, host_data.front()->at(subindex).size());
-				cuda_linear_buffer_device_smart_ptr src = *src_it;
+				unsigned int single_size = get_data_elem_count(part_id, it->size());
+				cuda_linear_buffer_device_smart_ptr src = device_data[part_id];
 				std::vector<float> pack(src->get_size() / sizeof(float));
 				cuda_safe_call(cudaMemcpy(&(*pack.begin()), *src, pack.size() * sizeof(float), cudaMemcpyDeviceToHost));
-
-				std::vector<float>::const_iterator src_buf_it = pack.begin();
-				for(std::vector<layer_data_smart_ptr>::const_iterator sample_it = host_data.begin(); sample_it != host_data.end(); ++sample_it, src_buf_it += single_size)
-				{
-					std::vector<float>& dst_buf = (*sample_it)->at(subindex);
-					fill_data_for_host(subindex, &(*src_buf_it), &(*dst_buf.begin()), single_size);
-				}
+				fill_data_for_host(part_id, &(*pack.begin()), &(*it->begin()), single_size);
 			}
 		}
 
@@ -262,11 +237,6 @@ namespace nnforge
 			unsigned int count) const
 		{
 			std::copy(src, src + count, dst);
-		}
-
-		std::vector<unsigned int> layer_updater_cuda::get_incoming_weight_count_per_output_neuron_list() const
-		{
-			return std::vector<unsigned int>();
 		}
 	}
 }
