@@ -254,7 +254,7 @@ void gtsrb_toolset::write_single_entry(
 		else
 		{
 			cv::Mat1b image_monochrome;
-			cv::cvtColor(image_resized, image_monochrome, CV_RGB2GRAY);
+			cv::cvtColor(image_resized, image_monochrome, CV_BGR2GRAY);
 
 			std::copy(
 				image_monochrome.begin(),
