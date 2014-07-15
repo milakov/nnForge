@@ -2,7 +2,7 @@ BUILD_MODE=release
 ENABLE_CUDA_BACKEND=yes
 ENABLE_CUDA_PROFILING=no
 CPP11COMPILER=no
-BOOST_PATH=/usr/local
+BOOST_PATH=/usr
 OPENCV_PATH=/usr/local
 NETCDF_INSTALLED=yes
 NETCDF_PATH=
@@ -14,7 +14,7 @@ NNFORGE_PATH=../..
 NNFORGE_INPUT_DATA_PATH=/home/max/nnforge/input_data
 NNFORGE_WORKING_DATA_PATH=/home/max/nnforge/working_data
 
-BOOST_LIBS=-lboost_thread-mt -lboost_regex-mt -lboost_chrono-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_random-mt -lboost_system-mt -lboost_date_time-mt
+BOOST_LIBS=-lboost_thread -lboost_regex -lboost_chrono -lboost_filesystem -lboost_program_options -lboost_random -lboost_system -lboost_date_time
 OPENCV_LIBS=-lopencv_highgui -lopencv_imgproc -lopencv_core
 NETCDF_LIBS=-lnetcdf
 MATIO_LIBS=-lmatio
