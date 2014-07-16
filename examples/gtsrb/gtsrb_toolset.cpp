@@ -130,6 +130,7 @@ void gtsrb_toolset::write_folder(
 
 	std::string str;
 	std::getline(file_input, str); // read the header
+	unsigned int entry_read_count = 0;
 	while (true)
 	{
 		std::getline(file_input, str);
@@ -139,6 +140,8 @@ void gtsrb_toolset::write_folder(
 
 		if (strs.size() != 8)
 			break;
+
+		++entry_read_count;
 
 		std::string file_name = strs[0];
 		boost::filesystem::path absolute_file_path = subfolder_path / file_name;
@@ -188,6 +191,9 @@ void gtsrb_toolset::write_folder(
 				bottom_right_y);
 		}
 	}
+
+	if (entry_read_count == 0)
+		throw std::runtime_error((boost::format("No entries with class ID encountered in %1%") % annotation_file_path.string()).str());
 }
 
 void gtsrb_toolset::write_single_entry(
