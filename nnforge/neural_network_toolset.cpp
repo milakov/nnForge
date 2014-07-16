@@ -1438,6 +1438,10 @@ namespace nnforge
 		{
 			random_generator data_gen = rnd::get_random_generator(47597);
 			data->randomize(*schema, data_gen);
+			network_data_initializer().initialize(
+				*data,
+				*schema,
+				get_network_output_type());
 		}
 
 		network_data_smart_ptr learning_rates(new network_data(*schema));
@@ -1510,6 +1514,10 @@ namespace nnforge
 			data->randomize(
 				*schema,
 				gen);
+			network_data_initializer().initialize(
+				*data,
+				*schema,
+				get_network_output_type());
 		}
 
 		unsigned int hessian_entry_count = std::max(static_cast<unsigned int>(0.05F * training_data_reader->get_entry_count()), 50U);
