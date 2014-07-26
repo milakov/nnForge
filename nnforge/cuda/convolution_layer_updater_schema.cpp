@@ -21,6 +21,7 @@
 #include "fully_connected_layer_updater_cuda.h"
 #include "convolution_layer_updater_schema_helper_cuda_kepler.h"
 #include "convolution_layer_updater_schema_helper_cuda_fermi.h"
+#include "convolution_1x1_layer_updater_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -55,6 +56,10 @@ namespace nnforge
 			if (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count)
 			{
 				res = layer_updater_cuda_smart_ptr(new fully_connected_layer_updater_cuda());
+			}
+			else if (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes)
+			{
+				res = layer_updater_cuda_smart_ptr(new convolution_1x1_layer_updater_cuda());
 			}
 			else
 			{

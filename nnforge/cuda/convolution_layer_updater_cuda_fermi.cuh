@@ -1270,15 +1270,6 @@ namespace nnforge
 				cudaChannelFormatDesc desc = cudaCreateChannelDesc<float2>();
 				cuda_safe_call(cudaBindTexture(0, output_tex_ref, *additional_buffers[1], desc, additional_buffers[1]->get_size()));
 
-				cuda_util::copy_to_striped(
-					*cuda_config,
-					*output_errors_buffer,
-					*additional_buffers[1],
-					output_elem_count_per_feature_map,
-					output_configuration_specific.feature_map_count,
-					entry_count,
-					stream_id);
-
 				if (backward_output_feature_map_group_count > 1)
 					cuda_util::set_with_value(
 						*cuda_config,
@@ -1332,17 +1323,14 @@ namespace nnforge
 						entry_count);
 				}
 
-				if (!backprop_required)
-				{
-					cuda_util::copy_to_striped(
-						*cuda_config,
-						*output_errors_buffer,
-						*additional_buffers[1],
-						output_elem_count_per_feature_map,
-						output_configuration_specific.feature_map_count,
-						entry_count,
-						stream_id);
-				}
+				cuda_util::copy_to_striped(
+					*cuda_config,
+					*output_errors_buffer,
+					*additional_buffers[1],
+					output_elem_count_per_feature_map,
+					output_configuration_specific.feature_map_count,
+					entry_count,
+					stream_id);
 				const float2 * output_errors = *additional_buffers[1];
 
 				cudaChannelFormatDesc desc = cudaCreateChannelDesc<float2>();

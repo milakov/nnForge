@@ -519,6 +519,17 @@ namespace nnforge
 							layer_configuration_specific_list::const_reverse_iterator layer_config_it = layer_config_list.rbegin() + 1;
 							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++gradient_it, ++output_errors_it, ++net_data_it, --reverse_layer_id, ++layer_config_it)
 							{
+								(*it)->enqueue_update_weights(
+									(it == (updater_list.rend() - 1)) ? base_input_entry_id : 0,
+									*command_stream,
+									*gradient_it,
+									*schema_data_it,
+									*output_errors_it,
+									input_and_all_buffers_pack_it->first,
+									input_and_all_buffers_pack_it->second.additional_buffers,
+									input_and_all_buffers_pack_it->second.dynamic_memobjects,
+									current_updater_entry_count);
+
 								if (it != (updater_list.rend() - 1))
 								{
 									(*it)->enqueue_backprop(
@@ -565,17 +576,6 @@ namespace nnforge
 											offset);
 									}
 								}
-
-								(*it)->enqueue_update_weights(
-									(it == (updater_list.rend() - 1)) ? base_input_entry_id : 0,
-									*command_stream,
-									*gradient_it,
-									*schema_data_it,
-									*output_errors_it,
-									input_and_all_buffers_pack_it->first,
-									input_and_all_buffers_pack_it->second.additional_buffers,
-									input_and_all_buffers_pack_it->second.dynamic_memobjects,
-									current_updater_entry_count);
 							}
 						}
 

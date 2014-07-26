@@ -160,6 +160,15 @@ namespace nnforge
 				int elem_count,
 				cudaStream_t cuda_stream);
 
+			static void transpose(
+				const cuda_running_configuration& cuda_config,
+				const float * src,
+				float * dst,
+				int src_fast_dim,
+				int src_slow_dim,
+				int entry_count,
+				cudaStream_t cuda_stream);
+
 			static int get_group_count(
 				const cuda_running_configuration& cuda_config,
 				int total_thread_count,

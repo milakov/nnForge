@@ -1250,15 +1250,6 @@ namespace nnforge
 					dynamic_memobjects[1] = cuda_texture_smart_ptr(new cuda_texture(data[0], 2));
 				cuda_texture& weights_tex = *(dynamic_cast<cuda_texture *>(dynamic_memobjects[1].get()));
 
-				cuda_util::copy_to_striped(
-					*cuda_config,
-					*output_errors_buffer,
-					*additional_buffers[1],
-					output_elem_count_per_feature_map,
-					output_configuration_specific.feature_map_count,
-					entry_count,
-					stream_id);
-
 				if (backward_output_feature_map_group_count > 1)
 					cuda_util::set_with_value(
 						*cuda_config,
@@ -1320,17 +1311,14 @@ namespace nnforge
 					dynamic_memobjects[0] = cuda_texture_smart_ptr(new cuda_texture(additional_buffers[0], 2));
 				cuda_texture& input_tex = *(dynamic_cast<cuda_texture *>(dynamic_memobjects[0].get()));
 
-				if (!backprop_required)
-				{
-					cuda_util::copy_to_striped(
-						*cuda_config,
-						*output_errors_buffer,
-						*additional_buffers[1],
-						output_elem_count_per_feature_map,
-						output_configuration_specific.feature_map_count,
-						entry_count,
-						stream_id);
-				}
+				cuda_util::copy_to_striped(
+					*cuda_config,
+					*output_errors_buffer,
+					*additional_buffers[1],
+					output_elem_count_per_feature_map,
+					output_configuration_specific.feature_map_count,
+					entry_count,
+					stream_id);
 
 				const packed_config<updater_dimension_count> * packed_config_list = static_cast<const packed_config<updater_dimension_count> *>((const void *)*additional_buffers[3]);
 

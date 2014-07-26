@@ -29,7 +29,7 @@ namespace nnforge
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific)
 		{
-			layer_updater_cuda_smart_ptr res; 
+			layer_updater_cuda_smart_ptr res;
 
 			switch (output_configuration_specific.dimension_sizes.size()) 
 			{

@@ -19,6 +19,8 @@
 #include "../neural_network_exception.h"
 #include "../layer_configuration_specific.h"
 
+#include "neural_network_cuda_exception.h"
+
 #include <boost/format.hpp>
 
 #include <utility>
@@ -215,6 +217,42 @@ namespace nnforge
 				int second_feature_map_id = first_feature_map_id + 1;
 				if (second_feature_map_id < feature_map_count)
 					dest_buf[second_feature_map_id * elem_count_per_feature_map + base_dst_offset] = pack.y;
+			}
+		}
+
+		#define TRANSPOSE_TILE_DIM 32
+		#define TRANSPOSE_BLOCK_ROWS 8
+		__global__ void transpose_kernel(
+			const float * __restrict src,
+			float * __restrict dst,
+			int src_fast_dim,
+			int src_slow_dim,
+			int elem_count_per_entry,
+			int entry_count)
+		{
+			int x = blockIdx.x * TRANSPOSE_TILE_DIM + threadIdx.x;
+			int y = blockIdx.y * TRANSPOSE_TILE_DIM + threadIdx.y;
+			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
+
+			bool in_bounds = (entry_id < entry_count);
+
+			__shared__ float tile[TRANSPOSE_TILE_DIM][TRANSPOSE_TILE_DIM + 1];
+
+			for(int j = 0; j < TRANSPOSE_TILE_DIM; j += TRANSPOSE_BLOCK_ROWS)
+			{
+				if (in_bounds && ((y + j) < src_slow_dim) && (x < src_fast_dim))
+					tile[threadIdx.y + j][threadIdx.x] = src[(int)(entry_id * elem_count_per_entry + (y + j) * src_fast_dim + x)];
+			}
+
+			__syncthreads();
+
+			x = blockIdx.y * TRANSPOSE_TILE_DIM + threadIdx.x;
+			y = blockIdx.x * TRANSPOSE_TILE_DIM + threadIdx.y;
+
+			for(int j = 0; j < TRANSPOSE_TILE_DIM; j += TRANSPOSE_BLOCK_ROWS)
+			{
+				if (in_bounds && ((y + j) < src_fast_dim) && (x < src_slow_dim))
+					dst[(int)(entry_id * elem_count_per_entry + (y + j) * src_slow_dim + x)] = tile[threadIdx.x][threadIdx.y + j];
 			}
 		}
 
@@ -520,6 +558,27 @@ namespace nnforge
 				cuda_config,
 				new_elem_count);
 			copy_buffer_util_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((const float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, new_elem_count);
+		}
+
+		void cuda_util::transpose(
+			const cuda_running_configuration& cuda_config,
+			const float * src,
+			float * dst,
+			int src_fast_dim,
+			int src_slow_dim,
+			int entry_count,
+			cudaStream_t cuda_stream)
+		{
+			dim3 threadblock_size(TRANSPOSE_TILE_DIM, TRANSPOSE_BLOCK_ROWS, 1);
+			dim3 grid_size((src_fast_dim + TRANSPOSE_TILE_DIM - 1) / TRANSPOSE_TILE_DIM, (src_slow_dim + TRANSPOSE_TILE_DIM - 1) / TRANSPOSE_TILE_DIM, entry_count);
+
+			transpose_kernel<<<grid_size, threadblock_size, 0, cuda_stream>>>(
+				src,
+				dst,
+				src_fast_dim,
+				src_slow_dim,
+				src_fast_dim * src_slow_dim,
+				entry_count);
 		}
 
 		int cuda_util::get_group_count(
