@@ -55,4 +55,9 @@ namespace nnforge
 			*data_it = static_cast<unsigned char>(std::min<int>(std::max<int>((shift + static_cast<int>(*data_it)), 0), 255));
 		}
 	}
+
+ 	bool noise_data_transformer::is_deterministic() const
+	{
+		return false;
+	}
 }

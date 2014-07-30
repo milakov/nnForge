@@ -101,4 +101,9 @@ namespace nnforge
 	{
 		return static_cast<unsigned int>(params.size());
 	}
+
+	bool distort_2d_data_sampler_transformer::is_deterministic() const
+	{
+		return true;
+	}
 }

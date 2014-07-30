@@ -69,4 +69,9 @@ namespace nnforge
 				brightness_shift);
 		}
 	}
+
+ 	bool intensity_2d_data_transformer::is_deterministic() const
+	{
+		return false;
+	}
 }

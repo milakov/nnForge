@@ -45,6 +45,8 @@ namespace nnforge
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
+		virtual bool is_deterministic() const;
+
 	protected:
 		random_generator generator;
 

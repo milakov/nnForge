@@ -40,6 +40,8 @@ namespace nnforge
 			
 		virtual bool is_in_place() const;
 
+		virtual bool is_deterministic() const;
+
 	protected:
 		random_generator generator;
 		std::vector<nnforge_uniform_int_distribution<int> > rotate_band_distributions;

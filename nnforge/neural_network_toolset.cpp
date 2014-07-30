@@ -1241,7 +1241,7 @@ namespace nnforge
 		return res;
 	}
 
-	supervised_data_reader_smart_ptr neural_network_toolset::get_data_reader_for_training() const
+	supervised_data_reader_smart_ptr neural_network_toolset::get_data_reader_for_training(bool deterministic_transformers_only) const
 	{
 		supervised_data_reader_smart_ptr current_reader = get_initial_data_reader_for_training();
 
@@ -1256,16 +1256,22 @@ namespace nnforge
 			std::vector<data_transformer_smart_ptr> data_transformer_list = get_input_data_transformer_list_for_training();
 			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
 			{
-				supervised_data_reader_smart_ptr new_reader(new supervised_transformed_input_data_reader(current_reader, *it));
-				current_reader = new_reader;
+				if ((!deterministic_transformers_only) || (*it)->is_deterministic())
+				{
+					supervised_data_reader_smart_ptr new_reader(new supervised_transformed_input_data_reader(current_reader, *it));
+					current_reader = new_reader;
+				}
 			}
 		}
 		{
 			std::vector<data_transformer_smart_ptr> data_transformer_list = get_output_data_transformer_list_for_training();
 			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
 			{
-				supervised_data_reader_smart_ptr new_reader(new supervised_transformed_output_data_reader(current_reader, *it));
-				current_reader = new_reader;
+				if ((!deterministic_transformers_only) || (*it)->is_deterministic())
+				{
+					supervised_data_reader_smart_ptr new_reader(new supervised_transformed_output_data_reader(current_reader, *it));
+					current_reader = new_reader;
+				}
 			}
 		}
 		return current_reader;
@@ -1429,9 +1435,9 @@ namespace nnforge
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
 			get_error_function(),
-			get_dropout_rate_map());
+			std::map<unsigned int, float>());
 
-		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
+		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
 		training_data_reader = supervised_data_reader_smart_ptr(new supervised_limited_entry_count_data_reader(training_data_reader, profile_updater_entry_count));
 
 		network_data_smart_ptr data(new network_data(*schema));
@@ -1506,7 +1512,7 @@ namespace nnforge
 
 		hessian_calculator_smart_ptr hessian = hessian_factory->create(schema);
 
-		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
+		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
 
 		network_data_smart_ptr data(new network_data(*schema));
 		{

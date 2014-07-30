@@ -54,6 +54,8 @@ namespace nnforge
 
 		nnforge_shared_ptr<normalize_data_transformer> get_inverted_transformer() const;
 
+		virtual bool is_deterministic() const;
+
 	public:
 		std::vector<std::pair<float, float> > mul_add_list;
 

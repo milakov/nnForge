@@ -54,6 +54,8 @@ namespace nnforge
 
 		virtual unsigned int get_sample_count() const;
 
+		virtual bool is_deterministic() const;
+
 	protected:
 		std::vector<distort_2d_data_sampler_param> params;
 	};

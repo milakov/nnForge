@@ -110,4 +110,9 @@ namespace nnforge
 				flip_around_y_axis);
 		}
 	}
+
+ 	bool distort_2d_data_transformer::is_deterministic() const
+	{
+		return false;
+	}
 }

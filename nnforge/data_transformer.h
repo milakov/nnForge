@@ -42,6 +42,8 @@ namespace nnforge
 		
 		virtual void reset();
 
+		virtual bool is_deterministic() const = 0;
+
 	protected:
 		data_transformer();
 

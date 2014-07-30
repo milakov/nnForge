@@ -235,7 +235,7 @@ namespace nnforge
 
 		normalize_data_transformer_smart_ptr get_reverse_output_data_normalize_transformer() const;
 
-		supervised_data_reader_smart_ptr get_data_reader_for_training() const;
+		supervised_data_reader_smart_ptr get_data_reader_for_training(bool deterministic_transformers_only = false) const;
 
 		std::pair<supervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_validating_and_sample_count() const;
 

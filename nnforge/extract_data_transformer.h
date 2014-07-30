@@ -42,6 +42,8 @@ namespace nnforge
 
 		virtual bool is_in_place() const;
 
+		virtual bool is_deterministic() const;
+
 	protected:
 		std::vector<unsigned int> input_window_sizes;
 		std::vector<unsigned int> output_window_sizes;

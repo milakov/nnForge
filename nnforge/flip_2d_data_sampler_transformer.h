@@ -40,6 +40,8 @@ namespace nnforge
 
 		virtual unsigned int get_sample_count() const;
 
+		virtual bool is_deterministic() const;
+
 	protected:
 		unsigned int flip_around_dimension_id;
 	};

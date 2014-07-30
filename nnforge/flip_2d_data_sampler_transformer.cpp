@@ -76,4 +76,9 @@ namespace nnforge
 	{
 		return 2;
 	}
+
+ 	bool flip_2d_data_sampler_transformer::is_deterministic() const
+	{
+		return true;
+	}
 }

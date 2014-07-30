@@ -145,4 +145,9 @@ namespace nnforge
 			mul_add_list.push_back(std::make_pair(mult, add));
 		}
 	}
+
+ 	bool normalize_data_transformer::is_deterministic() const
+	{
+		return true;
+	}
 }

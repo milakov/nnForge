@@ -131,4 +131,9 @@ namespace nnforge
 	{
 		return false;
 	}
+
+ 	bool extract_data_transformer::is_deterministic() const
+	{
+		return true;
+	}
 }

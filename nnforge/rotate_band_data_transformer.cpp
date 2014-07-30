@@ -112,4 +112,9 @@ namespace nnforge
 	{
 		return false;
 	}
+
+ 	bool rotate_band_data_transformer::is_deterministic() const
+	{
+		return false;
+	}
 }
