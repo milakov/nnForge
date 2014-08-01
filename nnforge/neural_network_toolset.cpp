@@ -20,6 +20,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/format.hpp>
 #include <boost/chrono.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <regex>
 #include <algorithm>
@@ -72,6 +73,7 @@ namespace nnforge
 	const char * neural_network_toolset::ann_resume_subfolder_name = "resume";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
 	const char * neural_network_toolset::logfile_name = "log.txt";
+	float neural_network_toolset::check_gradient_step_modifiers[] = {1.0, sqrtf(10.0F), 1.0F / sqrtf(10.0F), 10.0F, 0.1F, 10.0F * sqrtf(10.0F), 1.0F / (sqrtf(10.0F) * 10.0F), 100.0F, 0.01F, 100.0F * sqrtf(10.0F), 1.0F / (sqrtf(10.0F) * 100.0F), 1000.0F, 0.001F, -1.0F};
 
 	neural_network_toolset::neural_network_toolset(factory_generator_smart_ptr factory)
 		: factory(factory)
@@ -148,6 +150,10 @@ namespace nnforge
 		{
 			ann_snapshot();
 		}
+		else if (!action.compare("check_gradient"))
+		{
+			check_gradient();
+		}
 		else
 		{
 			throw std::runtime_error((boost::format("Unknown action: %1%") % action).str());
@@ -171,7 +177,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_invalid, ann_snapshot, profile_updater, profile_hessian)")
+			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, profile_hessian, check_gradient)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -203,6 +209,9 @@ namespace nnforge
 			("snapshot_data_set", boost::program_options::value<std::string>(&snapshot_data_set)->default_value("training"), "Type of the dataset to use for snapshots (training, validating, testing).")
 			("profile_updater_entry_count", boost::program_options::value<unsigned int>(&profile_updater_entry_count)->default_value(1), "The number of entries to process when profiling updater.")
 			("profile_hessian_entry_count", boost::program_options::value<unsigned int>(&profile_hessian_entry_count)->default_value(0), "The number of entries to process when profiling hessian (0 means no limitation).")
+			("check_gradient_weights", boost::program_options::value<std::string>(&check_gradient_weights)->default_value("::"), "The set of weights to check for gradient, in the form Layer:WeightSet:WeightID.")
+			("check_gradient_threshold", boost::program_options::value<float>(&check_gradient_threshold)->default_value(1.05F), "Threshold for gradient check.")
+			("check_gradient_base_step", boost::program_options::value<float>(&check_gradient_base_step)->default_value(1.0e-3F), "Base step size for gradient check.")
 			("training_algo", boost::program_options::value<std::string>(&training_algo)->default_value("sdlm"), "Training algorithm (sdlm, sgd).")
 			("dump_resume", boost::program_options::value<bool>(&dump_resume)->default_value(true), "Dump neural network data after each epoch.")
 			("load_resume,R", boost::program_options::value<bool>(&load_resume)->default_value(false), "Resume neural network training strating from saved.")
@@ -364,6 +373,9 @@ namespace nnforge
 			std::cout << "snapshot_data_set" << "=" << snapshot_data_set << std::endl;
 			std::cout << "profile_updater_entry_count" << "=" << profile_updater_entry_count << std::endl;
 			std::cout << "profile_hessian_entry_count" << "=" << profile_hessian_entry_count << std::endl;
+			std::cout << "check_gradient_weights" << "=" << check_gradient_weights << std::endl;
+			std::cout << "check_gradient_threshold" << "=" << check_gradient_threshold << std::endl;
+			std::cout << "check_gradient_base_step" << "=" << check_gradient_base_step << std::endl;
 			std::cout << "training_algo" << "=" << training_algo << std::endl;
 			std::cout << "dump_resume" << "=" << dump_resume << std::endl;
 			std::cout << "load_resume" << "=" << load_resume << std::endl;
@@ -1546,6 +1558,178 @@ namespace nnforge
 		}
 
 		std::cout << hessian_data->get_stat() << std::endl;
+	}
+
+	void neural_network_toolset::check_gradient()
+	{
+		network_schema_smart_ptr schema(new network_schema());
+		{
+			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
+			schema->read(in);
+		}
+
+		network_updater_smart_ptr updater = updater_factory->create(
+			schema,
+			get_error_function(),
+			std::map<unsigned int, float>());
+
+		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
+		training_data_reader = supervised_data_reader_smart_ptr(new supervised_limited_entry_count_data_reader(training_data_reader, 1));
+
+		network_data_smart_ptr data(new network_data(*schema));
+		{
+			random_generator data_gen = rnd::get_random_generator(47597);
+			data->randomize(*schema, data_gen);
+			network_data_initializer().initialize(
+				*data,
+				*schema,
+				get_network_output_type());
+		}
+
+		network_data_smart_ptr learning_rates(new network_data(*schema));
+		learning_rates->fill(0.0F);
+
+		std::vector<std::string> check_gradient_weight_params;
+		char* end;
+		boost::split(check_gradient_weight_params, check_gradient_weights, boost::is_any_of(":"));
+
+		if (check_gradient_weight_params.size() != 3)
+			throw std::runtime_error((boost::format("Invalid check_gradient_weights parameter: %1%") % check_gradient_weights).str());
+
+		int param_layer_id = -1;
+		if (!check_gradient_weight_params[0].empty())
+			param_layer_id = strtol(check_gradient_weight_params[0].c_str(), &end, 10);
+		int param_weight_set = -1;
+		if (!check_gradient_weight_params[1].empty())
+			param_weight_set = strtol(check_gradient_weight_params[1].c_str(), &end, 10);
+		int param_weight_id = -1;
+		if (!check_gradient_weight_params[2].empty())
+			param_weight_id = strtol(check_gradient_weight_params[2].c_str(), &end, 10);
+
+		const const_layer_list& layer_list = *schema;
+		unsigned int error_count = 0;
+		unsigned int total_weight_count = 0;
+		for(int layer_id = ((param_layer_id == -1) ? 0 : param_layer_id); layer_id < ((param_layer_id == -1) ? layer_list.size() : param_layer_id + 1); ++layer_id)
+		{
+			layer_data_smart_ptr layer_data = data->at(layer_id);
+			int min_weight_set = (param_weight_set == -1) ? 0 : param_weight_set;
+			int max_weight_set = (param_weight_set == -1) ? layer_data->size() : std::min<int>(layer_data->size(), param_weight_set + 1);
+			for(int weight_set = min_weight_set; weight_set < max_weight_set; ++weight_set)
+			{
+				std::vector<float>& weight_list = layer_data->at(weight_set);
+				std::vector<int> weight_id_list;
+				if (param_weight_id != -1)
+				{
+					if (param_weight_id < weight_list.size())
+						weight_id_list.push_back(param_weight_id);
+				}
+				else
+				{
+					for(int i = 0; i < weight_list.size(); ++i)
+						weight_id_list.push_back(i);
+				}
+
+				random_generator weight_gen = rnd::get_random_generator(637463);
+				for(int weight_to_process_count = weight_id_list.size(); weight_to_process_count > 0; --weight_to_process_count)
+				{
+					nnforge_uniform_int_distribution<int> dist(0, weight_to_process_count - 1);
+					int index = dist(weight_gen);
+					int weight_id = weight_id_list[index];
+					int leftover_entry_id = weight_id_list[weight_to_process_count - 1];
+					weight_id_list[index] = leftover_entry_id;
+
+					std::cout << layer_id << ":" << weight_set << ":" << weight_id << " ";
+
+					learning_rates->at(layer_id)->at(weight_set).at(weight_id) = 1.0e+6F;
+					float original_weight = data->at(layer_id)->at(weight_set).at(weight_id);
+
+					testing_result_smart_ptr res = updater->update(
+						*training_data_reader,
+						learning_rates,
+						data,
+						1,
+						0.0F,
+						0.0F);
+					double original_error = res->get_error();
+					float gradient_backprop = -(data->at(layer_id)->at(weight_set).at(weight_id) - original_weight) / 1.0e+6F;
+
+					float best_gradient_rate = std::numeric_limits<float>::max();
+					float best_check_gradient_step = 0.0F;
+					float best_gradient_check = 0.0F;
+					for (int step_modifier = 0; (check_gradient_step_modifiers[step_modifier] > 0.0F) && (best_gradient_rate > check_gradient_threshold); ++step_modifier)
+					{
+						for(int sign = 0; (sign <= 1) && (best_gradient_rate > check_gradient_threshold); ++sign)
+						{
+							float check_gradient_step = check_gradient_base_step * check_gradient_step_modifiers[step_modifier];
+							if (sign == 1)
+								check_gradient_step = -check_gradient_step;
+
+							data->at(layer_id)->at(weight_set).at(weight_id) = original_weight + check_gradient_step;
+							res = updater->update(
+								*training_data_reader,
+								learning_rates,
+								data,
+								1,
+								0.0F,
+								0.0F);
+							float new_error = res->get_error();
+							float gradient_check = static_cast<float>(new_error - original_error) / check_gradient_step;
+
+							float gradient_rate = get_gradient_rate(gradient_backprop, gradient_check);
+
+							if (gradient_rate <= best_gradient_rate)
+							{
+								best_gradient_rate = gradient_rate;
+								best_check_gradient_step = check_gradient_step;
+								best_gradient_check = gradient_check;
+							}
+						}
+					}
+
+					if (best_gradient_rate > check_gradient_threshold)
+					{
+						std::cout << "ERROR: ";
+						++error_count;
+					}
+					std::cout << "rate=" << best_gradient_rate << ", gradient_backprop=" << gradient_backprop << ", gradient_check=" << best_gradient_check << ", step = " << best_check_gradient_step;
+					++total_weight_count;
+
+					data->at(layer_id)->at(weight_set).at(weight_id) = original_weight;
+					learning_rates->at(layer_id)->at(weight_set).at(weight_id) = 0.0F;
+
+					std::cout << std::endl;
+				}
+			}
+		}
+
+		std::cout << error_count << " errors encountered in " << total_weight_count << " weights " << (boost::format("(%|1$.2f|%%)") % (static_cast<float>(error_count) * 100.0F / static_cast<float>(total_weight_count))).str() << std::endl;
+	}
+
+	float neural_network_toolset::get_gradient_rate(float gradient_backprop, float gradient_check) const
+	{
+		if (gradient_backprop == 0.0F)
+		{
+			if (gradient_check == 0.0F)
+				return 1.0F;
+			else
+				return 1.0e+37F;
+		}
+		else
+		{
+			if (gradient_check == 0.0F)
+				return 1.0e+37F;
+
+			if (((gradient_backprop > 0.0F) && (gradient_check > 0.0F)) || ((gradient_backprop < 0.0F) && (gradient_check < 0.0F)))
+			{
+				float diff = std::max(gradient_backprop / gradient_check, gradient_check / gradient_backprop);
+				return diff;
+			}
+			else
+			{
+				float diff = std::max(std::max(std::max(fabs(gradient_check), fabs(gradient_backprop)), fabs(1.0F / gradient_backprop)), fabs(1.0F / gradient_check));
+				return diff;
+			}
+		}
 	}
 
 	network_output_type::output_type neural_network_toolset::get_network_output_type() const

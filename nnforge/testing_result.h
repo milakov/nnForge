@@ -31,6 +31,8 @@ namespace nnforge
 
 		float get_error() const;
 
+		double get_error_precise() const;
+
 		const_error_function_smart_ptr ef;
 
 		float flops;

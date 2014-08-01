@@ -33,7 +33,12 @@ namespace nnforge
 
 	float testing_result::get_error() const
 	{
-		return static_cast<float>(static_cast<double>(cumulative_error) / static_cast<double>(entry_count));
+		return static_cast<float>(cumulative_error / static_cast<double>(entry_count));
+	}
+
+	double testing_result::get_error_precise() const
+	{
+		return cumulative_error / static_cast<double>(entry_count);
 	}
 
 	void testing_result::add_error(float sample_error)

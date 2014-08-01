@@ -188,6 +188,9 @@ namespace nnforge
 		unsigned int snapshot_scale;
 		unsigned int batch_size;
 		float momentum;
+		std::string check_gradient_weights;
+		float check_gradient_threshold;
+		float check_gradient_base_step;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
@@ -229,6 +232,8 @@ namespace nnforge
 
 		void profile_hessian();
 
+		void check_gradient();
+
 		normalize_data_transformer_smart_ptr get_input_data_normalize_transformer() const;
 
 		normalize_data_transformer_smart_ptr get_output_data_normalize_transformer() const;
@@ -254,6 +259,8 @@ namespace nnforge
 
 		void dump_settings();
 
+		float get_gradient_rate(float gradient_backprop, float gradient_check) const;
+
 	private:
 		factory_generator_smart_ptr factory;
 
@@ -261,6 +268,8 @@ namespace nnforge
 		boost::filesystem::path working_data_folder;
 
 		nnforge_shared_ptr<stream_duplicator> out_to_log_duplicator_smart_ptr;
+
+		static float check_gradient_step_modifiers[];
 
 	private:
 		neural_network_toolset();
