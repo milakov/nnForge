@@ -322,7 +322,7 @@ namespace nnforge
 				*cuda_config,
 				(double *)(*error_buf),
 				0.0,
-				updater_entry_count,
+				1,
 				*command_stream);
 
 			unsigned int current_data_slot = 0;
