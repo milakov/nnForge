@@ -57,12 +57,12 @@ namespace nnforge
 		{
 		}
 
-		network_data_smart_ptr hessian_calculator_plain::actual_get_hessian(
+		layer_data_list_smart_ptr hessian_calculator_plain::actual_get_hessian(
 			unsupervised_data_reader& reader,
 			network_data_smart_ptr data,
 			unsigned int hessian_entry_to_process_count)
 		{
-			network_data_smart_ptr hessian(new network_data(*schema));
+			layer_data_list_smart_ptr hessian(new layer_data_list(*schema));
 
 			reader.reset();
 
@@ -78,12 +78,19 @@ namespace nnforge
 			buffers_config.add_per_entry_buffer(input_neuron_count * input_neuron_elem_size); // input
 			buffers_config.add_per_entry_buffer(input_neuron_count * sizeof(float)); // converted input
 			buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // initial error
-			for(std::vector<layer_data_smart_ptr>::const_iterator it = data->begin(); it != data->end(); ++it)
+			for(std::vector<layer_data_smart_ptr>::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
 			{
 				for(layer_data::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); ++it2)
 				{
 					buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // data
 					buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // hessian
+				}
+			}
+			for(std::vector<layer_data_custom_smart_ptr>::const_iterator it = data->data_custom_list.begin(); it != data->data_custom_list.end(); ++it)
+			{
+				for(layer_data_custom::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); ++it2)
+				{
+					buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // data
 				}
 			}
 
@@ -185,9 +192,10 @@ namespace nnforge
 					const_layer_list::const_iterator layer_it = layer_list.begin();
 					layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
 					std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> >::iterator buffers_it = input_buffer_and_additional_testing_buffers_pack.begin();
-					layer_data_list::const_iterator data_it = data->begin();
+					layer_data_list::const_iterator data_it = data->data_list.begin();
+					layer_data_custom_list::const_iterator data_custom_it = data->data_custom_list.begin();
 					// Run testing
-					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it)
+					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it)
 					{
 						(*it)->test(
 							buffers_it->first,
@@ -195,13 +203,14 @@ namespace nnforge
 							plain_config,
 							*layer_it,
 							*data_it,
+							*data_custom_it,
 							*input_config_it,
 							*(input_config_it + 1),
 							entries_available_for_processing_count);
 					}
 					// Forward hessian
 					std::vector<std::pair<additional_buffer_smart_ptr, hessian_additional_buffer_set> >::iterator hessian_buffers_it = input_buffer_and_additional_hessian_buffers_pack.begin();
-					for(std::vector<const_layer_hessian_plain_smart_ptr>::const_iterator it = hessian_list.begin(); it != hessian_list.end(); ++it, ++layer_it, ++input_config_it, ++hessian_buffers_it, ++data_it)
+					for(std::vector<const_layer_hessian_plain_smart_ptr>::const_iterator it = hessian_list.begin(); it != hessian_list.end(); ++it, ++layer_it, ++input_config_it, ++hessian_buffers_it, ++data_it, ++data_custom_it)
 					{
 						(*it)->test(
 							hessian_buffers_it->first,
@@ -210,6 +219,7 @@ namespace nnforge
 							plain_config,
 							*layer_it,
 							*data_it,
+							*data_custom_it,
 							*input_config_it,
 							*(input_config_it + 1),
 							entries_available_for_processing_count);
@@ -233,10 +243,11 @@ namespace nnforge
 					const_layer_list::const_reverse_iterator layer_it = layer_list.rbegin();
 					std::vector<std::pair<additional_buffer_smart_ptr, hessian_additional_buffer_set> >::reverse_iterator hessian_buffers_it = input_buffer_and_additional_hessian_buffers_pack.rbegin();
 					layer_configuration_specific_list::const_reverse_iterator input_config_it = layer_config_list.rbegin();
-					layer_data_list::const_reverse_iterator data_it = data->rbegin();
+					layer_data_list::const_reverse_iterator data_it = data->data_list.rbegin();
+					layer_data_custom_list::const_reverse_iterator data_custom_it = data->data_custom_list.rbegin();
 					layer_data_list::reverse_iterator hessian_data_it = hessian->rbegin();
 					additional_buffer_smart_ptr output_errors = initial_error_buf;
-					for(std::vector<const_layer_hessian_plain_smart_ptr>::const_reverse_iterator it = hessian_list.rbegin(); it != hessian_list.rend(); ++it, ++layer_it, ++input_config_it, ++hessian_buffers_it, ++data_it, ++hessian_data_it)
+					for(std::vector<const_layer_hessian_plain_smart_ptr>::const_reverse_iterator it = hessian_list.rbegin(); it != hessian_list.rend(); ++it, ++layer_it, ++input_config_it, ++hessian_buffers_it, ++data_it, ++data_custom_it, ++hessian_data_it)
 					{
 						if (it != hessian_list.rend() - 1)
 						{
@@ -248,6 +259,7 @@ namespace nnforge
 								plain_config,
 								*layer_it,
 								*data_it,
+								*data_custom_it,
 								*(input_config_it + 1),
 								*input_config_it,
 								entries_available_for_processing_count);
@@ -258,6 +270,7 @@ namespace nnforge
 							output_errors,
 							hessian_buffers_it->second.additional_buffers,
 							*hessian_data_it,
+							*data_custom_it,
 							plain_config,
 							*layer_it,
 							*(input_config_it + 1),

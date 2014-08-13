@@ -24,37 +24,44 @@
 
 namespace nnforge
 {
-	// {6D6CFB72-3A5C-4C5E-9566-029D2E649045}
+	// {A8B18171-A294-4D99-B3B2-3A181374F226}
 	const boost::uuids::uuid network_data::data_guid =
-	{ 0x6d, 0x6c, 0xfb, 0x72
-	, 0x3a, 0x5c
-	, 0x4c, 0x5e
-	, 0x95, 0x66
-	, 0x02, 0x9d, 0x2e, 0x64, 0x90, 0x45 };
+		{ 0xa8, 0xb1, 0x81, 0x71
+		, 0xa2, 0x94
+		, 0x4d, 0x99
+		, 0xb3, 0xb2
+		, 0x3a, 0x18, 0x13, 0x74, 0xf2, 0x26 };
+
+	// {6D6CFB72-3A5C-4C5E-9566-029D2E649045}
+	const boost::uuids::uuid network_data::data_guid_v1 =
+		{ 0x6d, 0x6c, 0xfb, 0x72
+		, 0x3a, 0x5c
+		, 0x4c, 0x5e
+		, 0x95, 0x66
+		, 0x02, 0x9d, 0x2e, 0x64, 0x90, 0x45 };
 
 	network_data::network_data()
 	{
 	}
 
 	network_data::network_data(const const_layer_list& layer_list, float val)
+		: data_list(layer_list, val)
 	{
-		resize(layer_list.size());
-		for(unsigned int i = 0; i < size(); ++i)
+		data_custom_list.resize(layer_list.size());
+		for(unsigned int i = 0; i < layer_list.size(); ++i)
 		{
-			at(i) = layer_list[i]->create_layer_data();
-			at(i)->fill(val);
+			data_custom_list[i] = layer_list[i]->create_layer_data_custom();
 		}
 	}
 
 	void network_data::check_network_data_consistency(const const_layer_list& layer_list) const
 	{
-		if (size() != layer_list.size())
-			throw neural_network_exception("data count is not equal layer count");
+		data_list.check_consistency(layer_list);
 
-		for(unsigned int i = 0; i < size(); ++i)
-		{
-			layer_list[i]->check_layer_data_consistency(*at(i));
-		}
+		if (data_custom_list.size() != layer_list.size())
+			throw neural_network_exception("data custom count is not equal layer count");
+		for(unsigned int i = 0; i < data_list.size(); ++i)
+			layer_list[i]->check_layer_data_custom_consistency(*data_custom_list[i]);
 	}
 
 	const boost::uuids::uuid& network_data::get_uuid() const
@@ -69,12 +76,13 @@ namespace nnforge
 		const boost::uuids::uuid& guid = get_uuid();
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(guid.data), sizeof(guid.data));
 
-		unsigned int data_count = (unsigned int)size();
+		unsigned int data_count = (unsigned int)data_list.size();
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&data_count), sizeof(data_count));
 
-		for(layer_data_list::const_iterator it = begin(); it != end(); ++it)
+		for(unsigned int i = 0; i < data_count; ++i)
 		{
-			(*it)->write(binary_stream_to_write_to);
+			data_list[i]->write(binary_stream_to_write_to);
+			data_custom_list[i]->write(binary_stream_to_write_to);
 		}
 
 		binary_stream_to_write_to.flush();
@@ -86,18 +94,26 @@ namespace nnforge
 
 		boost::uuids::uuid data_guid_read;
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(data_guid_read.data), sizeof(data_guid_read.data));
-		if (data_guid_read != get_uuid())
+		bool read_data_custom = true;
+		if (data_guid_read == data_guid_v1)
+			read_data_custom = false;
+		else if (data_guid_read != get_uuid())
 			throw neural_network_exception((boost::format("Unknown data GUID encountered in input stream: %1%") % data_guid_read).str());
 
 		unsigned int data_count;
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&data_count), sizeof(data_count));
 
-		resize(data_count);
+		data_list.resize(data_count);
+		data_custom_list.resize(data_count);
 
-		for(unsigned int i = 0; i < size(); ++i)
+		for(unsigned int i = 0; i < data_count; ++i)
 		{
-			at(i) = layer_data_smart_ptr(new layer_data());
-			at(i)->read(binary_stream_to_read_from);
+			data_list[i] = layer_data_smart_ptr(new layer_data());
+			data_list[i]->read(binary_stream_to_read_from);
+
+			data_custom_list[i] = layer_data_custom_smart_ptr(new layer_data_custom());
+			if (read_data_custom)
+				data_custom_list[i]->read(binary_stream_to_read_from);
 		}
 	}
 
@@ -105,61 +121,13 @@ namespace nnforge
 		const const_layer_list& layer_list,
 		random_generator& gen)
 	{
-		for(unsigned int i = 0; i < size(); ++i)
+		for(unsigned int i = 0; i < layer_list.size(); ++i)
 		{
 			layer_list[i]->randomize_data(
-				*at(i),
+				*data_list[i],
+				*data_custom_list[i],
 				gen);
 		}
-	}
-
-	void network_data::fill(float val)
-	{
-		for(layer_data_list::iterator it = begin(); it != end(); ++it)
-			(*it)->fill(val);
-	}
-
-	void network_data::random_fill(
-		float min,
-		float max,
-		random_generator& gen)
-	{
-		for(layer_data_list::iterator it = begin(); it != end(); ++it)
-			(*it)->random_fill(min, max, gen);
-	}
-
-	std::string network_data::get_stat() const
-	{
-		std::string stat = "";
-
-		unsigned int layer_id = 0;
-		for(layer_data_list::const_iterator it = begin(); it != end(); ++it)
-		{
-			std::string layer_stat;
-
-			for(layer_data::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++)
-			{
-				const std::vector<float>& data = *it2;
-
-				double sum = std::accumulate(data.begin(), data.end(), 0.0);
-				float avg = sum / data.size();
-
-				if (!layer_stat.empty())
-					layer_stat += ", ";
-				layer_stat += (boost::format("%|1$.5e|") % avg).str();
-			}
-
-			if (!layer_stat.empty())
-			{
-				if (!stat.empty())
-					stat += ", ";
-				stat += (boost::format("Layer %1% - (%2%)") % layer_id % layer_stat).str();
-			}
-
-			layer_id++;
-		}
-
-		return stat;
 	}
 
 	void network_data::apply_dropout_layer_config(
@@ -169,7 +137,7 @@ namespace nnforge
 		for(std::map<unsigned int, dropout_layer_config>::const_iterator it = layer_id_to_dropout_config_map.begin(); it != layer_id_to_dropout_config_map.end(); ++it)
 		{
 			unsigned int layer_id = it->first;
-			at(layer_id)->apply_dropout_layer_config(it->second, is_direct);
+			data_list[layer_id]->apply_dropout_layer_config(it->second, is_direct);
 		}
 	}
 }

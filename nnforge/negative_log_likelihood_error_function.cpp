@@ -96,9 +96,13 @@ namespace nnforge
 		float * gradient,
 		unsigned int neuron_count) const
 	{
+		float max_val = -1.0e+37F;
+		for(unsigned int i = 0; i < neuron_count; ++i)
+			max_val = std::max(max_val, predicted_values[i]);
+
 		float predicted_sum = 0.0F;
 		for(unsigned int i = 0; i < neuron_count; ++i)
-			predicted_sum += expf(predicted_values[i]);
+			predicted_sum += expf(predicted_values[i] - max_val);
 
 		float mult = 1.0F / predicted_sum;
 
@@ -106,7 +110,7 @@ namespace nnforge
 		for(unsigned int i = 0; i < neuron_count; ++i)
 		{
 			float actual_val = actual_values[i];
-			float predicted_val = expf(predicted_values[i]) * mult;
+			float predicted_val = expf(predicted_values[i] - max_val) * mult;
 			gradient[i] = actual_val - predicted_val;
 			if (actual_val > 0.0F)
 				error_sum -= actual_val * logf(std::max(predicted_val, 1.0e-20F));

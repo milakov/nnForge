@@ -69,20 +69,20 @@ namespace nnforge
 		hessian_calculator_smart_ptr hessian_calc;
 		network_updater_smart_ptr updater;
 
-		std::vector<std::vector<float> > get_average_hessian_list(network_data_smart_ptr hessian) const;
+		std::vector<std::vector<float> > get_average_hessian_list(layer_data_list_smart_ptr hessian) const;
 
 		std::string convert_hessian_to_training_vector(
-			network_data_smart_ptr hessian,
+			layer_data_list_smart_ptr hessian,
 			const std::vector<std::vector<float> >& average_hessian_list,
 			unsigned int epoch_id) const;
 
 		std::string convert_hessian_to_training_vector_per_layer_mu(
-			network_data_smart_ptr hessian,
+			layer_data_list_smart_ptr hessian,
 			const std::vector<std::vector<float> >& average_hessian_list,
 			unsigned int epoch_id) const;
 
 		std::string convert_hessian_to_training_vector(
-			network_data_smart_ptr hessian,
+			layer_data_list_smart_ptr hessian,
 			unsigned int epoch_id) const;
 
 #ifdef NNFORGE_DEBUG_HESSIAN

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ namespace nnforge
 			plain_running_configuration_const_smart_ptr plain_config,
 			const_layer_smart_ptr layer_schema,
 			const_layer_data_smart_ptr data,
+			const_layer_data_custom_smart_ptr data_custom,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
@@ -78,10 +79,17 @@ namespace nnforge
 					const std::vector<float>::const_iterator in_it = input_buffer_it + (entry_id * input_neuron_count) + neuron_id;
 					const std::vector<float>::iterator out_it = output_buffer_it + (entry_id * input_neuron_count) + neuron_id;
 
+					float max_val = -1.0e+37F;
+					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+					{
+						float val = *(in_it + (feature_map_id * input_neuron_count_per_feature_map));
+						max_val = std::max(max_val, val);
+					}
+
 					float sum = 0.0F;
 					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 					{
-						float val = expf(*(in_it + (feature_map_id * input_neuron_count_per_feature_map)));
+						float val = expf((*(in_it + (feature_map_id * input_neuron_count_per_feature_map))) - max_val);
 						sum += val;
 						local_additional_buffer[feature_map_id] = val;
 					}
@@ -100,6 +108,7 @@ namespace nnforge
 			plain_running_configuration_const_smart_ptr plain_config,
 			const_layer_smart_ptr layer_schema,
 			const_layer_data_smart_ptr data,
+			const_layer_data_custom_smart_ptr data_custom,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const

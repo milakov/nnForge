@@ -19,6 +19,7 @@
 #include "layer_configuration.h"
 #include "layer_configuration_specific.h"
 #include "layer_data.h"
+#include "layer_data_custom.h"
 #include "rnd.h"
 #include "dropout_layer_config.h"
 #include "layer_data_configuration.h"
@@ -27,10 +28,12 @@
 #include <boost/uuid/uuid.hpp>
 #include <ostream>
 #include <istream>
+#include <set>
 
 namespace nnforge
 {
 	typedef std::vector<unsigned int> data_config;
+	typedef std::vector<unsigned int> data_custom_config;
 
 	class layer
 	{
@@ -72,22 +75,33 @@ namespace nnforge
 		// All values are set to 0.0F
 		layer_data_smart_ptr create_layer_data() const;
 
+		// All values are set to -1
+		layer_data_custom_smart_ptr create_layer_data_custom() const;
+
 		// The method throws exception in case the data is not suitable for the layer
 		void check_layer_data_consistency(const layer_data& data) const;
+
+		// The method throws exception in case the data is not suitable for the layer
+		void check_layer_data_custom_consistency(const layer_data_custom& data_custom) const;
 
 		// Override this member function to randomize data
 		virtual void randomize_data(
 			layer_data& data,
+			layer_data_custom& data_custom,
 			random_generator& generator) const;
 
 		virtual dropout_layer_config get_dropout_layer_config(float dropout_rate) const;
 
 		bool is_empty_data() const;
 
+		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;
+
 	protected:
 		layer();
 
 		virtual data_config get_data_config() const;
+
+		virtual data_custom_config get_data_custom_config() const;
 	};
 
 	typedef nnforge_shared_ptr<layer> layer_smart_ptr;

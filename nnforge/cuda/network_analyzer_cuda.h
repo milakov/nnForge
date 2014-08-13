@@ -77,6 +77,7 @@ namespace nnforge
 
 			std::vector<layer_updater_cuda_smart_ptr> updater_list;
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data;
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data_custom;
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > schema_data;
 
 			cuda_linear_buffer_device_smart_ptr input_buf;

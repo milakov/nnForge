@@ -28,6 +28,11 @@ namespace nnforge
 			size_t elem_count,
 			const char * filepath);
 
+		static void dump_list(
+			int * buffer,
+			size_t elem_count,
+			const char * filepath);
+
 	private:
 		debug_util();
 		~debug_util();

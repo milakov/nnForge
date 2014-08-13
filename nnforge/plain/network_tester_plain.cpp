@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -129,8 +129,9 @@ namespace nnforge
 					const_layer_list::const_iterator layer_it = layer_list.begin();
 					layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
 					std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> >::iterator buffers_it = input_buffer_and_additional_buffers_pack.begin();
-					layer_data_list::const_iterator data_it = net_data->begin();
-					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it)
+					layer_data_list::const_iterator data_it = net_data->data_list.begin();
+					layer_data_custom_list::const_iterator data_custom_it = net_data->data_custom_list.begin();
+					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it)
 					{
 						(*it)->test(
 							buffers_it->first,
@@ -138,6 +139,7 @@ namespace nnforge
 							plain_config,
 							*layer_it,
 							*data_it,
+							*data_custom_it,
 							*input_config_it,
 							*(input_config_it + 1),
 							entries_available_for_processing_count);
@@ -244,9 +246,10 @@ namespace nnforge
 				const_layer_list::const_iterator layer_it = layer_list.begin();
 				layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
 				std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> >::iterator buffers_it = input_buffer_and_additional_buffers_pack.begin();
-				layer_data_list::const_iterator data_it = net_data->begin();
+				layer_data_list::const_iterator data_it = net_data->data_list.begin();
+				layer_data_custom_list::const_iterator data_custom_it = net_data->data_custom_list.begin();
 				std::vector<additional_buffer_smart_ptr>::iterator output_it = output_buffer_list.begin();
-				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it)
+				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++output_it, ++data_it, ++data_custom_it)
 				{
 					(*it)->test(
 						buffers_it->first,
@@ -254,6 +257,7 @@ namespace nnforge
 						plain_config,
 						*layer_it,
 						*data_it,
+						*data_custom_it,
 						*input_config_it,
 						*(input_config_it + 1),
 						1);
@@ -262,12 +266,6 @@ namespace nnforge
 					res.push_back(new_elem);
 
 					std::copy((*output_it)->begin(), (*output_it)->end(), new_elem->data.begin());
-
-					++layer_it;
-					++input_config_it;
-					++buffers_it;
-					++data_it;
-					++output_it;
 				}
 			}
 
@@ -335,8 +333,9 @@ namespace nnforge
 				const_layer_list::const_iterator layer_it = layer_list.begin();
 				layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
 				std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> >::iterator buffers_it = input_buffer_and_additional_buffers_pack.begin();
-				layer_data_list::const_iterator data_it = net_data->begin();
-				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it)
+				layer_data_list::const_iterator data_it = net_data->data_list.begin();
+				layer_data_custom_list::const_iterator data_custom_it = net_data->data_custom_list.begin();
+				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it)
 				{
 					(*it)->test(
 						buffers_it->first,
@@ -344,6 +343,7 @@ namespace nnforge
 						plain_config,
 						*layer_it,
 						*data_it,
+						*data_custom_it,
 						*input_config_it,
 						*(input_config_it + 1),
 						1);
@@ -361,8 +361,11 @@ namespace nnforge
 
 		void network_tester_plain::update_buffers_configuration_testing(buffer_plain_size_configuration& buffer_configuration) const
 		{
-			for(std::vector<layer_data_smart_ptr>::const_iterator it = net_data->begin(); it != net_data->end(); ++it)
+			for(std::vector<layer_data_smart_ptr>::const_iterator it = net_data->data_list.begin(); it != net_data->data_list.end(); ++it)
 				for(layer_data::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); ++it2)
+					buffer_configuration.add_constant_buffer(it2->size() * sizeof(float));
+			for(std::vector<layer_data_custom_smart_ptr>::const_iterator it = net_data->data_custom_list.begin(); it != net_data->data_custom_list.end(); ++it)
+				for(layer_data_custom::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); ++it2)
 					buffer_configuration.add_constant_buffer(it2->size() * sizeof(float));
 
 			const const_layer_list& layer_list = *schema;

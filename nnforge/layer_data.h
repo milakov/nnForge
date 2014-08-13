@@ -65,5 +65,4 @@ namespace nnforge
 
 	typedef nnforge_shared_ptr<layer_data> layer_data_smart_ptr;
 	typedef nnforge_shared_ptr<const layer_data> const_layer_data_smart_ptr;
-	typedef std::vector<layer_data_smart_ptr> layer_data_list;
 }

@@ -32,7 +32,7 @@ namespace nnforge
 		// You don't need to call this method before calling get_hessian with supervised_data_reader
 		void set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific);
 
-		network_data_smart_ptr get_hessian(
+		layer_data_list_smart_ptr get_hessian(
 			unsupervised_data_reader& reader,
 			network_data_smart_ptr data,
 			unsigned int hessian_entry_to_process_count);
@@ -44,7 +44,7 @@ namespace nnforge
 		hessian_calculator(network_schema_smart_ptr schema);
 
 		// schema, data and reader are guaranteed to be compatible
-		virtual network_data_smart_ptr actual_get_hessian(
+		virtual layer_data_list_smart_ptr actual_get_hessian(
 			unsupervised_data_reader& reader,
 			network_data_smart_ptr data,
 			unsigned int hessian_entry_to_process_count) = 0;

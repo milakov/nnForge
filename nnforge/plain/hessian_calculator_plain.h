@@ -38,7 +38,7 @@ namespace nnforge
 
 		protected:
 			// schema, data and reader are guaranteed to be compatible
-			virtual network_data_smart_ptr actual_get_hessian(
+			virtual layer_data_list_smart_ptr actual_get_hessian(
 				unsupervised_data_reader& reader,
 				network_data_smart_ptr data,
 				unsigned int hessian_entry_to_process_count);

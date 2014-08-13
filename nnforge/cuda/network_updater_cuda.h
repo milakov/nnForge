@@ -43,7 +43,7 @@ namespace nnforge
 			// schema, data and reader are guaranteed to be compatible
 			virtual testing_result_smart_ptr actual_update(
 				supervised_data_reader& reader,
-				network_data_const_smart_ptr learning_rate,
+				const layer_data_list& learning_rate,
 				network_data_smart_ptr data,
 				unsigned int batch_size,
 				float weight_decay,
@@ -65,9 +65,11 @@ namespace nnforge
 
 			unsigned int get_updater_max_count() const;
 
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_learning_rate(network_data_const_smart_ptr learning_rate) const;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_learning_rate(const layer_data_list& learning_rate) const;
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data(network_data_const_smart_ptr data) const;
+
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data_custom(network_data_const_smart_ptr data_custom) const;
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_zero_gradient(const std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data) const;
 

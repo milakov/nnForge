@@ -34,13 +34,21 @@ namespace nnforge
 		layer_data_smart_ptr res(new layer_data());
 
 		data_config dc = get_data_config();
-
 		res->resize(dc.size());
-
 		for(unsigned int i = 0; i < dc.size(); ++i)
-		{
 			(*res)[i].resize(dc[i]);
-		}
+
+		return res;
+	}
+
+	layer_data_custom_smart_ptr layer::create_layer_data_custom() const
+	{
+		layer_data_custom_smart_ptr res(new layer_data_custom());
+
+		data_config dc = get_data_custom_config();
+		res->resize(dc.size());
+		for(unsigned int i = 0; i < dc.size(); ++i)
+			(*res)[i].resize(dc[i], -1);
 
 		return res;
 	}
@@ -48,10 +56,8 @@ namespace nnforge
 	void layer::check_layer_data_consistency(const layer_data& data) const
 	{
 		data_config dc = get_data_config();
-
 		if (dc.size() != data.size())
 			throw neural_network_exception((boost::format("data weight vector count %1% doesn't satisfy layer configuration %2%") % data.size() % dc.size()).str());
-
 		for(unsigned int i = 0; i < dc.size(); ++i)
 		{
 			if (dc[i] != data[i].size())
@@ -59,8 +65,21 @@ namespace nnforge
 		}
 	}
 
+	void layer::check_layer_data_custom_consistency(const layer_data_custom& data_custom) const
+	{
+		data_custom_config dcc = get_data_custom_config();
+		if (dcc.size() != data_custom.size())
+			throw neural_network_exception((boost::format("custom data weight vector count %1% doesn't satisfy layer configuration %2%") % data_custom.size() % dcc.size()).str());
+		for(unsigned int i = 0; i < dcc.size(); ++i)
+		{
+			if (dcc[i] != data_custom[i].size())
+				throw neural_network_exception((boost::format("custom data weight count %1% for vector %2% doesn't satisfy layer configuration %3%") % data_custom[i].size() % i % dcc[i]).str());
+		}
+	}
+
 	void layer::randomize_data(
 		layer_data& data,
+		layer_data_custom& data_custom,
 		random_generator& generator) const
 	{
 	}
@@ -68,6 +87,11 @@ namespace nnforge
 	data_config layer::get_data_config() const
 	{
 		return data_config();
+	}
+
+	data_custom_config layer::get_data_custom_config() const
+	{
+		return data_custom_config();
 	}
 
 	void layer::write(std::ostream& binary_stream_to_write_to) const
@@ -82,7 +106,7 @@ namespace nnforge
 	{
 		data_config dc = get_data_config();
 
-		for(data_config::const_iterator it = dc.begin(); it != dc.end(); it++)
+		for(std::vector<unsigned int>::const_iterator it = dc.begin(); it != dc.end(); it++)
 		{
 			if (*it > 0)
 				return false;
@@ -124,5 +148,10 @@ namespace nnforge
 	std::vector<std::pair<unsigned int, unsigned int> > layer::get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const
 	{
 		return output_rectangle_borders;
+	}
+
+	std::set<unsigned int> layer::get_weight_decay_part_id_set() const
+	{
+		return std::set<unsigned int>();
 	}
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -66,6 +66,7 @@ namespace nnforge
 				cudaStream_t stream_id,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
@@ -77,6 +78,7 @@ namespace nnforge
 				cudaStream_t stream_id,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
 				const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
@@ -89,6 +91,7 @@ namespace nnforge
 				unsigned int offset_input_entry_id,
 				cudaStream_t stream_id,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
@@ -97,6 +100,8 @@ namespace nnforge
 				unsigned int entry_count);
 
 			std::vector<cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
+
+			std::vector<cuda_linear_buffer_device_smart_ptr> get_data_custom(const_layer_data_custom_smart_ptr host_data_custom) const;
 
 			std::vector<const_cuda_linear_buffer_device_smart_ptr> get_learning_rate(const_layer_data_smart_ptr host_learning_rate) const;
 
@@ -124,10 +129,18 @@ namespace nnforge
 
 			virtual unsigned int get_data_elem_count(unsigned int part_id, unsigned int source_elem_count) const;
 
+			virtual unsigned int get_data_custom_elem_count(unsigned int part_id, unsigned int source_elem_count) const;
+
 			virtual void fill_data_for_device(
 				unsigned int part_id,
 				const float * src,
 				float * dst,
+				unsigned int count) const;
+
+			virtual void fill_data_custom_for_device(
+				unsigned int part_id,
+				const int * src,
+				int * dst,
 				unsigned int count) const;
 
 			virtual void fill_data_for_host(

@@ -38,7 +38,7 @@ namespace nnforge
 
 		protected:
 			// schema, data and reader are guaranteed to be compatible
-			virtual network_data_smart_ptr actual_get_hessian(
+			virtual layer_data_list_smart_ptr actual_get_hessian(
 				unsupervised_data_reader& reader,
 				network_data_smart_ptr data,
 				unsigned int hessian_entry_to_process_count);
@@ -57,6 +57,8 @@ namespace nnforge
 
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_data(network_data_smart_ptr data) const;
 
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_data_custom(network_data_smart_ptr data) const;
+
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_data_squared(network_data_smart_ptr data) const;
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > enqueue_get_hessian(
@@ -70,7 +72,7 @@ namespace nnforge
 
 			void enqueue_read_hessian(
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& hessian_data,
-				network_data_smart_ptr res,
+				layer_data_list_smart_ptr res,
 				cudaStream_t stream_id) const;
 
 			cuda_running_configuration_const_smart_ptr cuda_config;

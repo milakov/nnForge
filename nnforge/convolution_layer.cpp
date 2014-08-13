@@ -144,6 +144,7 @@ namespace nnforge
 
 	void convolution_layer::randomize_data(
 		layer_data& data,
+		layer_data_custom& data_custom,
 		random_generator& generator) const
 	{
 		unsigned int input_neuron_count = input_feature_map_count;
@@ -230,6 +231,13 @@ namespace nnforge
 		res.push_back(layer_data_configuration(input_feature_map_count, output_feature_map_count, window_sizes));
 		res.push_back(layer_data_configuration(1, output_feature_map_count, std::vector<unsigned int>()));
 
+		return res;
+	}
+
+	std::set<unsigned int> convolution_layer::get_weight_decay_part_id_set() const
+	{
+		std::set<unsigned int> res;
+		res.insert(0);
 		return res;
 	}
 }

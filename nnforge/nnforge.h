@@ -19,6 +19,7 @@
 #include "neural_network_exception.h"
 
 #include "convolution_layer.h"
+#include "sparse_convolution_layer.h"
 #include "hyperbolic_tangent_layer.h"
 #include "average_subsampling_layer.h"
 #include "max_subsampling_layer.h"

@@ -19,6 +19,7 @@
 #include "sigmoid_layer.h"
 #include "hyperbolic_tangent_layer.h"
 #include "convolution_layer.h"
+#include "rectified_linear_layer.h"
 #include "nn_types.h"
 
 #include <cmath>
@@ -62,5 +63,23 @@ namespace nnforge
 				}
 			}
 		}
+
+		/*
+		for(int i = 0; i < layer_list.size() - 1; ++i)
+		{
+			if ((layer_list[i + 1]->get_uuid() == rectified_linear_layer::layer_guid)
+				&& (layer_list[i]->get_uuid() == convolution_layer::layer_guid))
+			{
+				nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[layer_list.size() - 2]);
+
+				std::vector<float>::iterator it_start = data_list[i]->at(0).begin();
+				std::vector<float>::iterator it_end = data_list[i]->at(0).end();
+				for(std::vector<float>::iterator it = it_start; it != it_end; ++it)
+					*it *= 0.9F;
+
+				std::fill(data_list[i]->at(1).begin(), data_list[i]->at(1).end(), 0.1F);
+			}
+		}
+		*/
 	}
 }

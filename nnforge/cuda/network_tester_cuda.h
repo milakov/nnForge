@@ -81,6 +81,7 @@ namespace nnforge
 			cuda_stream_smart_ptr data_stream;
 
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > net_data;
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > net_data_custom;
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > schema_data;
 
 			std::vector<layer_tester_cuda_smart_ptr> tester_list;

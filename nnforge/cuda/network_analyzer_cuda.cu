@@ -118,8 +118,9 @@ namespace nnforge
 		void network_analyzer_cuda::actual_set_data(network_data_smart_ptr data)
 		{
 			net_data.clear();
+			net_data_custom.clear();
 
-			for(layer_data_list::const_iterator it2 = data->begin(); it2 != data->end(); ++it2)
+			for(layer_data_list::const_iterator it2 = data->data_list.begin(); it2 != data->data_list.end(); ++it2)
 			{
 				std::vector<cuda_linear_buffer_device_smart_ptr> res;
 
@@ -132,6 +133,21 @@ namespace nnforge
 				}
 
 				net_data.push_back(res);
+			}
+
+			for(layer_data_custom_list::const_iterator it2 = data->data_custom_list.begin(); it2 != data->data_custom_list.end(); ++it2)
+			{
+				std::vector<cuda_linear_buffer_device_smart_ptr> res;
+
+				for(std::vector<std::vector<int> >::iterator it = (*it2)->begin(); it != (*it2)->end(); ++it)
+				{
+					size_t buffer_size = it->size() * sizeof(int);
+					cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
+					cuda_safe_call(cudaMemcpy(*new_buf, &(*it->begin()), buffer_size, cudaMemcpyHostToDevice));
+					res.push_back(new_buf);
+				}
+
+				net_data_custom.push_back(res);
 			}
 		}
 
@@ -176,15 +192,17 @@ namespace nnforge
 			{
 				std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, layer_updater_cuda::buffer_set> >::iterator input_and_all_buffers_pack_it = updater_input_and_all_buffers_pack.begin();
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator net_data_it = net_data.begin();
+				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator net_data_custom_it = net_data_custom.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = updater_schema_data.begin();
 				layer_configuration_specific_list::const_iterator layer_config_it = layer_config_list.begin();
-				for(std::vector<layer_updater_cuda_smart_ptr>::iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++net_data_it, ++layer_config_it)
+				for(std::vector<layer_updater_cuda_smart_ptr>::iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++net_data_it, ++net_data_custom_it, ++layer_config_it)
 				{
 					(*it)->enqueue_test(
 						0,
 						*command_stream,
 						*schema_data_it,
 						*net_data_it,
+						*net_data_custom_it,
 						input_and_all_buffers_pack_it->first,
 						input_and_all_buffers_pack_it->second.output_neurons_buffer,
 						input_and_all_buffers_pack_it->second.additional_buffers,
@@ -266,12 +284,14 @@ namespace nnforge
 			std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, layer_updater_cuda::buffer_set> >::reverse_iterator input_and_all_buffers_pack_it = updater_input_and_all_buffers_pack.rbegin() + (updater_input_and_all_buffers_pack.size() - output_layer_id - 1);
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator schema_data_it = updater_schema_data.rbegin() + (updater_schema_data.size() - output_layer_id - 1);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator net_data_it = net_data.rbegin() + (net_data.size() - output_layer_id - 1);
-			for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin() + (updater_list.size() - output_layer_id - 1); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++output_errors_it, ++net_data_it)
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator net_data_custom_it = net_data_custom.rbegin() + (net_data.size() - output_layer_id - 1);
+			for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin() + (updater_list.size() - output_layer_id - 1); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++output_errors_it, ++net_data_it, ++net_data_custom_it)
 			{
 				(*it)->enqueue_backprop(
 					*command_stream,
 					*schema_data_it,
 					*net_data_it,
+					*net_data_custom_it,
 					input_and_all_buffers_pack_it->second.output_neurons_buffer,
 					input_and_all_buffers_pack_it->first,
 					*output_errors_it,

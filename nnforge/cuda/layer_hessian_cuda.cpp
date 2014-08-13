@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -123,6 +123,7 @@ namespace nnforge
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& hessian_data,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
@@ -146,6 +147,21 @@ namespace nnforge
 			for(std::vector<std::vector<float> >::const_iterator it = host_data->begin(); it != host_data->end(); ++it)
 			{
 				size_t buffer_size = it->size() * sizeof(float);
+				cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
+				cuda_safe_call(cudaMemcpy(*new_buf, &(*it->begin()), buffer_size, cudaMemcpyHostToDevice));
+				res.push_back(new_buf);
+			}
+
+			return res;
+		}
+
+		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_hessian_cuda::get_data_custom(const_layer_data_custom_smart_ptr host_data_custom) const
+		{
+			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
+
+			for(std::vector<std::vector<int> >::const_iterator it = host_data_custom->begin(); it != host_data_custom->end(); ++it)
+			{
+				size_t buffer_size = it->size() * sizeof(int);
 				cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
 				cuda_safe_call(cudaMemcpy(*new_buf, &(*it->begin()), buffer_size, cudaMemcpyHostToDevice));
 				res.push_back(new_buf);

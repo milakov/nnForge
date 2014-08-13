@@ -17,10 +17,12 @@
 #pragma once
 
 #include "layer_data.h"
+#include "layer_data_custom.h"
 #include "layer.h"
 #include "dropout_layer_config.h"
 #include "nn_types.h"
 #include "rnd.h"
+#include "layer_data_list.h"
 
 #include <vector>
 #include <ostream>
@@ -30,14 +32,13 @@
 
 namespace nnforge
 {
-	class network_data : public layer_data_list
+	class network_data
 	{
 	public:
 		network_data();
 
 		const boost::uuids::uuid& get_uuid() const;
 
-		// All data values are initialized to 0.0F
 		network_data(const const_layer_list& layer_list, float val = 0.0F);
 
 		// The stream should be created with std::ios_base::binary flag
@@ -55,21 +56,17 @@ namespace nnforge
 			const const_layer_list& layer_list,
 			random_generator& gen);
 
-		void fill(float val);
-
-		void random_fill(
-			float min,
-			float max,
-			random_generator& gen);
-
 		void apply_dropout_layer_config(
 			const std::map<unsigned int, dropout_layer_config>& layer_id_to_dropout_config_map,
 			bool is_direct);
 
-		std::string get_stat() const;
+	public:
+		layer_data_list data_list;
+		layer_data_custom_list data_custom_list;
 
 	private:
 		static const boost::uuids::uuid data_guid;
+		static const boost::uuids::uuid data_guid_v1;
 	};
 
 	typedef nnforge_shared_ptr<network_data> network_data_smart_ptr;

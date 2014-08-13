@@ -29,4 +29,14 @@ namespace nnforge
 		for(size_t i = 0; i < elem_count; ++i)
 			out << buffer[i] << std::endl;
 	}
+
+	void debug_util::dump_list(
+		int * buffer,
+		size_t elem_count,
+		const char * filepath)
+	{
+		std::ofstream out(filepath);
+		for(size_t i = 0; i < elem_count; ++i)
+			out << buffer[i] << std::endl;
+	}
 }

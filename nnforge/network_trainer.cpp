@@ -60,9 +60,11 @@ namespace nnforge
 
 			if (is_last_epoch(new_task))
 			{
-				std::cout << "Warning: Task is allocated which is already complete. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
+				std::cout << "Warning: Task is allocated which is already complete. Index " << new_task.index_peeked << ", Base epoch " << new_task.initial_epoch << std::endl;
 				continue;
 			}
+
+			std::cout << "New task allocated: Index " << new_task.index_peeked << ", Base epoch " << new_task.initial_epoch << std::endl;
 
 			if (new_task.initial_epoch > reader_epoch_id)
 			{

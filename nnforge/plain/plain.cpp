@@ -51,6 +51,7 @@
 #include "max_subsampling_layer_updater_plain.h"
 #include "local_contrast_subtractive_layer_updater_plain.h"
 #include "convolution_layer_updater_plain.h"
+#include "sparse_convolution_layer_updater_plain.h"
 #include "rectified_linear_layer_updater_plain.h"
 #include "soft_rectified_linear_layer_updater_plain.h"
 #include "softmax_layer_updater_plain.h"
@@ -96,6 +97,7 @@ namespace nnforge
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new max_subsampling_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new local_contrast_subtractive_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new convolution_layer_updater_plain()));
+			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new sparse_convolution_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new rectified_linear_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new soft_rectified_linear_layer_updater_plain()));
 			single_layer_updater_plain_factory::get_mutable_instance().register_layer_updater_plain(layer_updater_plain_smart_ptr(new softmax_layer_updater_plain()));

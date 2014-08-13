@@ -63,6 +63,7 @@ namespace nnforge
 				plain_running_configuration_const_smart_ptr plain_config,
 				const_layer_smart_ptr layer_schema,
 				const_layer_data_smart_ptr data,
+				const_layer_data_custom_smart_ptr data_custom,
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int entry_count) const = 0;

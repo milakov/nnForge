@@ -53,9 +53,9 @@ namespace nnforge
 
 		unsigned int hessian_entry_to_process_count = std::min<unsigned int>(std::max<unsigned int>(static_cast<unsigned int>(hessian_entry_to_process_ratio * reader.get_entry_count()), min_hessian_entry_to_process_count), reader.get_entry_count());
 
-		network_data_smart_ptr learning_rate;
+		layer_data_list_smart_ptr learning_rate;
 
-		network_data_smart_ptr hessian = hessian_calc->get_hessian(
+		layer_data_list_smart_ptr hessian = hessian_calc->get_hessian(
 			reader,
 			task.data,
 			hessian_entry_to_process_count);
@@ -69,7 +69,7 @@ namespace nnforge
 
 		testing_result_smart_ptr train_result = updater->update(
 			reader,
-			learning_rate,
+			*learning_rate,
 			task.data,
 			batch_size,
 			weight_decay,
@@ -88,10 +88,10 @@ namespace nnforge
 
 #ifdef NNFORGE_DEBUG_HESSIAN
 	void network_trainer_sdlm::dump_lists(
-		network_data_smart_ptr hessian,
+		layer_data_list_smart_ptr hessian,
 		const char * filename_prefix) const
 	{
-		for(network_data::const_iterator it = hessian->begin(); it != hessian->end(); it++)
+		for(layer_data_list::const_iterator it = hessian->begin(); it != hessian->end(); it++)
 		{
 			for(layer_data::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++)
 			{
@@ -108,7 +108,7 @@ namespace nnforge
 #endif
 
 	std::string network_trainer_sdlm::convert_hessian_to_training_vector(
-		network_data_smart_ptr hessian,
+		layer_data_list_smart_ptr hessian,
 		unsigned int epoch_id) const
 	{
 #ifdef NNFORGE_DEBUG_HESSIAN
@@ -140,14 +140,14 @@ namespace nnforge
 		return (boost::format("%|1$s|, Hessian (%|2$s|)") % convertion_str % average_hessian_str).str();
 	}
 
-	std::vector<std::vector<float> > network_trainer_sdlm::get_average_hessian_list(network_data_smart_ptr hessian) const
+	std::vector<std::vector<float> > network_trainer_sdlm::get_average_hessian_list(layer_data_list_smart_ptr hessian) const
 	{
 		std::vector<std::vector<float> >res;
 
 		float min_hessian = std::numeric_limits<float>::max();
 		float max_hessian = std::numeric_limits<float>::min();
 
-		for(network_data::iterator it = hessian->begin(); it != hessian->end(); it++)
+		for(layer_data_list::iterator it = hessian->begin(); it != hessian->end(); it++)
 		{
 			if (!(*it)->empty())
 			{
@@ -178,16 +178,14 @@ namespace nnforge
 		return eta / (in + mu);
 	}
 
-
-
 	std::string network_trainer_sdlm::convert_hessian_to_training_vector_per_layer_mu(
-		network_data_smart_ptr hessian,
+		layer_data_list_smart_ptr hessian,
 		const std::vector<std::vector<float> >& average_hessian_list,
 		unsigned int epoch_id) const
 	{
 		std::vector<std::vector<float> >::const_iterator ah_it = average_hessian_list.begin();
 		std::vector<std::vector<float> > avg_lr_lists;
-		for(network_data::iterator it = hessian->begin(); it != hessian->end(); it++)
+		for(layer_data_list::iterator it = hessian->begin(); it != hessian->end(); it++)
 		{
 			if ((*it)->size() > 0)
 			{
@@ -227,7 +225,7 @@ namespace nnforge
 	}
 
 	std::string network_trainer_sdlm::convert_hessian_to_training_vector(
-		network_data_smart_ptr hessian,
+		layer_data_list_smart_ptr hessian,
 		const std::vector<std::vector<float> >& average_hessian_list,
 		unsigned int epoch_id) const
 	{
@@ -250,7 +248,7 @@ namespace nnforge
 		float eta = mu * get_global_learning_rate(static_cast<unsigned int>(epoch_id));
 
 		std::vector<std::vector<float> > avg_lr_lists;
-		for(network_data::iterator it = hessian->begin(); it != hessian->end(); it++)
+		for(layer_data_list::iterator it = hessian->begin(); it != hessian->end(); it++)
 		{
 			if ((*it)->size() > 0)
 			{

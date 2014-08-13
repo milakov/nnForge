@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,11 +54,14 @@ namespace nnforge
 				cudaStream_t stream_id,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
+				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
 				cuda_linear_buffer_device_smart_ptr input_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				unsigned int entry_count) = 0;
 
 			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
+
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data_custom(const_layer_data_custom_smart_ptr host_data) const;
 
 		protected:
 			layer_tester_cuda();

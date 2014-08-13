@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ namespace nnforge
 				cudaStream_t stream_id,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
+				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
@@ -68,6 +69,7 @@ namespace nnforge
 				cudaStream_t stream_id,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_squared,
+				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
 				const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
@@ -78,12 +80,15 @@ namespace nnforge
 				cudaStream_t stream_id,
 				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& hessian_data,
+				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
 				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				unsigned int entry_count);
 
 			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
+
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data_custom(const_layer_data_custom_smart_ptr host_data_custom) const;
 
 			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data_squared(const_layer_data_smart_ptr host_data) const;
 

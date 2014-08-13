@@ -140,6 +140,7 @@ namespace nnforge
 			unsigned int offset_input_entry_id,
 			cudaStream_t stream_id,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
+			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
@@ -185,6 +186,24 @@ namespace nnforge
 			return res;
 		}
 
+		std::vector<cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_data_custom(const_layer_data_custom_smart_ptr host_data_custom) const
+		{
+			std::vector<cuda_linear_buffer_device_smart_ptr> res;
+
+			unsigned int part_id = 0;
+			for(layer_data_custom::const_iterator it = host_data_custom->begin(); it != host_data_custom->end(); ++it, ++part_id)
+			{
+				unsigned int single_size = get_data_custom_elem_count(part_id, it->size());
+				std::vector<int> pack(single_size);
+				fill_data_custom_for_device(part_id, &(*it->begin()), &(*pack.begin()), single_size);
+				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
+					&(*pack.begin()),
+					pack.size() * sizeof(int))));
+			}
+
+			return res;
+		}
+
 		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_learning_rate(const_layer_data_smart_ptr host_learning_rate) const
 		{
 			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
@@ -221,10 +240,24 @@ namespace nnforge
 			return source_elem_count;
 		}
 
+		unsigned int layer_updater_cuda::get_data_custom_elem_count(unsigned int part_id, unsigned int source_elem_count) const
+		{
+			return source_elem_count;
+		}
+
 		void layer_updater_cuda::fill_data_for_device(
 			unsigned int part_id,
 			const float * src,
 			float * dst,
+			unsigned int count) const
+		{
+			std::copy(src, src + count, dst);
+		}
+
+		void layer_updater_cuda::fill_data_custom_for_device(
+			unsigned int part_id,
+			const int * src,
+			int * dst,
 			unsigned int count) const
 		{
 			std::copy(src, src + count, dst);

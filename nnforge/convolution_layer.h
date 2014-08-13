@@ -58,9 +58,12 @@ namespace nnforge
 
 		virtual void randomize_data(
 			layer_data& data,
+			layer_data_custom& data_custom,
 			random_generator& generator) const;
 
 		virtual dropout_layer_config get_dropout_layer_config(float dropout_rate) const;
+
+		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;
 
 		static const boost::uuids::uuid layer_guid;
 

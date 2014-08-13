@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ namespace nnforge
 				plain_running_configuration_const_smart_ptr plain_config,
 				const_layer_smart_ptr layer_schema,
 				const_layer_data_smart_ptr data,
+				const_layer_data_custom_smart_ptr data_custom,
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int updater_count,
@@ -52,6 +53,7 @@ namespace nnforge
 				plain_running_configuration_const_smart_ptr plain_config,
 				const_layer_smart_ptr layer_schema,
 				const_layer_data_smart_ptr data,
+				const_layer_data_custom_smart_ptr data_custom,
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int updater_count) const;
@@ -61,6 +63,7 @@ namespace nnforge
 				const_additional_buffer_smart_ptr output_errors,
 				std::vector<additional_buffer_smart_ptr>& additional_buffers,
 				layer_data_smart_ptr gradient,
+				const_layer_data_custom_smart_ptr data_custom,
 				plain_running_configuration_const_smart_ptr plain_config,
 				const_layer_smart_ptr layer_schema,
 				const layer_configuration_specific& input_configuration_specific,

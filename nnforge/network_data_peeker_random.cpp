@@ -47,7 +47,7 @@ namespace nnforge
 			*schema,
 			gen);
 		init.initialize(
-			*data,
+			data->data_list,
 			*schema,
 			network_type);
 

@@ -177,7 +177,7 @@ namespace nnforge
 
 		testing_result_smart_ptr network_updater_cuda::actual_update(
 			supervised_data_reader& reader,
-			network_data_const_smart_ptr learning_rate,
+			const layer_data_list& learning_rate,
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
@@ -193,8 +193,12 @@ namespace nnforge
 			unsigned int input_neuron_count = input_configuration.get_neuron_count();
 			unsigned int output_neuron_count = output_configuration.get_neuron_count();
 			unsigned int input_neuron_count_per_feature_map = input_configuration.get_neuron_count_per_feature_map();
+			unsigned int output_neuron_count_per_feature_map = output_configuration.get_neuron_count_per_feature_map();
 			neuron_data_type::input_type type_code = reader.get_input_type();
 			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
+
+			if (error_function_fused_with_activation && (output_neuron_count_per_feature_map != 1))
+				throw neural_network_exception("Error function is fused with activation but output_neuron_count_per_feature_map is not equal 1: not implemented");
 
 			unsigned int updater_max_count = std::max(get_updater_max_count(), 1U);
 			unsigned int updater_entry_count;
@@ -217,6 +221,7 @@ namespace nnforge
 			}
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data = get_data(data);
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data_custom = get_data_custom(data);
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > learning_rate_data = get_learning_rate(learning_rate);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > gradient = get_zero_gradient(net_data);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > previous_upd;
@@ -238,6 +243,9 @@ namespace nnforge
 				if (!random_uniform_list.empty())
 					buffers_config.add_constant_buffer(random_uniform_list.size() * sizeof(float)); // random_uniform_list
 				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::const_iterator it = net_data.begin(); it != net_data.end(); ++it)
+					for(std::vector<cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
+						buffers_config.add_constant_buffer((*it2)->get_size());
+				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::const_iterator it = net_data_custom.begin(); it != net_data_custom.end(); ++it)
 					for(std::vector<cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
 						buffers_config.add_constant_buffer((*it2)->get_size());
 				for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::const_iterator it = learning_rate_data.begin(); it != learning_rate_data.end(); ++it)
@@ -414,6 +422,7 @@ namespace nnforge
 								*command_stream,
 								*schema_data_it,
 								std::vector<const_cuda_linear_buffer_device_smart_ptr>(),
+								std::vector<const_cuda_linear_buffer_device_smart_ptr>(),
 								input_and_additional_buffers_pack_it->first,
 								input_and_additional_buffers_pack_it->second,
 								entries_available_for_processing_count);
@@ -448,10 +457,11 @@ namespace nnforge
 						{
 							std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, layer_updater_cuda::buffer_set> >::iterator input_and_all_buffers_pack_it = updater_input_and_all_buffers_pack.begin();
 							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator net_data_it = net_data.begin();
+							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator net_data_custom_it = net_data_custom.begin();
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = updater_schema_data.begin();
 							unsigned int layer_id = testing_layer_count;
 							layer_configuration_specific_list::const_iterator layer_config_it = layer_config_list.begin() + testing_layer_count;
-							for(std::vector<layer_updater_cuda_smart_ptr>::iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++net_data_it, ++layer_id, ++layer_config_it)
+							for(std::vector<layer_updater_cuda_smart_ptr>::iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++net_data_it, ++net_data_custom_it, ++layer_id, ++layer_config_it)
 							{
 								if (it != updater_list.begin())
 								{
@@ -476,6 +486,7 @@ namespace nnforge
 									*command_stream,
 									*schema_data_it,
 									*net_data_it,
+									*net_data_custom_it,
 									input_and_all_buffers_pack_it->first,
 									input_and_all_buffers_pack_it->second.output_neurons_buffer,
 									input_and_all_buffers_pack_it->second.additional_buffers,
@@ -513,16 +524,18 @@ namespace nnforge
 							std::vector<cuda_linear_buffer_device_smart_ptr>::iterator output_errors_it = output_errors_buffers.begin();
 							std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, layer_updater_cuda::buffer_set> >::reverse_iterator input_and_all_buffers_pack_it = updater_input_and_all_buffers_pack.rbegin();
 							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator net_data_it = net_data.rbegin();
+							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator net_data_custom_it = net_data_custom.rbegin();
 							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator gradient_it = gradient.rbegin();
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator schema_data_it = updater_schema_data.rbegin();
 							unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1 - (error_function_fused_with_activation ? 1 : 0);
 							layer_configuration_specific_list::const_reverse_iterator layer_config_it = layer_config_list.rbegin() + 1;
-							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++gradient_it, ++output_errors_it, ++net_data_it, --reverse_layer_id, ++layer_config_it)
+							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++gradient_it, ++output_errors_it, ++net_data_it, ++net_data_custom_it, --reverse_layer_id, ++layer_config_it)
 							{
 								(*it)->enqueue_update_weights(
 									(it == (updater_list.rend() - 1)) ? base_input_entry_id : 0,
 									*command_stream,
 									*gradient_it,
+									*net_data_custom_it,
 									*schema_data_it,
 									*output_errors_it,
 									input_and_all_buffers_pack_it->first,
@@ -536,6 +549,7 @@ namespace nnforge
 										*command_stream,
 										*schema_data_it,
 										*net_data_it,
+										*net_data_custom_it,
 										input_and_all_buffers_pack_it->second.output_neurons_buffer,
 										input_and_all_buffers_pack_it->first,
 										*output_errors_it,
@@ -683,7 +697,20 @@ namespace nnforge
 
 			for(int i = 0; i < updater_list.size(); ++i)
 			{
-				std::vector<cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->get_data(data->at(i + testing_layer_count));
+				std::vector<cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->get_data(data->data_list[i + testing_layer_count]);
+				res.push_back(device_data);
+			}
+
+			return res;
+		}
+
+		std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::get_data_custom(network_data_const_smart_ptr data) const
+		{
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > res;
+
+			for(int i = 0; i < updater_list.size(); ++i)
+			{
+				std::vector<cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->get_data_custom(data->data_custom_list[i + testing_layer_count]);
 				res.push_back(device_data);
 			}
 
@@ -716,13 +743,13 @@ namespace nnforge
 			return res;
 		}
 
-		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::get_learning_rate(network_data_const_smart_ptr learning_rate) const
+		std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::get_learning_rate(const layer_data_list& learning_rate) const
 		{
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > res;
 
 			for(int i = 0; i < updater_list.size(); ++i)
 			{
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->get_learning_rate(learning_rate->at(i + testing_layer_count));
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->get_learning_rate(learning_rate[i + testing_layer_count]);
 				res.push_back(device_data);
 			}
 
@@ -736,7 +763,7 @@ namespace nnforge
 		{
 			unsigned int layer_id = 0;
 			for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator src_it = data_list.begin(); src_it != data_list.end(); ++src_it, ++layer_id)
-				updater_list[layer_id]->get_data_from_device(*src_it, res->at(layer_id + testing_layer_count));
+				updater_list[layer_id]->get_data_from_device(*src_it, res->data_list[layer_id + testing_layer_count]);
 		}
 
 		void network_updater_cuda::update_buffers_configuration(
@@ -799,18 +826,24 @@ namespace nnforge
 			float weight_decay,
 			float momentum)
 		{
+			const const_layer_list& layer_list = *schema;
+
 			if (momentum> 0.0F)
 			{
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator gradient_it = gradient.begin();
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator prev_upd_it = prev_upd.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator learning_rate_it = learning_rate.begin();
-				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++gradient_it, ++prev_upd_it, ++learning_rate_it)
+				const_layer_list::const_iterator layer_it = layer_list.begin() + testing_layer_count;
+				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++gradient_it, ++prev_upd_it, ++learning_rate_it, ++layer_it)
 				{
 					std::vector<cuda_linear_buffer_device_smart_ptr>::iterator gradient_it2 = gradient_it->begin();
 					std::vector<cuda_linear_buffer_device_smart_ptr>::iterator prev_upd_it2 = prev_upd_it->begin();
 					std::vector<const_cuda_linear_buffer_device_smart_ptr>::iterator learning_rate_it2 = learning_rate_it->begin();
-					for(std::vector<cuda_linear_buffer_device_smart_ptr>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++prev_upd_it2, ++learning_rate_it2)
+					std::set<unsigned int> weight_decay_part_id_set = (*layer_it)->get_weight_decay_part_id_set();
+					unsigned int part_id = 0;
+					for(std::vector<cuda_linear_buffer_device_smart_ptr>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++prev_upd_it2, ++learning_rate_it2, ++part_id)
 					{
+						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
 						int elem_count = (*data_it2)->get_size() / sizeof(float);
 						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
@@ -821,7 +854,7 @@ namespace nnforge
 							**prev_upd_it2,
 							**learning_rate_it2,
 							gradient_normalizer,
-							weight_decay,
+							actual_weight_decay,
 							momentum,
 							elem_count);
 					}
@@ -831,12 +864,16 @@ namespace nnforge
 			{
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator gradient_it = gradient.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator learning_rate_it = learning_rate.begin();
-				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++gradient_it, ++learning_rate_it)
+				const_layer_list::const_iterator layer_it = layer_list.begin() + testing_layer_count;
+				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++gradient_it, ++learning_rate_it, ++layer_it)
 				{
 					std::vector<cuda_linear_buffer_device_smart_ptr>::iterator gradient_it2 = gradient_it->begin();
 					std::vector<const_cuda_linear_buffer_device_smart_ptr>::iterator learning_rate_it2 = learning_rate_it->begin();
-					for(std::vector<cuda_linear_buffer_device_smart_ptr>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++learning_rate_it2)
+					std::set<unsigned int> weight_decay_part_id_set = (*layer_it)->get_weight_decay_part_id_set();
+					unsigned int part_id = 0;
+					for(std::vector<cuda_linear_buffer_device_smart_ptr>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++learning_rate_it2, ++part_id)
 					{
+						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
 						int elem_count = (*data_it2)->get_size() / sizeof(float);
 						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
@@ -846,7 +883,7 @@ namespace nnforge
 							**gradient_it2,
 							**learning_rate_it2,
 							gradient_normalizer,
-							weight_decay,
+							actual_weight_decay,
 							elem_count);
 					}
 				}

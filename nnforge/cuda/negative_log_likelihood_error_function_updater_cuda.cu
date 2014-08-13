@@ -112,86 +112,135 @@ namespace nnforge
 			int thread_id = threadIdx.x;
 			int lane_id = thread_id & 31;
 
-			float predicted_sum = 0.0F;
-			for(int neuron_id = start_neuron_id; neuron_id < neuron_count; neuron_id += threadblock_size)
-				predicted_sum += __expf(predicted_output_neurons[updater_entry_id * neuron_count + neuron_id]);
-
 		#if __CUDA_ARCH__ < 300
 			volatile float * arr2 = arr_sh;
-			arr2[thread_id] = predicted_sum;
 		#endif
-			#pragma unroll
-			for(int tx = 16; tx > 0; tx >>= 1)
+
+			// calculate max value
+			float max_value;
 			{
+				max_value = -1.0e+37F;
+				for(int neuron_id = start_neuron_id; neuron_id < neuron_count; neuron_id += threadblock_size)
+					max_value = max(max_value, predicted_output_neurons[updater_entry_id * neuron_count + neuron_id]);
 			#if __CUDA_ARCH__ < 300
-				if (lane_id < tx)
-					arr2[thread_id] += arr2[thread_id + tx];
-			#else
-				predicted_sum += __shfl_down(predicted_sum, tx);
+				arr2[thread_id] = max_value;
 			#endif
-			}
-		#if __CUDA_ARCH__ < 300
-			predicted_sum = arr2[thread_id];
-			__syncthreads();
-		#endif
-
-			if (lane_id == 0)
-				arr_sh[thread_id >> 5] = predicted_sum;
-			__syncthreads();
-
-			if (thread_id == 0)
-			{
-				for(int i = 1; i < (blockDim.x >> 5); ++i)
-					predicted_sum += arr_sh[i];
-				arr_sh[0] = __fdividef(1.0F, predicted_sum);
-			}
-			__syncthreads();
-
-			float mult = arr_sh[0];
-
-			float err = 0.0F;
-			for(int neuron_id = start_neuron_id; neuron_id < neuron_count; neuron_id += threadblock_size)
-			{
-				float actual_val = actual_output_neurons[(offset_entry_id + updater_entry_id) * neuron_count + neuron_id];
-				float predicted_val = __expf(predicted_output_neurons[updater_entry_id * neuron_count + neuron_id]) * mult;
-				gradients[updater_entry_id * neuron_count + neuron_id] = actual_val - predicted_val;
-				if (actual_val > 0.0F) 
-					err -= actual_val * __logf(max(predicted_val, 1.0e-20F));
-			}
-
-		#if __CUDA_ARCH__ < 300
-			volatile float * arr = arr_sh;
-			arr[thread_id] = err;
-		#endif
-			#pragma unroll
-			for(int tx = 16; tx > 0; tx >>= 1)
-			{
+				#pragma unroll
+				for(int tx = 16; tx > 0; tx >>= 1)
+				{
+				#if __CUDA_ARCH__ < 300
+					if (lane_id < tx)
+						arr2[thread_id] = max(arr2[thread_id], arr2[thread_id + tx]);
+				#else
+					max_value = max(max_value, __shfl_down(max_value, tx));
+				#endif
+				}
 			#if __CUDA_ARCH__ < 300
-				if (lane_id < tx)
-					arr[thread_id] += arr[thread_id + tx];
-			#else
-				err += __shfl_down(err, tx);
-			#endif
-			}
-		#if __CUDA_ARCH__ < 300
-			err = arr[thread_id];
-			__syncthreads();
-		#endif
-
-			if (threadblock_size > 32)
-			{
-				if (lane_id == 0)
-					arr_sh[thread_id >> 5] = err;
+				max_value = arr2[thread_id];
 				__syncthreads();
+			#endif
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = max_value;
+				__syncthreads();
+
+				if (thread_id == 0)
+				{
+					for(int i = 1; i < (blockDim.x >> 5); ++i)
+						max_value = max(max_value, arr_sh[i]);
+					arr_sh[0] = max_value;
+				}
+				__syncthreads();
+
+				max_value = arr_sh[0];
 			}
 
-			if (thread_id == 0)
+			// calculate multiplier
+			float mult;
 			{
-				for(int i = 1; i < (blockDim.x >> 5); ++i)
-					err += arr_sh[i];
-				double err_d = (double)err;
+				float predicted_sum = 0.0F;
+				for(int neuron_id = start_neuron_id; neuron_id < neuron_count; neuron_id += threadblock_size)
+					predicted_sum += __expf(predicted_output_neurons[updater_entry_id * neuron_count + neuron_id] - max_value);
 
-				atomicAdd(total_error, err_d);
+			#if __CUDA_ARCH__ < 300
+				arr2[thread_id] = predicted_sum;
+			#endif
+				#pragma unroll
+				for(int tx = 16; tx > 0; tx >>= 1)
+				{
+				#if __CUDA_ARCH__ < 300
+					if (lane_id < tx)
+						arr2[thread_id] += arr2[thread_id + tx];
+				#else
+					predicted_sum += __shfl_down(predicted_sum, tx);
+				#endif
+				}
+			#if __CUDA_ARCH__ < 300
+				predicted_sum = arr2[thread_id];
+				__syncthreads();
+			#endif
+
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = predicted_sum;
+				__syncthreads();
+
+				if (thread_id == 0)
+				{
+					for(int i = 1; i < (blockDim.x >> 5); ++i)
+						predicted_sum += arr_sh[i];
+					arr_sh[0] = __fdividef(1.0F, predicted_sum);
+				}
+				__syncthreads();
+
+				mult = arr_sh[0];
+			}
+
+			// calculate error and gradient
+			{
+				float err = 0.0F;
+
+				for(int neuron_id = start_neuron_id; neuron_id < neuron_count; neuron_id += threadblock_size)
+				{
+					float actual_val = actual_output_neurons[(offset_entry_id + updater_entry_id) * neuron_count + neuron_id];
+					float predicted_val = __expf(predicted_output_neurons[updater_entry_id * neuron_count + neuron_id] - max_value) * mult;
+					gradients[updater_entry_id * neuron_count + neuron_id] = actual_val - predicted_val;
+					if (actual_val > 0.0F) 
+						err -= actual_val * __logf(max(predicted_val, 1.0e-20F));
+				}
+
+			#if __CUDA_ARCH__ < 300
+				volatile float * arr = arr_sh;
+				arr[thread_id] = err;
+			#endif
+				#pragma unroll
+				for(int tx = 16; tx > 0; tx >>= 1)
+				{
+				#if __CUDA_ARCH__ < 300
+					if (lane_id < tx)
+						arr[thread_id] += arr[thread_id + tx];
+				#else
+					err += __shfl_down(err, tx);
+				#endif
+				}
+			#if __CUDA_ARCH__ < 300
+				err = arr[thread_id];
+				__syncthreads();
+			#endif
+
+				if (threadblock_size > 32)
+				{
+					if (lane_id == 0)
+						arr_sh[thread_id >> 5] = err;
+					__syncthreads();
+				}
+
+				if (thread_id == 0)
+				{
+					for(int i = 1; i < (blockDim.x >> 5); ++i)
+						err += arr_sh[i];
+					double err_d = (double)err;
+
+					atomicAdd(total_error, err_d);
+				}
 			}
 		}
 

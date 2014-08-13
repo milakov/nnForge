@@ -90,14 +90,17 @@ namespace nnforge
 		void network_tester_cuda::update_data()
 		{
 			net_data.clear();
+			net_data_custom.clear();
 
 			if (tester_list.empty() || (host_net_data == 0))
 				return;
 
-			for(int i = 0; i < std::min(host_net_data->size(), tester_list.size()); ++i)
+			for(int i = 0; i < std::min(host_net_data->data_list.size(), tester_list.size()); ++i)
 			{
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = tester_list[i]->get_data(host_net_data->at(i));
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = tester_list[i]->get_data(host_net_data->data_list[i]);
 				net_data.push_back(device_data);
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data_custom = tester_list[i]->get_data_custom(host_net_data->data_custom_list[i]);
+				net_data_custom.push_back(device_data_custom);
 			}
 		}
 
@@ -122,6 +125,9 @@ namespace nnforge
 		void network_tester_cuda::update_buffers_configuration_testing(buffer_cuda_size_configuration& buffer_configuration) const
 		{
 			for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::const_iterator it = net_data.begin(); it != net_data.end(); ++it)
+				for(std::vector<const_cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
+					buffer_configuration.add_constant_buffer((*it2)->get_size());
+			for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::const_iterator it = net_data_custom.begin(); it != net_data_custom.end(); ++it)
 				for(std::vector<const_cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
 					buffer_configuration.add_constant_buffer((*it2)->get_size());
 
@@ -242,13 +248,15 @@ namespace nnforge
 					{
 						std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> > >::iterator input_and_additional_buffers_pack_it = input_and_additional_buffers_pack.begin();
 						std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_it = net_data.begin();
+						std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_custom_it = net_data_custom.begin();
 						std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = schema_data.begin();
-						for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++input_and_additional_buffers_pack_it, ++net_data_it, ++schema_data_it)
+						for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++input_and_additional_buffers_pack_it, ++net_data_it, ++net_data_custom_it, ++schema_data_it)
 						{
 							(*it)->enqueue_test(
 								*command_stream,
 								*schema_data_it,
 								*net_data_it,
+								*net_data_custom_it,
 								input_and_additional_buffers_pack_it->first,
 								input_and_additional_buffers_pack_it->second,
 								entries_available_for_processing_count);
@@ -381,18 +389,20 @@ namespace nnforge
 			{
 				std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> > >::iterator input_and_additional_buffers_pack_it = input_and_additional_buffers_pack.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_it = net_data.begin();
+				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_custom_it = net_data_custom.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = schema_data.begin();
 				int layer_id = 0;
 				int output_buffer_id = 1;
 				for(
 					std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin();
 					it != tester_list.end();
-					++it, ++input_and_additional_buffers_pack_it, ++net_data_it, ++schema_data_it, ++layer_id, ++output_buffer_id)
+					++it, ++input_and_additional_buffers_pack_it, ++net_data_it, ++net_data_custom_it, ++schema_data_it, ++layer_id, ++output_buffer_id)
 				{
 					(*it)->enqueue_test(
 						*command_stream,
 						*schema_data_it,
 						*net_data_it,
+						*net_data_custom_it,
 						input_and_additional_buffers_pack_it->first,
 						input_and_additional_buffers_pack_it->second,
 						1);
@@ -469,13 +479,15 @@ namespace nnforge
 			{
 				std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> > >::iterator input_and_additional_buffers_pack_it = input_and_additional_buffers_pack.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_it = net_data.begin();
+				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_custom_it = net_data_custom.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = schema_data.begin();
-				for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++input_and_additional_buffers_pack_it, ++net_data_it, ++schema_data_it)
+				for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++input_and_additional_buffers_pack_it, ++net_data_it, ++net_data_custom_it, ++schema_data_it)
 				{
 					(*it)->enqueue_test(
 						*command_stream,
 						*schema_data_it,
 						*net_data_it,
+						*net_data_custom_it,
 						input_and_additional_buffers_pack_it->first,
 						input_and_additional_buffers_pack_it->second,
 						1);

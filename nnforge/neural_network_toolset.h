@@ -177,6 +177,7 @@ namespace nnforge
 		unsigned int snapshot_video_fps;
 		int test_validate_ann_index;
 		unsigned int snapshot_ann_index;
+		std::string snapshot_ann_type;
 		std::string snapshot_data_set;
 		unsigned int profile_updater_entry_count;
 		unsigned int profile_hessian_entry_count;
@@ -219,10 +220,14 @@ namespace nnforge
 
 		void ann_snapshot();
 
-		void save_ann_snapshot(
-			const std::string& name,
+		void save_ann_snapshot_image(
+			const std::string& filename,
 			const network_data& data,
 			const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list);
+
+		void save_ann_snapshot_raw(
+			const std::string& filename_prefix,
+			const network_data& data);
 
 		network_data_smart_ptr load_ann_data(unsigned int ann_id);
 

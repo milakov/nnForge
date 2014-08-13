@@ -76,7 +76,7 @@ namespace nnforge
 
 	testing_result_smart_ptr network_updater::update(
 		supervised_data_reader& reader,
-		network_data_const_smart_ptr learning_rate,
+		const layer_data_list& learning_rate,
 		network_data_smart_ptr data,
 		unsigned int batch_size,
 		float weight_decay,
@@ -84,7 +84,7 @@ namespace nnforge
 	{
 		// Check data-schema consistency
 		data->check_network_data_consistency(*schema);
-		learning_rate->check_network_data_consistency(*schema);
+		learning_rate.check_consistency(*schema);
 
 		set_input_configuration_specific(reader.get_input_configuration());
 

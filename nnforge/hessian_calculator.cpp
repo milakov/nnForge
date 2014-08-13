@@ -42,7 +42,7 @@ namespace nnforge
 		layer_config_list_modified();
 	}
 
-	network_data_smart_ptr hessian_calculator::get_hessian(
+	layer_data_list_smart_ptr hessian_calculator::get_hessian(
 		unsupervised_data_reader& reader,
 		network_data_smart_ptr data,
 		unsigned int hessian_entry_to_process_count)

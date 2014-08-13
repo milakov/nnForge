@@ -54,6 +54,7 @@
 #include "network_trainer_sgd.h"
 #include "save_resume_network_data_pusher.h"
 #include "network_data_peeker_load_resume.h"
+#include "debug_util.h"
 
 namespace nnforge
 {
@@ -196,6 +197,7 @@ namespace nnforge
 			("snapshot_scale", boost::program_options::value<unsigned int>(&snapshot_scale)->default_value(1), "Scale snapshots by this value.")
 			("snapshot_video_fps", boost::program_options::value<unsigned int>(&snapshot_video_fps)->default_value(5), "Frames per second when saving video snapshot.")
 			("snapshot_ann_index", boost::program_options::value<unsigned int>(&snapshot_ann_index)->default_value(0), "Index of ANN for snapshots.")
+			("snapshot_ann_type", boost::program_options::value<std::string>(&snapshot_ann_type)->default_value("image"), "Type of the output for ann data (image, raw).")
 			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.0F), "Mu increases by this ratio each epoch.")
 			("max_mu", boost::program_options::value<float>(&max_mu)->default_value(1.0F), "Maximum Mu during training.")
 			("per_layer_mu", boost::program_options::value<bool>(&per_layer_mu)->default_value(false), "Mu is calculated for each layer separately.")
@@ -360,6 +362,7 @@ namespace nnforge
 			std::cout << "snapshot_scale" << "=" << snapshot_scale << std::endl;
 			std::cout << "snapshot_video_fps" << "=" << snapshot_video_fps << std::endl;
 			std::cout << "snapshot_ann_index" << "=" << snapshot_ann_index << std::endl;
+			std::cout << "snapshot_ann_type" << "=" << snapshot_ann_type << std::endl;
 			std::cout << "mu_increase_factor" << "=" << mu_increase_factor << std::endl;
 			std::cout << "max_mu" << "=" << max_mu << std::endl;
 			std::cout << "per_layer_mu" << "=" << per_layer_mu << std::endl;
@@ -1136,25 +1139,69 @@ namespace nnforge
 			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
 			schema->read(in);
 		}
-		std::vector<layer_data_configuration_list> layer_data_configuration_list_list = schema->get_layer_data_configuration_list_list();
-
 		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
 
-		std::string ann_snapshot_filename = "trained";
-		save_ann_snapshot(ann_snapshot_filename, *data, layer_data_configuration_list_list);
+		if (snapshot_ann_type == "image")
+		{
+			std::string ann_snapshot_filename = "ann_snapshot_trained." + snapshot_extension;
+			std::vector<layer_data_configuration_list> layer_data_configuration_list_list = schema->get_layer_data_configuration_list_list();
+			save_ann_snapshot_image(ann_snapshot_filename, *data, layer_data_configuration_list_list);
+		}
+		else if (snapshot_ann_type == "raw")
+		{
+			save_ann_snapshot_raw("ann_snapshot_trained", *data);
+		}
+		else
+			throw std::runtime_error((boost::format("Invalid snapshot_ann_type: %1%") % snapshot_ann_type).str());
 	}
 
-	void neural_network_toolset::save_ann_snapshot(
-		const std::string& name,
+	void neural_network_toolset::save_ann_snapshot_raw(
+		const std::string& filename_prefix,
+		const network_data& data)
+	{
+		boost::filesystem::path ann_snapshot_folder = get_working_data_folder() / ann_snapshot_subfolder_name;
+		boost::filesystem::create_directories(ann_snapshot_folder);
+
+		for(int layer_id = 0; layer_id < data.data_list.size(); ++layer_id)
+		{
+			for(int part_id = 0; part_id < data.data_list[layer_id]->size(); ++part_id)
+			{
+				std::string filename = (boost::format("%1%_%|2$02d|_%|3$02d|.txt") % filename_prefix % layer_id % part_id).str();
+				boost::filesystem::path ann_snapshot_file_path = ann_snapshot_folder / filename;
+				
+				debug_util::dump_list(
+					&(*data.data_list[layer_id]->at(part_id).begin()),
+					data.data_list[layer_id]->at(part_id).size(),
+					ann_snapshot_file_path.string().c_str());
+			}
+		}
+
+		for(int layer_id = 0; layer_id < data.data_custom_list.size(); ++layer_id)
+		{
+			for(int part_id = 0; part_id < data.data_custom_list[layer_id]->size(); ++part_id)
+			{
+				std::string filename = (boost::format("%1%_%|2$02d|_custom_%|3$02d|.txt") % filename_prefix % layer_id % part_id).str();
+				boost::filesystem::path ann_snapshot_file_path = ann_snapshot_folder / filename;
+				
+				debug_util::dump_list(
+					&(*data.data_custom_list[layer_id]->at(part_id).begin()),
+					data.data_custom_list[layer_id]->at(part_id).size(),
+					ann_snapshot_file_path.string().c_str());
+			}
+		}
+	}
+
+	void neural_network_toolset::save_ann_snapshot_image(
+		const std::string& filename,
 		const network_data& data,
 		const std::vector<layer_data_configuration_list>& layer_data_configuration_list_list)
 	{
 		boost::filesystem::path ann_snapshot_folder = get_working_data_folder() / ann_snapshot_subfolder_name;
 		boost::filesystem::create_directories(ann_snapshot_folder);
 
-		boost::filesystem::path ann_snapshot_file_path = ann_snapshot_folder / (std::string("ann_snapshot_") + name + "." + snapshot_extension);
+		boost::filesystem::path ann_snapshot_file_path = ann_snapshot_folder / filename;
 
-		snapshot_visualizer::save_ann_snapshot(data, layer_data_configuration_list_list, ann_snapshot_file_path.string().c_str());
+		snapshot_visualizer::save_ann_snapshot(data.data_list, layer_data_configuration_list_list, ann_snapshot_file_path.string().c_str());
 	}
 
 	void neural_network_toolset::snapshot_invalid()
@@ -1457,12 +1504,12 @@ namespace nnforge
 			random_generator data_gen = rnd::get_random_generator(47597);
 			data->randomize(*schema, data_gen);
 			network_data_initializer().initialize(
-				*data,
+				data->data_list,
 				*schema,
 				get_network_output_type());
 		}
 
-		network_data_smart_ptr learning_rates(new network_data(*schema));
+		layer_data_list_smart_ptr learning_rates(new layer_data_list(*schema));
 		{
 			random_generator data_gen = rnd::get_random_generator(674578);
 			learning_rates->random_fill(learning_rate * 0.5F, learning_rate * 1.5F, data_gen);
@@ -1478,7 +1525,7 @@ namespace nnforge
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		updater->update(
 			*training_data_reader,
-			learning_rates,
+			*learning_rates,
 			data,
 			batch_size,
 			weight_decay,
@@ -1511,7 +1558,7 @@ namespace nnforge
 			std::cout << (boost::format("%|1$.1f| GFLOPs, %|2$.2f| seconds") % gflops % time_to_complete_seconds) << std::endl;
 		}
 
-		std::cout << data->get_stat() << std::endl;
+		std::cout << data->data_list.get_stat() << std::endl;
 	}
 
 	void neural_network_toolset::profile_hessian()
@@ -1533,7 +1580,7 @@ namespace nnforge
 				*schema,
 				gen);
 			network_data_initializer().initialize(
-				*data,
+				data->data_list,
 				*schema,
 				get_network_output_type());
 		}
@@ -1543,7 +1590,7 @@ namespace nnforge
 			hessian_entry_count = profile_hessian_entry_count;
 		unsigned int hessian_entry_to_process_count = std::min<unsigned int>(hessian_entry_count, training_data_reader->get_entry_count());
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
-		network_data_smart_ptr hessian_data = hessian->get_hessian(
+		layer_data_list_smart_ptr hessian_data = hessian->get_hessian(
 			*training_data_reader,
 			data,
 			hessian_entry_to_process_count);
@@ -1581,12 +1628,12 @@ namespace nnforge
 			random_generator data_gen = rnd::get_random_generator(47597);
 			data->randomize(*schema, data_gen);
 			network_data_initializer().initialize(
-				*data,
+				data->data_list,
 				*schema,
 				get_network_output_type());
 		}
 
-		network_data_smart_ptr learning_rates(new network_data(*schema));
+		layer_data_list_smart_ptr learning_rates(new layer_data_list(*schema));
 		learning_rates->fill(0.0F);
 
 		std::vector<std::string> check_gradient_weight_params;
@@ -1611,7 +1658,7 @@ namespace nnforge
 		unsigned int total_weight_count = 0;
 		for(int layer_id = ((param_layer_id == -1) ? 0 : param_layer_id); layer_id < ((param_layer_id == -1) ? layer_list.size() : param_layer_id + 1); ++layer_id)
 		{
-			layer_data_smart_ptr layer_data = data->at(layer_id);
+			layer_data_smart_ptr layer_data = data->data_list[layer_id];
 			int min_weight_set = (param_weight_set == -1) ? 0 : param_weight_set;
 			int max_weight_set = (param_weight_set == -1) ? layer_data->size() : std::min<int>(layer_data->size(), param_weight_set + 1);
 			for(int weight_set = min_weight_set; weight_set < max_weight_set; ++weight_set)
@@ -1641,17 +1688,17 @@ namespace nnforge
 					std::cout << layer_id << ":" << weight_set << ":" << weight_id << " ";
 
 					learning_rates->at(layer_id)->at(weight_set).at(weight_id) = 1.0e+6F;
-					float original_weight = data->at(layer_id)->at(weight_set).at(weight_id);
+					float original_weight = data->data_list[layer_id]->at(weight_set).at(weight_id);
 
 					testing_result_smart_ptr res = updater->update(
 						*training_data_reader,
-						learning_rates,
+						*learning_rates,
 						data,
 						1,
 						0.0F,
 						0.0F);
 					double original_error = res->get_error();
-					float gradient_backprop = -(data->at(layer_id)->at(weight_set).at(weight_id) - original_weight) / 1.0e+6F;
+					float gradient_backprop = -(data->data_list[layer_id]->at(weight_set).at(weight_id) - original_weight) / 1.0e+6F;
 
 					float best_gradient_rate = std::numeric_limits<float>::max();
 					float best_check_gradient_step = 0.0F;
@@ -1664,10 +1711,10 @@ namespace nnforge
 							if (sign == 1)
 								check_gradient_step = -check_gradient_step;
 
-							data->at(layer_id)->at(weight_set).at(weight_id) = original_weight + check_gradient_step;
+							data->data_list[layer_id]->at(weight_set).at(weight_id) = original_weight + check_gradient_step;
 							res = updater->update(
 								*training_data_reader,
-								learning_rates,
+								*learning_rates,
 								data,
 								1,
 								0.0F,
@@ -1694,7 +1741,7 @@ namespace nnforge
 					std::cout << "rate=" << best_gradient_rate << ", gradient_backprop=" << gradient_backprop << ", gradient_check=" << best_gradient_check << ", step = " << best_check_gradient_step;
 					++total_weight_count;
 
-					data->at(layer_id)->at(weight_set).at(weight_id) = original_weight;
+					data->data_list[layer_id]->at(weight_set).at(weight_id) = original_weight;
 					learning_rates->at(layer_id)->at(weight_set).at(weight_id) = 0.0F;
 
 					std::cout << std::endl;

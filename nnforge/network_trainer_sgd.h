@@ -41,7 +41,7 @@ namespace nnforge
 
 		virtual void initialize_train(supervised_data_reader& reader);
 
-		std::pair<network_data_smart_ptr, std::string> prepare_learning_rates(unsigned int epoch);
+		std::pair<layer_data_list_smart_ptr, std::string> prepare_learning_rates(unsigned int epoch);
 
 	private:
 		network_updater_smart_ptr updater;

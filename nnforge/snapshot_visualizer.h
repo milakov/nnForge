@@ -18,6 +18,7 @@
 
 #include "layer_configuration_specific_snapshot.h"
 #include "layer_data.h"
+#include "layer_data_list.h"
 #include "layer_data_configuration.h"
 
 #include <vector>

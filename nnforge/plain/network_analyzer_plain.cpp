@@ -116,8 +116,9 @@ namespace nnforge
 			const_layer_list::const_iterator layer_it = layer_list.begin();
 			layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
 			std::vector<std::pair<additional_buffer_smart_ptr, updater_additional_buffer_set> >::iterator updater_buffers_it = input_buffer_and_additional_updater_buffers_pack.begin();
-			layer_data_list::const_iterator data_it = data->begin();
-			for(std::vector<const_layer_updater_plain_smart_ptr>::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it)
+			layer_data_list::const_iterator data_it = data->data_list.begin();
+			layer_data_custom_list::const_iterator data_custom_it = data->data_custom_list.begin();
+			for(std::vector<const_layer_updater_plain_smart_ptr>::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++data_custom_it)
 			{
 				(*it)->test(
 					updater_buffers_it->first,
@@ -126,6 +127,7 @@ namespace nnforge
 					plain_config,
 					*layer_it,
 					*data_it,
+					*data_custom_it,
 					*input_config_it,
 					*(input_config_it + 1),
 					1,
@@ -207,8 +209,9 @@ namespace nnforge
 				const_layer_list::const_reverse_iterator layer_it = layer_list.rbegin() + (layer_list.size() - output_layer_id - 1);
 				std::vector<std::pair<additional_buffer_smart_ptr, updater_additional_buffer_set> >::reverse_iterator updater_buffers_it = input_buffer_and_additional_updater_buffers_pack.rbegin() + (input_buffer_and_additional_updater_buffers_pack.size() - output_layer_id - 1);
 				layer_configuration_specific_list::const_reverse_iterator input_config_it = layer_config_list.rbegin() + (layer_config_list.size() - output_layer_id - 2);
-				layer_data_list::reverse_iterator data_it = data->rbegin() + (data->size() - output_layer_id - 1);
-				for(std::vector<const_layer_updater_plain_smart_ptr>::const_reverse_iterator it = updater_list.rbegin() + (updater_list.size() - output_layer_id - 1); it != updater_list.rend(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++output_errors_it)
+				layer_data_list::reverse_iterator data_it = data->data_list.rbegin() + (data->data_list.size() - output_layer_id - 1);
+				layer_data_custom_list::reverse_iterator data_custom_it = data->data_custom_list.rbegin() + (data->data_custom_list.size() - output_layer_id - 1);
+				for(std::vector<const_layer_updater_plain_smart_ptr>::const_reverse_iterator it = updater_list.rbegin() + (updater_list.size() - output_layer_id - 1); it != updater_list.rend(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++data_custom_it, ++output_errors_it)
 				{
 					(*it)->backprop(
 						updater_buffers_it->second.input_errors_buffer,
@@ -219,6 +222,7 @@ namespace nnforge
 						plain_config,
 						*layer_it,
 						*data_it,
+						*data_custom_it,
 						*(input_config_it + 1),
 						*input_config_it,
 						1);

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "layer_data_list.h"
 #include "layer_data.h"
 #include "layer.h"
 #include "network_output_type.h"

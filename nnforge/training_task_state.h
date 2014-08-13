@@ -36,7 +36,7 @@ namespace nnforge
 
 		unsigned int get_current_epoch() const
 		{
-			return history.size() + initial_epoch;
+			return static_cast<unsigned int>(history.size() + initial_epoch);
 		}
 	};
 }

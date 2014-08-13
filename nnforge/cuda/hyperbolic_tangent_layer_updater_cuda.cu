@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -102,6 +102,7 @@ namespace nnforge
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
@@ -127,6 +128,7 @@ namespace nnforge
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
+			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
 			const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
