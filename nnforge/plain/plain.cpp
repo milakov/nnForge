@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "max_subsampling_layer_tester_plain.h"
 #include "local_contrast_subtractive_layer_tester_plain.h"
 #include "convolution_layer_tester_plain.h"
+#include "sparse_convolution_layer_tester_plain.h"
 #include "rectified_linear_layer_tester_plain.h"
 #include "soft_rectified_linear_layer_tester_plain.h"
 #include "softmax_layer_tester_plain.h"
@@ -72,6 +73,7 @@ namespace nnforge
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new max_subsampling_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new local_contrast_subtractive_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new convolution_layer_tester_plain()));
+			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new sparse_convolution_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new rectified_linear_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new soft_rectified_linear_layer_tester_plain()));
 			single_layer_tester_plain_factory::get_mutable_instance().register_layer_tester_plain(layer_tester_plain_smart_ptr(new softmax_layer_tester_plain()));
