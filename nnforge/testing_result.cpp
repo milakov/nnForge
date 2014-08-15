@@ -51,7 +51,7 @@ namespace nnforge
 		double cumulative_error,
 		unsigned int entry_count)
 	{
-		cumulative_error += cumulative_error;
+		this->cumulative_error += cumulative_error;
 		this->entry_count += entry_count;
 	}
 
