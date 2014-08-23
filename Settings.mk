@@ -20,7 +20,7 @@ NETCDF_LIBS=-lnetcdf
 MATIO_LIBS=-lmatio
 
 CPP_FLAGS_CPP11=-std=c++11
-CPP_HW_ARCHITECTURE=-march=native
+CPP_HW_ARCHITECTURE=-march=native # set this to -march=corei7 if you see AVX related errors when CPP11COMPILER=yes
 CPP_FLAGS_COMMON=-ffast-math $(CPP_HW_ARCHITECTURE) -mfpmath=sse -msse2 # -mavx
 CPP_FLAGS_DEBUG_MODE=-g
 CPP_FLAGS_RELEASE_MODE=-O3
