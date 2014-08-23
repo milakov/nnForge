@@ -101,7 +101,7 @@ namespace nnforge
 
 			std::vector<cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
 
-			std::vector<cuda_linear_buffer_device_smart_ptr> get_data_custom(const_layer_data_custom_smart_ptr host_data_custom) const;
+			std::vector<cuda_linear_buffer_device_smart_ptr> set_get_data_custom(const_layer_data_custom_smart_ptr host_data_custom);
 
 			std::vector<const_cuda_linear_buffer_device_smart_ptr> get_learning_rate(const_layer_data_smart_ptr host_learning_rate) const;
 
@@ -148,6 +148,8 @@ namespace nnforge
 				const float * src,
 				float * dst,
 				unsigned int count) const;
+
+			virtual void notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom);
 
 			const_layer_smart_ptr layer_schema;
 			cuda_running_configuration_const_smart_ptr cuda_config;

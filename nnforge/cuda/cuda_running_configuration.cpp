@@ -25,7 +25,7 @@
 
 #include "neural_network_cuda_exception.h"
 #include "neural_network_cublas_exception.h"
-
+#include "neural_network_cusparse_exception.h"
 
 namespace nnforge
 {
@@ -37,6 +37,7 @@ namespace nnforge
 			: device_id(device_id)
 			, max_global_memory_usage_ratio(max_global_memory_usage_ratio)
 			, cublas_handle(0)
+			, cusparse_handle(0)
 		{
 			update_parameters();
 		}
@@ -45,6 +46,8 @@ namespace nnforge
 		{
 			if (cublas_handle)
 				cublasDestroy(cublas_handle);
+			if (cusparse_handle)
+				cusparseDestroy(cusparse_handle);
 			cudaDeviceReset();
 		}
 
@@ -91,6 +94,8 @@ namespace nnforge
 			cuda_safe_call(cudaSetDevice(device_id));
 
 			cublas_safe_call(cublasCreate(&cublas_handle));
+
+			cusparse_safe_call(cusparseCreate(&cusparse_handle));
 		}
 
 		bool cuda_running_configuration::is_flush_required() const
@@ -175,6 +180,11 @@ namespace nnforge
 		cublasHandle_t cuda_running_configuration::get_cublas_handle() const
 		{
 			return cublas_handle;
+		}
+
+		cusparseHandle_t cuda_running_configuration::get_cusparse_handle() const
+		{
+			return cusparse_handle;
 		}
 	}
 }

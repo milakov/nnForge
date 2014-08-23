@@ -186,8 +186,10 @@ namespace nnforge
 			return res;
 		}
 
-		std::vector<cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::get_data_custom(const_layer_data_custom_smart_ptr host_data_custom) const
+		std::vector<cuda_linear_buffer_device_smart_ptr> layer_updater_cuda::set_get_data_custom(const_layer_data_custom_smart_ptr host_data_custom)
 		{
+			notify_data_custom(host_data_custom);
+
 			std::vector<cuda_linear_buffer_device_smart_ptr> res;
 
 			unsigned int part_id = 0;
@@ -270,6 +272,10 @@ namespace nnforge
 			unsigned int count) const
 		{
 			std::copy(src, src + count, dst);
+		}
+
+		void layer_updater_cuda::notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom)
+		{
 		}
 	}
 }

@@ -256,6 +256,22 @@ namespace nnforge
 			}
 		}
 
+		__global__ void transpose23_kernel(
+			const float * __restrict src,
+			float * __restrict dst,
+			int src_dim1,
+			int src_dim2,
+			int src_dim3)
+		{
+			int elem_id1 = blockDim.x * blockIdx.x + threadIdx.x;
+			int elem_id2 = blockDim.y * blockIdx.y + threadIdx.y;
+			int elem_id3 = blockDim.z * blockIdx.z + threadIdx.z;
+			if ((elem_id1 < src_dim1) && (elem_id2 < src_dim2) && (elem_id3 < src_dim3))
+			{
+				dst[(elem_id2 * src_dim3 + elem_id3) * src_dim1 + elem_id1] = src[(elem_id3 * src_dim2 + elem_id2) * src_dim1 + elem_id1];
+			}
+		}
+
 		const unsigned int cuda_util::preferred_width_2d_access = 16;
 		const unsigned int cuda_util::preferred_height_2d_access = 16;
 		const unsigned int cuda_util::preferred_threadblocksize_sequential_access = 256;
@@ -579,6 +595,28 @@ namespace nnforge
 				src_slow_dim,
 				src_fast_dim * src_slow_dim,
 				entry_count);
+		}
+
+		void cuda_util::transpose23(
+			const cuda_running_configuration& cuda_config,
+			const float * src,
+			float * dst,
+			int src_dim1,
+			int src_dim2,
+			int src_dim3,
+			cudaStream_t cuda_stream)
+		{
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				src_dim1,
+				src_dim2,
+				src_dim3);
+			transpose23_kernel<<<kernel_dims.first, kernel_dims.second>>>(
+				src,
+				dst,
+				src_dim1,
+				src_dim2,
+				src_dim3);
 		}
 
 		int cuda_util::get_group_count(

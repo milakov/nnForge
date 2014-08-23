@@ -17,6 +17,8 @@
 #include <iostream>
 #include <stdio.h>
 
+//#undef NNFORGE_CUDA_BACKEND_ENABLED
+
 #ifdef NNFORGE_CUDA_BACKEND_ENABLED
 #include <nnforge/cuda/cuda.h>
 #else

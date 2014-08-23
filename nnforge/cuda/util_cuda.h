@@ -27,7 +27,16 @@
 
 static __forceinline__ __device__ float __load_nc(const float * ptr)
 {
-#if __CUDA_ARCH__ >= 350
+#if __CUDA_ARCH__ >= 320
+	return __ldg(ptr);
+#else
+	return *ptr;
+#endif
+}
+
+static __forceinline__ __device__ int __load_nc(const int * ptr)
+{
+#if __CUDA_ARCH__ >= 320
 	return __ldg(ptr);
 #else
 	return *ptr;
@@ -36,7 +45,7 @@ static __forceinline__ __device__ float __load_nc(const float * ptr)
 
 static __forceinline__ __device__ float2 __load_nc(const float2 * ptr)
 {
-#if __CUDA_ARCH__ >= 350
+#if __CUDA_ARCH__ >= 320
 	return __ldg(ptr);
 #else
 	return *ptr;
@@ -167,6 +176,15 @@ namespace nnforge
 				int src_fast_dim,
 				int src_slow_dim,
 				int entry_count,
+				cudaStream_t cuda_stream);
+
+			static void transpose23(
+				const cuda_running_configuration& cuda_config,
+				const float * src,
+				float * dst,
+				int src_dim1,
+				int src_dim2,
+				int src_dim3,
 				cudaStream_t cuda_stream);
 
 			static int get_group_count(

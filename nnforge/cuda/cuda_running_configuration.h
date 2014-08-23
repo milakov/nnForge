@@ -19,6 +19,7 @@
 #include <string>
 
 #include <cublas_v2.h>
+#include <cusparse_v2.h>
 
 #include "buffer_cuda_size_configuration.h"
 #include "../nn_types.h"
@@ -41,6 +42,8 @@ namespace nnforge
 				float ratio = 1.0F) const;
 
 			cublasHandle_t get_cublas_handle() const;
+
+			cusparseHandle_t get_cusparse_handle() const;
 
 			bool is_flush_required() const;
 
@@ -88,6 +91,7 @@ namespace nnforge
 			void update_parameters();
 
 			cublasHandle_t cublas_handle;
+			cusparseHandle_t cusparse_handle;
 		};
 
 		typedef nnforge_shared_ptr<const cuda_running_configuration> cuda_running_configuration_const_smart_ptr;

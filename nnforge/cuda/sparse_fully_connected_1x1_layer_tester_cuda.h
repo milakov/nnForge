@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class convolution_1x1_layer_tester_cuda : public layer_tester_cuda
+		class sparse_fully_connected_1x1_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			convolution_1x1_layer_tester_cuda();
+			sparse_fully_connected_1x1_layer_tester_cuda();
 
-			virtual ~convolution_1x1_layer_tester_cuda();
+			virtual ~sparse_fully_connected_1x1_layer_tester_cuda();
 
 			virtual void enqueue_test(
 				cudaStream_t stream_id,
@@ -44,6 +44,11 @@ namespace nnforge
 
 		protected:
 			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
+
+			virtual void tester_configured();
+
+		private:
+			int feature_map_connection_count;
 		};
 	}
 }

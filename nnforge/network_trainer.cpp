@@ -81,6 +81,9 @@ namespace nnforge
 					reader,
 					new_task);
 
+				reader.next_epoch();
+				++reader_epoch_id;
+
 				progress_pusher.push(new_task);
 
 				if (is_broken(new_task))
@@ -94,9 +97,6 @@ namespace nnforge
 					pusher.push(new_task);
 					break;
 				}
-
-				reader.next_epoch();
-				++reader_epoch_id;
 			}
 		}
 	}

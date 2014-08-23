@@ -139,11 +139,5 @@ namespace nnforge
 		{
 			return additional_buffers[0];
 		}
-
-		int convolution_1x1_layer_tester_cuda::get_bias_update_block_size(int entry_count)
-		{
-			int block_size = std::min(std::max(static_cast<int>(sqrtf(static_cast<float>(entry_count))), 1), entry_count);
-			return block_size;
-		}
 	}
 }

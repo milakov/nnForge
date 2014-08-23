@@ -1,0 +1,128 @@
+/*
+ *  Copyright 2011-2014 Maxim Milakov
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+#include "sparse_fully_connected_1x1_layer_tester_cuda.h"
+
+#include <cuda_runtime.h>
+
+#include "util_cuda.h"
+#include "neural_network_cusparse_exception.h"
+#include "../sparse_convolution_layer.h"
+
+namespace nnforge
+{
+	namespace cuda
+	{
+		__global__ void copy_bias_sparse_kernel(
+			const float * __restrict biases,
+			float * __restrict output,
+			int output_neuron_count,
+			int entry_count)
+		{
+			int output_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int entry_id = (blockIdx.y * blockDim.y + threadIdx.y) * 4;
+
+			if ((output_neuron_id < output_neuron_count))
+			{
+				float bias = biases[output_neuron_id];
+				float * current_output = output + (int)(entry_id * output_neuron_count + output_neuron_id);
+				#pragma unroll
+				for(int i = 0; i < 4; ++i)
+				{
+					if (entry_id < entry_count)
+						*current_output = bias;
+					current_output += output_neuron_count;
+					entry_id++;
+				}
+			}
+		}
+
+		sparse_fully_connected_1x1_layer_tester_cuda::sparse_fully_connected_1x1_layer_tester_cuda()
+		{
+		}
+
+		sparse_fully_connected_1x1_layer_tester_cuda::~sparse_fully_connected_1x1_layer_tester_cuda()
+		{
+		}
+
+		void sparse_fully_connected_1x1_layer_tester_cuda::enqueue_test(
+			cudaStream_t stream_id,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
+			cuda_linear_buffer_device_smart_ptr input_buffer,
+			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			unsigned int entry_count)
+		{
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				*cuda_config,
+				output_elem_count_per_entry,
+				(entry_count + 4 - 1) / 4,
+				1);
+			copy_bias_sparse_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+				*data[1],
+				*additional_buffers[0],
+				output_elem_count_per_entry,
+				entry_count);
+
+			cusparse_safe_call(cusparseSetStream(cuda_config->get_cusparse_handle(), stream_id));
+			float alpha = 1.0F;
+			float beta = 1.0F;
+			cusparseMatDescr_t mat_descr;
+			cusparse_safe_call(cusparseCreateMatDescr(&mat_descr));
+			cusparse_safe_call(cusparseScsrmm(
+				cuda_config->get_cusparse_handle(),
+				CUSPARSE_OPERATION_NON_TRANSPOSE,
+				output_elem_count_per_entry,
+				entry_count,
+				input_elem_count_per_entry,
+				feature_map_connection_count,
+				&alpha,
+				mat_descr,
+				*data[0],
+				*data_custom[1],
+				*data_custom[0],
+				*input_buffer,
+				input_elem_count_per_entry,
+				&beta,
+				*additional_buffers[0],
+				output_elem_count_per_entry));
+		}
+
+		std::vector<size_t> sparse_fully_connected_1x1_layer_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
+		{
+			std::vector<size_t> res;
+
+			res.push_back(output_elem_count_per_entry * sizeof(float));
+
+			return res;
+		}
+
+		cuda_linear_buffer_device_smart_ptr sparse_fully_connected_1x1_layer_tester_cuda::get_output_buffer(
+			cuda_linear_buffer_device_smart_ptr input_buffer,
+			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
+		{
+			return additional_buffers[0];
+		}
+
+		void sparse_fully_connected_1x1_layer_tester_cuda::tester_configured()
+		{
+			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+
+			feature_map_connection_count = layer_derived->feature_map_connection_count;
+		}
+	}
+}

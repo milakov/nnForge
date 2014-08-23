@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "hyperbolic_tangent_layer_testing_schema.h"
 #include "average_subsampling_layer_testing_schema.h"
 #include "convolution_layer_testing_schema.h"
+#include "sparse_convolution_layer_testing_schema.h"
 #include "max_subsampling_layer_testing_schema.h"
 #include "rectified_linear_layer_testing_schema.h"
 #include "soft_rectified_linear_layer_testing_schema.h"
@@ -51,6 +52,7 @@
 #include "hyperbolic_tangent_layer_updater_schema.h"
 #include "average_subsampling_layer_updater_schema.h"
 #include "convolution_layer_updater_schema.h"
+#include "sparse_convolution_layer_updater_schema.h"
 #include "max_subsampling_layer_updater_schema.h"
 #include "rectified_linear_layer_updater_schema.h"
 #include "soft_rectified_linear_layer_updater_schema.h"
@@ -78,6 +80,7 @@ namespace nnforge
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new hyperbolic_tangent_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new average_subsampling_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new convolution_layer_testing_schema()));
+			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new sparse_convolution_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new max_subsampling_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new rectified_linear_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new soft_rectified_linear_layer_testing_schema()));
@@ -103,6 +106,7 @@ namespace nnforge
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new hyperbolic_tangent_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new average_subsampling_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new convolution_layer_updater_schema()));
+			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new sparse_convolution_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new max_subsampling_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new rectified_linear_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new soft_rectified_linear_layer_updater_schema()));

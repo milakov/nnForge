@@ -35,7 +35,7 @@ endif
 
 ifeq ($(USE_CUDA),yes)
 GENERIC_CXXFLAGS+=-I$(CUDA_PATH)/include
-LDFLAGS+=-L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib -lcublas -lcudart
+LDFLAGS+=-L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib -lcusparse -lcublas -lcudart
 endif
 
 ifeq ($(USE_OPENCV),yes)

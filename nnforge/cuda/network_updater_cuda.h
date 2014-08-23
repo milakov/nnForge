@@ -69,7 +69,7 @@ namespace nnforge
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data(network_data_const_smart_ptr data) const;
 
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data_custom(network_data_const_smart_ptr data_custom) const;
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > set_get_data_custom(network_data_const_smart_ptr data_custom);
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_zero_gradient(const std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data) const;
 

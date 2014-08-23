@@ -221,7 +221,7 @@ namespace nnforge
 			}
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data = get_data(data);
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data_custom = get_data_custom(data);
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data_custom = set_get_data_custom(data);
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > learning_rate_data = get_learning_rate(learning_rate);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > gradient = get_zero_gradient(net_data);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > previous_upd;
@@ -704,13 +704,13 @@ namespace nnforge
 			return res;
 		}
 
-		std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::get_data_custom(network_data_const_smart_ptr data) const
+		std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > network_updater_cuda::set_get_data_custom(network_data_const_smart_ptr data)
 		{
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > res;
 
 			for(int i = 0; i < updater_list.size(); ++i)
 			{
-				std::vector<cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->get_data_custom(data->data_custom_list[i + testing_layer_count]);
+				std::vector<cuda_linear_buffer_device_smart_ptr> device_data = updater_list[i]->set_get_data_custom(data->data_custom_list[i + testing_layer_count]);
 				res.push_back(device_data);
 			}
 
