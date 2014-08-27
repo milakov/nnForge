@@ -78,12 +78,15 @@ namespace nnforge
 		private:
 			static int get_block_size(int entry_count);
 
-			std::pair<int, int> get_entry32_block_size_and_count(unsigned int entry_count) const;
+			std::pair<int, int> get_entry32_update_block_size_and_count(unsigned int entry_count) const;
+
+			std::pair<int, int> get_entry32_backprop_block_size_and_count(unsigned int entry_count) const;
 
 		private:
 			int feature_map_connection_count;
 			int max_column_index_count_per_row;
-			int max_entry32_block_size;
+			int max_entry32_update_block_size;
+			int max_entry32_backprop_block_size;
 		};
 	}
 }
