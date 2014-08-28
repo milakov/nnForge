@@ -661,6 +661,8 @@ namespace nnforge
 				get_validating_visualizer()->dump(std::cout, testing_res);
 				std::cout << std::endl;
 
+				tester->clear_data();
+
 				predicted_neuron_value_set_list.push_back(testing_res.predicted_output_neuron_value_set);
 			}
 		}
@@ -701,6 +703,9 @@ namespace nnforge
 				boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 				output_neuron_value_set_smart_ptr new_res = tester->run(reader, sample_count);
 				boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
+
+				tester->clear_data();
+
 				std::cout << "# " << index;
 				std::cout << std::endl;
 

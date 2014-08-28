@@ -39,6 +39,11 @@ namespace nnforge
 		actual_set_data(data);
 	}
 
+	void network_tester::clear_data()
+	{
+		actual_clear_data();
+	}
+
 	void network_tester::set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific)
 	{
 		if ((layer_config_list.size() > 0) && (layer_config_list[0] == input_configuration_specific))

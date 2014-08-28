@@ -47,6 +47,8 @@ namespace nnforge
 			// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
 			virtual void actual_set_data(network_data_smart_ptr data);
 
+			virtual void actual_clear_data();
+
 			// The method is called when client calls get_snapshot. The data is guaranteed to be compatible with schema
 			virtual std::vector<layer_configuration_specific_snapshot_smart_ptr> actual_get_snapshot(
 				const void * input,

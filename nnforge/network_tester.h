@@ -38,6 +38,8 @@ namespace nnforge
 
 		void set_data(network_data_smart_ptr data);
 
+		void clear_data();
+
 		// You don't need to call this method before calling test with supervised_data_reader
 		void set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific);
 
@@ -84,6 +86,8 @@ namespace nnforge
 
 		// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
 		virtual void actual_set_data(network_data_smart_ptr data) = 0;
+
+		virtual void actual_clear_data() = 0;
 
 		// The method is called when client calls get_snapshot. The data is guaranteed to be compatible with schema
 		virtual std::vector<layer_configuration_specific_snapshot_smart_ptr> actual_get_snapshot(

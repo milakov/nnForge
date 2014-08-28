@@ -48,6 +48,8 @@ namespace nnforge
 			*reader,
 			testing_res);
 
+		tester->clear_data();
+
 		unsigned int last_index = static_cast<unsigned int>(task_state.history.size()) - 1;
 
 		std::cout << "# " << task_state.index_peeked

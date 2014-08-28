@@ -171,6 +171,11 @@ namespace nnforge
 			net_data = data;
 		}
 
+		void network_tester_plain::actual_clear_data()
+		{
+			net_data.reset();
+		}
+
 		std::vector<layer_configuration_specific_snapshot_smart_ptr> network_tester_plain::actual_get_snapshot(
 			const void * input,
 			neuron_data_type::input_type type_code)

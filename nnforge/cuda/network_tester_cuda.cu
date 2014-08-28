@@ -87,6 +87,13 @@ namespace nnforge
 			update_data();
 		}
 
+		void network_tester_cuda::actual_clear_data()
+		{
+			host_net_data.reset();
+
+			update_data();
+		}
+
 		void network_tester_cuda::update_data()
 		{
 			net_data.clear();
