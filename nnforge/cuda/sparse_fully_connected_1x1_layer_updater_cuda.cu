@@ -24,37 +24,11 @@
 #include "neural_network_cuda_exception.h"
 #include "../sparse_convolution_layer.h"
 
-#define OUTPUT_ELEM_COUNT_BLOCK_SIZE 4
-
 namespace nnforge
 {
 	namespace cuda
 	{
-		__global__ void copy_bias_sparse_upd_kernel(
-			const float * __restrict biases,
-			float * __restrict output,
-			int output_neuron_count,
-			int entry_count)
-		{
-			int output_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int entry_id = (blockIdx.y * blockDim.y + threadIdx.y) * 4;
-
-			if ((output_neuron_id < output_neuron_count) && (entry_id < entry_count))
-			{
-				float bias = biases[output_neuron_id];
-				float * current_output = output + (int)(entry_id * output_neuron_count + output_neuron_id);
-				#pragma unroll
-				for(int i = 0; i < 4; ++i)
-				{
-					if (entry_id < entry_count)
-						*current_output = bias;
-					current_output += output_neuron_count;
-					entry_id++;
-				}
-			}
-		}
-
-		__global__ void sparse_fully_connected_update_biases_upd_kernel(
+		__global__ void sparse_fully_connected_1x1_update_biases_upd_kernel(
 			float * __restrict gradient_biases,
 			const float * __restrict output_errors,
 			int block_size,
@@ -80,7 +54,7 @@ namespace nnforge
 		}
 
 		#define OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE 4
-		__global__ void sparse_fully_connected_backprop_upd_kernel(
+		__global__ void sparse_fully_connected_1x1_backprop_upd_kernel(
 			const float * __restrict output_errors,
 			float * __restrict input_errors,
 			const float * __restrict weights,
@@ -102,16 +76,14 @@ namespace nnforge
 				return;
 
 			int max_valid_lane = min(OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE, end_column_index - base_nnz_index);
-			bool valid[OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE];
-			#pragma unroll
-			for(int i = 0; i < OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE; ++i)
-				valid[i] = (i < max_valid_lane);
 
+			bool valid[OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE];
 			int column_ids[OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE];
 			float w[OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE];
 			#pragma unroll
 			for(int i = 0; i < OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE; ++i)
 			{
+				valid[i] = (i < max_valid_lane);
 				int index = valid[i] ? base_nnz_index + i : (end_column_index - 1);
 				column_ids[i] = __load_nc(column_indices + index);
 				w[i] = __load_nc(weights + index);
@@ -123,7 +95,7 @@ namespace nnforge
 			int lane_id = thread_id_x & 31;
 			int current_entry_id = base_entry_id + lane_id;
 			const float * base_output_errors = output_errors + row_id * entry_count;
-			for(int i = 0; i < entry32_block_size; ++i, current_entry_id += 32)
+			for(int j = 0; j < entry32_block_size; ++j, current_entry_id += 32)
 			{
 				if (current_entry_id < entry_count)
 				{
@@ -140,7 +112,7 @@ namespace nnforge
 		#define OUTPUT_ELEM_COUNT_BLOCK_SIZE 4
 		extern __shared__ float arr_sh[];
 		template<bool single_entry_pass>
-		__global__ void sparse_fully_connected_update_weights_kernel(
+		__global__ void sparse_fully_connected_1x1_update_weights_kernel(
 			const float * __restrict output_errors,
 			const float * __restrict input_neurons,
 			float * __restrict gradient_weights,
@@ -182,7 +154,7 @@ namespace nnforge
 			for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
 				sums[i] = 0.0F;
 			const float * base_output_errors = output_errors + row_id * entry_count;
-			for(int i = 0; i < entry32_block_size; ++i, current_entry_id += 32)
+			for(int j = 0; j < entry32_block_size; ++j, current_entry_id += 32)
 			{
 				if (current_entry_id < entry_count)
 				{
@@ -260,16 +232,14 @@ namespace nnforge
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
-			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+			// Copy bias
+			cuda_util::duplicate_vector(
 				*cuda_config,
-				output_elem_count_per_entry,
-				(entry_count + 4 - 1) / 4,
-				1);
-			copy_bias_sparse_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 				*data[1],
 				*output_neurons_buffer,
 				output_elem_count_per_entry,
-				entry_count);
+				entry_count,
+				stream_id);
 
 			cusparse_safe_call(cusparseSetStream(cuda_config->get_cusparse_handle(), stream_id));
 			float alpha = 1.0F;
@@ -344,11 +314,11 @@ namespace nnforge
 			std::pair<int, int> entry32_block_size_and_count = get_entry32_backprop_block_size_and_count(entry_count);
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
-				32 * ((max_column_index_count_per_row + OUTPUT_ELEM_COUNT_BLOCK_SIZE - 1) / OUTPUT_ELEM_COUNT_BLOCK_SIZE),
+				32 * ((max_column_index_count_per_row + OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE - 1) / OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE),
 				output_elem_count_per_entry,
 				entry32_block_size_and_count.second,
 				32);
-			sparse_fully_connected_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+			sparse_fully_connected_1x1_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 				*additional_buffers[1],
 				*additional_buffers[0],
 				*data[0],
@@ -445,7 +415,7 @@ namespace nnforge
 				int smem_size = (cuda_config->get_compute_capability() < 300) ? threadblock_size * OUTPUT_ELEM_COUNT_BLOCK_SIZE * sizeof(float) : 0;
 				if (entry32_block_size_and_count.second > 1)
 				{
-					sparse_fully_connected_update_weights_kernel<false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+					sparse_fully_connected_1x1_update_weights_kernel<false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 						*additional_buffers[1],
 						*additional_buffers[0],
 						*gradient[0],
@@ -457,7 +427,7 @@ namespace nnforge
 				}
 				else
 				{
-					sparse_fully_connected_update_weights_kernel<true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+					sparse_fully_connected_1x1_update_weights_kernel<true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 						*additional_buffers[1],
 						*additional_buffers[0],
 						*gradient[0],
@@ -478,7 +448,7 @@ namespace nnforge
 					output_elem_count_per_entry,
 					block_count,
 					1);
-				sparse_fully_connected_update_biases_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+				sparse_fully_connected_1x1_update_biases_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					*gradient[1],
 					*output_errors_buffer,
 					block_size,

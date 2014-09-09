@@ -106,7 +106,7 @@ namespace nnforge
 			{
 				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data = tester_list[i]->get_data(host_net_data->data_list[i]);
 				net_data.push_back(device_data);
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data_custom = tester_list[i]->get_data_custom(host_net_data->data_custom_list[i]);
+				std::vector<const_cuda_linear_buffer_device_smart_ptr> device_data_custom = tester_list[i]->set_get_data_custom(host_net_data->data_custom_list[i]);
 				net_data_custom.push_back(device_data_custom);
 			}
 		}

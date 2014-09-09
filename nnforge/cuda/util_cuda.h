@@ -216,6 +216,14 @@ namespace nnforge
 				unsigned int entry_count,
 				cudaStream_t cuda_stream);
 
+			static void duplicate_vector(
+				const cuda_running_configuration& cuda_config,
+				const float * source_buf,
+				float * dest_buf,
+				unsigned int vector_elem_count,
+				unsigned int dup_count,
+				cudaStream_t cuda_stream);
+
 		private:
 			cuda_util();
 			cuda_util(const cuda_util&);

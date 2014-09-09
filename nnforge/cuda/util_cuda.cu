@@ -272,6 +272,30 @@ namespace nnforge
 			}
 		}
 
+		__global__ void duplicate_vector_kernel(
+			const float * __restrict src,
+			float * __restrict dst,
+			int vector_elem_count,
+			int dup_count)
+		{
+			int vector_elem_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int dup_id = (blockIdx.y * blockDim.y + threadIdx.y) * 4;
+
+			if (vector_elem_id < vector_elem_count)
+			{
+				float val = src[vector_elem_id];
+				float * current_output = dst + (int)(dup_id * vector_elem_count + vector_elem_id);
+				#pragma unroll
+				for(int i = 0; i < 4; ++i)
+				{
+					if (dup_id < dup_count)
+						*current_output = val;
+					current_output += vector_elem_count;
+					dup_id++;
+				}
+			}
+		}
+
 		const unsigned int cuda_util::preferred_width_2d_access = 16;
 		const unsigned int cuda_util::preferred_height_2d_access = 16;
 		const unsigned int cuda_util::preferred_threadblocksize_sequential_access = 256;
@@ -697,6 +721,26 @@ namespace nnforge
 				get_feature_map_count_striped(feature_map_count),
 				entry_count);
 			copy_from_striped_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(source_buf, dest_buf, elem_count_per_feature_map, feature_map_count, entry_count);
+		}
+
+		void cuda_util::duplicate_vector(
+			const cuda_running_configuration& cuda_config,
+			const float * source_buf,
+			float * dest_buf,
+			unsigned int vector_elem_count,
+			unsigned int dup_count,
+			cudaStream_t cuda_stream)
+		{
+			std::pair<dim3, dim3> kernel_dims = get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				vector_elem_count,
+				(dup_count + 4 - 1) / 4,
+				1);
+			duplicate_vector_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(
+				source_buf,
+				dest_buf,
+				vector_elem_count,
+				dup_count);
 		}
 	}
 }

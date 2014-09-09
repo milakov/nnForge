@@ -27,30 +27,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		__global__ void copy_bias_upd_kernel(
-			const float * __restrict biases,
-			float * __restrict output,
-			int output_neuron_count,
-			int entry_count)
-		{
-			int output_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int entry_id = (blockIdx.y * blockDim.y + threadIdx.y) * 4;
-
-			if ((output_neuron_id < output_neuron_count) && (entry_id < entry_count))
-			{
-				float bias = biases[output_neuron_id];
-				float * current_output = output + (int)(entry_id * output_neuron_count + output_neuron_id);
-				#pragma unroll
-				for(int i = 0; i < 4; ++i)
-				{
-					if (entry_id < entry_count)
-						*current_output = bias;
-					current_output += output_neuron_count;
-					entry_id++;
-				}
-			}
-		}
-
 		__global__ void fully_connected_update_biases_upd_kernel(
 			float * __restrict gradient_biases,
 			const float * __restrict output_errors,
@@ -96,16 +72,14 @@ namespace nnforge
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
 			unsigned int entry_count)
 		{
-			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+			// Copy bias
+			cuda_util::duplicate_vector(
 				*cuda_config,
-				output_elem_count_per_entry,
-				(entry_count + 4 - 1) / 4,
-				1);
-			copy_bias_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 				*data[1],
 				*output_neurons_buffer,
 				output_elem_count_per_entry,
-				entry_count);
+				entry_count,
+				stream_id);
 
 			cublas_safe_call(cublasSetStream(cuda_config->get_cublas_handle(), stream_id));
 			float alpha = 1.0F;

@@ -19,6 +19,7 @@
 #include "../sparse_convolution_layer.h"
 #include "../neural_network_exception.h"
 #include "sparse_fully_connected_1x1_layer_updater_cuda.h"
+#include "sparse_fully_connected_layer_updater_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -50,15 +51,18 @@ namespace nnforge
 		{
 			layer_updater_cuda_smart_ptr res;
 
-			if (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes)
+			if (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count)
 			{
-				if (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count)
+				if (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes)
 				{
 					res = layer_updater_cuda_smart_ptr(new sparse_fully_connected_1x1_layer_updater_cuda());
 				}
-				else throw neural_network_exception("sparse convolutional layer has only 1x1 window, spatial fully connected updater implementation in CUDA backend");
+				else
+				{
+					res = layer_updater_cuda_smart_ptr(new sparse_fully_connected_layer_updater_cuda());
+				}
 			}
-			else throw neural_network_exception("sparse convolutional layer has only 1x1 window, spatial fully connected updater implementation in CUDA backend");
+			else throw neural_network_exception("sparse convolutional layer has spatial fully connected updater implementation in CUDA backend");
 
 			return res;
 		}

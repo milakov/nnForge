@@ -61,7 +61,7 @@ namespace nnforge
 
 			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
 
-			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data_custom(const_layer_data_custom_smart_ptr host_data) const;
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> set_get_data_custom(const_layer_data_custom_smart_ptr host_data);
 
 		protected:
 			layer_tester_cuda();
@@ -76,6 +76,8 @@ namespace nnforge
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
 
 			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const;
+
+			virtual void notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom);
 
 			const_layer_smart_ptr layer_schema;
 			cuda_running_configuration_const_smart_ptr cuda_config;

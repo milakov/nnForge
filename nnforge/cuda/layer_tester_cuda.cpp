@@ -132,11 +132,13 @@ namespace nnforge
 			return res;
 		}
 
-		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_tester_cuda::get_data_custom(const_layer_data_custom_smart_ptr host_data) const
+		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_tester_cuda::set_get_data_custom(const_layer_data_custom_smart_ptr host_data_custom)
 		{
+			notify_data_custom(host_data_custom);
+
 			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
 
-			for(std::vector<std::vector<int> >::const_iterator it = host_data->begin(); it != host_data->end(); ++it)
+			for(std::vector<std::vector<int> >::const_iterator it = host_data_custom->begin(); it != host_data_custom->end(); ++it)
 			{
 				size_t buffer_size = it->size() * sizeof(int);
 				cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
@@ -145,6 +147,10 @@ namespace nnforge
 			}
 
 			return res;
+		}
+
+		void layer_tester_cuda::notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom)
+		{
 		}
 	}
 }
