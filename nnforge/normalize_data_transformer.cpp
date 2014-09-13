@@ -94,7 +94,7 @@ namespace nnforge
 		unsigned int sample_id)
 	{
 		if (type != neuron_data_type::type_float)
-			throw neural_network_exception("noise_data_transformer is implemented for data stored as floats only");
+			throw neural_network_exception("normalize_data_transformer is implemented for data stored as floats only");
 
 		float * dt = static_cast<float *>(data_transformed);
 		unsigned int elem_count_per_feature_map = original_config.get_neuron_count_per_feature_map();

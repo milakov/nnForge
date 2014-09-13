@@ -32,7 +32,8 @@ namespace nnforge
 	{
 		if (!transformer->is_in_place())
 		{
-			input_buf.resize(original_reader->get_input_neuron_elem_size() * original_reader->get_input_configuration().get_neuron_count());
+			input_buf.resize(neuron_data_type::get_input_size(transformer->get_transformed_data_type(original_reader->get_input_type()))
+				* original_reader->get_input_configuration().get_neuron_count());
 			local_input_ptr = &(*input_buf.begin());
 		}
 		if (transformer_sample_count > 1)
@@ -114,7 +115,7 @@ namespace nnforge
 
 	neuron_data_type::input_type supervised_transformed_input_data_reader::get_input_type() const
 	{
-		return original_reader->get_input_type();
+		return transformer->get_transformed_data_type(original_reader->get_input_type());
 	}
 
 	void supervised_transformed_input_data_reader::rewind(unsigned int entry_id)

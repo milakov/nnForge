@@ -66,50 +66,61 @@ namespace nnforge
 		std::vector<float> input_data(input_configuration.get_neuron_count());
 		unsigned int neuron_count_per_feature_map = input_configuration.get_neuron_count_per_feature_map();
 
-		while(read(&(*input_data.begin())))
-		{
-			std::vector<float>::const_iterator data_it = input_data.begin();
-			for(std::vector<feature_map_data_stat>::iterator fm_it = res.begin(); fm_it != res.end(); ++fm_it)
-			{
-				float current_sum = 0.0F;
-				for(unsigned int i = 0; i < neuron_count_per_feature_map; ++i)
-				{
-					float val = *data_it;
-					fm_it->min = std::min(fm_it->min, val);
-					fm_it->max = std::max(fm_it->max, val);
-					current_sum += val;
-					++data_it;
-				}
-				fm_it->average += current_sum;
-			}
-		}
+		double mult = 1.0 / ((double)entry_count * (double)neuron_count_per_feature_map);
 
-		float mult = 1.0F / ((float)entry_count * (float)neuron_count_per_feature_map);
-		for(std::vector<feature_map_data_stat>::iterator it = res.begin(); it != res.end(); ++it)
-			it->average *= mult;
+		{
+			std::vector<double> avg(input_configuration.feature_map_count, 0.0);
+			while(read(&(*input_data.begin())))
+			{
+				std::vector<float>::const_iterator data_it = input_data.begin();
+				std::vector<double>::iterator avg_it = avg.begin();
+				for(std::vector<feature_map_data_stat>::iterator fm_it = res.begin(); fm_it != res.end(); ++fm_it, ++avg_it)
+				{
+					double current_sum = 0.0;
+					for(unsigned int i = 0; i < neuron_count_per_feature_map; ++i)
+					{
+						float val = *data_it;
+						fm_it->min = std::min(fm_it->min, val);
+						fm_it->max = std::max(fm_it->max, val);
+						current_sum += static_cast<double>(val);
+						++data_it;
+					}
+					*avg_it += current_sum;
+				}
+			}
+
+			std::vector<double>::const_iterator avg_it = avg.begin();
+			for(std::vector<feature_map_data_stat>::iterator it = res.begin(); it != res.end(); ++it, ++avg_it)
+				it->average = static_cast<float>(*avg_it * mult);
+		}
 
 		reset();
 
-		while(read(&(*input_data.begin())))
 		{
-			std::vector<float>::const_iterator data_it = input_data.begin();
-			for(std::vector<feature_map_data_stat>::iterator fm_it = res.begin(); fm_it != res.end(); ++fm_it)
+			std::vector<double> stddv(input_configuration.feature_map_count, 0.0);
+			while(read(&(*input_data.begin())))
 			{
-				float current_sum = 0.0F;
-				float average = fm_it->average;
-				for(unsigned int i = 0; i < neuron_count_per_feature_map; ++i)
+				std::vector<float>::const_iterator data_it = input_data.begin();
+				std::vector<double>::iterator stddv_it = stddv.begin();
+				for(std::vector<feature_map_data_stat>::iterator fm_it = res.begin(); fm_it != res.end(); ++fm_it, ++stddv_it)
 				{
-					float val = *data_it;
-					float diff = val - average;
-					current_sum += diff * diff;
-					++data_it;
+					double current_sum = 0.0F;
+					float average = fm_it->average;
+					for(unsigned int i = 0; i < neuron_count_per_feature_map; ++i)
+					{
+						float val = *data_it;
+						float diff = val - average;
+						current_sum += static_cast<double>(diff * diff);
+						++data_it;
+					}
+					*stddv_it += current_sum;
 				}
-				fm_it->std_dev += current_sum;
 			}
-		}
 
-		for(std::vector<feature_map_data_stat>::iterator it = res.begin(); it != res.end(); ++it)
-			it->std_dev = sqrtf(it->std_dev * mult);
+			std::vector<double>::const_iterator stddv_it = stddv.begin();
+			for(std::vector<feature_map_data_stat>::iterator it = res.begin(); it != res.end(); ++it, ++stddv_it)
+				it->std_dev = static_cast<float>(sqrt(*stddv_it * mult));
+		}
 
 		return res;
 	}

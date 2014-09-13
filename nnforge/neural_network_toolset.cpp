@@ -764,10 +764,9 @@ namespace nnforge
 
 	void neural_network_toolset::generate_input_normalizer()
 	{
-		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
-		nnforge::supervised_data_stream_reader reader(in);
+		nnforge::supervised_data_reader_smart_ptr reader = get_initial_data_reader_for_normalizing();;
 
-		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader.get_feature_map_input_data_stat_list();
+		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader->get_feature_map_input_data_stat_list();
 		unsigned int feature_map_id = 0;
 		for(std::vector<nnforge::feature_map_data_stat>::const_iterator it = feature_map_data_stat_list.begin(); it != feature_map_data_stat_list.end(); ++it, ++feature_map_id)
 			std::cout << "Feature map # " << feature_map_id << ": " << *it << std::endl;
@@ -780,10 +779,9 @@ namespace nnforge
 
 	void neural_network_toolset::generate_output_normalizer()
 	{
-		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
-		nnforge::supervised_data_stream_reader reader(in);
+		nnforge::supervised_data_reader_smart_ptr reader = get_initial_data_reader_for_normalizing();;
 
-		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader.get_feature_map_output_data_stat_list();
+		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader->get_feature_map_output_data_stat_list();
 		unsigned int feature_map_id = 0;
 		for(std::vector<nnforge::feature_map_data_stat>::const_iterator it = feature_map_data_stat_list.begin(); it != feature_map_data_stat_list.end(); ++it, ++feature_map_id)
 			std::cout << "Feature map # " << feature_map_id << ": " << *it << std::endl;
@@ -1344,6 +1342,13 @@ namespace nnforge
 	supervised_data_reader_smart_ptr neural_network_toolset::get_initial_data_reader_for_training() const
 	{
 		nnforge_shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::in | std::ios_base::binary));
+		supervised_data_reader_smart_ptr current_reader(new supervised_data_stream_reader(training_data_stream));
+		return current_reader;
+	}
+
+	supervised_data_reader_smart_ptr neural_network_toolset::get_initial_data_reader_for_normalizing() const
+	{
+		nnforge_shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_data_filename, std::ios_base::in | std::ios_base::binary));
 		supervised_data_reader_smart_ptr current_reader(new supervised_data_stream_reader(training_data_stream));
 		return current_reader;
 	}

@@ -44,4 +44,9 @@ namespace nnforge
 	{
 		return 1;
 	}
+
+	neuron_data_type::input_type data_transformer::get_transformed_data_type(neuron_data_type::input_type original_data_type) const
+	{
+		return original_data_type;
+	}
 }

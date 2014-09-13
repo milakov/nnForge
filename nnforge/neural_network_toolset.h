@@ -124,6 +124,8 @@ namespace nnforge
 			supervised_data_reader& reader,
 			const boost::filesystem::path& path) const;
 
+		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_normalizing() const;
+
 		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_training() const;
 
 		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_validating() const;
