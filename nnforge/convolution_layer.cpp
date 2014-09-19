@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -187,15 +187,6 @@ namespace nnforge
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 	}
 
-	float convolution_layer::get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
-		unsigned int per_item_flops = input_feature_map_count * 2;
-		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
-
-		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
-	}
-
 	float convolution_layer::get_weights_update_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
 		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
@@ -203,15 +194,6 @@ namespace nnforge
 		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
 
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
-	}
-
-	float convolution_layer::get_weights_update_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
-		unsigned int per_item_flops = input_feature_map_count * 2;
-		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
-
-		return (static_cast<float>(neuron_count) * static_cast<float>(per_item_flops)) + static_cast<float>(input_configuration_specific.get_neuron_count());
 	}
 
 	dropout_layer_config convolution_layer::get_dropout_layer_config(float dropout_rate) const

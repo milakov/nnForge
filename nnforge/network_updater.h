@@ -34,7 +34,7 @@ namespace nnforge
 	public:
 		virtual ~network_updater();
 
-		// You don't need to call this method before calling get_hessian with supervised_data_reader
+		// You don't need to call this method before calling update with supervised_data_reader
 		void set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific);
 
 		// Size of random_uniform_list is a power of 2

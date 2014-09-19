@@ -124,9 +124,4 @@ namespace nnforge
 	{
 		return static_cast<float>(0);
 	}
-
-	float max_subsampling_layer::get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return static_cast<float>(0);
-	}
 }

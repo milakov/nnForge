@@ -58,10 +58,6 @@ namespace nnforge
 
 		virtual float get_weights_update_flops(const layer_configuration_specific& input_configuration_specific) const;
 
-		virtual float get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const = 0;
-
-		virtual float get_weights_update_flops_2nd(const layer_configuration_specific& input_configuration_specific) const;
-
 		virtual const boost::uuids::uuid& get_uuid() const = 0;
 
 		// The method shouldn't write uuid of the layer type

@@ -34,8 +34,6 @@ namespace nnforge
 
 		virtual float get_backward_flops(const layer_configuration_specific& input_configuration_specific) const;
 
-		virtual float get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const;
-
 		virtual const boost::uuids::uuid& get_uuid() const;
 
 		static const boost::uuids::uuid layer_guid;

@@ -339,7 +339,8 @@ nnforge::network_schema_smart_ptr gtsrb_toolset::get_schema() const
 		std::vector<unsigned int> layer_window_sizes;
 		layer_window_sizes.push_back(5);
 		layer_window_sizes.push_back(5);
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::convolution_layer(layer_window_sizes, 96, 200)));
+		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::sparse_convolution_layer(layer_window_sizes, 96, 200, 0.3F)));
+		//schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::convolution_layer(layer_window_sizes, 96, 200)));
 		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::hyperbolic_tangent_layer()));
 		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::absolute_layer()));
 	}

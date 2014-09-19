@@ -117,9 +117,4 @@ namespace nnforge
 
 		return static_cast<float>(neuron_count * 9);
 	}
-
-	float rgb_to_yuv_convert_layer::get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		throw neural_network_exception("get_backward_flops_2nd not implemented for rgb_to_yuv_convert_layer");
-	}
 }

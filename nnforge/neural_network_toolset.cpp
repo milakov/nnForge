@@ -40,7 +40,6 @@
 #include "complex_network_data_pusher.h"
 #include "testing_complete_result_set_classifier_visualizer.h"
 #include "testing_complete_result_set_roc_visualizer.h"
-#include "network_trainer_sdlm.h"
 #include "summarize_network_data_pusher.h"
 #include "supervised_transformed_input_data_reader.h"
 #include "supervised_transformed_output_data_reader.h"
@@ -131,10 +130,6 @@ namespace nnforge
 		{
 			profile_updater();
 		}
-		else if (!action.compare("profile_hessian"))
-		{
-			profile_hessian();
-		}
 		else if (!action.compare("snapshot"))
 		{
 			snapshot();
@@ -178,7 +173,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, profile_hessian, check_gradient)")
+			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -198,9 +193,6 @@ namespace nnforge
 			("snapshot_video_fps", boost::program_options::value<unsigned int>(&snapshot_video_fps)->default_value(5), "Frames per second when saving video snapshot.")
 			("snapshot_ann_index", boost::program_options::value<unsigned int>(&snapshot_ann_index)->default_value(0), "Index of ANN for snapshots.")
 			("snapshot_ann_type", boost::program_options::value<std::string>(&snapshot_ann_type)->default_value("image"), "Type of the output for ann data (image, raw).")
-			("mu_increase_factor", boost::program_options::value<float>(&mu_increase_factor)->default_value(1.0F), "Mu increases by this ratio each epoch.")
-			("max_mu", boost::program_options::value<float>(&max_mu)->default_value(1.0F), "Maximum Mu during training.")
-			("per_layer_mu", boost::program_options::value<bool>(&per_layer_mu)->default_value(false), "Mu is calculated for each layer separately.")
 			("learning_rate,L", boost::program_options::value<float>(&learning_rate)->default_value(0.02F), "Global learning rate, Eta/Mu ratio for Stochastic Diagonal Levenberg Marquardt.")
 			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_epoch_count)->default_value(0), "Number of tail iterations with gradually lowering learning rates.")
 			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of learning rate at each tail epoch.")
@@ -210,11 +202,10 @@ namespace nnforge
 			("test_validate_ann_index", boost::program_options::value<int>(&test_validate_ann_index)->default_value(-1), "Index of ANN to test/validate. -1 indicates all ANNs, batch mode.")
 			("snapshot_data_set", boost::program_options::value<std::string>(&snapshot_data_set)->default_value("training"), "Type of the dataset to use for snapshots (training, validating, testing).")
 			("profile_updater_entry_count", boost::program_options::value<unsigned int>(&profile_updater_entry_count)->default_value(1), "The number of entries to process when profiling updater.")
-			("profile_hessian_entry_count", boost::program_options::value<unsigned int>(&profile_hessian_entry_count)->default_value(0), "The number of entries to process when profiling hessian (0 means no limitation).")
 			("check_gradient_weights", boost::program_options::value<std::string>(&check_gradient_weights)->default_value("::"), "The set of weights to check for gradient, in the form Layer:WeightSet:WeightID.")
 			("check_gradient_threshold", boost::program_options::value<float>(&check_gradient_threshold)->default_value(1.05F), "Threshold for gradient check.")
 			("check_gradient_base_step", boost::program_options::value<float>(&check_gradient_base_step)->default_value(1.0e-3F), "Base step size for gradient check.")
-			("training_algo", boost::program_options::value<std::string>(&training_algo)->default_value("sdlm"), "Training algorithm (sdlm, sgd).")
+			("training_algo", boost::program_options::value<std::string>(&training_algo)->default_value("sgd"), "Training algorithm (sgd).")
 			("dump_resume", boost::program_options::value<bool>(&dump_resume)->default_value(true), "Dump neural network data after each epoch.")
 			("load_resume,R", boost::program_options::value<bool>(&load_resume)->default_value(false), "Resume neural network training strating from saved.")
 			("epoch_count_in_training_set", boost::program_options::value<unsigned int>(&epoch_count_in_training_set)->default_value(1), "The whole should be split in this amount of epochs.")
@@ -342,7 +333,6 @@ namespace nnforge
 
 		tester_factory = factory->create_tester_factory();
 		updater_factory = factory->create_updater_factory();
-		hessian_factory = factory->create_hessian_factory();
 		analyzer_factory = factory->create_analyzer_factory();
 
 		return (action.size() > 0);
@@ -363,9 +353,6 @@ namespace nnforge
 			std::cout << "snapshot_video_fps" << "=" << snapshot_video_fps << std::endl;
 			std::cout << "snapshot_ann_index" << "=" << snapshot_ann_index << std::endl;
 			std::cout << "snapshot_ann_type" << "=" << snapshot_ann_type << std::endl;
-			std::cout << "mu_increase_factor" << "=" << mu_increase_factor << std::endl;
-			std::cout << "max_mu" << "=" << max_mu << std::endl;
-			std::cout << "per_layer_mu" << "=" << per_layer_mu << std::endl;
 			std::cout << "learning_rate" << "=" << learning_rate << std::endl;
 			std::cout << "learning_rate_decay_tail" << "=" << learning_rate_decay_tail_epoch_count << std::endl;
 			std::cout << "learning_rate_decay_rate" << "=" << learning_rate_decay_rate << std::endl;
@@ -375,7 +362,6 @@ namespace nnforge
 			std::cout << "test_validate_ann_index" << "=" << test_validate_ann_index << std::endl;
 			std::cout << "snapshot_data_set" << "=" << snapshot_data_set << std::endl;
 			std::cout << "profile_updater_entry_count" << "=" << profile_updater_entry_count << std::endl;
-			std::cout << "profile_hessian_entry_count" << "=" << profile_hessian_entry_count << std::endl;
 			std::cout << "check_gradient_weights" << "=" << check_gradient_weights << std::endl;
 			std::cout << "check_gradient_threshold" << "=" << check_gradient_threshold << std::endl;
 			std::cout << "check_gradient_base_step" << "=" << check_gradient_base_step << std::endl;
@@ -471,23 +457,7 @@ namespace nnforge
 			get_error_function(),
 			get_dropout_rate_map());
 
-		if (training_algo == "sdlm")
-		{
-			hessian_calculator_smart_ptr hessian = hessian_factory->create(schema);
-
-			network_trainer_sdlm_smart_ptr typed_res(
-				new network_trainer_sdlm(
-					schema,
-					hessian,
-					updater));
-
-			typed_res->max_mu = max_mu;
-			typed_res->per_layer_mu = per_layer_mu;
-			typed_res->mu_increase_factor = mu_increase_factor;
-
-			res = typed_res;
-		}
-		else if (training_algo == "sgd")
+		if (training_algo == "sgd")
 		{
 			network_trainer_sgd_smart_ptr typed_res(
 				new network_trainer_sgd(
@@ -1569,52 +1539,6 @@ namespace nnforge
 		}
 
 		std::cout << data->data_list.get_stat() << std::endl;
-	}
-
-	void neural_network_toolset::profile_hessian()
-	{
-		network_schema_smart_ptr schema(new network_schema());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-			schema->read(in);
-		}
-
-		hessian_calculator_smart_ptr hessian = hessian_factory->create(schema);
-
-		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
-
-		network_data_smart_ptr data(new network_data(*schema));
-		{
-			random_generator gen = rnd::get_random_generator(47597);
-			data->randomize(
-				*schema,
-				gen);
-			network_data_initializer().initialize(
-				data->data_list,
-				*schema,
-				get_network_output_type());
-		}
-
-		unsigned int hessian_entry_count = std::max(static_cast<unsigned int>(0.05F * training_data_reader->get_entry_count()), 50U);
-		if (profile_hessian_entry_count > 0)
-			hessian_entry_count = profile_hessian_entry_count;
-		unsigned int hessian_entry_to_process_count = std::min<unsigned int>(hessian_entry_count, training_data_reader->get_entry_count());
-		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
-		layer_data_list_smart_ptr hessian_data = hessian->get_hessian(
-			*training_data_reader,
-			data,
-			hessian_entry_to_process_count);
-		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
-		float time_to_complete_seconds = sec.count();
-
-		if (time_to_complete_seconds != 0.0F)
-		{
-			float flops = static_cast<float>(hessian_entry_to_process_count) * hessian->get_flops_for_single_entry();
-			float gflops = flops / time_to_complete_seconds * 1.0e-9F;
-			std::cout << (boost::format("%|1$.1f| GFLOPs, %|2$.2f| seconds") % gflops % time_to_complete_seconds) << std::endl;
-		}
-
-		std::cout << hessian_data->get_stat() << std::endl;
 	}
 
 	void neural_network_toolset::check_gradient()

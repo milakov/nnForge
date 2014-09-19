@@ -50,9 +50,4 @@ namespace nnforge
 	{
 		return static_cast<float>(input_configuration_specific.get_neuron_count() * 2);
 	}
-
-	float sigmoid_layer::get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count() * 3);
-	}
 }

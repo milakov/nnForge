@@ -50,9 +50,4 @@ namespace nnforge
 	{
 		return static_cast<float>(input_configuration_specific.get_neuron_count_per_feature_map() * (input_configuration_specific.feature_map_count * 4 - 1));
 	}
-
-	float softmax_layer::get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count_per_feature_map() * (input_configuration_specific.feature_map_count * 9 - 1));
-	}
 }

@@ -17,7 +17,6 @@
 #include "factory_generator_plain.h"
 
 #include "network_tester_plain_factory.h"
-#include "hessian_calculator_plain_factory.h"
 #include "network_updater_plain_factory.h"
 #include "network_analyzer_plain_factory.h"
 
@@ -58,11 +57,6 @@ namespace nnforge
 		network_updater_factory_smart_ptr factory_generator_plain::create_updater_factory() const
 		{
 			return network_updater_factory_smart_ptr(new network_updater_plain_factory(plain_config));
-		}
-
-		hessian_calculator_factory_smart_ptr factory_generator_plain::create_hessian_factory() const
-		{
-			return hessian_calculator_factory_smart_ptr(new hessian_calculator_plain_factory(plain_config));
 		}
 
 		network_analyzer_factory_smart_ptr factory_generator_plain::create_analyzer_factory() const

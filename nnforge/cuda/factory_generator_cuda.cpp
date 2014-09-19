@@ -18,7 +18,6 @@
 
 #include "network_tester_cuda_factory.h"
 #include "network_updater_cuda_factory.h"
-#include "hessian_calculator_cuda_factory.h"
 #include "network_analyzer_cuda_factory.h"
 
 #include <iostream>
@@ -48,11 +47,6 @@ namespace nnforge
 		network_updater_factory_smart_ptr factory_generator_cuda::create_updater_factory() const
 		{
 			return network_updater_factory_smart_ptr(new network_updater_cuda_factory(cuda_config));
-		}
-
-		hessian_calculator_factory_smart_ptr factory_generator_cuda::create_hessian_factory() const
-		{
-			return hessian_calculator_factory_smart_ptr(new hessian_calculator_cuda_factory(cuda_config));
 		}
 
 		network_analyzer_factory_smart_ptr factory_generator_cuda::create_analyzer_factory() const

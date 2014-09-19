@@ -126,11 +126,4 @@ namespace nnforge
 
 		return static_cast<float>(neuron_count);
 	}
-
-	float average_subsampling_layer::get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
-
-		return static_cast<float>(neuron_count);
-	}
 }

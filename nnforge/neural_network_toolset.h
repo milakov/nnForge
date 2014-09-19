@@ -158,7 +158,6 @@ namespace nnforge
 
 		network_tester_factory_smart_ptr tester_factory;
 		network_updater_factory_smart_ptr updater_factory;
-		hessian_calculator_factory_smart_ptr hessian_factory;
 		network_analyzer_factory_smart_ptr analyzer_factory;
 
 		std::string action;
@@ -172,9 +171,6 @@ namespace nnforge
 		float learning_rate_decay_rate;
 		unsigned int learning_rate_rise_head_epoch_count;
 		float learning_rate_rise_rate;
-		float max_mu;
-		bool per_layer_mu;
-		float mu_increase_factor;
 		unsigned int batch_offset;
 		unsigned int snapshot_video_fps;
 		int test_validate_ann_index;
@@ -182,7 +178,6 @@ namespace nnforge
 		std::string snapshot_ann_type;
 		std::string snapshot_data_set;
 		unsigned int profile_updater_entry_count;
-		unsigned int profile_hessian_entry_count;
 		std::string training_algo;
 		bool dump_resume;
 		bool load_resume;
@@ -236,8 +231,6 @@ namespace nnforge
 		void train();
 
 		void profile_updater();
-
-		void profile_hessian();
 
 		void check_gradient();
 

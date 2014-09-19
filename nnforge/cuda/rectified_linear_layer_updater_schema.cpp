@@ -42,7 +42,7 @@ namespace nnforge
 		}
 
 		layer_updater_cuda_smart_ptr rectified_linear_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& hyperbolic_tangent_layer_hessian_schema,
+			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
 			return layer_updater_cuda_smart_ptr(new rectified_linear_layer_updater_cuda());

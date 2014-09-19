@@ -120,11 +120,6 @@ namespace nnforge
 		return 0.0F;
 	}
 
-	float layer::get_weights_update_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return 0.0F;
-	}
-
 	dropout_layer_config layer::get_dropout_layer_config(float dropout_rate) const
 	{
 		return dropout_layer_config();

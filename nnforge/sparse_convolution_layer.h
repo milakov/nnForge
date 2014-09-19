@@ -53,10 +53,6 @@ namespace nnforge
 
 		virtual float get_weights_update_flops(const layer_configuration_specific& input_configuration_specific) const;
 
-		virtual float get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const;
-
-		virtual float get_weights_update_flops_2nd(const layer_configuration_specific& input_configuration_specific) const;
-
 		virtual const boost::uuids::uuid& get_uuid() const;
 
 		virtual void write(std::ostream& binary_stream_to_write_to) const;

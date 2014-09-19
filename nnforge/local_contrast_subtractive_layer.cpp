@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -219,15 +219,6 @@ namespace nnforge
 	{
 		unsigned int neuron_count = static_cast<unsigned int>(input_configuration_specific.get_neuron_count_per_feature_map() * feature_maps_affected.size());
 		unsigned int per_item_flops = 1;
-		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops += ((boost::lambda::_1 >> 1) * 3 + 1) );
-
-		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
-	}
-
-	float local_contrast_subtractive_layer::get_backward_flops_2nd(const layer_configuration_specific& input_configuration_specific) const
-	{
-		unsigned int neuron_count = static_cast<unsigned int>(input_configuration_specific.get_neuron_count_per_feature_map() * feature_maps_affected.size());
-		unsigned int per_item_flops = 2;
 		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops += ((boost::lambda::_1 >> 1) * 3 + 1) );
 
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
