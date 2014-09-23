@@ -43,7 +43,7 @@
 
 <ul>
 <li>Convolutional (1D, 2D, 3D, and 4D)</li>
-<li>Sparse (in feature map dimension) convolutional (CPU backend - 1D, 2D, 3D, and 4D, GPU backend - fully connected (spatial) 1x1 window only) </li>
+<li>Sparse (in feature map dimension) convolutional (CPU backend - 1D, 2D, 3D, and 4D, GPU backend - fully connected (spatial) only) </li>
 <li>Fully connected</li>
 <li>Local contrast subtractive (CPU backend - no limitations, GPU backend - 2D only)</li>
 <li>RGB-&gt;YUV conversion (CPU backend: forward propagation only, GPU backend - forward + backward prop)</li>
@@ -60,12 +60,9 @@
 </ul><h2>
 <a name="training" class="anchor" href="#training"><span class="octicon octicon-link"></span></a>Training</h2>
 
-<p>The library implements the following training algorithms:</p>
+<p>The library implements Stochastic Gradient Descent training algorithm.</p>
 
-<ul>
-<li>Stochastic Gradient Descent</li>
-<li>Stochastic Diagonal Levenberg-Marquardt, well described in Y. LeCun, L. Bottou, Y. Bengio and P. Haffner: Gradient-Based Learning Applied to Document Recognition, <em>Proceedings of the IEEE, 86(11):2278-2324, November 1998</em> and Y. LeCun, L. Bottou, G. Orr and K. Muller: Efficient BackProp, in Orr, G. and Muller K. (Eds), <em>Neural Networks: Tricks of the trade, Springer, 1998</em>. You will find these papers at <a href="http://yann.lecun.com/exdb/publis/index.html">Yann LeCun site</a>.</li>
-</ul><p>Mini-batch training supported.</p>
+<p>Mini-batch training supported.</p>
 
 <h2>
 <a name="regularization" class="anchor" href="#regularization"><span class="octicon octicon-link"></span></a>Regularization</h2>
