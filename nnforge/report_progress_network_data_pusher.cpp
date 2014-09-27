@@ -61,7 +61,26 @@ namespace nnforge
 		if (task_state.comments[last_index].size() > 0)
 			std::cout << ", " << task_state.comments[last_index];
 
-		std::cout << ", " << *(task_state.history[last_index].second);
+		std::cout << ", Avg [rate weights updates]";
+		for(int layer_id = 0; layer_id < task_state.data->data_list.size(); ++layer_id)
+		{
+			layer_data_smart_ptr layer_data = task_state.data->data_list[layer_id];
+			if (!layer_data->empty())
+			{
+				std::cout << " #" << layer_id;
+				const std::vector<float>& absolute_updates = task_state.history[last_index].second->absolute_updates[layer_id];
+				for(int part_id = 0; part_id < layer_data->size(); ++part_id)
+				{
+					const std::vector<float>& weights = layer_data->at(part_id);
+					double sum = 0.0;
+					for(std::vector<float>::const_iterator it = weights.begin(); it != weights.end(); ++it)
+						sum += static_cast<double>(fabsf(*it));
+					float avg_weight = static_cast<float>(sum) / static_cast<float>(weights.size());
+
+					std::cout << (boost::format(" [%|1$.2e| %|2$.2e| %|3$.2e|]") % (absolute_updates[part_id] / avg_weight) % avg_weight % absolute_updates[part_id]); 
+				}
+			}
+		}
 
 		std::cout << std::endl;
 	}
