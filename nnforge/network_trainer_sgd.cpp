@@ -45,7 +45,7 @@ namespace nnforge
 		std::pair<layer_data_list_smart_ptr, std::string> lr_and_comment = prepare_learning_rates(task.get_current_epoch());
 		task.comments.push_back(lr_and_comment.second);
 
-		testing_result_smart_ptr train_result = updater->update(
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> train_result = updater->update(
 			reader,
 			*lr_and_comment.first,
 			task.data,
@@ -57,8 +57,8 @@ namespace nnforge
 
 		float flops = updater->get_flops_for_single_entry();
 
-		train_result->time_to_complete_seconds = sec.count();
-		train_result->flops = static_cast<float>(train_result->get_entry_count()) * flops;
+		train_result.first->time_to_complete_seconds = sec.count();
+		train_result.first->flops = static_cast<float>(train_result.first->get_entry_count()) * flops;
 
 		task.history.push_back(train_result);
 	}

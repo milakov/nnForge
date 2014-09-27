@@ -78,7 +78,7 @@ namespace nnforge
 		{
 		}
 
-		testing_result_smart_ptr network_updater_plain::actual_update(
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> network_updater_plain::actual_update(
 			supervised_data_reader& reader,
 			const layer_data_list& learning_rate,
 			network_data_smart_ptr data,
@@ -86,7 +86,11 @@ namespace nnforge
 			float weight_decay,
 			float momentum)
 		{
-			testing_result_smart_ptr res(new testing_result(ef));
+			testing_result_smart_ptr testing_res(new testing_result(ef));
+
+			std::vector<std::vector<double> > updates_accumulated;
+			for(std::vector<layer_data_smart_ptr>::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
+				updates_accumulated.push_back(std::vector<double>((*it)->size(), 0.0));
 
 			reader.reset();
 
@@ -367,7 +371,7 @@ namespace nnforge
 						const std::vector<float>::iterator initial_error_it = initial_error_buf->begin();
 						const std::vector<float>::const_iterator actual_output_buf_it = actual_output_buf.begin() + (output_neuron_count * base_input_entry_id);
 						const std::vector<float>::const_iterator output_buffer_it = output_buffer->begin();
-						testing_result& tr = *res;
+						testing_result& tr = *testing_res;
 						const int elem_count = current_updater_entry_count;
 						std::vector<double> errors(plain_config->openmp_thread_count, 0.0);
 						const std::vector<double>::iterator errors_it = errors.begin();
@@ -478,8 +482,10 @@ namespace nnforge
 							data->data_list,
 							*gradient,
 							*previous_upd,
+							updates_accumulated,
 							learning_rate,
 							gradient_normalizer,
+							entry_gradient_calculated_count,
 							weight_decay,
 							momentum);
 						entry_gradient_calculated_count = 0;
@@ -494,14 +500,28 @@ namespace nnforge
 					data->data_list,
 					*gradient,
 					*previous_upd,
+					updates_accumulated,
 					learning_rate,
 					gradient_normalizer,
+					entry_gradient_calculated_count,
 					weight_decay,
 					momentum);
 				entry_gradient_calculated_count = 0;
 			}
 
-			return res;
+			training_stat_smart_ptr training_res(new training_stat());
+			{
+				float mult = 1.0F / static_cast<float>(testing_res->get_entry_count());
+				for(std::vector<std::vector<double> >::const_iterator it = updates_accumulated.begin(); it != updates_accumulated.end(); ++it)
+				{
+					std::vector<float> updates;
+					for(std::vector<double>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
+						updates.push_back(mult * static_cast<float>(*it2));
+					training_res->absolute_updates.push_back(updates);
+				}
+			}
+
+			return std::make_pair(testing_res, training_res);
 		}
 
 		void network_updater_plain::layer_config_list_modified()
@@ -512,8 +532,10 @@ namespace nnforge
 			std::vector<layer_data_smart_ptr>& data,
 			std::vector<layer_data_smart_ptr>& gradient,
 			std::vector<layer_data_smart_ptr>& previous_upd,
+			std::vector<std::vector<double> >& updates_accumulated,
 			const std::vector<layer_data_smart_ptr>& learning_rate,
 			float normalizer,
+			unsigned int entry_count,
 			float weight_decay,
 			float momentum) const
 		{
@@ -524,20 +546,23 @@ namespace nnforge
 				layer_data_list::iterator gradient_it0 = gradient.begin() + testing_layer_count;
 				layer_data_list::iterator previous_upd_it0 = previous_upd.begin() + testing_layer_count;
 				layer_data_list::const_iterator learning_rate_it0 = learning_rate.begin() + testing_layer_count;
+				std::vector<std::vector<double> >::iterator updates_accumulated_it0 = updates_accumulated.begin() + testing_layer_count;
 				const_layer_list::const_iterator layer_it = layer_list.begin() + testing_layer_count;
-				for(layer_data_list::iterator data_it0 = data.begin() + testing_layer_count; data_it0 != data.end(); ++data_it0, ++gradient_it0, ++previous_upd_it0, ++learning_rate_it0, ++layer_it)
+				for(layer_data_list::iterator data_it0 = data.begin() + testing_layer_count; data_it0 != data.end(); ++data_it0, ++gradient_it0, ++previous_upd_it0, ++learning_rate_it0, ++layer_it, ++updates_accumulated_it0)
 				{
 					layer_data::iterator gradient_it = (*gradient_it0)->begin();
 					layer_data::iterator previous_upd_it = (*previous_upd_it0)->begin();
+					std::vector<double>::iterator updates_accumulated_it = updates_accumulated_it0->begin();
 					layer_data::const_iterator learning_rate_it = (*learning_rate_it0)->begin();
 					std::set<unsigned int> weight_decay_part_id_set = (*layer_it)->get_weight_decay_part_id_set();
 					unsigned int part_id = 0;
-					for(layer_data::iterator data_it = (*data_it0)->begin(); data_it != (*data_it0)->end(); ++data_it, ++gradient_it, ++previous_upd_it, ++learning_rate_it, ++part_id)
+					for(layer_data::iterator data_it = (*data_it0)->begin(); data_it != (*data_it0)->end(); ++data_it, ++gradient_it, ++previous_upd_it, ++learning_rate_it, ++part_id, ++updates_accumulated_it)
 					{
 						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
 						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
 						std::vector<float>::iterator previous_upd_it2 = previous_upd_it->begin();
 						std::vector<float>::const_iterator learning_rate_it2 = learning_rate_it->begin();
+						double accum = 0.0;
 						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2, ++learning_rate_it2)
 						{
 							float current_weight = *data_it2;
@@ -545,11 +570,13 @@ namespace nnforge
 							float gr = *gradient_it2;
 							float prev_upd = *previous_upd_it2;
 							float upd = prev_upd * momentum + lr * (gr * normalizer - current_weight * actual_weight_decay);
+							accum += static_cast<double>(fabsf(upd));
 							float new_weight = current_weight + upd;
 							*data_it2 = new_weight;
 							*gradient_it2 = 0.0F;
 							*previous_upd_it2 = upd;
 						}
+						*updates_accumulated_it += accum * static_cast<double>(entry_count) / static_cast<double>(data_it->size());
 					}
 				}
 			}

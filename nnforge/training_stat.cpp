@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,30 +14,31 @@
  *  limitations under the License.
  */
 
-#pragma once
-
-#include "testing_result.h"
 #include "training_stat.h"
-#include "network_data.h"
 
-#include <boost/chrono.hpp>
+#include <boost/format.hpp>
 
 namespace nnforge
 {
-	class training_task_state
+	training_stat::training_stat()
 	{
-	public:
-		training_task_state();
+	}
 
-		unsigned int index_peeked;
-		network_data_smart_ptr data;
-		std::vector<std::pair<testing_result_smart_ptr, training_stat_smart_ptr> > history;
-		std::vector<std::string> comments;
-		unsigned int initial_epoch;
+	std::ostream& operator<< (std::ostream& out, const training_stat& val)
+	{
+		out << "Weight updates";
 
-		unsigned int get_current_epoch() const
+		for(unsigned int layer_id = 0; layer_id < val.absolute_updates.size(); ++layer_id)
 		{
-			return static_cast<unsigned int>(history.size() + initial_epoch);
+			if (!val.absolute_updates[layer_id].empty())
+			{
+				out << " #" << layer_id << " (" << (boost::format("%|1$.2e|") % val.absolute_updates[layer_id][0]);
+				for(int i = 1; i < val.absolute_updates[layer_id].size(); ++i)
+					out << ", " << (boost::format(" %|1$.2e|") % val.absolute_updates[layer_id][i]);
+				out << ")";
+			}
 		}
-	};
+
+		return out;
+	}
 }

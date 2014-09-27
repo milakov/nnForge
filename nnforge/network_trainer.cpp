@@ -108,7 +108,7 @@ namespace nnforge
 
 	bool network_trainer::is_broken(const training_task_state& state) const
 	{
-		float error = state.history.back()->get_error();
+		float error = state.history.back().first->get_error();
 		bool sanity_check = (error < 1.0e+10F) && (-error > -1.0E+10F) && !(-error < -1.0E+10F);
 		return !sanity_check;
 	}

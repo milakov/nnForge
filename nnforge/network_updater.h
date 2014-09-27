@@ -21,6 +21,7 @@
 #include "layer_configuration_specific.h"
 #include "supervised_data_reader.h"
 #include "testing_result.h"
+#include "training_stat.h"
 #include "dropout_layer_config.h"
 #include "error_function.h"
 #include "nn_types.h"
@@ -38,7 +39,7 @@ namespace nnforge
 		void set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific);
 
 		// Size of random_uniform_list is a power of 2
-		testing_result_smart_ptr update(
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> update(
 			supervised_data_reader& reader,
 			const layer_data_list& learning_rate,
 			network_data_smart_ptr data,
@@ -56,7 +57,7 @@ namespace nnforge
 			const std::map<unsigned int, float>& layer_to_dropout_rate_map);
 
 		// schema, data and reader are guaranteed to be compatible
-		virtual testing_result_smart_ptr actual_update(
+		virtual std::pair<testing_result_smart_ptr, training_stat_smart_ptr> actual_update(
 			supervised_data_reader& reader,
 			const layer_data_list& learning_rate,
 			network_data_smart_ptr data,

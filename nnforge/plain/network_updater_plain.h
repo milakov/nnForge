@@ -40,7 +40,7 @@ namespace nnforge
 
 		protected:
 			// schema, data and reader are guaranteed to be compatible
-			virtual testing_result_smart_ptr actual_update(
+			virtual std::pair<testing_result_smart_ptr, training_stat_smart_ptr> actual_update(
 				supervised_data_reader& reader,
 				const layer_data_list& learning_rate,
 				network_data_smart_ptr data,
@@ -73,8 +73,10 @@ namespace nnforge
 				std::vector<layer_data_smart_ptr>& data,
 				std::vector<layer_data_smart_ptr>& gradient,
 				std::vector<layer_data_smart_ptr>& previous_upd,
+				std::vector<std::vector<double> >& updates_accumulated,
 				const std::vector<layer_data_smart_ptr>& learning_rate,
 				float normalizer,
+				unsigned int entry_count,
 				float weight_decay,
 				float momentum) const;
 

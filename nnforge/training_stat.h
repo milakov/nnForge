@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,28 +16,23 @@
 
 #pragma once
 
-#include "testing_result.h"
-#include "training_stat.h"
-#include "network_data.h"
+#include "nn_types.h"
 
-#include <boost/chrono.hpp>
+#include <vector>
+#include <ostream>
 
 namespace nnforge
 {
-	class training_task_state
+	class training_stat
 	{
 	public:
-		training_task_state();
+		training_stat();
 
-		unsigned int index_peeked;
-		network_data_smart_ptr data;
-		std::vector<std::pair<testing_result_smart_ptr, training_stat_smart_ptr> > history;
-		std::vector<std::string> comments;
-		unsigned int initial_epoch;
-
-		unsigned int get_current_epoch() const
-		{
-			return static_cast<unsigned int>(history.size() + initial_epoch);
-		}
+	public:
+		std::vector<std::vector<float> > absolute_updates;
 	};
+
+	std::ostream& operator<< (std::ostream& out, const training_stat& val);
+
+	typedef nnforge_shared_ptr<training_stat> training_stat_smart_ptr;
 }

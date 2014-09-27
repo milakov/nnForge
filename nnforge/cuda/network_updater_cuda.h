@@ -41,7 +41,7 @@ namespace nnforge
 
 		protected:
 			// schema, data and reader are guaranteed to be compatible
-			virtual testing_result_smart_ptr actual_update(
+			virtual std::pair<testing_result_smart_ptr, training_stat_smart_ptr> actual_update(
 				supervised_data_reader& reader,
 				const layer_data_list& learning_rate,
 				network_data_smart_ptr data,
@@ -93,9 +93,17 @@ namespace nnforge
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& gradient,
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& prev_upd,
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >& learning_rate,
+				cuda_linear_buffer_device_smart_ptr update_accum,
 				float gradient_normalizer,
+				unsigned int entry_count,
 				float weight_decay,
 				float momentum);
+
+			training_stat_smart_ptr read_update_accum(
+				const_cuda_linear_buffer_device_smart_ptr update_accum,
+				network_data_smart_ptr data,
+				unsigned int entry_count,
+				cudaStream_t stream_id) const;
 
 			cuda_running_configuration_const_smart_ptr cuda_config;
 
@@ -117,7 +125,8 @@ namespace nnforge
 
 			bool error_function_fused_with_activation;
 
-			static unsigned int max_entry_count_in_single_batch;
+			static const unsigned int max_entry_count_in_single_batch;
+			static const unsigned int elem_count_update_accum_per_part; // should be power of 2
 		};
 	}
 }

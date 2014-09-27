@@ -61,7 +61,7 @@ namespace nnforge
 			int lane_id = thread_id & 31;
 		#if __CUDA_ARCH__ < 300
 			volatile float * arr = arr_sh;
-			arr[neuron_id] = err;
+			arr[thread_id] = err;
 		#endif
 			#pragma unroll
 			for(int tx = 16; tx > 0; tx >>= 1)

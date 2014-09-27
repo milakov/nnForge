@@ -36,18 +36,18 @@ namespace nnforge
 		std::cout << "# " << task_state.index_peeked
 			<< ", Epoch " << task_state.get_current_epoch()
 			<< ", Training "
-			<< *(task_state.history[last_index]);
+			<< *(task_state.history[last_index].first);
 
 		if (last_index > 0)
 		{
 			std::cout << " (";
 
-			float error_improvement = task_state.history[last_index - 1]->get_error() - task_state.history[last_index]->get_error();
+			float error_improvement = task_state.history[last_index - 1].first->get_error() - task_state.history[last_index].first->get_error();
 			std::cout << (boost::format("Imp %|1$.6f|") % error_improvement);
 
 			if (last_index > 1)
 			{
-				float previous_error_improvement = task_state.history[last_index - 2]->get_error() - task_state.history[last_index - 1]->get_error();
+				float previous_error_improvement = task_state.history[last_index - 2].first->get_error() - task_state.history[last_index - 1].first->get_error();
 				if ((previous_error_improvement > 0.0F) && (error_improvement >= 0.0F))
 				{
 					float improvement_ratio = error_improvement / previous_error_improvement * 100.0F;
@@ -60,6 +60,8 @@ namespace nnforge
 
 		if (task_state.comments[last_index].size() > 0)
 			std::cout << ", " << task_state.comments[last_index];
+
+		std::cout << ", " << *(task_state.history[last_index].second);
 
 		std::cout << std::endl;
 	}

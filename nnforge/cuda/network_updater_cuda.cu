@@ -31,6 +31,7 @@
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
 #include <stack>
+#include <numeric>
 
 #include "../debug_util.h"
 #include <boost/filesystem.hpp>
@@ -39,6 +40,17 @@ namespace nnforge
 {
 	namespace cuda
 	{
+		__forceinline__ __device__ double atomicAdd(double* address, double val)
+		{
+				unsigned long long int* address_as_ull = (unsigned long long int*)address;
+				unsigned long long int old = *address_as_ull, assumed;
+				do {
+					assumed = old;
+					old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+				} while (assumed != old);
+				return __longlong_as_double(old);
+		}
+
 		__global__ void convert_compacted_to_raw_upd_kernel(
 			const uchar4 * __restrict input,
 			float4 * __restrict output,
@@ -74,23 +86,70 @@ namespace nnforge
 			}
 		}
 
+		extern __shared__ float arr_sh[];
 		__global__ void apply_gradient_kernel(
 			float * __restrict data,
 			float * __restrict gradient,
+			double * __restrict update_accum,
 			const float * __restrict learning_rate,
+			float update_accum_mult,
 			float normalizer,
 			float weight_decay,
-			int elem_count)
+			int elem_count,
+			unsigned int update_accum_mask)
 		{
 			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			float upd_acc = 0.0F;
 			if (elem_id < elem_count)
 			{
-				float current_weight = data[elem_id];
-				float lr = learning_rate[elem_id];
-				float gr = gradient[elem_id];
-				float new_weight = current_weight + lr * (gr * normalizer - current_weight * weight_decay);
+				float current_weight = __load_nc(data + elem_id);
+				float lr = __load_nc(learning_rate + elem_id);
+				float gr = __load_nc(gradient + elem_id);
+				float upd = lr * (gr * normalizer - current_weight * weight_decay);
+				float new_weight = current_weight + upd;
 				data[elem_id] = new_weight;
 				gradient[elem_id] = 0.0F;
+				upd_acc = fabs(upd);
+			}
+
+			int thread_id = threadIdx.x;
+			int lane_id = thread_id & 31;
+		#if __CUDA_ARCH__ < 300
+			volatile float * arr = arr_sh;
+			arr[thread_id] = upd_acc;
+		#endif
+			#pragma unroll
+			for(int tx = 16; tx > 0; tx >>= 1)
+			{
+			#if __CUDA_ARCH__ < 300
+				if (lane_id < tx)
+					arr[thread_id] += arr[thread_id + tx];
+			#else
+				upd_acc += __shfl_down(upd_acc, tx);
+			#endif
+			}
+		#if __CUDA_ARCH__ < 300
+			upd_acc = arr[thread_id];
+			__syncthreads();
+		#endif
+
+			if (blockDim.x > 32)
+			{
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = upd_acc;
+				__syncthreads();
+			}
+
+			if (thread_id == 0)
+			{
+				for(int i = 1; i < (blockDim.x >> 5); ++i)
+					upd_acc += arr_sh[i];
+				upd_acc *= update_accum_mult;
+				double upd_acc_d = (double)upd_acc;
+
+				int accum_bucket_id = blockIdx.x & update_accum_mask;
+
+				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
 			}
 		}
 
@@ -98,28 +157,74 @@ namespace nnforge
 			float * __restrict data,
 			float * __restrict gradient,
 			float * __restrict previous_upd,
+			double * __restrict update_accum,
 			const float * __restrict learning_rate,
+			float update_accum_mult,
 			float normalizer,
 			float weight_decay,
 			float momentum,
-			int elem_count)
+			int elem_count,
+			unsigned int update_accum_mask)
 		{
 			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			float upd_acc = 0.0F;
 			if (elem_id < elem_count)
 			{
-				float current_weight = data[elem_id];
-				float lr = learning_rate[elem_id];
-				float gr = gradient[elem_id];
-				float prev_upd = previous_upd[elem_id];
+				float current_weight = __load_nc(data + elem_id);
+				float lr = __load_nc(learning_rate + elem_id);
+				float gr = __load_nc(gradient + elem_id);
+				float prev_upd = __load_nc(previous_upd + elem_id);
 				float upd = prev_upd * momentum + lr * (gr * normalizer - current_weight * weight_decay);
 				float new_weight = current_weight + upd;
 				data[elem_id] = new_weight;
 				gradient[elem_id] = 0.0F;
 				previous_upd[elem_id] = upd;
+				upd_acc = fabs(upd);
+			}
+
+			int thread_id = threadIdx.x;
+			int lane_id = thread_id & 31;
+		#if __CUDA_ARCH__ < 300
+			volatile float * arr = arr_sh;
+			arr[thread_id] = upd_acc;
+		#endif
+			#pragma unroll
+			for(int tx = 16; tx > 0; tx >>= 1)
+			{
+			#if __CUDA_ARCH__ < 300
+				if (lane_id < tx)
+					arr[thread_id] += arr[thread_id + tx];
+			#else
+				upd_acc += __shfl_down(upd_acc, tx);
+			#endif
+			}
+		#if __CUDA_ARCH__ < 300
+			upd_acc = arr[thread_id];
+			__syncthreads();
+		#endif
+
+			if (blockDim.x > 32)
+			{
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = upd_acc;
+				__syncthreads();
+			}
+
+			if (thread_id == 0)
+			{
+				for(int i = 1; i < (blockDim.x >> 5); ++i)
+					upd_acc += arr_sh[i];
+				upd_acc *= update_accum_mult;
+				double upd_acc_d = (double)upd_acc;
+
+				int accum_bucket_id = blockIdx.x & update_accum_mask;
+
+				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
 			}
 		}
 
-		unsigned int network_updater_cuda::max_entry_count_in_single_batch = 1024;
+		const unsigned int network_updater_cuda::max_entry_count_in_single_batch = 1024;
+		const unsigned int network_updater_cuda::elem_count_update_accum_per_part = 64;
 
 		network_updater_cuda::network_updater_cuda(
 			network_schema_smart_ptr schema,
@@ -175,7 +280,7 @@ namespace nnforge
 			data_stream = cuda_stream_smart_ptr(new cuda_stream());
 		}
 
-		testing_result_smart_ptr network_updater_cuda::actual_update(
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> network_updater_cuda::actual_update(
 			supervised_data_reader& reader,
 			const layer_data_list& learning_rate,
 			network_data_smart_ptr data,
@@ -183,7 +288,7 @@ namespace nnforge
 			float weight_decay,
 			float momentum)
 		{
-			testing_result_smart_ptr res(new testing_result(ef));
+			testing_result_smart_ptr testing_res(new testing_result(ef));
 
 			reader.reset();
 
@@ -199,6 +304,11 @@ namespace nnforge
 
 			if (error_function_fused_with_activation && (output_neuron_count_per_feature_map != 1))
 				throw neural_network_exception("Error function is fused with activation but output_neuron_count_per_feature_map is not equal 1: not implemented");
+
+			unsigned int part_count = 0;
+			for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
+				part_count += (*it)->size();
+			unsigned int elem_count_update_accum = part_count * elem_count_update_accum_per_part;
 
 			unsigned int updater_max_count = std::max(get_updater_max_count(), 1U);
 			unsigned int updater_entry_count;
@@ -240,6 +350,7 @@ namespace nnforge
 				buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
 				buffers_config.add_constant_buffer(output_neuron_count * sizeof(float) * updater_entry_count); // initial error
 				buffers_config.add_constant_buffer(sizeof(double) * updater_entry_count); // error buffer
+				buffers_config.add_constant_buffer(sizeof(double) * elem_count_update_accum); // update_accum
 				if (!random_uniform_list.empty())
 					buffers_config.add_constant_buffer(random_uniform_list.size() * sizeof(float)); // random_uniform_list
 				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::const_iterator it = net_data.begin(); it != net_data.end(); ++it)
@@ -286,6 +397,8 @@ namespace nnforge
 
 			cuda_linear_buffer_device_smart_ptr error_buf(new cuda_linear_buffer_device(sizeof(double)));
 
+			cuda_linear_buffer_device_smart_ptr update_accum_buf(new cuda_linear_buffer_device(elem_count_update_accum * sizeof(double)));
+
 			cuda_linear_buffer_device_smart_ptr random_uniform_buf;
 			if (!random_uniform_list.empty())
 			{
@@ -331,6 +444,13 @@ namespace nnforge
 				(double *)(*error_buf),
 				0.0,
 				1,
+				*command_stream);
+			// set update accumulators to zero
+			cuda_util::set_with_value(
+				*cuda_config,
+				(double *)(*update_accum_buf),
+				0.0,
+				elem_count_update_accum,
 				*command_stream);
 
 			unsigned int current_data_slot = 0;
@@ -605,7 +725,9 @@ namespace nnforge
 								gradient,
 								previous_upd,
 								learning_rate_data,
+								update_accum_buf,
 								gradient_normalizer,
+								entry_gradient_calculated_count,
 								weight_decay,
 								momentum);
 							entry_gradient_calculated_count = 0;
@@ -650,7 +772,9 @@ namespace nnforge
 					gradient,
 					previous_upd,
 					learning_rate_data,
+					update_accum_buf,
 					gradient_normalizer,
+					entry_gradient_calculated_count,
 					weight_decay,
 					momentum);
 				entry_gradient_calculated_count = 0;
@@ -662,9 +786,53 @@ namespace nnforge
 			cuda_safe_call(cudaMemcpyAsync(&error, *error_buf, sizeof(double), cudaMemcpyDeviceToHost, *command_stream));
 			cuda_safe_call(cudaStreamSynchronize(*command_stream));
 
-			res->init(error, entries_processed_count);
+			testing_res->init(error, entries_processed_count);
 
-			return res;
+			training_stat_smart_ptr training_res = read_update_accum(
+				update_accum_buf,
+				data,
+				testing_res->get_entry_count(),
+				*command_stream);
+
+			return std::make_pair(testing_res, training_res);
+		}
+
+		training_stat_smart_ptr network_updater_cuda::read_update_accum(
+			const_cuda_linear_buffer_device_smart_ptr update_accum,
+			network_data_smart_ptr data,
+			unsigned int entry_count,
+			cudaStream_t stream_id) const
+		{
+			training_stat_smart_ptr training_res(new training_stat());
+
+			float mult = 1.0F / static_cast<float>(entry_count);
+
+			std::vector<double> pack(update_accum->get_size() / sizeof(double));
+			cuda_safe_call(cudaMemcpyAsync(&(*pack.begin()), *update_accum, update_accum->get_size(), cudaMemcpyDeviceToHost, stream_id));
+			cuda_safe_call(cudaStreamSynchronize(stream_id));
+
+			std::vector<double>::const_iterator current_accum_it = pack.begin();
+			for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
+			{
+				std::vector<float> layer_stat;
+
+				for(std::vector<std::vector<float> >::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); ++it2)
+				{
+					double sum = std::accumulate(
+						current_accum_it, 
+						current_accum_it + elem_count_update_accum_per_part,
+						0.0);
+
+					float val = static_cast<float>(sum) * mult;
+					layer_stat.push_back(val);
+
+					current_accum_it += elem_count_update_accum_per_part;
+				}
+
+				training_res->absolute_updates.push_back(layer_stat);
+			}
+
+			return training_res;
 		}
 
 		void network_updater_cuda::layer_config_list_modified()
@@ -822,18 +990,21 @@ namespace nnforge
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& gradient,
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& prev_upd,
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >& learning_rate,
+			cuda_linear_buffer_device_smart_ptr update_accum,
 			float gradient_normalizer,
+			unsigned int entry_count,
 			float weight_decay,
 			float momentum)
 		{
 			const const_layer_list& layer_list = *schema;
 
-			if (momentum> 0.0F)
+			const_layer_list::const_iterator layer_it = layer_list.begin() + testing_layer_count;
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator gradient_it = gradient.begin();
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator learning_rate_it = learning_rate.begin();
+			unsigned int total_part_id = 0;
+			if (momentum > 0.0F)
 			{
-				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator gradient_it = gradient.begin();
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator prev_upd_it = prev_upd.begin();
-				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator learning_rate_it = learning_rate.begin();
-				const_layer_list::const_iterator layer_it = layer_list.begin() + testing_layer_count;
 				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++gradient_it, ++prev_upd_it, ++learning_rate_it, ++layer_it)
 				{
 					std::vector<cuda_linear_buffer_device_smart_ptr>::iterator gradient_it2 = gradient_it->begin();
@@ -847,24 +1018,30 @@ namespace nnforge
 						int elem_count = (*data_it2)->get_size() / sizeof(float);
 						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
-							elem_count);
-						apply_gradient_with_momentum_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+							elem_count,
+							1,
+							1,
+							32);
+						int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+						int smem_size = threadblock_size * sizeof(float);
+						apply_gradient_with_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 							**data_it2,
 							**gradient_it2,
 							**prev_upd_it2,
+							((double *)(*update_accum)) + total_part_id * elem_count_update_accum_per_part,
 							**learning_rate_it2,
+							static_cast<float>(entry_count) / static_cast<float>(elem_count),
 							gradient_normalizer,
 							actual_weight_decay,
 							momentum,
-							elem_count);
+							elem_count,
+							elem_count_update_accum_per_part - 1);
+						++total_part_id;
 					}
 				}
 			}
 			else
 			{
-				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator gradient_it = gradient.begin();
-				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator learning_rate_it = learning_rate.begin();
-				const_layer_list::const_iterator layer_it = layer_list.begin() + testing_layer_count;
 				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++gradient_it, ++learning_rate_it, ++layer_it)
 				{
 					std::vector<cuda_linear_buffer_device_smart_ptr>::iterator gradient_it2 = gradient_it->begin();
@@ -877,14 +1054,23 @@ namespace nnforge
 						int elem_count = (*data_it2)->get_size() / sizeof(float);
 						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
-							elem_count);
-						apply_gradient_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+							elem_count,
+							1,
+							1,
+							32);
+						int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+						int smem_size = threadblock_size * sizeof(float);
+						apply_gradient_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 							**data_it2,
 							**gradient_it2,
+							((double *)(*update_accum)) + total_part_id * elem_count_update_accum_per_part,
 							**learning_rate_it2,
+							static_cast<float>(entry_count) / static_cast<float>(elem_count),
 							gradient_normalizer,
 							actual_weight_decay,
-							elem_count);
+							elem_count,
+							elem_count_update_accum_per_part - 1);
+						++total_part_id;
 					}
 				}
 			}

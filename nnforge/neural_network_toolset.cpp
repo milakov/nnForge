@@ -1503,7 +1503,7 @@ namespace nnforge
 			*it = dist(gen);
 
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
-		updater->update(
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> training_result = updater->update(
 			*training_data_reader,
 			*learning_rates,
 			data,
@@ -1537,6 +1537,8 @@ namespace nnforge
 			float gflops = flops / time_to_complete_seconds * 1.0e-9F;
 			std::cout << (boost::format("%|1$.1f| GFLOPs, %|2$.2f| seconds") % gflops % time_to_complete_seconds) << std::endl;
 		}
+
+		std::cout << *training_result.second << std::endl;
 
 		std::cout << data->data_list.get_stat() << std::endl;
 	}
@@ -1624,14 +1626,14 @@ namespace nnforge
 					learning_rates->at(layer_id)->at(weight_set).at(weight_id) = 1.0e+6F;
 					float original_weight = data->data_list[layer_id]->at(weight_set).at(weight_id);
 
-					testing_result_smart_ptr res = updater->update(
+					std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = updater->update(
 						*training_data_reader,
 						*learning_rates,
 						data,
 						1,
 						0.0F,
 						0.0F);
-					double original_error = res->get_error();
+					double original_error = res.first->get_error();
 					float gradient_backprop = -(data->data_list[layer_id]->at(weight_set).at(weight_id) - original_weight) / 1.0e+6F;
 
 					float best_gradient_rate = std::numeric_limits<float>::max();
@@ -1653,7 +1655,7 @@ namespace nnforge
 								1,
 								0.0F,
 								0.0F);
-							float new_error = res->get_error();
+							float new_error = res.first->get_error();
 							float gradient_check = static_cast<float>(new_error - original_error) / check_gradient_step;
 
 							float gradient_rate = get_gradient_rate(gradient_backprop, gradient_check);
