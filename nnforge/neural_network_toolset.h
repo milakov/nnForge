@@ -53,6 +53,10 @@ namespace nnforge
 		void do_action();
 
 	protected:
+		virtual std::string get_default_action() const;
+
+		virtual void do_custom_action();
+
 		virtual std::vector<string_option> get_string_options();
 
 		virtual std::vector<bool_option> get_bool_options();
@@ -61,11 +65,11 @@ namespace nnforge
 
 		virtual std::vector<int_option> get_int_options();
 
-		virtual void prepare_training_data() = 0;
+		virtual void prepare_training_data();
 
 		virtual void prepare_testing_data();
 
-		virtual network_schema_smart_ptr get_schema() const = 0;
+		virtual network_schema_smart_ptr get_schema() const;
 
 		virtual std::map<unsigned int, float> get_dropout_rate_map() const;
 

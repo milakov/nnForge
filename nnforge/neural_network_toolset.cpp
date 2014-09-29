@@ -152,13 +152,23 @@ namespace nnforge
 		}
 		else
 		{
-			throw std::runtime_error((boost::format("Unknown action: %1%") % action).str());
+			do_custom_action();
 		}
 	}
 
 	void neural_network_toolset::prepare_testing_data()
 	{
 		throw std::runtime_error("This toolset doesn't implement preparing testing data");
+	}
+	
+	void neural_network_toolset::prepare_training_data()
+	{
+		throw std::runtime_error("This toolset doesn't implement preparing training data");
+	}
+
+	network_schema_smart_ptr neural_network_toolset::get_schema() const
+	{
+		throw std::runtime_error("This toolset doesn't implement get_schema");
 	}
 	
 	bool neural_network_toolset::parse(int argc, char* argv[])
@@ -173,7 +183,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
+			("action,A", boost::program_options::value<std::string>(&action)->default_value(get_default_action()), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -338,6 +348,11 @@ namespace nnforge
 		return (action.size() > 0);
 	}
 
+	void neural_network_toolset::do_custom_action()
+	{
+		throw std::runtime_error((boost::format("Unknown action: %1%") % action).str());
+	}
+
 	void neural_network_toolset::dump_settings()
 	{
 		{
@@ -401,6 +416,11 @@ namespace nnforge
 			for(std::vector<int_option>::iterator it = additional_int_options.begin(); it != additional_int_options.end(); it++)
 				std::cout << it->name << "=" << *it->var << std::endl;
 		}
+	}
+
+	std::string neural_network_toolset::get_default_action() const
+	{
+		return std::string();
 	}
 
 	std::string neural_network_toolset::get_action() const
