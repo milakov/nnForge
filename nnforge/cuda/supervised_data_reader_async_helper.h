@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../supervised_data_reader.h"
+#include "cuda_running_configuration.h"
 
 #include <string>
 #include <cuda_runtime.h>
@@ -36,6 +37,7 @@ namespace nnforge
 				float * output,
 				void * d_input,
 				void * d_output,
+				cuda_running_configuration_const_smart_ptr cuda_config,
 				cudaStream_t stream);
 
 			supervised_data_reader_functor& operator =(const supervised_data_reader_functor& other);
@@ -48,6 +50,7 @@ namespace nnforge
 			float * output;
 			void * d_input;
 			void * d_output;
+			cuda_running_configuration_const_smart_ptr cuda_config;
 			cudaStream_t stream;
 
 			std::string * error;

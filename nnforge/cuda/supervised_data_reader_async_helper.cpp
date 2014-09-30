@@ -44,6 +44,7 @@ namespace nnforge
 			float * output,
 			void * d_input,
 			void * d_output,
+			cuda_running_configuration_const_smart_ptr cuda_config,
 			cudaStream_t stream)
 			: entries_to_read_count(entries_to_read_count)
 			, reader(reader)
@@ -51,6 +52,7 @@ namespace nnforge
 			, output(output)
 			, d_input(d_input)
 			, d_output(d_output)
+			, cuda_config(cuda_config)
 			, stream(stream)
 		{
 		}
@@ -63,6 +65,7 @@ namespace nnforge
 			this->output = other.output;
 			this->d_input = other.d_input;
 			this->d_output = other.d_output;
+			this->cuda_config = other.cuda_config;
 			this->stream = other.stream;
 
 			return *this;
@@ -74,6 +77,7 @@ namespace nnforge
 			try
 			{
 				PUSH_RANGE("Reading supervised data", 0);
+				cuda_config->set_device();
 				unsigned int input_neuron_count = reader->get_input_configuration().get_neuron_count();
 				unsigned int output_neuron_count = reader->get_output_configuration().get_neuron_count();
 				size_t input_neuron_elem_size = reader->get_input_neuron_elem_size();

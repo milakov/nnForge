@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../unsupervised_data_reader.h"
+#include "cuda_running_configuration.h"
 
 #include <string>
 #include <cuda_runtime.h>
@@ -34,6 +35,7 @@ namespace nnforge
 				unsupervised_data_reader * reader,
 				unsigned char * input,
 				void * d_input,
+				cuda_running_configuration_const_smart_ptr cuda_config,
 				cudaStream_t stream);
 
 			unsupervised_data_reader_functor& operator =(const unsupervised_data_reader_functor& other);
@@ -44,6 +46,7 @@ namespace nnforge
 			unsupervised_data_reader * reader;
 			unsigned char * input;
 			void * d_input;
+			cuda_running_configuration_const_smart_ptr cuda_config;
 			cudaStream_t stream;
 
 			std::string * error;

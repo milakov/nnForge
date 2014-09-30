@@ -55,6 +55,8 @@ namespace nnforge
 			: network_tester(schema)
 			, cuda_config(cuda_config)
 		{
+			cuda_config->set_device();
+
 			const const_layer_list& layer_list = *schema;
 			for(const_layer_list::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
 			{
@@ -82,6 +84,8 @@ namespace nnforge
 		// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
 		void network_tester_cuda::actual_set_data(network_data_smart_ptr data)
 		{
+			cuda_config->set_device();
+
 			host_net_data = data;
 
 			update_data();
@@ -89,6 +93,8 @@ namespace nnforge
 
 		void network_tester_cuda::actual_clear_data()
 		{
+			cuda_config->set_device();
+
 			host_net_data.reset();
 
 			update_data();
@@ -115,6 +121,8 @@ namespace nnforge
 		// The layer_config_list is guaranteed to be compatible with schema
 		void network_tester_cuda::layer_config_list_modified()
 		{
+			cuda_config->set_device();
+
 			tester_list.clear();
 
 			layer_configuration_specific_list::const_iterator it_conf = layer_config_list.begin();
@@ -148,6 +156,8 @@ namespace nnforge
 
 		output_neuron_value_set_smart_ptr network_tester_cuda::actual_run(unsupervised_data_reader& reader)
 		{
+			cuda_config->set_device();
+
 			reader.reset();
 
 			layer_configuration_specific input_configuration = reader.get_input_configuration();
@@ -221,6 +231,7 @@ namespace nnforge
 						&reader,
 						input,
 						*(input_buf[current_data_slot]),
+						cuda_config,
 						*data_stream);
 					async_reader.start();
 					power_of_two_spinup = (power_of_two_spinup > 0) ? (power_of_two_spinup - 1) : 0;
@@ -331,6 +342,8 @@ namespace nnforge
 			const void * input,
 			neuron_data_type::input_type type_code)
 		{
+			cuda_config->set_device();
+
 			std::vector<layer_configuration_specific_snapshot_smart_ptr> res;
 
 			unsigned int input_neuron_count = layer_config_list.begin()->get_neuron_count();
@@ -435,6 +448,8 @@ namespace nnforge
 			const void * input,
 			neuron_data_type::input_type type_code)
 		{
+			cuda_config->set_device();
+
 			layer_configuration_specific_snapshot_smart_ptr res(new layer_configuration_specific_snapshot(layer_config_list[layer_config_list.size() - 1]));
 
 			unsigned int input_neuron_count = layer_config_list.begin()->get_neuron_count();

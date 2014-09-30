@@ -52,6 +52,8 @@ namespace nnforge
 				return compute_capability_major * 100 + compute_capability_minor;
 			}
 
+			void set_device() const;
+
 		public:
 			float max_global_memory_usage_ratio;
 

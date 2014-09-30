@@ -54,6 +54,8 @@ namespace nnforge
 			: network_analyzer(schema)
 			, cuda_config(cuda_config)
 		{
+			cuda_config->set_device();
+
 			const const_layer_list& layer_list = *schema;
 
 			for(const_layer_list::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
@@ -76,6 +78,8 @@ namespace nnforge
 
 		void network_analyzer_cuda::layer_config_list_modified()
 		{
+			cuda_config->set_device();
+
 			updater_list.clear();
 			updater_input_and_all_buffers_pack.clear();
 			output_errors_buffers.clear();
@@ -117,6 +121,8 @@ namespace nnforge
 
 		void network_analyzer_cuda::actual_set_data(network_data_smart_ptr data)
 		{
+			cuda_config->set_device();
+
 			net_data.clear();
 			net_data_custom.clear();
 
@@ -155,6 +161,8 @@ namespace nnforge
 			const void * input,
 			neuron_data_type::input_type type_code)
 		{
+			cuda_config->set_device();
+
 			unsigned int input_neuron_count = layer_config_list.front().get_neuron_count();
 			unsigned int output_neuron_count = layer_config_list.back().get_neuron_count();
 			size_t input_neuron_elem_size = neuron_data_type::get_input_size(type_code);
@@ -220,6 +228,8 @@ namespace nnforge
 			unsigned int output_layer_id,
 			const std::vector<std::pair<unsigned int, unsigned int> >& input_rectangle_borders)
 		{
+			cuda_config->set_device();
+
 			std::vector<cuda_linear_buffer_device_smart_ptr>::iterator output_errors_it = output_errors_buffers.begin() + (output_errors_buffers.size() - output_layer_id - 1);
 			// Initialize output errors
 			{

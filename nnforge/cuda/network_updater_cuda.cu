@@ -234,6 +234,8 @@ namespace nnforge
 			: network_updater(schema, ef, layer_to_dropout_rate_map)
 			, cuda_config(cuda_config)
 		{
+			cuda_config->set_device();
+
 			const const_layer_list& layer_list = *schema;
 
 			testing_layer_count = 0;
@@ -288,6 +290,8 @@ namespace nnforge
 			float weight_decay,
 			float momentum)
 		{
+			cuda_config->set_device();
+
 			testing_result_smart_ptr testing_res(new testing_result(ef));
 
 			reader.reset();
@@ -484,6 +488,7 @@ namespace nnforge
 						output,
 						*(input_buf[current_data_slot]),
 						*(output_buf[current_data_slot]),
+						cuda_config,
 						*data_stream);
 					async_reader.start();
 					entry_read_count_index++;
@@ -837,6 +842,8 @@ namespace nnforge
 
 		void network_updater_cuda::layer_config_list_modified()
 		{
+			cuda_config->set_device();
+
 			layer_configuration_specific_list::const_iterator it_conf = layer_config_list.begin();
 
 			tester_list.clear();

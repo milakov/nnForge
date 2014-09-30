@@ -98,6 +98,11 @@ namespace nnforge
 			cusparse_safe_call(cusparseCreate(&cusparse_handle));
 		}
 
+		void cuda_running_configuration::set_device() const
+		{
+			cuda_safe_call(cudaSetDevice(device_id));
+		}
+
 		bool cuda_running_configuration::is_flush_required() const
 		{
 			#ifdef _WIN32
