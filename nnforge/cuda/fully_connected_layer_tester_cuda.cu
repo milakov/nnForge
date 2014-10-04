@@ -55,22 +55,40 @@ namespace nnforge
 			cublas_safe_call(cublasSetStream(cuda_config->get_cublas_handle(), stream_id));
 			float alpha = 1.0F;
 			float beta = 1.0F;
-			cublas_safe_call(cublasSgemm(
-				cuda_config->get_cublas_handle(),
-				CUBLAS_OP_T,
-				CUBLAS_OP_N,
-				output_elem_count_per_entry,
-				entry_count,
-				input_elem_count_per_entry,
-				&alpha,
-				*data[0],
-				input_elem_count_per_entry,
-				*input_buffer,
-				input_elem_count_per_entry,
-				&beta,
-				*additional_buffers[0],
-				output_elem_count_per_entry));
-
+			if (entry_count > 1)
+			{
+				cublas_safe_call(cublasSgemm(
+					cuda_config->get_cublas_handle(),
+					CUBLAS_OP_T,
+					CUBLAS_OP_N,
+					output_elem_count_per_entry,
+					entry_count,
+					input_elem_count_per_entry,
+					&alpha,
+					*data[0],
+					input_elem_count_per_entry,
+					*input_buffer,
+					input_elem_count_per_entry,
+					&beta,
+					*additional_buffers[0],
+					output_elem_count_per_entry));
+			}
+			else
+			{
+				cublasSgemv(
+					cuda_config->get_cublas_handle(),
+					CUBLAS_OP_T,
+					input_elem_count_per_entry,
+					output_elem_count_per_entry,
+					&alpha,
+					*data[0],
+					input_elem_count_per_entry,
+					*input_buffer,
+					1,
+					&beta,
+					*additional_buffers[0],
+					1);
+			}
 		}
 
 		std::vector<size_t> fully_connected_layer_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
