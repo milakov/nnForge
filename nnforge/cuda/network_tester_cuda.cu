@@ -54,6 +54,7 @@ namespace nnforge
 			cuda_running_configuration_const_smart_ptr cuda_config)
 			: network_tester(schema)
 			, cuda_config(cuda_config)
+			, cached_buffers_initialized(false)
 		{
 			cuda_config->set_device();
 
@@ -135,6 +136,9 @@ namespace nnforge
 			}
 
 			update_data();
+
+			cached_buffers_initialized = false;
+
 		}
 
 		void network_tester_cuda::update_buffers_configuration_testing(buffer_cuda_size_configuration& buffer_configuration) const
@@ -444,11 +448,37 @@ namespace nnforge
 			return res;
 		}
 
+		void network_tester_cuda::init_cached_buffers()
+		{
+			if (cached_buffers_initialized)
+				return;
+
+			cuda_config->set_device();
+
+			unsigned int input_neuron_count = layer_config_list.begin()->get_neuron_count();
+
+			cached_input_buf = cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * sizeof(float)));
+			cached_input_converted_buf = cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(input_neuron_count * sizeof(float)));
+
+			cached_output_buffer = cached_input_converted_buf;
+			cached_input_and_additional_buffers_pack.clear();
+			for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it)
+			{
+				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers = (*it)->allocate_additional_buffers(1);
+				cached_input_and_additional_buffers_pack.push_back(std::make_pair(cached_output_buffer, additional_buffers));
+				cached_output_buffer = (*it)->get_output_buffer(cached_output_buffer, additional_buffers);
+			}
+			cached_buffers_initialized = true;
+
+		}
+
 		layer_configuration_specific_snapshot_smart_ptr network_tester_cuda::actual_run(
 			const void * input,
 			neuron_data_type::input_type type_code)
 		{
 			cuda_config->set_device();
+
+			init_cached_buffers();
 
 			layer_configuration_specific_snapshot_smart_ptr res(new layer_configuration_specific_snapshot(layer_config_list[layer_config_list.size() - 1]));
 
@@ -457,22 +487,10 @@ namespace nnforge
 			unsigned int output_neuron_count = (layer_config_list.end() - 1)->get_neuron_count();
 			size_t input_neuron_elem_size = neuron_data_type::get_input_size(type_code);
 
-			cuda_linear_buffer_device_smart_ptr input_buf(new cuda_linear_buffer_device(input_neuron_count * input_neuron_elem_size));
-			cuda_linear_buffer_device_smart_ptr input_converted_buf(new cuda_linear_buffer_device(input_neuron_count * sizeof(float)));
-
-			cuda_linear_buffer_device_smart_ptr output_buffer = input_converted_buf;
-			std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> > > input_and_additional_buffers_pack;
-			for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it)
-			{
-				std::vector<cuda_linear_buffer_device_smart_ptr> additional_buffers = (*it)->allocate_additional_buffers(1);
-				input_and_additional_buffers_pack.push_back(std::make_pair(output_buffer, additional_buffers));
-				output_buffer = (*it)->get_output_buffer(output_buffer, additional_buffers);
-			}
-
 			// Copy input
 			{
 				cuda_safe_call(cudaMemcpyAsync(
-					*input_buf,
+					*cached_input_buf,
 					input,
 					input_neuron_count * input_neuron_elem_size,
 					cudaMemcpyHostToDevice,
@@ -487,19 +505,19 @@ namespace nnforge
 					*cuda_config,
 					elem_count);
 				convert_compacted_to_raw_kernel<<<kernel_dims.first, kernel_dims.second, 0, *command_stream>>>(
-					*input_buf,
-					*input_converted_buf,
+					*cached_input_buf,
+					*cached_input_converted_buf,
 					elem_count);
 			}
 			else if (type_code == neuron_data_type::type_float)
 			{
-				cuda_safe_call(cudaMemcpyAsync(*input_converted_buf, *input_buf, input_neuron_count * sizeof(float), cudaMemcpyDeviceToDevice, *command_stream));
+				cuda_safe_call(cudaMemcpyAsync(*cached_input_converted_buf, *cached_input_buf, input_neuron_count * sizeof(float), cudaMemcpyDeviceToDevice, *command_stream));
 			}
 			else throw neural_network_exception((boost::format("actual_run cannot handle input neurons of type %1%") % type_code).str());
 
 			// Run ann
 			{
-				std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> > >::iterator input_and_additional_buffers_pack_it = input_and_additional_buffers_pack.begin();
+				std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> > >::iterator input_and_additional_buffers_pack_it = cached_input_and_additional_buffers_pack.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_it = net_data.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_custom_it = net_data_custom.begin();
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = schema_data.begin();
@@ -520,7 +538,7 @@ namespace nnforge
 			{
 				cuda_safe_call(cudaMemcpyAsync(
 					&(*(res->data.begin())),
-					*output_buffer,
+					*cached_output_buffer,
 					output_neuron_count * sizeof(float),
 					cudaMemcpyDeviceToHost,
 					*command_stream));

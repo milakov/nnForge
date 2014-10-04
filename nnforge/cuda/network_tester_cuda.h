@@ -73,6 +73,8 @@ namespace nnforge
 
 			void update_data();
 
+			void init_cached_buffers();
+
 			cuda_running_configuration_const_smart_ptr cuda_config;
 
 			const_layer_testing_schema_list testing_schemas;
@@ -87,6 +89,12 @@ namespace nnforge
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > schema_data;
 
 			std::vector<layer_tester_cuda_smart_ptr> tester_list;
+
+			bool cached_buffers_initialized;
+			cuda_linear_buffer_device_smart_ptr cached_input_buf;
+			cuda_linear_buffer_device_smart_ptr cached_input_converted_buf;
+			std::vector<std::pair<cuda_linear_buffer_device_smart_ptr, std::vector<cuda_linear_buffer_device_smart_ptr> > > cached_input_and_additional_buffers_pack;
+			cuda_linear_buffer_device_smart_ptr cached_output_buffer;
 		};
 	}
 }
