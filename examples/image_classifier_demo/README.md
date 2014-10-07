@@ -11,7 +11,7 @@ The app needs trained model to run the classifier. The models are stored at [Goo
 Model files
 -------------------
 
-You need to download the archive with trained model and extract all the file from there:
+You need to download the archive with trained model and extract all the files from it:
 
 	nnforge/
 		working_data/

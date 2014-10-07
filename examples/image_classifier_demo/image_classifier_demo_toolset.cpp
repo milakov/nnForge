@@ -65,6 +65,7 @@ void image_classifier_demo_toolset::dump_help() const
 	std::cout << "KEYS:" << std::endl;
 	std::cout << "q,Esc : quit application" << std::endl;
 	std::cout << "+/- : increase/decrease font size" << std::endl;
+	std::cout << "s : save screenshot into screenshots directory" << std::endl;
 }
 
 void image_classifier_demo_toolset::run_demo()
@@ -121,6 +122,10 @@ void image_classifier_demo_toolset::run_demo()
 				case '-':
 					font_scale = std::max(font_scale - 0.2, 0.4);
 					init_draw_params();
+					break;
+				case 's':
+				case 'S':
+					save_image(frame);
 					break;
 				default:
 					break;
@@ -505,4 +510,25 @@ std::string image_classifier_demo_toolset::get_class_name_by_class_id(unsigned i
 		return (boost::format("Unknown class %1%") % class_id).str();
 
 	return it->second;
+}
+
+void image_classifier_demo_toolset::save_image(cv::Mat3b frame)
+{
+	boost::filesystem::path screenshots_folder = get_working_data_folder() / "screenshots";
+	boost::filesystem::create_directories(screenshots_folder);
+
+	std::string current_datetime;
+	{
+		time_t rawtime;
+		struct tm * timeinfo;
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		char buf[80];
+		strftime(buf, 80, "%Y-%m-%d_%H%M%S", timeinfo);
+		current_datetime = buf;
+	}
+
+	std::string filename = (boost::format("image_classifier_screenshot_%1%.jpg") % current_datetime).str();
+	boost::filesystem::path screenshot_filepath = screenshots_folder / filename;
+	cv::imwrite(screenshot_filepath.string(), frame);
 }

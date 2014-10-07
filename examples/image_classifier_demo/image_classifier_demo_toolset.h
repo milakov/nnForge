@@ -83,6 +83,8 @@ private:
 
 	void dump_help() const;
 
+	void save_image(cv::Mat3b frame);
+
 private:
 	bool demo_should_stop;
 	boost::mutex demo_should_stop_mutex;
