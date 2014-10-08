@@ -3,6 +3,8 @@ Image Classifier Demo
 
 This application captures video stream from camera and outputs images captured into a window on a screen. At the same time it runs classifier for the captured images and overlays the results (Top-5 predictions) onto the original images.
 
+![Screenshot of the Image Classifier Demo app running](misc_files/image_classifier_screenshot.jpg)
+
 Get model
 ---------
 
