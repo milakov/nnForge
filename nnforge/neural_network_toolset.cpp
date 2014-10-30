@@ -1509,6 +1509,13 @@ namespace nnforge
 				get_network_output_type());
 		}
 
+		/*
+		{
+			boost::filesystem::ofstream data_file(get_working_data_folder() / "ann_trained_000_initial.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+			data->write(data_file);
+		}
+		*/
+
 		layer_data_list_smart_ptr learning_rates(new layer_data_list(*schema));
 		{
 			random_generator data_gen = rnd::get_random_generator(674578);

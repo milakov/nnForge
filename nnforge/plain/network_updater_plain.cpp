@@ -223,6 +223,7 @@ namespace nnforge
 			bool entries_remained_for_loading = true;
 			unsigned int entry_read_count_index = 0;
 			unsigned int entry_gradient_calculated_count = 0;
+			unsigned int gradient_applied_count = 0;
 			while (entries_remained_for_loading)
 			{
 				unsigned int entries_available_for_processing_count = 0;
@@ -485,10 +486,10 @@ namespace nnforge
 							updates_accumulated,
 							learning_rate,
 							gradient_normalizer,
-							entry_gradient_calculated_count,
 							weight_decay,
 							momentum);
 						entry_gradient_calculated_count = 0;
+						++gradient_applied_count;
 					}
 				}
 			}
@@ -503,20 +504,24 @@ namespace nnforge
 					updates_accumulated,
 					learning_rate,
 					gradient_normalizer,
-					entry_gradient_calculated_count,
 					weight_decay,
 					momentum);
 				entry_gradient_calculated_count = 0;
+				++gradient_applied_count;
 			}
 
 			training_stat_smart_ptr training_res(new training_stat());
 			{
-				float mult = 1.0F / static_cast<float>(testing_res->get_entry_count());
-				for(std::vector<std::vector<double> >::const_iterator it = updates_accumulated.begin(); it != updates_accumulated.end(); ++it)
+				float mult = 1.0F / static_cast<float>(gradient_applied_count);
+				std::vector<layer_data_smart_ptr>::const_iterator it_data = data->data_list.begin();
+				for(std::vector<std::vector<double> >::const_iterator it = updates_accumulated.begin(); it != updates_accumulated.end(); ++it, ++it_data)
 				{
 					std::vector<float> updates;
-					for(std::vector<double>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
-						updates.push_back(mult * static_cast<float>(*it2));
+					std::vector<std::vector<float> >::const_iterator it_data2 = (*it_data)->begin();
+					for(std::vector<double>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2, ++it_data2)
+					{
+						updates.push_back(static_cast<float>(*it2) * mult / static_cast<float>(it_data2->size()));
+					}
 					training_res->absolute_updates.push_back(updates);
 				}
 			}
@@ -535,7 +540,6 @@ namespace nnforge
 			std::vector<std::vector<double> >& updates_accumulated,
 			const std::vector<layer_data_smart_ptr>& learning_rate,
 			float normalizer,
-			unsigned int entry_count,
 			float weight_decay,
 			float momentum) const
 		{
@@ -576,7 +580,7 @@ namespace nnforge
 							*gradient_it2 = 0.0F;
 							*previous_upd_it2 = upd;
 						}
-						*updates_accumulated_it += accum * static_cast<double>(entry_count) / static_cast<double>(data_it->size());
+						*updates_accumulated_it += accum;
 					}
 				}
 			}
@@ -606,7 +610,7 @@ namespace nnforge
 							*data_it2 = new_weight;
 							*gradient_it2 = 0.0F;
 						}
-						*updates_accumulated_it += accum * static_cast<double>(entry_count) / static_cast<double>(data_it->size());
+						*updates_accumulated_it += accum;
 					}
 				}
 			}

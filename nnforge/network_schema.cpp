@@ -108,11 +108,11 @@ namespace nnforge
 
 		for(unsigned int i = 0; i < layer_count_read; ++i)
 		{
-			boost::uuids::uuid layer_guid_read;
-			binary_stream_to_read_from.read(reinterpret_cast<char*>(layer_guid_read.data), sizeof(layer_guid_read.data));
+			boost::uuids::uuid layer_read_guid;
+			binary_stream_to_read_from.read(reinterpret_cast<char*>(layer_read_guid.data), sizeof(layer_read_guid.data));
 
-			layer_smart_ptr new_layer = single_layer_factory::get_const_instance().create_layer(layer_guid_read);
-			new_layer->read(binary_stream_to_read_from);
+			layer_smart_ptr new_layer = single_layer_factory::get_const_instance().create_layer(layer_read_guid);
+			new_layer->read(binary_stream_to_read_from, layer_read_guid);
 			add_layer(new_layer);
 		}
 	}

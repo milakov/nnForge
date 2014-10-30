@@ -76,7 +76,6 @@ namespace nnforge
 				std::vector<std::vector<double> >& updates_accumulated,
 				const std::vector<layer_data_smart_ptr>& learning_rate,
 				float normalizer,
-				unsigned int entry_count,
 				float weight_decay,
 				float momentum) const;
 

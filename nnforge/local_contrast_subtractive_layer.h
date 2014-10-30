@@ -45,7 +45,9 @@ namespace nnforge
 
 		virtual void write(std::ostream& binary_stream_to_write_to) const;
 
-		virtual void read(std::istream& binary_stream_to_read_from);
+		virtual void read(
+			std::istream& binary_stream_to_read_from,
+			const boost::uuids::uuid& layer_read_guid);
 
 		static const boost::uuids::uuid layer_guid;
 

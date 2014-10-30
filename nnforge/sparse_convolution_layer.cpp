@@ -146,7 +146,9 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
-	void sparse_convolution_layer::read(std::istream& binary_stream_to_read_from)
+	void sparse_convolution_layer::read(
+		std::istream& binary_stream_to_read_from,
+		const boost::uuids::uuid& layer_read_guid)
 	{
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&input_feature_map_count), sizeof(input_feature_map_count));
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&output_feature_map_count), sizeof(output_feature_map_count));

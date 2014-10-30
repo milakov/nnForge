@@ -50,17 +50,20 @@ namespace nnforge
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
 			array_by_val<int, DIMENSION_COUNT> window_sizes,
+			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
 			int input_feature_map_count_striped,
 			int output_feature_map_count,
 			int entry_count,
 			int packed_config_count)
 		{
+			int xyzw_output[DIMENSION_COUNT];
 			int xyzw[DIMENSION_COUNT];
-			xyzw[0] = (blockIdx.x * blockDim.x + threadIdx.x) * BLOCK_SIZE;
+			xyzw_output[0] = (blockIdx.x * blockDim.x + threadIdx.x) * BLOCK_SIZE;
+			xyzw[0] = xyzw_output[0] - left_zero_padding[0];
 			int packed_config_id = blockIdx.y * blockDim.y + threadIdx.y;
 			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-			bool in_bounds = (entry_id < entry_count) && (xyzw[0] < output_sizes[0]) && (packed_config_id < packed_config_count);
+			bool in_bounds = (entry_id < entry_count) && (xyzw_output[0] < output_sizes[0]) && (packed_config_id < packed_config_count);
 			if (in_bounds)
 			{
 				int weight_count_per_output_feature_map = input_feature_map_count_striped;
@@ -70,7 +73,10 @@ namespace nnforge
 				packed_config<DIMENSION_COUNT> conf = packed_config_list[packed_config_id];
 				#pragma unroll
 				for(int i = 0; i < DIMENSION_COUNT - 1; ++i)
-					xyzw[i + 1] = conf.get_val(i);
+				{
+					xyzw_output[i + 1] = conf.get_val(i);
+					xyzw[i + 1] = xyzw_output[i + 1] - left_zero_padding[i + 1];
+				}
 				int output_feature_map_id = conf.get_val(DIMENSION_COUNT - 1);
 				int input_elem_id = entry_id * input_feature_map_count_striped;
 				#pragma unroll
@@ -96,14 +102,18 @@ namespace nnforge
 
 				for(int input_layer_id = 0; input_layer_id < input_feature_map_count_striped; ++input_layer_id)
 				{
-					for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? window_sizes[3] : 1); ++input_w)
+					for(int input_w = (DIMENSION_COUNT > 3 ? xyzw[3] : 0); input_w < (DIMENSION_COUNT > 3 ? xyzw[3] + window_sizes[3] : 1); ++input_w)
 					{
-						for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? window_sizes[2] : 1); ++input_z)
+						bool b_fit3 = (DIMENSION_COUNT > 3) ? ((unsigned int)input_w < (unsigned int)input_sizes[3]) : true;
+						for(int input_z = (DIMENSION_COUNT > 2 ? xyzw[2] : 0); input_z < (DIMENSION_COUNT > 2 ? xyzw[2] + window_sizes[2] : 1); ++input_z)
 						{
-							for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? window_sizes[1] : 1); ++input_y)
+							bool b_fit2 = (DIMENSION_COUNT > 2) ? (b_fit3 && ((unsigned int)input_z < (unsigned int)input_sizes[2])) : true;
+							for(int input_y = (DIMENSION_COUNT > 1 ? xyzw[1] : 0); input_y < (DIMENSION_COUNT > 1 ? xyzw[1] + window_sizes[1] : 1); ++input_y)
 							{
+								bool b_fit1 = (DIMENSION_COUNT > 1) ? (b_fit2 && ((unsigned int)input_y < (unsigned int)input_sizes[1])) : true;
+
 								#pragma unroll 4
-								for(int input_x = 0; input_x < window_sizes[0]; ++input_x)
+								for(int input_x = xyzw[0]; input_x < xyzw[0] + window_sizes[0]; ++input_x)
 								{
 									float2 weight_list[FEATURE_MAP_BLOCK_SIZE];
 									#pragma unroll
@@ -112,7 +122,10 @@ namespace nnforge
 									#pragma unroll
 									for(int j = 0; j < BLOCK_SIZE; ++j)
 									{
-										float2 inp = tex1Dfetch(input_tex_ref, input_elem_id + j); 
+										int input_x_total = input_x + j;
+										bool b_fit0 = b_fit1 && ((unsigned int)input_x_total < (unsigned int)input_sizes[0]);
+										float2 inp = tex1Dfetch(input_tex_ref, b_fit0 ? (input_elem_id - xyzw[0] + input_x_total) : -1);
+
 										#pragma unroll
 										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										{
@@ -121,9 +134,8 @@ namespace nnforge
 										}
 									}
 									current_weights++;
-									input_elem_id++;
 								} // for input_x
-								input_elem_id += input_sizes[0] - window_sizes[0];
+								input_elem_id += input_sizes[0];
 							} // for input_y
 							if (DIMENSION_COUNT > 1)
 								input_elem_id += input_sizes[0] * (input_sizes[1] - window_sizes[1]);
@@ -138,7 +150,7 @@ namespace nnforge
 				int output_offset = entry_id * output_feature_map_count + output_feature_map_id;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-					output_offset = output_offset * output_sizes[i] + xyzw[i];
+					output_offset = output_offset * output_sizes[i] + xyzw_output[i];
 				float * base_output = output + output_offset;
 				int output_neuron_count_per_feature_map = output_sizes[0];
 				#pragma unroll
@@ -152,7 +164,7 @@ namespace nnforge
 						#pragma unroll
 						for(int j = 0; j < BLOCK_SIZE; ++j)
 						{
-							if (j < output_sizes[0] - xyzw[0])
+							if (j < output_sizes[0] - xyzw_output[0])
 								base_output[j + output_neuron_count_per_feature_map * i] = sums[i * BLOCK_SIZE + j];
 						}
 					}
@@ -170,17 +182,20 @@ namespace nnforge
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
 			array_by_val<int, DIMENSION_COUNT> window_sizes,
+			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
 			int input_feature_map_count_striped,
 			int output_feature_map_count,
 			int entry_count,
 			int packed_config_count)
 		{
+			int xyzw_output[DIMENSION_COUNT];
 			int xyzw[DIMENSION_COUNT];
-			xyzw[0] = (blockIdx.x * blockDim.x + threadIdx.x) * BLOCK_SIZE;
+			xyzw_output[0] = (blockIdx.x * blockDim.x + threadIdx.x) * BLOCK_SIZE;
+			xyzw[0] = xyzw_output[0] - left_zero_padding[0];
 			int packed_config_id = blockIdx.y * blockDim.y + threadIdx.y;
 			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-			bool in_bounds = (entry_id < entry_count) && (xyzw[0] < output_sizes[0]) && (packed_config_id < packed_config_count);
+			bool in_bounds = (entry_id < entry_count) && (xyzw_output[0] < output_sizes[0]) && (packed_config_id < packed_config_count);
 			if (in_bounds)
 			{
 				int weight_count_per_output_feature_map = input_feature_map_count_striped;
@@ -190,7 +205,10 @@ namespace nnforge
 				packed_config<DIMENSION_COUNT> conf = packed_config_list[packed_config_id];
 				#pragma unroll
 				for(int i = 0; i < DIMENSION_COUNT - 1; ++i)
-					xyzw[i + 1] = conf.get_val(i);
+				{
+					xyzw_output[i + 1] = conf.get_val(i);
+					xyzw[i + 1] = xyzw_output[i + 1] - left_zero_padding[i + 1];
+				}
 				int output_feature_map_id = conf.get_val(DIMENSION_COUNT - 1);
 				int input_elem_id = entry_id * input_feature_map_count_striped;
 				#pragma unroll
@@ -216,12 +234,25 @@ namespace nnforge
 
 				for(int input_layer_id = 0; input_layer_id < input_feature_map_count_striped; ++input_layer_id)
 				{
-					for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? window_sizes[3] : 1); ++input_w)
+					for(int input_w = (DIMENSION_COUNT > 3 ? xyzw[3] : 0); input_w < (DIMENSION_COUNT > 3 ? xyzw[3] + window_sizes[3] : 1); ++input_w)
 					{
-						for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? window_sizes[2] : 1); ++input_z)
+						bool b_fit3 = (DIMENSION_COUNT > 3) ? ((unsigned int)input_w < (unsigned int)input_sizes[3]) : true;
+						for(int input_z = (DIMENSION_COUNT > 2 ? xyzw[2] : 0); input_z < (DIMENSION_COUNT > 2 ? xyzw[2] + window_sizes[2] : 1); ++input_z)
 						{
-							for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? window_sizes[1] : 1); ++input_y)
+							bool b_fit2 = (DIMENSION_COUNT > 2) ? (b_fit3 && ((unsigned int)input_z < (unsigned int)input_sizes[2])) : true;
+							for(int input_y = (DIMENSION_COUNT > 1 ? xyzw[1] : 0); input_y < (DIMENSION_COUNT > 1 ? xyzw[1] + window_sizes[1] : 1); ++input_y)
 							{
+								bool b_fit1 = (DIMENSION_COUNT > 1) ? (b_fit2 && ((unsigned int)input_y < (unsigned int)input_sizes[1])) : true;
+
+								float2 input_vals[BLOCK_SIZE + WINDOW_WIDTH - 1];
+								int input_x = xyzw[0];
+								#pragma unroll
+								for(int i = 0; i < BLOCK_SIZE + WINDOW_WIDTH - 1; ++i, ++input_x)
+								{
+									bool b_fit0 = b_fit1 && ((unsigned int)input_x < (unsigned int)input_sizes[0]);
+									input_vals[i] = tex1Dfetch(input_tex_ref, b_fit0 ? (input_elem_id + i) : -1);
+								}
+
 								#pragma unroll
 								for(int input_x = 0; input_x < WINDOW_WIDTH; ++input_x)
 								{
@@ -232,7 +263,7 @@ namespace nnforge
 									#pragma unroll
 									for(int j = 0; j < BLOCK_SIZE; ++j)
 									{
-										float2 inp = tex1Dfetch(input_tex_ref, input_elem_id + j); 
+										float2 inp = input_vals[input_x + j]; 
 										#pragma unroll
 										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										{
@@ -241,9 +272,8 @@ namespace nnforge
 										}
 									}
 									current_weights++;
-									input_elem_id++;
 								} // input_x
-								input_elem_id += input_sizes[0] - WINDOW_WIDTH;
+								input_elem_id += input_sizes[0];
 							} // for input_y
 							if (DIMENSION_COUNT > 1)
 								input_elem_id += input_sizes[0] * (input_sizes[1] - window_sizes[1]);
@@ -258,7 +288,7 @@ namespace nnforge
 				int output_offset = entry_id * output_feature_map_count + output_feature_map_id;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-					output_offset = output_offset * output_sizes[i] + xyzw[i];
+					output_offset = output_offset * output_sizes[i] + xyzw_output[i];
 				float * base_output = output + output_offset;
 				int output_neuron_count_per_feature_map = output_sizes[0];
 				#pragma unroll
@@ -272,7 +302,7 @@ namespace nnforge
 						#pragma unroll
 						for(int j = 0; j < BLOCK_SIZE; ++j)
 						{
-							if (j < output_sizes[0] - xyzw[0])
+							if (j < output_sizes[0] - xyzw_output[0])
 								base_output[j + output_neuron_count_per_feature_map * i] = sums[i * BLOCK_SIZE + j];
 						}
 					}
@@ -281,10 +311,10 @@ namespace nnforge
 		}
 
 #define launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, block_size_const) \
-	convolution_tex_exact_blocked_kernel_fermi<dimension_count_const,window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*additional_buffers[0], *data[0], *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, packed_config_count);
+	convolution_tex_exact_blocked_kernel_fermi<dimension_count_const,window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*additional_buffers[0], *data[0], *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, packed_config_count);
 
 #define launch_generic_kernel_const_const(dimension_count_const, block_size_const) \
-	convolution_tex_generic_blocked_kernel_fermi<dimension_count_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*additional_buffers[0], *data[0], *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, packed_config_count);
+	convolution_tex_generic_blocked_kernel_fermi<dimension_count_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*additional_buffers[0], *data[0], *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, packed_config_count);
 
 #define launch_kernel_const_const(dimension_count_const, window_width, block_size_const) \
 	switch (window_width) \
@@ -465,6 +495,7 @@ namespace nnforge
 					window_sizes[i] = layer_derived->window_sizes[i];
 					input_sizes[i] = input_configuration_specific.dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
+					left_zero_padding[i] = layer_derived->left_zero_padding[i];
 				}
 
 				forward_x_block_size = get_block_size(output_sizes[0]);
@@ -544,6 +575,7 @@ namespace nnforge
 			array_by_val<int, dimension_count> output_sizes;
 			array_by_val<int, dimension_count> input_sizes;
 			array_by_val<int, dimension_count> window_sizes;
+			array_by_val<int, dimension_count> left_zero_padding;
 
 			layer_configuration_specific input_configuration_specific_striped;
 

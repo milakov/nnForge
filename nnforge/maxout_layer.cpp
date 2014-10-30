@@ -78,7 +78,9 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&feature_map_subsampling_size), sizeof(feature_map_subsampling_size));
 	}
 
-	void maxout_layer::read(std::istream& binary_stream_to_read_from)
+	void maxout_layer::read(
+		std::istream& binary_stream_to_read_from,
+		const boost::uuids::uuid& layer_read_guid)
 	{
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&feature_map_subsampling_size), sizeof(feature_map_subsampling_size));
 	}

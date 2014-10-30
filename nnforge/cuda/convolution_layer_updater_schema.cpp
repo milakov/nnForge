@@ -53,11 +53,16 @@ namespace nnforge
 		{
 			layer_updater_cuda_smart_ptr res;
 
-			if (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count)
+			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
+
+			bool zero_padding = (layer_derived->left_zero_padding == std::vector<unsigned int>(layer_derived->left_zero_padding.size(), 0))
+				&& (layer_derived->right_zero_padding == std::vector<unsigned int>(layer_derived->right_zero_padding.size(), 0));
+
+			if (zero_padding && (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count))
 			{
 				res = layer_updater_cuda_smart_ptr(new fully_connected_layer_updater_cuda());
 			}
-			else if (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes)
+			else if (zero_padding && (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes))
 			{
 				res = layer_updater_cuda_smart_ptr(new convolution_1x1_layer_updater_cuda());
 			}

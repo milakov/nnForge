@@ -112,14 +112,15 @@ namespace nnforge
 					for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
 						// Define the starting position of the first input elem
-						std::vector<float>::const_iterator in_it = in_it_base;
+						int in_it_offset = 0;
+
 						for(unsigned int i = 0; i < dimension_count; ++i)
-							in_it += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
+							in_it_offset += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
 
 						float sum = 0.0F;
 						for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
 						{
-							sum += *(in_it + (*(offset_list_it + i)));
+							sum += *(in_it_base + (in_it_offset + (*(offset_list_it + i))));
 						}
 						*out_it = sum * mult;
 

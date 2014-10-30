@@ -26,8 +26,16 @@
 
 namespace nnforge
 {
-	// {8AD07635-DDFE-43B4-B26A-15CA19155A65}
+	// {5957B44F-699E-4DDB-836E-3FB3EEB54965}
 	const boost::uuids::uuid convolution_layer::layer_guid =
+		{ 0x59, 0x57, 0xb4, 0x4f
+		, 0x69, 0x9e
+		, 0x4d, 0xdb
+		, 0x83, 0x6e
+		, 0x3f, 0xb3, 0xee, 0xb5, 0x49, 0x65 };
+
+	// {8AD07635-DDFE-43B4-B26A-15CA19155A65}
+	const boost::uuids::uuid convolution_layer::layer_guid_v1 =
 		{ 0x8a, 0xd0, 0x76, 0x35
 		, 0xdd, 0xfe
 		, 0x43, 0xb4
@@ -37,18 +45,44 @@ namespace nnforge
 	convolution_layer::convolution_layer(
 		const std::vector<unsigned int>& window_sizes,
 		unsigned int input_feature_map_count,
-		unsigned int output_feature_map_count)
+		unsigned int output_feature_map_count,
+		const std::vector<unsigned int>& left_zero_padding,
+		const std::vector<unsigned int>& right_zero_padding)
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count)
 	{
 		if (window_sizes.size() == 0)
 			throw neural_network_exception("window sizes for convolution layer may not be empty");
-
 		for(unsigned int i = 0; i < window_sizes.size(); i++)
 		{
 			if (window_sizes[i] == 0)
 				throw neural_network_exception("window dimension for convolution layer may not be zero");
+		}
+
+		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
+		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for right zero padding") % right_zero_padding.size()).str());
+
+		if (left_zero_padding.empty())
+			this->left_zero_padding.resize(window_sizes.size(), 0);
+		else
+		{
+			for(unsigned int i = 0; i < window_sizes.size(); i++)
+				if (left_zero_padding[i] >= window_sizes[i])
+					throw neural_network_exception((boost::format("left zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % left_zero_padding[i] % i % window_sizes[i]).str());
+			this->left_zero_padding = left_zero_padding;
+		}
+
+		if (right_zero_padding.empty())
+			this->right_zero_padding.resize(window_sizes.size(), 0);
+		else
+		{
+			for(unsigned int i = 0; i < window_sizes.size(); i++)
+				if (right_zero_padding[i] >= window_sizes[i])
+					throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
+			this->right_zero_padding = right_zero_padding;
 		}
 	}
 
@@ -85,10 +119,11 @@ namespace nnforge
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
 		{
-			if (input_configuration_specific.dimension_sizes[i] < window_sizes[i])
-				throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) is smaller than layer window size (%3%)") % input_configuration_specific.dimension_sizes[i] % i % window_sizes[i]).str());
+			unsigned int total_input_dimension_size = input_configuration_specific.dimension_sizes[i] + left_zero_padding[i] + right_zero_padding[i];
+			if (total_input_dimension_size < window_sizes[i])
+				throw neural_network_exception((boost::format("Too small total dimension size (with padding) %1% of dimension (%2%) is smaller than layer window size (%3%)") % total_input_dimension_size % i % window_sizes[i]).str());
 
-			res.dimension_sizes.push_back(input_configuration_specific.dimension_sizes[i] + 1 - window_sizes[i]);
+			res.dimension_sizes.push_back(total_input_dimension_size + 1 - window_sizes[i]);
 		}
 
 		return res;
@@ -102,7 +137,12 @@ namespace nnforge
 		std::vector<std::pair<unsigned int, unsigned int> > res;
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			res.push_back(std::make_pair(output_rectangle_borders[i].first, output_rectangle_borders[i].second + window_sizes[i] - 1));
+			res.push_back(
+				std::make_pair(
+					static_cast<unsigned int>(std::max(0, static_cast<int>(output_rectangle_borders[i].first) - static_cast<int>(left_zero_padding[i]))),
+					(output_rectangle_borders[i].second + window_sizes[i] - 1) - left_zero_padding[i]
+				)
+			);
 
 		return res;
 	}
@@ -115,9 +155,13 @@ namespace nnforge
 		unsigned int dimension_count = static_cast<unsigned int>(window_sizes.size());
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&dimension_count), sizeof(dimension_count));
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
+		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*left_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
+		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
-	void convolution_layer::read(std::istream& binary_stream_to_read_from)
+	void convolution_layer::read(
+		std::istream& binary_stream_to_read_from,
+		const boost::uuids::uuid& layer_read_guid)
 	{
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&input_feature_map_count), sizeof(input_feature_map_count));
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&output_feature_map_count), sizeof(output_feature_map_count));
@@ -126,6 +170,14 @@ namespace nnforge
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));
 		window_sizes.resize(dimension_count);
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
+
+		left_zero_padding.resize(dimension_count, 0);
+		right_zero_padding.resize(dimension_count, 0);
+		if (layer_read_guid != layer_guid_v1)
+		{
+			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*left_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
+			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
+		}
 	}
 
 	data_config convolution_layer::get_data_config() const

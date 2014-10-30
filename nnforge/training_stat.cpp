@@ -32,9 +32,9 @@ namespace nnforge
 		{
 			if (!val.absolute_updates[layer_id].empty())
 			{
-				out << " #" << layer_id << " (" << (boost::format("%|1$.2e|") % val.absolute_updates[layer_id][0]);
+				out << " #" << layer_id << " (" << (boost::format("%|1$.5e|") % val.absolute_updates[layer_id][0]);
 				for(int i = 1; i < val.absolute_updates[layer_id].size(); ++i)
-					out << ", " << (boost::format(" %|1$.2e|") % val.absolute_updates[layer_id][i]);
+					out << (boost::format(", %|1$.5e|") % val.absolute_updates[layer_id][i]);
 				out << ")";
 			}
 		}

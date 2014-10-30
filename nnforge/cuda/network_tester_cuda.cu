@@ -24,8 +24,11 @@
 #include "cuda_event.h"
 #include "unsupervised_data_reader_async_helper.h"
 
+#include "../debug_util.h"
+
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
 
 __global__ void convert_compacted_to_raw_kernel(
 	const uchar4 * __restrict input,
@@ -272,8 +275,26 @@ namespace nnforge
 						std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_it = net_data.begin();
 						std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator net_data_custom_it = net_data_custom.begin();
 						std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::iterator schema_data_it = schema_data.begin();
-						for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++input_and_additional_buffers_pack_it, ++net_data_it, ++net_data_custom_it, ++schema_data_it)
+						unsigned int layer_id = 0;
+						for(std::vector<layer_tester_cuda_smart_ptr>::iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++input_and_additional_buffers_pack_it, ++net_data_it, ++net_data_custom_it, ++schema_data_it, ++layer_id)
 						{
+							/*
+							{
+								cuda_linear_buffer_device_smart_ptr buf = input_and_additional_buffers_pack_it->first;
+								std::vector<float> inp_err(buf->get_size() / sizeof(float));
+								cuda_safe_call(cudaMemcpyAsync(&(*inp_err.begin()), *buf, inp_err.size() * sizeof(float), cudaMemcpyDeviceToHost, *command_stream));
+								cuda_safe_call(cudaStreamSynchronize(*command_stream));
+										
+								boost::filesystem::path dir = "Debug";
+								dir /= "GPU";
+								boost::filesystem::create_directories(dir);
+								debug_util::dump_list(
+									&(*inp_err.begin()),
+									inp_err.size(),
+									(dir / (boost::format("input_neurons_%1%.txt") % layer_id).str()).string().c_str());
+							}
+							*/
+
 							(*it)->enqueue_test(
 								*command_stream,
 								*schema_data_it,
@@ -283,6 +304,23 @@ namespace nnforge
 								input_and_additional_buffers_pack_it->second,
 								entries_available_for_processing_count);
 						}
+
+						/*
+						{
+							cuda_linear_buffer_device_smart_ptr buf = output_buffer;
+							std::vector<float> host_buf(buf->get_size() / sizeof(float));
+							cuda_safe_call(cudaMemcpyAsync(&(*host_buf.begin()), *buf, host_buf.size() * sizeof(float), cudaMemcpyDeviceToHost, *command_stream));
+							cuda_safe_call(cudaStreamSynchronize(*command_stream));
+										
+							boost::filesystem::path dir = "Debug";
+							dir /= "GPU";
+							boost::filesystem::create_directories(dir);
+							debug_util::dump_list(
+								&(*host_buf.begin()),
+								host_buf.size(),
+								(dir / "output_neurons.txt").string().c_str());
+						}
+						*/
 					}
 
 					// Copy output

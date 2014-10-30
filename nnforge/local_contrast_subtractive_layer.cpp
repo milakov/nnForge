@@ -126,7 +126,9 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*feature_maps_affected.begin())), sizeof(unsigned int) * feature_maps_affected_count);
 	}
 
-	void local_contrast_subtractive_layer::read(std::istream& binary_stream_to_read_from)
+	void local_contrast_subtractive_layer::read(
+		std::istream& binary_stream_to_read_from,
+		const boost::uuids::uuid& layer_read_guid)
 	{
 		unsigned int dimension_count;
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));

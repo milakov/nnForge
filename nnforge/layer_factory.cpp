@@ -27,6 +27,11 @@ namespace nnforge
 		return sample_layer_map.insert(sample_map::value_type(sample_layer->get_uuid(), sample_layer)).second;
 	}
 
+	bool layer_factory::register_layer(const boost::uuids::uuid& layer_guid, layer_smart_ptr sample_layer)
+	{
+		return sample_layer_map.insert(sample_map::value_type(layer_guid, sample_layer)).second;
+	}
+
 	bool layer_factory::unregister_layer(const boost::uuids::uuid& layer_guid)
 	{
 		return sample_layer_map.erase(layer_guid) == 1;

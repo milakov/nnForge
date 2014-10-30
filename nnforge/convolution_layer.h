@@ -28,7 +28,9 @@ namespace nnforge
 		convolution_layer(
 			const std::vector<unsigned int>& window_sizes,
 			unsigned int input_feature_map_count,
-			unsigned int output_feature_map_count);
+			unsigned int output_feature_map_count,
+			const std::vector<unsigned int>& left_zero_padding = std::vector<unsigned int>(),
+			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>());
 
 		virtual layer_smart_ptr clone() const;
 
@@ -50,7 +52,9 @@ namespace nnforge
 
 		virtual void write(std::ostream& binary_stream_to_write_to) const;
 
-		virtual void read(std::istream& binary_stream_to_read_from);
+		virtual void read(
+			std::istream& binary_stream_to_read_from,
+			const boost::uuids::uuid& layer_read_guid);
 
 		virtual void randomize_data(
 			layer_data& data,
@@ -63,6 +67,8 @@ namespace nnforge
 
 		static const boost::uuids::uuid layer_guid;
 
+		static const boost::uuids::uuid layer_guid_v1;
+
 	protected:
 		virtual data_config get_data_config() const;
 
@@ -70,5 +76,7 @@ namespace nnforge
 		std::vector<unsigned int> window_sizes;
 		unsigned int input_feature_map_count;
 		unsigned int output_feature_map_count;
+		std::vector<unsigned int> left_zero_padding;
+		std::vector<unsigned int> right_zero_padding;
 	};
 }

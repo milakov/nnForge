@@ -98,7 +98,9 @@ namespace nnforge
 	{
 	}
 
-	void layer::read(std::istream& binary_stream_to_read_from)
+	void layer::read(
+		std::istream& binary_stream_to_read_from,
+		const boost::uuids::uuid& layer_read_guid)
 	{
 	}
 

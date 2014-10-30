@@ -66,7 +66,9 @@ namespace nnforge
 
 		// The method shouldn't read uuid of the layer type
 		// The stream should be created with std::ios_base::binary flag
-		virtual void read(std::istream& binary_stream_to_read_from);
+		virtual void read(
+			std::istream& binary_stream_to_read_from,
+			const boost::uuids::uuid& layer_read_guid);
 
 		// All values are set to 0.0F
 		layer_data_smart_ptr create_layer_data() const;

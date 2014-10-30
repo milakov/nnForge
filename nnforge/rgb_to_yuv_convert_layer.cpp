@@ -90,7 +90,9 @@ namespace nnforge
 		}
 	}
 
-	void rgb_to_yuv_convert_layer::read(std::istream& binary_stream_to_read_from)
+	void rgb_to_yuv_convert_layer::read(
+		std::istream& binary_stream_to_read_from,
+		const boost::uuids::uuid& layer_read_guid)
 	{
 		unsigned int color_feature_map_config_count;
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&color_feature_map_config_count), sizeof(color_feature_map_config_count));

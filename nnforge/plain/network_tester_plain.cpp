@@ -18,8 +18,10 @@
 
 #include "layer_tester_plain_factory.h"
 #include "../neural_network_exception.h"
+#include "../debug_util.h"
 
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
 
 namespace nnforge
 {
@@ -131,8 +133,21 @@ namespace nnforge
 					std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> >::iterator buffers_it = input_buffer_and_additional_buffers_pack.begin();
 					layer_data_list::const_iterator data_it = net_data->data_list.begin();
 					layer_data_custom_list::const_iterator data_custom_it = net_data->data_custom_list.begin();
-					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it)
+					unsigned int layer_id = 0;
+					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it, ++layer_id)
 					{
+						/*
+						{
+							boost::filesystem::path dir = "Debug";
+							dir /= "CPU";
+							boost::filesystem::create_directories(dir);
+							debug_util::dump_list(
+								&(*buffers_it->first->begin()),
+								buffers_it->first->size(),
+								(dir / (boost::format("input_neurons_%1%.txt") % layer_id).str()).string().c_str());
+						}
+						*/
+
 						(*it)->test(
 							buffers_it->first,
 							buffers_it->second,
@@ -144,6 +159,18 @@ namespace nnforge
 							*(input_config_it + 1),
 							entries_available_for_processing_count);
 					}
+
+					/*
+					{
+						boost::filesystem::path dir = "Debug";
+						dir /= "CPU";
+						boost::filesystem::create_directories(dir);
+						debug_util::dump_list(
+							&(*output_buffer->begin()),
+							output_buffer->size(),
+							(dir / "output_neurons.txt").string().c_str());
+					}
+					*/
 				}
 
 				// Copy predicted values

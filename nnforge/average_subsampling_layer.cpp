@@ -103,7 +103,9 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*subsampling_sizes.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
-	void average_subsampling_layer::read(std::istream& binary_stream_to_read_from)
+	void average_subsampling_layer::read(
+		std::istream& binary_stream_to_read_from,
+		const boost::uuids::uuid& layer_read_guid)
 	{
 		unsigned int dimension_count;
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));

@@ -95,14 +95,13 @@ namespace nnforge
 				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >& learning_rate,
 				cuda_linear_buffer_device_smart_ptr update_accum,
 				float gradient_normalizer,
-				unsigned int entry_count,
 				float weight_decay,
 				float momentum);
 
 			training_stat_smart_ptr read_update_accum(
 				const_cuda_linear_buffer_device_smart_ptr update_accum,
 				network_data_smart_ptr data,
-				unsigned int entry_count,
+				unsigned int gradient_applied_count,
 				cudaStream_t stream_id) const;
 
 			cuda_running_configuration_const_smart_ptr cuda_config;
