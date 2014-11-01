@@ -402,7 +402,7 @@ namespace nnforge
 				unsigned int max_entry_count = std::min(std::min(cuda_config->get_max_entry_count(buffers_config), reader.get_entry_count()), max_entry_count_in_single_batch);
 				if (entry_read_count_list.empty() || (max_entry_count >= batch_size))
 				{
-					unsigned int it_count = std::max((max_entry_count + batch_size - 1) / batch_size, 1U);
+					unsigned int it_count = std::max(max_entry_count / batch_size, 1U);
 					max_entry_read_count = it_count * batch_size;
 					entry_read_count_list.clear();
 					entry_read_count_list.push_back(max_entry_read_count);
