@@ -72,7 +72,7 @@ namespace nnforge
 			clock_rate = device_prop.clockRate;
 			memory_clock_rate = device_prop.memoryClockRate;
 			memory_bus_width = device_prop.memoryBusWidth;
-			global_memory_size = device_prop.totalGlobalMem * 5 / 6;
+			global_memory_size = device_prop.totalGlobalMem;
 			ecc_enabled = (device_prop.ECCEnabled != 0);
 			l2_cache_size = device_prop.l2CacheSize;
 			multiprocessor_count = device_prop.multiProcessorCount;
