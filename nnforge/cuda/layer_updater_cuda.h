@@ -55,7 +55,7 @@ namespace nnforge
 
 			buffer_set allocate_all_buffers(unsigned int max_entry_count);
 
-			void update_buffer_configuration(buffer_cuda_size_configuration& buffer_configuration) const;
+			void update_buffer_configuration(buffer_cuda_size_configuration& buffer_configuration);
 
 			void update_buffer_configuration(
 				buffer_cuda_size_configuration& buffer_configuration,

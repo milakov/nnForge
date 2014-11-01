@@ -66,8 +66,10 @@ namespace nnforge
 			return std::vector<unsigned int>();
 		}
 
-		void layer_updater_cuda::update_buffer_configuration(buffer_cuda_size_configuration& buffer_configuration) const
+		void layer_updater_cuda::update_buffer_configuration(buffer_cuda_size_configuration& buffer_configuration)
 		{
+			set_max_entry_count(1);
+
 			std::vector<size_t> per_entry_sizes = get_sizes_of_additional_buffers_per_entry();
 			for(std::vector<size_t>::const_iterator it = per_entry_sizes.begin(); it != per_entry_sizes.end(); ++it)
 				buffer_configuration.add_per_entry_buffer(*it);

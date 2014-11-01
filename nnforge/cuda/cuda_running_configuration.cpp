@@ -72,7 +72,7 @@ namespace nnforge
 			clock_rate = device_prop.clockRate;
 			memory_clock_rate = device_prop.memoryClockRate;
 			memory_bus_width = device_prop.memoryBusWidth;
-			global_memory_size = device_prop.totalGlobalMem;
+			global_memory_size = device_prop.totalGlobalMem * 5 / 6;
 			ecc_enabled = (device_prop.ECCEnabled != 0);
 			l2_cache_size = device_prop.l2CacheSize;
 			multiprocessor_count = device_prop.multiProcessorCount;
@@ -169,8 +169,8 @@ namespace nnforge
 			const buffer_cuda_size_configuration& buffers_config,
 			float ratio) const
 		{
-			size_t memory_left = static_cast<size_t>(static_cast<float>(global_memory_size) * max_global_memory_usage_ratio * ratio) - buffers_config.constant_buffer_size;
-			if (memory_left< 0)
+			long long memory_left = static_cast<long long>(static_cast<float>(global_memory_size) * max_global_memory_usage_ratio * ratio) - static_cast<long long>(buffers_config.constant_buffer_size);
+			if (memory_left < 0)
 				memory_left = 0;
 
 			size_t entry_count_limited_by_global = memory_left / buffers_config.per_entry_buffer_size;

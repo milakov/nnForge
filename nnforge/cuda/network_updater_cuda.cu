@@ -310,7 +310,45 @@ namespace nnforge
 				part_count += (*it)->size();
 			unsigned int elem_count_update_accum = part_count * elem_count_update_accum_per_part;
 
-			unsigned int updater_max_count = std::max(get_updater_max_count(), 1U);
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data = get_data(data);
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data_custom = set_get_data_custom(data);
+			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > learning_rate_data = get_learning_rate(learning_rate);
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > gradient = get_zero_gradient(net_data);
+			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > previous_upd;
+			if (momentum > 0.0F)
+				previous_upd = get_zero_gradient(net_data);
+
+			unsigned int updater_max_count;
+			{
+				buffer_cuda_size_configuration buffers_config;
+
+				buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // initial error
+				buffers_config.add_constant_buffer(sizeof(double)); // error buffer
+				buffers_config.add_constant_buffer(sizeof(double) * elem_count_update_accum); // update_accum
+				if (!random_uniform_list.empty())
+					buffers_config.add_constant_buffer(random_uniform_list.size() * sizeof(float)); // random_uniform_list
+				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::const_iterator it = net_data.begin(); it != net_data.end(); ++it)
+					for(std::vector<cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
+						buffers_config.add_constant_buffer((*it2)->get_size());
+				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::const_iterator it = net_data_custom.begin(); it != net_data_custom.end(); ++it)
+					for(std::vector<cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
+						buffers_config.add_constant_buffer((*it2)->get_size());
+				for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::const_iterator it = learning_rate_data.begin(); it != learning_rate_data.end(); ++it)
+					for(std::vector<const_cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
+						buffers_config.add_constant_buffer((*it2)->get_size());
+				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::const_iterator it = gradient.begin(); it != gradient.end(); ++it)
+					for(std::vector<cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
+						buffers_config.add_constant_buffer((*it2)->get_size());
+				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::const_iterator it = previous_upd.begin(); it != previous_upd.end(); ++it)
+					for(std::vector<cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)
+						buffers_config.add_constant_buffer((*it2)->get_size());
+
+				for(std::vector<layer_updater_cuda_smart_ptr>::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it)
+					(*it)->update_buffer_configuration(buffers_config);
+
+				updater_max_count = cuda_config->get_max_entry_count(buffers_config, 0.9F);
+			}
+
 			unsigned int updater_entry_count;
 			std::vector<unsigned int> entry_read_count_list;
 			unsigned int max_entry_read_count;
@@ -330,14 +368,6 @@ namespace nnforge
 				}
 			}
 
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data = get_data(data);
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data_custom = set_get_data_custom(data);
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > learning_rate_data = get_learning_rate(learning_rate);
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > gradient = get_zero_gradient(net_data);
-			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > previous_upd;
-			if (momentum > 0.0F)
-				previous_upd = get_zero_gradient(net_data);
-
 			{
 				buffer_cuda_size_configuration buffers_config;
 				update_buffers_configuration(buffers_config, updater_entry_count);
@@ -349,7 +379,7 @@ namespace nnforge
 				buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
 				buffers_config.add_per_entry_buffer(output_neuron_count * sizeof(float)); // output
 				buffers_config.add_constant_buffer(output_neuron_count * sizeof(float) * updater_entry_count); // initial error
-				buffers_config.add_constant_buffer(sizeof(double) * updater_entry_count); // error buffer
+				buffers_config.add_constant_buffer(sizeof(double)); // error buffer
 				buffers_config.add_constant_buffer(sizeof(double) * elem_count_update_accum); // update_accum
 				if (!random_uniform_list.empty())
 					buffers_config.add_constant_buffer(random_uniform_list.size() * sizeof(float)); // random_uniform_list
@@ -975,16 +1005,6 @@ namespace nnforge
 
 			for(std::vector<layer_updater_cuda_smart_ptr>::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it)
 				(*it)->update_buffer_configuration(buffer_configuration, updater_entry_count);
-		}
-
-		unsigned int network_updater_cuda::get_updater_max_count() const
-		{
-			buffer_cuda_size_configuration buffer_configuration;
-
-			for(std::vector<layer_updater_cuda_smart_ptr>::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it)
-				(*it)->update_buffer_configuration(buffer_configuration);
-
-			return cuda_config->get_max_entry_count(buffer_configuration, 0.5F);
 		}
 
 		void network_updater_cuda::enqueue_dropout(

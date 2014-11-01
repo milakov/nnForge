@@ -63,8 +63,6 @@ namespace nnforge
 				buffer_cuda_size_configuration& buffer_configuration,
 				unsigned int updater_entry_count) const;
 
-			unsigned int get_updater_max_count() const;
-
 			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_learning_rate(const layer_data_list& learning_rate) const;
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data(network_data_const_smart_ptr data) const;
