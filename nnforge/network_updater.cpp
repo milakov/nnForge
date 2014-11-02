@@ -76,7 +76,7 @@ namespace nnforge
 
 	std::pair<testing_result_smart_ptr, training_stat_smart_ptr> network_updater::update(
 		supervised_data_reader& reader,
-		const layer_data_list& learning_rate,
+		const std::vector<std::vector<float> >& learning_rates,
 		network_data_smart_ptr data,
 		unsigned int batch_size,
 		float weight_decay,
@@ -84,7 +84,6 @@ namespace nnforge
 	{
 		// Check data-schema consistency
 		data->check_network_data_consistency(*schema);
-		learning_rate.check_consistency(*schema);
 
 		set_input_configuration_specific(reader.get_input_configuration());
 
@@ -97,7 +96,7 @@ namespace nnforge
 
 		data->apply_dropout_layer_config(layer_id_to_dropout_config_map, false);
 
-		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = actual_update(reader, learning_rate, data, batch_size, weight_decay, momentum);
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = actual_update(reader, learning_rates, data, batch_size, weight_decay, momentum);
 
 		data->apply_dropout_layer_config(layer_id_to_dropout_config_map, true);
 

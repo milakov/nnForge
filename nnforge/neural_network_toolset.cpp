@@ -1516,12 +1516,9 @@ namespace nnforge
 		}
 		*/
 
-		layer_data_list_smart_ptr learning_rates(new layer_data_list(*schema));
-		{
-			random_generator data_gen = rnd::get_random_generator(674578);
-			learning_rates->random_fill(learning_rate * 0.5F, learning_rate * 1.5F, data_gen);
-			//learning_rates->fill(learning_rate);
-		}
+		std::vector<std::vector<float> > learning_rates;
+		for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
+			learning_rates.push_back(std::vector<float>((*it)->size(), learning_rate));
 
 		std::vector<float> random_uniform_list(1 << 10);
 		random_generator gen = rnd::get_random_generator();
@@ -1532,7 +1529,7 @@ namespace nnforge
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> training_result = updater->update(
 			*training_data_reader,
-			*learning_rates,
+			learning_rates,
 			data,
 			batch_size,
 			weight_decay,
@@ -1596,8 +1593,9 @@ namespace nnforge
 				get_network_output_type());
 		}
 
-		layer_data_list_smart_ptr learning_rates(new layer_data_list(*schema));
-		learning_rates->fill(0.0F);
+		std::vector<std::vector<float> > learning_rates;
+		for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
+			learning_rates.push_back(std::vector<float>((*it)->size(), 0.0F));
 
 		std::vector<std::string> check_gradient_weight_params;
 		char* end;
@@ -1650,12 +1648,13 @@ namespace nnforge
 
 					std::cout << layer_id << ":" << weight_set << ":" << weight_id << " ";
 
-					learning_rates->at(layer_id)->at(weight_set).at(weight_id) = 1.0e+6F;
-					float original_weight = data->data_list[layer_id]->at(weight_set).at(weight_id);
+					learning_rates[layer_id][weight_set] = 1.0e+6F;
+					std::vector<float> original_weights = data->data_list[layer_id]->at(weight_set);
+					float original_weight = original_weights[weight_id];
 
 					std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = updater->update(
 						*training_data_reader,
-						*learning_rates,
+						learning_rates,
 						data,
 						1,
 						0.0F,
@@ -1674,10 +1673,11 @@ namespace nnforge
 							if (sign == 1)
 								check_gradient_step = -check_gradient_step;
 
+							data->data_list[layer_id]->at(weight_set) = original_weights;
 							data->data_list[layer_id]->at(weight_set).at(weight_id) = original_weight + check_gradient_step;
 							res = updater->update(
 								*training_data_reader,
-								*learning_rates,
+								learning_rates,
 								data,
 								1,
 								0.0F,
@@ -1704,8 +1704,8 @@ namespace nnforge
 					std::cout << "rate=" << best_gradient_rate << ", gradient_backprop=" << gradient_backprop << ", gradient_check=" << best_gradient_check << ", step = " << best_check_gradient_step;
 					++total_weight_count;
 
-					data->data_list[layer_id]->at(weight_set).at(weight_id) = original_weight;
-					learning_rates->at(layer_id)->at(weight_set).at(weight_id) = 0.0F;
+					data->data_list[layer_id]->at(weight_set) = original_weights;
+					learning_rates[layer_id][weight_set] = 0.0F;
 
 					std::cout << std::endl;
 				}

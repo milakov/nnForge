@@ -42,12 +42,12 @@ namespace nnforge
 	{
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 
-		std::pair<layer_data_list_smart_ptr, std::string> lr_and_comment = prepare_learning_rates(task.get_current_epoch());
+		std::pair<std::vector<std::vector<float> >, std::string> lr_and_comment = prepare_learning_rates(task.get_current_epoch(), task.data);
 		task.comments.push_back(lr_and_comment.second);
 
 		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> train_result = updater->update(
 			reader,
-			*lr_and_comment.first,
+			lr_and_comment.first,
 			task.data,
 			batch_size,
 			weight_decay,
@@ -63,16 +63,20 @@ namespace nnforge
 		task.history.push_back(train_result);
 	}
 
-	std::pair<layer_data_list_smart_ptr, std::string> network_trainer_sgd::prepare_learning_rates(unsigned int epoch)
+	std::pair<std::vector<std::vector<float> >, std::string> network_trainer_sgd::prepare_learning_rates(
+		unsigned int epoch,
+		network_data_smart_ptr data)
 	{
 		float learning_rate = get_global_learning_rate(static_cast<unsigned int>(epoch));
 
-		layer_data_list_smart_ptr lr(new layer_data_list(*schema));
-		lr->fill(learning_rate);
+		std::vector<std::vector<float> > res;
+
+		for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
+			res.push_back(std::vector<float>((*it)->size(), learning_rate));
 
 		std::string comment = (boost::format("LR %|1$.5e|") % learning_rate).str();
 
-		return std::make_pair(lr, comment);
+		return std::make_pair(res, comment);
 	}
 
 	void network_trainer_sgd::initialize_train(supervised_data_reader& reader)

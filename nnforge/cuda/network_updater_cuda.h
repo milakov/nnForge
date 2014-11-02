@@ -43,7 +43,7 @@ namespace nnforge
 			// schema, data and reader are guaranteed to be compatible
 			virtual std::pair<testing_result_smart_ptr, training_stat_smart_ptr> actual_update(
 				supervised_data_reader& reader,
-				const layer_data_list& learning_rate,
+				const std::vector<std::vector<float> >& learning_rates,
 				network_data_smart_ptr data,
 				unsigned int batch_size,
 				float weight_decay,
@@ -62,8 +62,6 @@ namespace nnforge
 			void update_buffers_configuration(
 				buffer_cuda_size_configuration& buffer_configuration,
 				unsigned int updater_entry_count) const;
-
-			std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> > get_learning_rate(const layer_data_list& learning_rate) const;
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > get_data(network_data_const_smart_ptr data) const;
 
@@ -90,7 +88,7 @@ namespace nnforge
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data,
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& gradient,
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& prev_upd,
-				std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >& learning_rate,
+				const std::vector<std::vector<float> >& learning_rates,
 				cuda_linear_buffer_device_smart_ptr update_accum,
 				float gradient_normalizer,
 				float weight_decay,

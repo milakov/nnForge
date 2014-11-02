@@ -80,7 +80,7 @@ namespace nnforge
 
 		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> network_updater_plain::actual_update(
 			supervised_data_reader& reader,
-			const layer_data_list& learning_rate,
+			const std::vector<std::vector<float> >& learning_rates,
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
@@ -146,7 +146,6 @@ namespace nnforge
 					for(layer_data::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); ++it2)
 					{
 						buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // data
-						buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // learning rate
 						buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // gradient
 						if (momentum > 0.0F)
 							buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // previous_upd
@@ -484,7 +483,7 @@ namespace nnforge
 							*gradient,
 							*previous_upd,
 							updates_accumulated,
-							learning_rate,
+							learning_rates,
 							gradient_normalizer,
 							weight_decay,
 							momentum);
@@ -502,7 +501,7 @@ namespace nnforge
 					*gradient,
 					*previous_upd,
 					updates_accumulated,
-					learning_rate,
+					learning_rates,
 					gradient_normalizer,
 					weight_decay,
 					momentum);
@@ -538,7 +537,7 @@ namespace nnforge
 			std::vector<layer_data_smart_ptr>& gradient,
 			std::vector<layer_data_smart_ptr>& previous_upd,
 			std::vector<std::vector<double> >& updates_accumulated,
-			const std::vector<layer_data_smart_ptr>& learning_rate,
+			const std::vector<std::vector<float> >& learning_rates,
 			float normalizer,
 			float weight_decay,
 			float momentum) const
@@ -546,7 +545,7 @@ namespace nnforge
 			const const_layer_list& layer_list = *schema;
 
 			layer_data_list::iterator gradient_it0 = gradient.begin() + testing_layer_count;
-			layer_data_list::const_iterator learning_rate_it0 = learning_rate.begin() + testing_layer_count;
+			std::vector<std::vector<float> >::const_iterator learning_rate_it0 = learning_rates.begin() + testing_layer_count;
 			const_layer_list::const_iterator layer_it = layer_list.begin() + testing_layer_count;
 			std::vector<std::vector<double> >::iterator updates_accumulated_it0 = updates_accumulated.begin() + testing_layer_count;
 			if (momentum > 0.0F)
@@ -557,7 +556,7 @@ namespace nnforge
 					layer_data::iterator gradient_it = (*gradient_it0)->begin();
 					layer_data::iterator previous_upd_it = (*previous_upd_it0)->begin();
 					std::vector<double>::iterator updates_accumulated_it = updates_accumulated_it0->begin();
-					layer_data::const_iterator learning_rate_it = (*learning_rate_it0)->begin();
+					std::vector<float>::const_iterator learning_rate_it = learning_rate_it0->begin();
 					std::set<unsigned int> weight_decay_part_id_set = (*layer_it)->get_weight_decay_part_id_set();
 					unsigned int part_id = 0;
 					for(layer_data::iterator data_it = (*data_it0)->begin(); data_it != (*data_it0)->end(); ++data_it, ++gradient_it, ++previous_upd_it, ++learning_rate_it, ++part_id, ++updates_accumulated_it)
@@ -565,15 +564,14 @@ namespace nnforge
 						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
 						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
 						std::vector<float>::iterator previous_upd_it2 = previous_upd_it->begin();
-						std::vector<float>::const_iterator learning_rate_it2 = learning_rate_it->begin();
+						float learning_rate = *learning_rate_it;
 						double accum = 0.0;
-						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2, ++learning_rate_it2)
+						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2)
 						{
 							float current_weight = *data_it2;
-							float lr = *learning_rate_it2;
 							float gr = *gradient_it2;
 							float prev_upd = *previous_upd_it2;
-							float upd = prev_upd * momentum + lr * (gr * normalizer - current_weight * actual_weight_decay);
+							float upd = prev_upd * momentum + learning_rate * (gr * normalizer - current_weight * actual_weight_decay);
 							accum += static_cast<double>(fabsf(upd));
 							float new_weight = current_weight + upd;
 							*data_it2 = new_weight;
@@ -590,7 +588,7 @@ namespace nnforge
 				{
 					layer_data::iterator gradient_it = (*gradient_it0)->begin();
 					std::vector<double>::iterator updates_accumulated_it = updates_accumulated_it0->begin();
-					layer_data::const_iterator learning_rate_it = (*learning_rate_it0)->begin();
+					std::vector<float>::const_iterator learning_rate_it = learning_rate_it0->begin();
 					std::set<unsigned int> weight_decay_part_id_set = (*layer_it)->get_weight_decay_part_id_set();
 					unsigned int part_id = 0;
 					double accum = 0.0;
@@ -598,13 +596,12 @@ namespace nnforge
 					{
 						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
 						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
-						std::vector<float>::const_iterator learning_rate_it2 = learning_rate_it->begin();
-						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++learning_rate_it2)
+						float learning_rate = *learning_rate_it;
+						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2)
 						{
 							float current_weight = *data_it2;
-							float lr = *learning_rate_it2;
 							float gr = *gradient_it2;
-							float upd = lr * (gr * normalizer - current_weight * actual_weight_decay);
+							float upd = learning_rate * (gr * normalizer - current_weight * actual_weight_decay);
 							accum += static_cast<double>(fabsf(upd));
 							float new_weight = current_weight + upd;
 							*data_it2 = new_weight;

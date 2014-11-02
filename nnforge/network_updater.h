@@ -41,7 +41,7 @@ namespace nnforge
 		// Size of random_uniform_list is a power of 2
 		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> update(
 			supervised_data_reader& reader,
-			const layer_data_list& learning_rate,
+			const std::vector<std::vector<float> >& learning_rates,
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
@@ -59,7 +59,7 @@ namespace nnforge
 		// schema, data and reader are guaranteed to be compatible
 		virtual std::pair<testing_result_smart_ptr, training_stat_smart_ptr> actual_update(
 			supervised_data_reader& reader,
-			const layer_data_list& learning_rate,
+			const std::vector<std::vector<float> >& learning_rates,
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,

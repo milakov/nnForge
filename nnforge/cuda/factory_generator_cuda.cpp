@@ -58,7 +58,7 @@ namespace nnforge
 		{
 			std::vector<float_option> res;
 
-			res.push_back(float_option("cuda_max_global_memory_usage_ratio,G", &cuda_max_global_memory_usage_ratio, 0.8F, "part of the global memory to be used by a single CUDA configuration."));
+			res.push_back(float_option("cuda_max_global_memory_usage_ratio,G", &cuda_max_global_memory_usage_ratio, 0.9F, "part of the global memory to be used by a single CUDA configuration."));
 
 			return res;
 		}
