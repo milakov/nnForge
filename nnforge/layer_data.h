@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "dropout_layer_config.h"
 #include "nn_types.h"
 #include "rnd.h"
 
@@ -38,10 +37,6 @@ namespace nnforge
 		void read(std::istream& binary_stream_to_read_from);
 
 		bool is_empty() const;
-
-		void apply_dropout_layer_config(
-			const dropout_layer_config& dropout,
-			bool is_direct);
 
 		void fill(float val);
 

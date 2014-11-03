@@ -66,21 +66,6 @@ namespace nnforge
 		return true;
 	}
 
-	void layer_data::apply_dropout_layer_config(
-		const dropout_layer_config& dropout,
-		bool is_direct)
-	{
-		for(std::map<unsigned int, float>::const_iterator it = dropout.weight_part_to_dropout_direct_multiplier_map.begin(); it != dropout.weight_part_to_dropout_direct_multiplier_map.end(); ++it)
-		{
-			unsigned int block_id = it->first;
-			float actual_mult = is_direct ? it->second : 1.0F / it->second;
-
-			std::vector<float>& weights = at(block_id);
-			mult_transform tr(actual_mult);
-			std::transform(weights.begin(), weights.end(), weights.begin(), tr);
-		}
-	}
-
 	void layer_data::fill(float val)
 	{
 		for(std::vector<std::vector<float> >::iterator it = begin(); it != end(); ++it)

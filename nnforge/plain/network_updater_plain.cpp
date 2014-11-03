@@ -43,9 +43,8 @@ namespace nnforge
 		network_updater_plain::network_updater_plain(
 			network_schema_smart_ptr schema,
 			const_error_function_smart_ptr ef,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			plain_running_configuration_const_smart_ptr plain_config)
-			: network_updater(schema, ef, layer_to_dropout_rate_map)
+			: network_updater(schema, ef)
 			, plain_config(plain_config)
 		{
 			const const_layer_list& layer_list = *schema;
@@ -84,7 +83,8 @@ namespace nnforge
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
-			float momentum)
+			float momentum,
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map)
 		{
 			testing_result_smart_ptr testing_res(new testing_result(ef));
 
@@ -672,13 +672,16 @@ namespace nnforge
 		{
 			const std::vector<float>::const_iterator rnd_it = random_uniform_list.begin();
 			const std::vector<float>::iterator in_it = target_buffer->begin();
+			const float scale = 1.0F / (1.0F - dropout_rate);
 
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 			for(int i = 0; i < elem_count; ++i)
 			{
+				float val = *(in_it + i);
 				unsigned int random_elem_id = (i + offset_in_random_list) & mask;
-				if (*(rnd_it + random_elem_id) < dropout_rate)
-					*(in_it + i) = 0.0F;
+				bool under_threshold = (*(rnd_it + random_elem_id) < dropout_rate);
+				val *= under_threshold ? 0.0F : scale;
+				*(in_it + i) = val;
 			}
 		}
 	}

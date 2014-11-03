@@ -248,17 +248,6 @@ namespace nnforge
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 	}
 
-	dropout_layer_config convolution_layer::get_dropout_layer_config(float dropout_rate) const
-	{
-		if ((dropout_rate < 0.0F) || (dropout_rate >= 1.0F))
-			throw neural_network_exception((boost::format("Illegal dropout rate: %1%") % dropout_rate).str());
-
-		dropout_layer_config res;
-		res.weight_part_to_dropout_direct_multiplier_map.insert(std::make_pair<unsigned int, float>(0, 1.0F - dropout_rate));
-
-		return res;
-	}
-
 	layer_data_configuration_list convolution_layer::get_layer_data_configuration_list() const
 	{
 		layer_data_configuration_list res;

@@ -21,7 +21,6 @@
 #include "layer_data.h"
 #include "layer_data_custom.h"
 #include "rnd.h"
-#include "dropout_layer_config.h"
 #include "layer_data_configuration.h"
 #include "nn_types.h"
 
@@ -87,8 +86,6 @@ namespace nnforge
 			layer_data& data,
 			layer_data_custom& data_custom,
 			random_generator& generator) const;
-
-		virtual dropout_layer_config get_dropout_layer_config(float dropout_rate) const;
 
 		bool is_empty_data() const;
 

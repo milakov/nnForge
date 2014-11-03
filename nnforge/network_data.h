@@ -19,7 +19,6 @@
 #include "layer_data.h"
 #include "layer_data_custom.h"
 #include "layer.h"
-#include "dropout_layer_config.h"
 #include "nn_types.h"
 #include "rnd.h"
 #include "layer_data_list.h"
@@ -55,10 +54,6 @@ namespace nnforge
 		void randomize(
 			const const_layer_list& layer_list,
 			random_generator& gen);
-
-		void apply_dropout_layer_config(
-			const std::map<unsigned int, dropout_layer_config>& layer_id_to_dropout_config_map,
-			bool is_direct);
 
 	public:
 		layer_data_list data_list;

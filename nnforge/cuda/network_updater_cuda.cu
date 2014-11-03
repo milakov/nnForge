@@ -73,6 +73,7 @@ namespace nnforge
 			float * __restrict neurons,
 			const float * __restrict random_buf,
 			float dropout_rate,
+			float scale,
 			int offset,
 			unsigned int mask,
 			int elem_count)
@@ -80,9 +81,11 @@ namespace nnforge
 			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
 			if (elem_id < elem_count)
 			{
+				float val = neurons[elem_id];
 				unsigned int random_elem_id = (elem_id + offset) & mask;
-				if (random_buf[random_elem_id] < dropout_rate)
-					neurons[elem_id] = 0.0F;
+				bool under_thresgold = (random_buf[random_elem_id] < dropout_rate);
+				val *= under_thresgold ? 0.0F : scale;
+				neurons[elem_id] = val;
 			}
 		}
 
@@ -223,9 +226,8 @@ namespace nnforge
 		network_updater_cuda::network_updater_cuda(
 			network_schema_smart_ptr schema,
 			const_error_function_smart_ptr ef,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 			cuda_running_configuration_const_smart_ptr cuda_config)
-			: network_updater(schema, ef, layer_to_dropout_rate_map)
+			: network_updater(schema, ef)
 			, cuda_config(cuda_config)
 		{
 			cuda_config->set_device();
@@ -282,7 +284,8 @@ namespace nnforge
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
-			float momentum)
+			float momentum,
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map)
 		{
 			cuda_config->set_device();
 
@@ -994,6 +997,7 @@ namespace nnforge
 			unsigned int elem_count,
 			unsigned int offset_in_random_list)
 		{
+			float scale = 1.0F / (1.0F - dropout_rate);
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
 				elem_count);
@@ -1001,6 +1005,7 @@ namespace nnforge
 				*target_buffer,
 				*random_buffer,
 				dropout_rate,
+				scale,
 				offset_in_random_list,
 				mask,
 				elem_count);

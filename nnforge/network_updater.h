@@ -22,7 +22,6 @@
 #include "supervised_data_reader.h"
 #include "testing_result.h"
 #include "training_stat.h"
-#include "dropout_layer_config.h"
 #include "error_function.h"
 #include "nn_types.h"
 
@@ -45,7 +44,8 @@ namespace nnforge
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
-			float momentum);
+			float momentum,
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map);
 
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
 		float get_flops_for_single_entry() const;
@@ -53,8 +53,7 @@ namespace nnforge
 	protected:
 		network_updater(
 			network_schema_smart_ptr schema,
-			const_error_function_smart_ptr ef,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map);
+			const_error_function_smart_ptr ef);
 
 		// schema, data and reader are guaranteed to be compatible
 		virtual std::pair<testing_result_smart_ptr, training_stat_smart_ptr> actual_update(
@@ -63,7 +62,8 @@ namespace nnforge
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
-			float momentum) = 0;
+			float momentum,
+			const std::map<unsigned int, float>& layer_to_dropout_rate_map) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 		// The layer_config_list is guaranteed to be compatible with schema
@@ -74,7 +74,6 @@ namespace nnforge
 	protected:
 		network_schema_smart_ptr schema;
 		const_error_function_smart_ptr ef;
-		std::map<unsigned int, float> layer_to_dropout_rate_map;
 		layer_configuration_specific_list layer_config_list;
 		std::vector<float> random_uniform_list;
 		float flops;
@@ -86,8 +85,6 @@ namespace nnforge
 
 		random_generator gen;
 		static const unsigned int random_list_bits;
-
-		std::map<unsigned int, dropout_layer_config> layer_id_to_dropout_config_map;
 	};
 
 	typedef nnforge_shared_ptr<network_updater> network_updater_smart_ptr;

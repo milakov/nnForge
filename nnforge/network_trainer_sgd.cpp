@@ -51,7 +51,8 @@ namespace nnforge
 			task.data,
 			batch_size,
 			weight_decay,
-			momentum);
+			momentum,
+			layer_to_dropout_rate_map);
 
 		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start);
 

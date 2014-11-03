@@ -474,8 +474,7 @@ namespace nnforge
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
-			get_error_function(),
-			get_dropout_rate_map());
+			get_error_function());
 
 		if (training_algo == "sgd")
 		{
@@ -498,6 +497,7 @@ namespace nnforge
 		res->weight_decay = weight_decay;
 		res->batch_size = batch_size;
 		res->momentum = momentum;
+		res->layer_to_dropout_rate_map = get_dropout_rate_map();
 
 		return res;
 	}
@@ -1493,8 +1493,7 @@ namespace nnforge
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
-			get_error_function(),
-			std::map<unsigned int, float>());
+			get_error_function());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
 		training_data_reader = supervised_data_reader_smart_ptr(new supervised_limited_entry_count_data_reader(training_data_reader, profile_updater_entry_count));
@@ -1533,7 +1532,8 @@ namespace nnforge
 			data,
 			batch_size,
 			weight_decay,
-			momentum);
+			momentum,
+			std::map<unsigned int, float>());
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		/*
 		{
@@ -1577,8 +1577,7 @@ namespace nnforge
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
-			get_error_function(),
-			std::map<unsigned int, float>());
+			get_error_function());
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
 		training_data_reader = supervised_data_reader_smart_ptr(new supervised_limited_entry_count_data_reader(training_data_reader, 1));
@@ -1658,7 +1657,8 @@ namespace nnforge
 						data,
 						1,
 						0.0F,
-						0.0F);
+						0.0F,
+						std::map<unsigned int, float>());
 					double original_error = res.first->get_error();
 					float gradient_backprop = -(data->data_list[layer_id]->at(weight_set).at(weight_id) - original_weight) / 1.0e+6F;
 
@@ -1681,7 +1681,8 @@ namespace nnforge
 								data,
 								1,
 								0.0F,
-								0.0F);
+								0.0F,
+								std::map<unsigned int, float>());
 							float new_error = res.first->get_error();
 							float gradient_check = static_cast<float>(new_error - original_error) / check_gradient_step;
 

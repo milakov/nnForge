@@ -32,7 +32,6 @@ namespace nnforge
 	public:
 		virtual ~network_trainer();
 
-		// If the layer is not in layer_to_dropout_rate_map then its droput rate is assumed to be 0.0F
 		void train(
 			supervised_data_reader& reader,
 			network_data_peeker& peeker,
@@ -48,6 +47,7 @@ namespace nnforge
 		float learning_rate_rise_rate;
 		float weight_decay;
 		float momentum;
+		std::map<unsigned int, float> layer_to_dropout_rate_map;
 
 	protected:
 		network_trainer(network_schema_smart_ptr schema);

@@ -129,15 +129,4 @@ namespace nnforge
 				gen);
 		}
 	}
-
-	void network_data::apply_dropout_layer_config(
-		const std::map<unsigned int, dropout_layer_config>& layer_id_to_dropout_config_map,
-		bool is_direct)
-	{
-		for(std::map<unsigned int, dropout_layer_config>::const_iterator it = layer_id_to_dropout_config_map.begin(); it != layer_id_to_dropout_config_map.end(); ++it)
-		{
-			unsigned int layer_id = it->first;
-			data_list[layer_id]->apply_dropout_layer_config(it->second, is_direct);
-		}
-	}
 }

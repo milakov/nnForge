@@ -122,11 +122,6 @@ namespace nnforge
 		return 0.0F;
 	}
 
-	dropout_layer_config layer::get_dropout_layer_config(float dropout_rate) const
-	{
-		return dropout_layer_config();
-	}
-
 	layer_data_configuration_list layer::get_layer_data_configuration_list() const
 	{
 		return layer_data_configuration_list();

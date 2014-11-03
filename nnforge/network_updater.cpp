@@ -28,34 +28,12 @@ namespace nnforge
 
 	network_updater::network_updater(
 		network_schema_smart_ptr schema,
-		const_error_function_smart_ptr ef,
-		const std::map<unsigned int, float>& layer_to_dropout_rate_map)
+		const_error_function_smart_ptr ef)
 		: schema(schema)
 		, ef(ef)
-		, layer_to_dropout_rate_map(layer_to_dropout_rate_map)
 		, random_uniform_list(1 << random_list_bits)
 		, gen(rnd::get_random_generator())
 	{
-		const const_layer_list& layer_list = *schema;
-		unsigned int layer_count = static_cast<unsigned int>(layer_list.size());
-
-		std::vector<const_layer_smart_ptr>::const_iterator layer_it = schema->get_layers().begin();
-		for(std::map<unsigned int, float>::const_iterator it = layer_to_dropout_rate_map.begin(); it != layer_to_dropout_rate_map.end(); ++it, ++layer_it)
-		{
-			if (it->first >= layer_count)
-				throw neural_network_exception("Dropout is specified for the layer which doesn't exist in the schema");
-
-			float dropout_rate = it->second;
-
-			if ((dropout_rate < 0.0F) || (dropout_rate >= 1.0F))
-				throw neural_network_exception((boost::format("Illegal dropout rate: %1%") % dropout_rate).str());
-
-			if (dropout_rate > 0.0F)
-			{
-				dropout_layer_config mult = (schema->get_layers()[it->first])->get_dropout_layer_config(dropout_rate);
-					layer_id_to_dropout_config_map.insert(std::make_pair(it->first, mult));
-			}
-		}
 	}
 
 	network_updater::~network_updater()
@@ -80,7 +58,8 @@ namespace nnforge
 		network_data_smart_ptr data,
 		unsigned int batch_size,
 		float weight_decay,
-		float momentum)
+		float momentum,
+		const std::map<unsigned int, float>& layer_to_dropout_rate_map)
 	{
 		// Check data-schema consistency
 		data->check_network_data_consistency(*schema);
@@ -94,11 +73,7 @@ namespace nnforge
 		for(std::vector<float>::iterator it = random_uniform_list.begin(); it != random_uniform_list.end(); ++it)
 			*it = dist(gen);
 
-		data->apply_dropout_layer_config(layer_id_to_dropout_config_map, false);
-
-		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = actual_update(reader, learning_rates, data, batch_size, weight_decay, momentum);
-
-		data->apply_dropout_layer_config(layer_id_to_dropout_config_map, true);
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = actual_update(reader, learning_rates, data, batch_size, weight_decay, momentum, layer_to_dropout_rate_map);
 
 		return res;
 	}

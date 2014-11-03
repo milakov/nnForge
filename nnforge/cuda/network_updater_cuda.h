@@ -34,7 +34,6 @@ namespace nnforge
 			network_updater_cuda(
 				network_schema_smart_ptr schema,
 				const_error_function_smart_ptr ef,
-				const std::map<unsigned int, float>& layer_to_dropout_rate_map,
 				cuda_running_configuration_const_smart_ptr cuda_config);
 
 			virtual ~network_updater_cuda();
@@ -47,7 +46,8 @@ namespace nnforge
 				network_data_smart_ptr data,
 				unsigned int batch_size,
 				float weight_decay,
-				float momentum);
+				float momentum,
+				const std::map<unsigned int, float>& layer_to_dropout_rate_map);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 			// The layer_config_list is guaranteed to be compatible with schema
