@@ -1510,7 +1510,7 @@ namespace nnforge
 
 		/*
 		{
-			boost::filesystem::ofstream data_file(get_working_data_folder() / "ann_trained_000_initial.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+			boost::filesystem::ofstream data_file(get_working_data_folder() / ann_subfolder_name / "ann_trained_000_initial.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 			data->write(data_file);
 		}
 		*/
@@ -1535,24 +1535,9 @@ namespace nnforge
 			momentum,
 			std::map<unsigned int, float>());
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
-		/*
-		{
-			boost::filesystem::create_directories("profile_data");
-			for(network_data::const_iterator it = data[0]->begin(); it != data[0]->end(); it++)
-			{
-				for(layer_data::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); it2++)
-				{
-					if (!it2->empty())
-					{
-						std::string filename = (boost::format("%1%_%|2$02d|_%|3$02d|.txt") % "data" % (it - data[0]->begin()) % (it2 - (*it)->begin())).str();
-						std::ofstream out((boost::filesystem::path("profile_data") / filename).string()); 
-						for(std::vector<float>::const_iterator it3 = it2->begin(); it3 != it2->end(); ++it3)
-							out << *it3 << std::endl;
-					}
-				}
-			}
-		}
-		*/
+
+		//save_ann_snapshot_raw("ann_snapshot_profile_updater", *data);
+
 		float time_to_complete_seconds = sec.count();
 
 		if (time_to_complete_seconds != 0.0F)

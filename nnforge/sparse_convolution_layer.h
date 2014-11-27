@@ -29,13 +29,17 @@ namespace nnforge
 			const std::vector<unsigned int>& window_sizes,
 			unsigned int input_feature_map_count,
 			unsigned int output_feature_map_count,
-			unsigned int feature_map_connection_count);
+			unsigned int feature_map_connection_count,
+			const std::vector<unsigned int>& left_zero_padding = std::vector<unsigned int>(),
+			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>());
 
 		sparse_convolution_layer(
 			const std::vector<unsigned int>& window_sizes,
 			unsigned int input_feature_map_count,
 			unsigned int output_feature_map_count,
-			float feature_map_connection_sparsity_ratio);
+			float feature_map_connection_sparsity_ratio,
+			const std::vector<unsigned int>& left_zero_padding = std::vector<unsigned int>(),
+			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>());
 
 		virtual layer_smart_ptr clone() const;
 
@@ -70,6 +74,8 @@ namespace nnforge
 
 		static const boost::uuids::uuid layer_guid;
 
+		static const boost::uuids::uuid layer_guid_v1;
+
 	protected:
 		virtual data_config get_data_config() const;
 
@@ -92,5 +98,7 @@ namespace nnforge
 		unsigned int input_feature_map_count;
 		unsigned int output_feature_map_count;
 		unsigned int feature_map_connection_count;
+		std::vector<unsigned int> left_zero_padding;
+		std::vector<unsigned int> right_zero_padding;
 	};
 }

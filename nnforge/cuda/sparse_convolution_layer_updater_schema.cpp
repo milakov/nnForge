@@ -20,6 +20,7 @@
 #include "../neural_network_exception.h"
 #include "sparse_fully_connected_1x1_layer_updater_cuda.h"
 #include "sparse_fully_connected_layer_updater_cuda.h"
+#include "sparse_convolution_layer_updater_schema_helper_cuda_kepler.h"
 
 #include <boost/format.hpp>
 
@@ -51,7 +52,12 @@ namespace nnforge
 		{
 			layer_updater_cuda_smart_ptr res;
 
-			if (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count)
+			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+
+			bool zero_padding = (layer_derived->left_zero_padding == std::vector<unsigned int>(layer_derived->left_zero_padding.size(), 0))
+				&& (layer_derived->right_zero_padding == std::vector<unsigned int>(layer_derived->right_zero_padding.size(), 0));
+
+			if (zero_padding && (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count))
 			{
 				if (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes)
 				{
@@ -62,7 +68,13 @@ namespace nnforge
 					res = layer_updater_cuda_smart_ptr(new sparse_fully_connected_layer_updater_cuda());
 				}
 			}
-			else throw neural_network_exception("sparse convolutional layer has spatial fully connected updater implementation in CUDA backend");
+			else
+			{
+				if (cuda_config->get_compute_capability() >= 300)
+					res = sparse_convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific, output_configuration_specific);
+				else
+					throw neural_network_exception("sparse convolutional layer has spatial fully connected updater implementation in CUDA backend for Kepler and above GPUs only");
+			}
 
 			return res;
 		}

@@ -27,8 +27,16 @@
 
 namespace nnforge
 {
-	// {359B361C-61E7-4E52-89E6-E722B433F95C}
+	// {228C72EF-B260-493C-AEFD-24A13D455696}
 	const boost::uuids::uuid sparse_convolution_layer::layer_guid =
+		{ 0x22, 0x8c, 0x72, 0xef
+		, 0xb2, 0x60
+		, 0x49, 0x3c
+		, 0xae, 0xfd
+		, 0x24, 0xa1, 0x3d, 0x45, 0x56, 0x96 };
+
+	// {359B361C-61E7-4E52-89E6-E722B433F95C}
+	const boost::uuids::uuid sparse_convolution_layer::layer_guid_v1 =
 		{ 0x35, 0x9b, 0x36, 0x1c
 		, 0x61, 0xe7
 		, 0x4e, 0x52
@@ -39,11 +47,15 @@ namespace nnforge
 		const std::vector<unsigned int>& window_sizes,
 		unsigned int input_feature_map_count,
 		unsigned int output_feature_map_count,
-		unsigned int feature_map_connection_count)
+		unsigned int feature_map_connection_count,
+		const std::vector<unsigned int>& left_zero_padding,
+		const std::vector<unsigned int>& right_zero_padding)
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count),
-		feature_map_connection_count(feature_map_connection_count)
+		feature_map_connection_count(feature_map_connection_count),
+		left_zero_padding(left_zero_padding),
+		right_zero_padding(right_zero_padding)
 	{
 		check_consistency();
 	}
@@ -52,11 +64,15 @@ namespace nnforge
 		const std::vector<unsigned int>& window_sizes,
 		unsigned int input_feature_map_count,
 		unsigned int output_feature_map_count,
-		float feature_map_connection_sparsity_ratio)
+		float feature_map_connection_sparsity_ratio,
+		const std::vector<unsigned int>& left_zero_padding,
+		const std::vector<unsigned int>& right_zero_padding)
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count),
-		feature_map_connection_count(static_cast<unsigned int>(input_feature_map_count * output_feature_map_count * feature_map_connection_sparsity_ratio))
+		feature_map_connection_count(static_cast<unsigned int>(input_feature_map_count * output_feature_map_count * feature_map_connection_sparsity_ratio)),
+		left_zero_padding(left_zero_padding),
+		right_zero_padding(right_zero_padding)
 	{
 		check_consistency();
 	}
@@ -78,6 +94,29 @@ namespace nnforge
 			throw neural_network_exception("feature_map_connection_count may not be smaller than output_feature_map_count");
 		if (feature_map_connection_count > input_feature_map_count * output_feature_map_count)
 			throw neural_network_exception("feature_map_connection_count may not be larger than in dense case");
+
+		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
+		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for right zero padding") % right_zero_padding.size()).str());
+
+		if (left_zero_padding.empty())
+			left_zero_padding.resize(window_sizes.size(), 0);
+		else
+		{
+			for(unsigned int i = 0; i < window_sizes.size(); i++)
+				if (left_zero_padding[i] >= window_sizes[i])
+					throw neural_network_exception((boost::format("left zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % left_zero_padding[i] % i % window_sizes[i]).str());
+		}
+
+		if (right_zero_padding.empty())
+			right_zero_padding.resize(window_sizes.size(), 0);
+		else
+		{
+			for(unsigned int i = 0; i < window_sizes.size(); i++)
+				if (right_zero_padding[i] >= window_sizes[i])
+					throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
+		}
 	}
 
 	const boost::uuids::uuid& sparse_convolution_layer::get_uuid() const
@@ -113,10 +152,11 @@ namespace nnforge
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
 		{
-			if (input_configuration_specific.dimension_sizes[i] < window_sizes[i])
-				throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) is smaller than layer window size (%3%)") % input_configuration_specific.dimension_sizes[i] % i % window_sizes[i]).str());
+			unsigned int total_input_dimension_size = input_configuration_specific.dimension_sizes[i] + left_zero_padding[i] + right_zero_padding[i];
+			if (total_input_dimension_size < window_sizes[i])
+				throw neural_network_exception((boost::format("Too small total dimension size (with padding) %1% of dimension (%2%) is smaller than layer window size (%3%)") % total_input_dimension_size % i % window_sizes[i]).str());
 
-			res.dimension_sizes.push_back(input_configuration_specific.dimension_sizes[i] + 1 - window_sizes[i]);
+			res.dimension_sizes.push_back(total_input_dimension_size + 1 - window_sizes[i]);
 		}
 
 		return res;
@@ -130,7 +170,12 @@ namespace nnforge
 		std::vector<std::pair<unsigned int, unsigned int> > res;
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			res.push_back(std::make_pair(output_rectangle_borders[i].first, output_rectangle_borders[i].second + window_sizes[i] - 1));
+			res.push_back(
+				std::make_pair(
+					static_cast<unsigned int>(std::max(0, static_cast<int>(output_rectangle_borders[i].first) - static_cast<int>(left_zero_padding[i]))),
+					(output_rectangle_borders[i].second + window_sizes[i] - 1) - left_zero_padding[i]
+				)
+			);
 
 		return res;
 	}
@@ -144,6 +189,8 @@ namespace nnforge
 		unsigned int dimension_count = static_cast<unsigned int>(window_sizes.size());
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&dimension_count), sizeof(dimension_count));
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
+		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*left_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
+		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
 	void sparse_convolution_layer::read(
@@ -158,6 +205,14 @@ namespace nnforge
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));
 		window_sizes.resize(dimension_count);
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
+
+		left_zero_padding.resize(dimension_count, 0);
+		right_zero_padding.resize(dimension_count, 0);
+		if (layer_read_guid != layer_guid_v1)
+		{
+			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*left_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
+			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
+		}
 	}
 
 	data_config sparse_convolution_layer::get_data_config() const
@@ -246,7 +301,7 @@ namespace nnforge
 		std::set<unsigned int> input_feature_map_id_set;
 		unsigned int start_feature_map_index = 0;
 		std::vector<int> v(input_feature_map_count);
-		for(int i = 0; i < feature_map_connection_count; ++i)
+		for(int i = 0; i < static_cast<int>(feature_map_connection_count); ++i)
 		{
 			if (input_feature_map_id_set.empty())
 			{
@@ -270,7 +325,7 @@ namespace nnforge
 					in_fm_present_set.begin(),
 					in_fm_present_set.end(),
 					v.begin());
-				int count = end_it - v.begin();
+				int count = static_cast<int>(end_it - v.begin());
 				if (count == 0)
 					continue;
 
@@ -299,13 +354,13 @@ namespace nnforge
 		}
 
 		int current_column_offset = 0;
-		for(int output_feature_map_id = 0; output_feature_map_id < output_feature_map_count; ++output_feature_map_id)
+		for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_feature_map_count); ++output_feature_map_id)
 		{
 			data_custom[1][output_feature_map_id] = current_column_offset;
 			const std::set<int>& input_feature_map_set = out_fm_in_fm_present_list[output_feature_map_id];
 			std::copy(input_feature_map_set.begin(), input_feature_map_set.end(), data_custom[0].begin() + current_column_offset);
 
-			current_column_offset += input_feature_map_set.size();
+			current_column_offset += static_cast<int>(input_feature_map_set.size());
 		}
 		data_custom[1][output_feature_map_count] = current_column_offset;
 	}

@@ -61,8 +61,24 @@ namespace nnforge
 			const std::vector<float>::const_iterator in_it_global = input_buffer->begin() + input_neuron_count * offset_input_entry_id;
 			const std::vector<float>::iterator out_it_global = output_buffer->begin();
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
-			const std::vector<unsigned int>& window_sizes = layer_derived->window_sizes;
-			const unsigned int dimension_count = static_cast<unsigned int>(window_sizes.size());
+
+			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
+			window_sizes_extended.resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& window_sizes = window_sizes_extended;
+
+			std::vector<unsigned int> left_zero_padding_extended = layer_derived->left_zero_padding;
+			left_zero_padding_extended.resize(max_dimension_count, 0);
+			const std::vector<unsigned int>& left_zero_padding = left_zero_padding_extended;
+
+			std::vector<unsigned int> right_zero_padding_extended = layer_derived->right_zero_padding;
+			right_zero_padding_extended.resize(max_dimension_count, 0);
+			const std::vector<unsigned int>& right_zero_padding = right_zero_padding_extended;
+
+			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific.dimension_sizes;
+			input_dimension_sizes_extended .resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& input_dimension_sizes = input_dimension_sizes_extended ;
+
+			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->window_sizes.size());
 			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
@@ -103,9 +119,10 @@ namespace nnforge
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
 
-			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
+			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
 				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+				nnforge_array<int, max_dimension_count> current_input_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -119,26 +136,48 @@ namespace nnforge
 					const int start_column_index = row_indices[output_feature_map_id];
 					const int end_column_index = row_indices[output_feature_map_id + 1];
 
-					std::fill_n(current_output_position.begin(), dimension_count, 0);
+					std::fill_n(current_input_position.begin(), max_dimension_count, 0);
+					std::fill_n(current_output_position.begin(), max_dimension_count, 0);
 					for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
 						float sum = *(biases + output_feature_map_id);
 						std::vector<float>::const_iterator weights_it = weights + start_column_index * const_window_elem_count;
-						std::vector<float>::const_iterator in_it_base2 = in_it_base;
+
+						int in_it_offset2 = 0;
+
 						for(unsigned int i = 0; i < dimension_count; ++i)
-							in_it_base2 += current_output_position[i] * (*(input_slices_it + i));
+							current_input_position[i] = static_cast<int>(current_output_position[i]) - static_cast<int>(left_zero_padding[i]);
+
+						for(unsigned int i = 0; i < dimension_count; ++i)
+							in_it_offset2 += current_input_position[i] * (*(input_slices_it + i));
 
 						for(int column_index = start_column_index; column_index < end_column_index; ++column_index)
 						{
 							int input_feature_map_id = column_indices[column_index];
 
 							// Define the starting position of the first input elem
-							std::vector<float>::const_iterator in_it = in_it_base2 + (input_feature_map_id * input_neuron_count_per_feature_map);
+							int in_it_offset = in_it_offset2 + (input_feature_map_id * input_neuron_count_per_feature_map);
 
-							for(unsigned int i = 0; i < const_window_elem_count; ++i)
+							int ind = 0;
+							for(int w = current_input_position[3]; w < current_input_position[3] + static_cast<int>(window_sizes[3]); ++w)
 							{
-								sum += (*(in_it + *(offset_list_it + i))) * (*weights_it);
-								++weights_it;
+								bool fit3 = ((unsigned int)w < (unsigned int)input_dimension_sizes[3]);
+								for(int z = current_input_position[2]; z < current_input_position[2] + static_cast<int>(window_sizes[2]); ++z)
+								{
+									bool fit2 = fit3 && ((unsigned int)z < (unsigned int)input_dimension_sizes[2]);
+									for(int y = current_input_position[1]; y < current_input_position[1] + static_cast<int>(window_sizes[1]); ++y)
+									{
+										bool fit1 = fit2 && ((unsigned int)y < (unsigned int)input_dimension_sizes[1]);
+										for(int x = current_input_position[0]; x < current_input_position[0] + static_cast<int>(window_sizes[0]); ++x)
+										{
+											bool fit0 = fit1 && ((unsigned int)x < (unsigned int)input_dimension_sizes[0]);
+											if (fit0)
+												sum += (*(in_it_base + (in_it_offset + *(offset_list_it + ind)))) * (*weights_it);
+											++ind;
+											++weights_it;
+										}
+									}
+								}
 							}
 						}
 						*out_it = sum;
@@ -176,8 +215,24 @@ namespace nnforge
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
-			const std::vector<unsigned int>& window_sizes = layer_derived->window_sizes;
-			const unsigned int dimension_count = static_cast<unsigned int>(window_sizes.size());
+
+			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
+			window_sizes_extended.resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& window_sizes = window_sizes_extended;
+
+			std::vector<unsigned int> left_zero_padding_extended = layer_derived->left_zero_padding;
+			left_zero_padding_extended.resize(max_dimension_count, 0);
+			const std::vector<unsigned int>& left_zero_padding = left_zero_padding_extended;
+
+			std::vector<unsigned int> right_zero_padding_extended = layer_derived->right_zero_padding;
+			right_zero_padding_extended.resize(max_dimension_count, 0);
+			const std::vector<unsigned int>& right_zero_padding = right_zero_padding_extended;
+
+			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific.dimension_sizes;
+			input_dimension_sizes_extended .resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& input_dimension_sizes = input_dimension_sizes_extended ;
+
+			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->window_sizes.size());
 			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
@@ -193,7 +248,7 @@ namespace nnforge
 			const std::vector<int>::const_iterator row_indices = (*data_custom)[1].begin();
 
 			std::vector<std::vector<std::pair<int, int> > > in_fm_out_fm_weight_pos_list_list(input_configuration_specific.feature_map_count);
-			for(int output_feature_map_id = 0; output_feature_map_id < output_configuration_specific.feature_map_count; ++output_feature_map_id)
+			for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_configuration_specific.feature_map_count); ++output_feature_map_id)
 			{
 				const int start_column_index = row_indices[output_feature_map_id];
 				const int end_column_index = row_indices[output_feature_map_id + 1];
@@ -230,9 +285,10 @@ namespace nnforge
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
 			const std::vector<std::vector<std::pair<int, int> > >::const_iterator in_fm_out_fm_weight_pos_it = in_fm_out_fm_weight_pos_list_list.begin();
 
-			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
+			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
 				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+				nnforge_array<int, max_dimension_count> current_input_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -245,12 +301,17 @@ namespace nnforge
 					const std::vector<std::pair<int, int> >& out_fm_weight_pos_list = in_fm_out_fm_weight_pos_it[input_feature_map_id];
 
 					std::fill_n(in_err_it_base, input_neuron_count_per_feature_map, 0.0F);
-					std::fill_n(current_output_position.begin(), dimension_count, 0);
+					std::fill_n(current_input_position.begin(), max_dimension_count, 0);
+					std::fill_n(current_output_position.begin(), max_dimension_count, 0);
 					for(std::vector<float>::const_iterator out_err_it_base2 = out_err_it_base; out_err_it_base2 != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it_base2)
 					{
-						std::vector<float>::iterator in_err_it = in_err_it_base;
+						int in_err_offset = 0;
+
 						for(unsigned int i = 0; i < dimension_count; ++i)
-							in_err_it += current_output_position[i] * (*(input_slices_it + i));
+							current_input_position[i] = static_cast<int>(current_output_position[i]) - static_cast<int>(left_zero_padding[i]);
+
+						for(unsigned int i = 0; i < dimension_count; ++i)
+							in_err_offset += current_input_position[i] * (*(input_slices_it + i));
 
 						for(std::vector<std::pair<int, int> >::const_iterator it = out_fm_weight_pos_list.begin(); it != out_fm_weight_pos_list.end(); ++it)
 						{
@@ -260,11 +321,30 @@ namespace nnforge
 							std::vector<float>::const_iterator out_err_it = out_err_it_base2 + (output_feature_map_id * output_neuron_count_per_feature_map);
 							std::vector<float>::const_iterator weights_it = weights + weight_block_id * const_window_elem_count;
 							float current_err = *out_err_it;
-							for(unsigned int i = 0; i < const_window_elem_count; ++i)
+
+							int ind = 0;
+							for(int w = current_input_position[3]; w < current_input_position[3] + static_cast<int>(window_sizes[3]); ++w)
 							{
-								float w = *weights_it;
-								*(in_err_it + *(offset_list_it + i)) += (w * current_err);
-								++weights_it;
+								bool fit3 = ((unsigned int)w < (unsigned int)input_dimension_sizes[3]);
+								for(int z = current_input_position[2]; z < current_input_position[2] + static_cast<int>(window_sizes[2]); ++z)
+								{
+									bool fit2 = fit3 && ((unsigned int)z < (unsigned int)input_dimension_sizes[2]);
+									for(int y = current_input_position[1]; y < current_input_position[1] + static_cast<int>(window_sizes[1]); ++y)
+									{
+										bool fit1 = fit2 && ((unsigned int)y < (unsigned int)input_dimension_sizes[1]);
+										for(int x = current_input_position[0]; x < current_input_position[0] + static_cast<int>(window_sizes[0]); ++x)
+										{
+											bool fit0 = fit1 && ((unsigned int)x < (unsigned int)input_dimension_sizes[0]);
+											if (fit0)
+											{
+												float w = *weights_it;
+												*(in_err_it_base + (in_err_offset + *(offset_list_it + ind))) += (w * current_err);
+											}
+											++ind;
+											++weights_it;
+										}
+									}
+								}
 							}
 						}
 
@@ -300,9 +380,26 @@ namespace nnforge
 			const std::vector<float>::const_iterator in_it_global = input_neurons->begin() + input_neuron_count * offset_input_entry_id;
 			const std::vector<float>::const_iterator out_err_it_global = output_errors->begin();
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
-			const std::vector<unsigned int>& window_sizes = layer_derived->window_sizes;
+
+			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
+			window_sizes_extended.resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& window_sizes = window_sizes_extended;
+
+			std::vector<unsigned int> left_zero_padding_extended = layer_derived->left_zero_padding;
+			left_zero_padding_extended.resize(max_dimension_count, 0);
+			const std::vector<unsigned int>& left_zero_padding = left_zero_padding_extended;
+
+			std::vector<unsigned int> right_zero_padding_extended = layer_derived->right_zero_padding;
+			right_zero_padding_extended.resize(max_dimension_count, 0);
+			const std::vector<unsigned int>& right_zero_padding = right_zero_padding_extended;
+
+			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific.dimension_sizes;
+			input_dimension_sizes_extended .resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& input_dimension_sizes = input_dimension_sizes_extended ;
+
+			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->window_sizes.size());
 			unsigned int feature_map_connection_count = layer_derived->feature_map_connection_count;
-			const unsigned int dimension_count = static_cast<unsigned int>(window_sizes.size());
+
 			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
@@ -320,7 +417,7 @@ namespace nnforge
 
 			std::vector<std::pair<int, int> > out_fm_in_fm_list(feature_map_connection_count);
 			int i = 0;
-			for(int output_feature_map_id = 0; output_feature_map_id < output_configuration_specific.feature_map_count; ++output_feature_map_id)
+			for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_configuration_specific.feature_map_count); ++output_feature_map_id)
 			{
 				const int start_column_index = row_indices[output_feature_map_id];
 				const int end_column_index = row_indices[output_feature_map_id + 1];
@@ -361,9 +458,10 @@ namespace nnforge
 			const std::vector<std::pair<int, int> >::const_iterator out_fm_in_fm_it = out_fm_in_fm_list.begin();
 			const int const_updater_count = updater_count;
 
-			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
+			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
 				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+				nnforge_array<int, max_dimension_count> current_input_position;
 				std::vector<float> weights_local(const_window_elem_count, 0.0F);
 
 				#pragma omp for schedule(guided)
@@ -380,18 +478,42 @@ namespace nnforge
 						std::vector<float>::const_iterator in_it_base = in_it_global + (entry_id * input_neuron_count) + (input_feature_map_id * input_neuron_count_per_feature_map);
 						std::vector<float>::const_iterator out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
 
-						std::fill_n(current_output_position.begin(), dimension_count, 0);
+						std::fill_n(current_input_position.begin(), max_dimension_count, 0);
+						std::fill_n(current_output_position.begin(), max_dimension_count, 0);
 						for(std::vector<float>::const_iterator out_err_it = out_err_it_base; out_err_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it)
 						{
-							std::vector<float>::const_iterator in_it = in_it_base;
+							int in_it_offset = 0;
+
 							for(unsigned int i = 0; i < dimension_count; ++i)
-								in_it += current_output_position[i] * (*(input_slices_it + i));
+								current_input_position[i] = static_cast<int>(current_output_position[i]) - static_cast<int>(left_zero_padding[i]);
+
+							for(unsigned int i = 0; i < dimension_count; ++i)
+								in_it_offset += current_input_position[i] * (*(input_slices_it + i));
 
 							float current_err = *out_err_it;
-							for(unsigned int i = 0; i < const_window_elem_count; ++i)
+
+							int ind = 0;
+							for(int w = current_input_position[3]; w < current_input_position[3] + static_cast<int>(window_sizes[3]); ++w)
 							{
-								float in_neuron = *(in_it + *(offset_list_it + i));
-								weights_local[i] += (in_neuron * current_err);
+								bool fit3 = ((unsigned int)w < (unsigned int)input_dimension_sizes[3]);
+								for(int z = current_input_position[2]; z < current_input_position[2] + static_cast<int>(window_sizes[2]); ++z)
+								{
+									bool fit2 = fit3 && ((unsigned int)z < (unsigned int)input_dimension_sizes[2]);
+									for(int y = current_input_position[1]; y < current_input_position[1] + static_cast<int>(window_sizes[1]); ++y)
+									{
+										bool fit1 = fit2 && ((unsigned int)y < (unsigned int)input_dimension_sizes[1]);
+										for(int x = current_input_position[0]; x < current_input_position[0] + static_cast<int>(window_sizes[0]); ++x)
+										{
+											bool fit0 = fit1 && ((unsigned int)x < (unsigned int)input_dimension_sizes[0]);
+											if (fit0)
+											{
+												float in_neuron = *(in_it_base + (in_it_offset + *(offset_list_it + ind)));
+												weights_local[ind] += (in_neuron * current_err);
+											}
+											++ind;
+										}
+									}
+								}
 							}
 
 							// Go to the next output element
