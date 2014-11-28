@@ -24,7 +24,7 @@
 
 namespace nnforge
 {
-	const unsigned int network_updater::random_list_bits = 10;
+	const unsigned int network_updater::random_list_bits = 18;
 
 	network_updater::network_updater(
 		network_schema_smart_ptr schema,
