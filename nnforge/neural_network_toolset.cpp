@@ -1508,13 +1508,6 @@ namespace nnforge
 				get_network_output_type());
 		}
 
-		/*
-		{
-			boost::filesystem::ofstream data_file(get_working_data_folder() / ann_subfolder_name / "ann_trained_000_initial.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			data->write(data_file);
-		}
-		*/
-
 		std::vector<std::vector<float> > learning_rates;
 		for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
 			learning_rates.push_back(std::vector<float>((*it)->size(), learning_rate));
@@ -1536,7 +1529,14 @@ namespace nnforge
 			std::map<unsigned int, float>());
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 
-		//save_ann_snapshot_raw("ann_snapshot_profile_updater", *data);
+		/*
+		{
+			boost::filesystem::ofstream data_file(get_working_data_folder() / ann_subfolder_name / "ann_trained_000_profile_updater.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+			data->write(data_file);
+		}
+		*/
+
+		// save_ann_snapshot_raw("ann_snapshot_profile_updater", *data);
 
 		float time_to_complete_seconds = sec.count();
 

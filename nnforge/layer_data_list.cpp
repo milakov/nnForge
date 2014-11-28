@@ -20,6 +20,7 @@
 
 #include <numeric>
 #include <boost/format.hpp>
+#include <cmath>
 
 namespace nnforge
 {
@@ -47,7 +48,7 @@ namespace nnforge
 
 	std::string layer_data_list::get_stat() const
 	{
-		std::string stat = "";
+		std::string stat = "Avg Abs weights";
 
 		unsigned int layer_id = 0;
 		for(layer_data_list::const_iterator it = begin(); it != end(); ++it)
@@ -58,8 +59,10 @@ namespace nnforge
 			{
 				const std::vector<float>& data = *it2;
 
-				double sum = std::accumulate(data.begin(), data.end(), 0.0);
-				float avg = static_cast<float>(sum / data.size());
+				double sum = 0.0;
+				for(std::vector<float>::const_iterator it3 = data.begin(); it3 != data.end(); ++it3)
+					sum += static_cast<float>(fabsf(*it3));
+				float avg = static_cast<float>(sum) / static_cast<float>(data.size());
 
 				if (!layer_stat.empty())
 					layer_stat += ", ";
@@ -68,9 +71,7 @@ namespace nnforge
 
 			if (!layer_stat.empty())
 			{
-				if (!stat.empty())
-					stat += ", ";
-				stat += (boost::format("Layer %1% - (%2%)") % layer_id % layer_stat).str();
+				stat += (boost::format(" #%1% (%2%)") % layer_id % layer_stat).str();
 			}
 
 			layer_id++;

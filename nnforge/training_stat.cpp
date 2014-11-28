@@ -26,7 +26,7 @@ namespace nnforge
 
 	std::ostream& operator<< (std::ostream& out, const training_stat& val)
 	{
-		out << "Weight updates";
+		out << "Avg Abs weight updates";
 
 		for(unsigned int layer_id = 0; layer_id < val.absolute_updates.size(); ++layer_id)
 		{
