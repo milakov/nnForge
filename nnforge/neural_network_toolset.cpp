@@ -1494,6 +1494,9 @@ namespace nnforge
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
 			get_error_function());
+		// !!! Seeding to constant number will not guarantee that updater will run determnistically:
+		// Different updaters might use different internal batch sizes
+		updater->set_random_generator_seed(12349087);
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
 		training_data_reader = supervised_data_reader_smart_ptr(new supervised_limited_entry_count_data_reader(training_data_reader, profile_updater_entry_count));
@@ -1526,7 +1529,7 @@ namespace nnforge
 			batch_size,
 			weight_decay,
 			momentum,
-			std::map<unsigned int, float>());
+			get_dropout_rate_map());
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 
 		/*

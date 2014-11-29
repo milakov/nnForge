@@ -489,7 +489,6 @@ namespace nnforge
 				cuda_safe_call(cudaEventQuery(data_processed_event));
 			}
 
-			random_generator gen = rnd::get_random_generator();
 			nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(random_uniform_list.size() - 1));
 			unsigned int mask = static_cast<unsigned int>(random_uniform_list.size() - 1);
 			unsigned int entries_processed_count = 0;
@@ -673,8 +672,8 @@ namespace nnforge
 							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator net_data_custom_it = net_data_custom.rbegin();
 							std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator gradient_it = gradient.rbegin();
 							std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::reverse_iterator schema_data_it = updater_schema_data.rbegin();
-							unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1 - (error_function_fused_with_activation ? 1 : 0);
-							layer_configuration_specific_list::const_reverse_iterator layer_config_it = layer_config_list.rbegin() + 1;
+							unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1;
+							layer_configuration_specific_list::const_reverse_iterator layer_config_it = layer_config_list.rbegin() + (1 + (error_function_fused_with_activation ? 1 : 0));
 							for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++gradient_it, ++output_errors_it, ++net_data_it, ++net_data_custom_it, --reverse_layer_id, ++layer_config_it)
 							{
 								(*it)->enqueue_update_weights(

@@ -40,6 +40,11 @@ namespace nnforge
 	{
 	}
 
+	void network_updater::set_random_generator_seed(int seed)
+	{
+		gen = rnd::get_random_generator(seed);
+	}
+
 	void network_updater::set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific)
 	{
 		if ((layer_config_list.size() > 0) && (layer_config_list[0] == input_configuration_specific))

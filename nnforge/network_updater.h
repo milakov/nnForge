@@ -50,6 +50,8 @@ namespace nnforge
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
 		float get_flops_for_single_entry() const;
 
+		void set_random_generator_seed(int seed);
+
 	protected:
 		network_updater(
 			network_schema_smart_ptr schema,
@@ -78,12 +80,13 @@ namespace nnforge
 		std::vector<float> random_uniform_list;
 		float flops;
 
+		random_generator gen;
+
 	private:
 		network_updater();
 		network_updater(const network_updater&);
 		network_updater& operator =(const network_updater&);
 
-		random_generator gen;
 		static const unsigned int random_list_bits;
 	};
 

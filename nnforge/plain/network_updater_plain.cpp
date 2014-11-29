@@ -216,7 +216,6 @@ namespace nnforge
 				}
 			}
 
-			random_generator gen = rnd::get_random_generator();
 			nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(random_uniform_list.size() - 1));
 			unsigned int mask = static_cast<unsigned int>(random_uniform_list.size() - 1);
 			bool entries_remained_for_loading = true;
@@ -410,7 +409,7 @@ namespace nnforge
 						layer_data_custom_list::const_reverse_iterator data_custom_it = data->data_custom_list.rbegin() + (error_function_fused_with_activation ? 1 : 0);
 						layer_data_list::reverse_iterator gradient_it = gradient->rbegin() + (error_function_fused_with_activation ? 1 : 0);
 						additional_buffer_smart_ptr output_errors = initial_error_buf;
-						unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1 - (error_function_fused_with_activation ? 1 : 0);
+						unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1;
 						for(std::vector<const_layer_updater_plain_smart_ptr>::const_reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++data_custom_it, ++gradient_it, --reverse_layer_id)
 						{
 							if (it != updater_list.rend() - 1)
@@ -680,7 +679,7 @@ namespace nnforge
 				float val = *(in_it + i);
 				unsigned int random_elem_id = (i + offset_in_random_list) & mask;
 				bool under_threshold = (*(rnd_it + random_elem_id) < dropout_rate);
-				val *= under_threshold ? 0.0F : scale;
+				val *= (under_threshold ? 0.0F : scale);
 				*(in_it + i) = val;
 			}
 		}
