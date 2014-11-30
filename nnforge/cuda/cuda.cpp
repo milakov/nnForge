@@ -27,7 +27,6 @@
 #include "sparse_convolution_layer_testing_schema.h"
 #include "max_subsampling_layer_testing_schema.h"
 #include "rectified_linear_layer_testing_schema.h"
-#include "soft_rectified_linear_layer_testing_schema.h"
 #include "softmax_layer_testing_schema.h"
 #include "rgb_to_yuv_convert_layer_testing_schema.h"
 #include "maxout_layer_testing_schema.h"
@@ -42,7 +41,6 @@
 #include "sparse_convolution_layer_updater_schema.h"
 #include "max_subsampling_layer_updater_schema.h"
 #include "rectified_linear_layer_updater_schema.h"
-#include "soft_rectified_linear_layer_updater_schema.h"
 #include "softmax_layer_updater_schema.h"
 #include "rgb_to_yuv_convert_layer_updater_schema.h"
 #include "maxout_layer_updater_schema.h"
@@ -70,7 +68,6 @@ namespace nnforge
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new sparse_convolution_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new max_subsampling_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new rectified_linear_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new soft_rectified_linear_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new softmax_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new rgb_to_yuv_convert_layer_testing_schema()));
 			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new maxout_layer_testing_schema()));
@@ -84,7 +81,6 @@ namespace nnforge
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new sparse_convolution_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new max_subsampling_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new rectified_linear_layer_updater_schema()));
-			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new soft_rectified_linear_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new softmax_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new rgb_to_yuv_convert_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new maxout_layer_updater_schema()));

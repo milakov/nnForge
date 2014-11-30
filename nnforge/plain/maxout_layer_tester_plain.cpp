@@ -75,7 +75,7 @@ namespace nnforge
 					{
 						std::vector<float>::const_iterator in_it = in_it_base;
 						float current_max = *in_it;
-						for(int i = 1; i < feature_map_subsampling_size; ++i)
+						for(unsigned int i = 1; i < feature_map_subsampling_size; ++i)
 						{
 							in_it += output_feature_map_count * output_neuron_count_per_feature_map;
 							float new_val = *in_it;

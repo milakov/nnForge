@@ -48,7 +48,7 @@ namespace nnforge
 		{
 			unsigned int actual_class_id = *it;
 
-			for(int i = 0; i < top_n; ++i)
+			for(unsigned int i = 0; i < top_n; ++i)
 			{
 				if (actual_class_id == *(predicted_it + i))
 					break;

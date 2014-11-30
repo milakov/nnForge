@@ -76,7 +76,7 @@ namespace nnforge
 			while (true)
 			{
 				unsigned int offset = 0;
-				for(int i = dimension_sizes.size() - 1; i > 0; --i)
+				for(int i = static_cast<int>(dimension_sizes.size()) - 1; i > 0; --i)
 					offset = (offset + src_pos_list[i]) * dimension_sizes[i - 1];
 				const unsigned char * src = src_begin + offset * elem_size;
 

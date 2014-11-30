@@ -59,7 +59,7 @@ namespace nnforge
 
 			nnforge_shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = nnforge_dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
 
-			const unsigned int color_feature_map_config_count = layer_derived->color_feature_map_config_list.size();
+			const unsigned int color_feature_map_config_count = static_cast<unsigned int>(layer_derived->color_feature_map_config_list.size());
 			const int total_workload = static_cast<int>(entry_count * color_feature_map_config_count);
 
 			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
@@ -77,7 +77,7 @@ namespace nnforge
 				std::vector<float>::iterator in_it_green_and_u = in_it + (entry_id * input_neuron_count) + (cfm.green_and_u_feature_map_id * input_neuron_count_per_feature_map);
 				std::vector<float>::iterator in_it_blue_and_v = in_it + (entry_id * input_neuron_count) + (cfm.blue_and_v_feature_map_id * input_neuron_count_per_feature_map);
 
-				for(int i = 0; i < input_neuron_count_per_feature_map; ++i)
+				for(unsigned int i = 0; i < input_neuron_count_per_feature_map; ++i)
 				{
 					float red = in_it_red_and_y[i];
 					float green = in_it_green_and_u[i];

@@ -308,7 +308,7 @@ namespace nnforge
 
 			unsigned int part_count = 0;
 			for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
-				part_count += (*it)->size();
+				part_count += static_cast<unsigned int>((*it)->size());
 			unsigned int elem_count_update_accum = part_count * elem_count_update_accum_per_part;
 
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data = get_data(data);
@@ -861,7 +861,7 @@ namespace nnforge
 
 				for(std::vector<std::vector<float> >::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); ++it2)
 				{
-					int elem_count = it2->size();
+					size_t elem_count = it2->size();
 
 					double sum = std::accumulate(
 						current_accum_it, 
@@ -947,7 +947,7 @@ namespace nnforge
 						*cuda_config,
 						*buf,
 						0.0F,
-						buf_size / sizeof(float),
+						static_cast<int>(buf_size / sizeof(float)),
 						0);
 					device_data.push_back(buf);
 				}
@@ -1041,7 +1041,7 @@ namespace nnforge
 					{
 						float learning_rate = *learning_rate_it2;
 						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
-						int elem_count = (*data_it2)->get_size() / sizeof(float);
+						int elem_count = static_cast<int>((*data_it2)->get_size() / sizeof(float));
 						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
 							elem_count,
@@ -1077,7 +1077,7 @@ namespace nnforge
 					{
 						float learning_rate = *learning_rate_it2;
 						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
-						int elem_count = (*data_it2)->get_size() / sizeof(float);
+						int elem_count = static_cast<int>((*data_it2)->get_size() / sizeof(float));
 						std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 							*cuda_config,
 							elem_count,

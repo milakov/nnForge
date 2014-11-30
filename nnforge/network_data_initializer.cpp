@@ -43,10 +43,10 @@ namespace nnforge
 					&& (layer_list[layer_list.size() - 2]->get_uuid() == convolution_layer::layer_guid))
 				{
 					nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[layer_list.size() - 2]);
-					unsigned int output_feature_map_count = data_list[data_list.size() - 2]->at(1).size();
+					unsigned int output_feature_map_count = static_cast<unsigned int>(data_list[data_list.size() - 2]->at(1).size());
 					if (output_feature_map_count > 1)
 					{
-						float init_bias = - logf(output_feature_map_count - 1);
+						float init_bias = - logf(static_cast<float>(output_feature_map_count - 1));
 						std::fill_n(data_list[data_list.size() - 2]->at(1).begin(), output_feature_map_count, init_bias);
 					}
 				}
@@ -54,7 +54,7 @@ namespace nnforge
 					&& (layer_list[layer_list.size() - 2]->get_uuid() == convolution_layer::layer_guid))
 				{
 					nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[layer_list.size() - 2]);
-					unsigned int output_feature_map_count = data_list[data_list.size() - 2]->at(1).size();
+					unsigned int output_feature_map_count = static_cast<unsigned int>(data_list[data_list.size() - 2]->at(1).size());
 					if (output_feature_map_count > 1)
 					{
 						float init_bias = -1.0F + (2.0F / output_feature_map_count);

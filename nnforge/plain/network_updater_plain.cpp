@@ -674,7 +674,7 @@ namespace nnforge
 			const float scale = 1.0F / (1.0F - dropout_rate);
 
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-			for(int i = 0; i < elem_count; ++i)
+			for(int i = 0; i < static_cast<int>(elem_count); ++i)
 			{
 				float val = *(in_it + i);
 				unsigned int random_elem_id = (i + offset_in_random_list) & mask;

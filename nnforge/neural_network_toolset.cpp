@@ -856,7 +856,7 @@ namespace nnforge
 					for(std::vector<float>::const_iterator src_it = sn.data.begin(); src_it != sn.data.end(); src_it += neuron_count_per_feature_map)
 					{
 						std::vector<float>::const_iterator max_it = std::max_element(src_it, src_it + neuron_count_per_feature_map);
-						unsigned int offset = max_it - src_it;
+						unsigned int offset = static_cast<unsigned int>(max_it - src_it);
 						float val = *max_it;
 
 						feature_map_sample_and_offset_list.push_back(std::make_pair(0, offset));
@@ -883,7 +883,7 @@ namespace nnforge
 					for(std::vector<float>::const_iterator src_it = sn.data.begin(); src_it != sn.data.end(); src_it += neuron_count_per_feature_map, ++sample_and_offset_it, ++max_val_it)
 					{
 						std::vector<float>::const_iterator max_it = std::max_element(src_it, src_it + neuron_count_per_feature_map);
-						unsigned int offset = max_it - src_it;
+						unsigned int offset = static_cast<unsigned int>(max_it - src_it);
 						float val = *max_it;
 
 						if (val < *max_val_it)
@@ -938,7 +938,7 @@ namespace nnforge
 					sn.data[i] = static_cast<float>(buf[i]) * (1.0F / 255.0F);
 			}
 
-			std::vector<unsigned int> snapshot_data_dimension_list = get_snapshot_data_dimension_list(sn.config.dimension_sizes.size());
+			std::vector<unsigned int> snapshot_data_dimension_list = get_snapshot_data_dimension_list(static_cast<unsigned int>(sn.config.dimension_sizes.size()));
 
 			if (snapshot_data_dimension_list.size() == 2)
 			{
@@ -1072,7 +1072,7 @@ namespace nnforge
 						layer_config_list[layer_id + 1].get_offsets(offset),
 						layer_config_list[layer_id + 1].feature_map_count);
 
-					std::vector<unsigned int> snapshot_data_dimension_list = get_snapshot_data_dimension_list(input_image_pair.first->config.dimension_sizes.size());
+					std::vector<unsigned int> snapshot_data_dimension_list = get_snapshot_data_dimension_list(static_cast<unsigned int>(input_image_pair.first->config.dimension_sizes.size()));
 
 					if (snapshot_data_dimension_list.size() == 2)
 					{
@@ -1608,7 +1608,7 @@ namespace nnforge
 		{
 			layer_data_smart_ptr layer_data = data->data_list[layer_id];
 			int min_weight_set = (param_weight_set == -1) ? 0 : param_weight_set;
-			int max_weight_set = (param_weight_set == -1) ? layer_data->size() : std::min<int>(layer_data->size(), param_weight_set + 1);
+			int max_weight_set = (param_weight_set == -1) ? static_cast<int>(layer_data->size()) : std::min<int>(static_cast<int>(layer_data->size()), param_weight_set + 1);
 			for(int weight_set = min_weight_set; weight_set < max_weight_set; ++weight_set)
 			{
 				std::vector<float>& weight_list = layer_data->at(weight_set);
@@ -1625,7 +1625,7 @@ namespace nnforge
 				}
 
 				random_generator weight_gen = rnd::get_random_generator(637463);
-				for(int weight_to_process_count = weight_id_list.size(); weight_to_process_count > 0; --weight_to_process_count)
+				for(int weight_to_process_count = static_cast<int>(weight_id_list.size()); weight_to_process_count > 0; --weight_to_process_count)
 				{
 					nnforge_uniform_int_distribution<int> dist(0, weight_to_process_count - 1);
 					int index = dist(weight_gen);

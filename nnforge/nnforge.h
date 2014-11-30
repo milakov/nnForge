@@ -27,7 +27,6 @@
 #include "local_contrast_subtractive_layer.h"
 #include "rgb_to_yuv_convert_layer.h"
 #include "rectified_linear_layer.h"
-#include "soft_rectified_linear_layer.h"
 #include "softmax_layer.h"
 #include "maxout_layer.h"
 #include "sigmoid_layer.h"

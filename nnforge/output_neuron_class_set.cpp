@@ -36,7 +36,7 @@ namespace nnforge
 	{
 		if (neuron_value_set.neuron_value_list.empty())
 			throw neural_network_exception("Empty neuron_value_set passed to output_neuron_class_set");
-		unsigned int class_count = neuron_value_set.neuron_value_list.front().size();
+		unsigned int class_count = static_cast<unsigned int>(neuron_value_set.neuron_value_list.front().size());
 		if (class_count > 1)
 		{
 			if (class_count < top_n)
@@ -49,7 +49,7 @@ namespace nnforge
 				const std::vector<float>& neuron_values = *it;
 				std::fill_n(current_best_elems.begin(), top_n, std::make_pair(-std::numeric_limits<float>::max(), class_count));
 
-				for(int class_id = 0; class_id < class_count; ++class_id)
+				for(unsigned int class_id = 0; class_id < class_count; ++class_id)
 				{
 					float neuron_val = neuron_values[class_id];
 					if (neuron_val <= current_best_elems.back().first)
@@ -66,7 +66,7 @@ namespace nnforge
 					current_best_elems[target_position] = std::make_pair(neuron_val, class_id);
 				}
 
-				for(int i = 0; i < top_n; ++i)
+				for(unsigned int i = 0; i < top_n; ++i)
 				{
 					*dest_it = current_best_elems[i].second;
 					++dest_it;
@@ -96,7 +96,7 @@ namespace nnforge
 					best_elems[1] = 1;
 				}
 
-				for(int i = 0; i < top_n; ++i)
+				for(unsigned int i = 0; i < top_n; ++i)
 				{
 					*dest_it = best_elems[i];
 					++dest_it;

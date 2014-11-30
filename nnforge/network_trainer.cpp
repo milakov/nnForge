@@ -68,7 +68,7 @@ namespace nnforge
 
 			if (new_task.initial_epoch > reader_epoch_id)
 			{
-				for(int i = reader_epoch_id; i < new_task.initial_epoch; ++i)
+				for(unsigned int i = reader_epoch_id; i < new_task.initial_epoch; ++i)
 					reader.next_epoch();
 				reader_epoch_id += (new_task.initial_epoch - reader_epoch_id);
 			}
