@@ -32,18 +32,18 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
         <h2>
-<a name="what-is-nnforge" class="anchor" href="#what-is-nnforge"><span class="octicon octicon-link"></span></a>What is nnForge?</h2>
+<a id="what-is-nnforge" class="anchor" href="#what-is-nnforge" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is nnForge?</h2>
 
 <p>nnForge is a library for training convolutional and fully-connected neural networks. It includes CPU and GPU (CUDA) backends.</p>
 
 <h2>
-<a name="layers" class="anchor" href="#layers"><span class="octicon octicon-link"></span></a>Layers</h2>
+<a id="layers" class="anchor" href="#layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Layers</h2>
 
 <p>The library has a number of layers defined:</p>
 
 <ul>
 <li>Convolutional (1D, 2D, 3D, and 4D)</li>
-<li>Sparse (in feature map dimension) convolutional (CPU backend - 1D, 2D, 3D, and 4D, GPU backend - fully connected (spatial) only) </li>
+<li>Sparse (in feature map dimension) convolutional (1D, 2D, 3D, and 4D, Kepler+ only support in GPU backend) </li>
 <li>Fully connected</li>
 <li>Local contrast subtractive (CPU backend - no limitations, GPU backend - 2D only)</li>
 <li>RGB-&gt;YUV conversion (CPU backend: forward propagation only, GPU backend - forward + backward prop)</li>
@@ -57,22 +57,26 @@
 <li>Rectified linear unit - max(0,x)</li>
 <li>Soft rectified linear unit - log(1+exp(x))</li>
 <li>Softmax</li>
-</ul><h2>
-<a name="training" class="anchor" href="#training"><span class="octicon octicon-link"></span></a>Training</h2>
+</ul>
+
+<h2>
+<a id="training" class="anchor" href="#training" aria-hidden="true"><span class="octicon octicon-link"></span></a>Training</h2>
 
 <p>The library implements Stochastic Gradient Descent training algorithm.</p>
 
 <p>Mini-batch training supported.</p>
 
 <h2>
-<a name="regularization" class="anchor" href="#regularization"><span class="octicon octicon-link"></span></a>Regularization</h2>
+<a id="regularization" class="anchor" href="#regularization" aria-hidden="true"><span class="octicon octicon-link"></span></a>Regularization</h2>
 
 <ul>
 <li>Dropout, see Improving neural networks by preventing co-adaptation of feature detectors, Geoffery Hinton, Nitish Srivastava, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov, <a href="http://arxiv.org/abs/1207.0580">arXiv:1207.0580</a>
 </li>
 <li>Weight decay</li>
-</ul><h2>
-<a name="error-functions" class="anchor" href="#error-functions"><span class="octicon octicon-link"></span></a>Error functions</h2>
+</ul>
+
+<h2>
+<a id="error-functions" class="anchor" href="#error-functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Error functions</h2>
 
 <p>Error functions available:</p>
 
@@ -81,27 +85,29 @@
 <li>SHL - Squared Hinge Loss</li>
 <li>NLL - Negative Log-Likelihood</li>
 <li>CE - Cross-Entropy</li>
-</ul><h2>
-<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+</ul>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p>nnForge is an open-source software distributed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
 
 <h2>
-<a name="download" class="anchor" href="#download"><span class="octicon octicon-link"></span></a>Download</h2>
+<a id="download" class="anchor" href="#download" aria-hidden="true"><span class="octicon octicon-link"></span></a>Download</h2>
 
 <p>Download the <a href="https://github.com/milakov/nnForge/tarball/master">latest version</a>. Access all the releases along with release notes on <a href="https://github.com/milakov/nnForge/releases">GitHub</a>.</p>
 
 <p>The package contains nnForge library as well as examples - applications using the library.</p>
 
 <h2>
-<a name="prerequisites" class="anchor" href="#prerequisites"><span class="octicon octicon-link"></span></a>Prerequisites</h2>
+<a id="prerequisites" class="anchor" href="#prerequisites" aria-hidden="true"><span class="octicon octicon-link"></span></a>Prerequisites</h2>
 
 <p>The library depends on <a href="http://www.boost.org/">Boost</a> and <a href="http://opencv.org/">OpenCV</a>.</p>
 
 <p>If you want to use CUDA backend you will also need <a href="https://developer.nvidia.com/cuda-toolkit">CUDA Toolkit</a> installed.</p>
 
 <h2>
-<a name="authors" class="anchor" href="#authors"><span class="octicon octicon-link"></span></a>Authors</h2>
+<a id="authors" class="anchor" href="#authors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors</h2>
 
 <p>nnForge is designed and implemented by <a href="http://milakov.org">Maxim Milakov</a>.</p>
       </section>
