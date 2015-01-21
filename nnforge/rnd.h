@@ -27,7 +27,9 @@ namespace nnforge
 	public:
 		static random_generator get_random_generator();
 
-		static random_generator get_random_generator(unsigned long seed);
+		static random_generator get_random_generator(unsigned int seed);
+
+		static unsigned int get_time_dependent_seed();
 
 	private:
 		rnd();

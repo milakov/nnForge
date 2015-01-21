@@ -20,6 +20,7 @@
 
 #include <boost/filesystem.hpp>
 #include <set>
+#include <map>
 
 namespace nnforge
 {
