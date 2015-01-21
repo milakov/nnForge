@@ -46,8 +46,6 @@ public:
 protected:
 	virtual nnforge::network_schema_smart_ptr get_schema() const;
 
-	virtual std::map<unsigned int, float> get_dropout_rate_map() const;
-
 	virtual void prepare_training_data();
 
 	void write_single_entry(

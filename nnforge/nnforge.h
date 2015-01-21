@@ -30,6 +30,7 @@
 #include "softmax_layer.h"
 #include "maxout_layer.h"
 #include "sigmoid_layer.h"
+#include "dropout_layer.h"
 
 #include "neural_network_toolset.h"
 #include "supervised_data_stream_reader.h"
@@ -41,6 +42,12 @@
 #include "supervised_data_mem_reader.h"
 #include "supervised_limited_entry_count_data_reader.h"
 #include "supervised_multiple_epoch_data_reader.h"
+#include "supervised_center_image_data_stream_reader.h"
+#include "supervised_transformed_input_data_reader.h"
+#include "supervised_transformed_output_data_reader.h"
+#include "supervised_center_image_data_stream_reader.h"
+#include "supervised_random_image_data_stream_reader.h"
+#include "supervised_image_stream_reader.h"
 #include "rnd.h"
 
 #include "data_transformer_util.h"
@@ -53,6 +60,8 @@
 #include "distort_2d_data_sampler_transformer.h"
 #include "flip_2d_data_sampler_transformer.h"
 #include "convert_data_type_transformer.h"
+#include "negate_data_transformer.h"
+#include "convert_to_polar_data_transformer.h"
 
 #include "mse_error_function.h"
 #include "squared_hinge_loss_error_function.h"

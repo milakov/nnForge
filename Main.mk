@@ -34,8 +34,8 @@ LDFLAGS+=$(MATIO_LIBS)
 endif
 
 ifeq ($(USE_CUDA),yes)
-GENERIC_CXXFLAGS+=-I$(CUDA_PATH)/include
-LDFLAGS+=-L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib -lcusparse -lcublas -lcudart
+GENERIC_CXXFLAGS+=-I$(CUDA_PATH)/include -I$(CUDNN_PATH)
+LDFLAGS+=-L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib -L$(CUDNN_PATH) $(CUDA_LIBS)
 endif
 
 ifeq ($(USE_OPENCV),yes)
