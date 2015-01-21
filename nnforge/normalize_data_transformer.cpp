@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,24 +43,15 @@ namespace nnforge
 			const feature_map_data_stat& current_stat = *it;
 			float mult;
 			float add;
-			float t1 = std::max(current_stat.max - current_stat.average, current_stat.average - current_stat.min);
-			if (t1 > 0.0F)
+			if (current_stat.std_dev > 0.0F)
 			{
-				mult = 1.0F / t1;
+				mult = 1.0F / current_stat.std_dev;
 				add = -current_stat.average * mult;
 			}
 			else
 			{
-				if (current_stat.average == 0.0F)
-				{
-					mult = 1.0F;
-					add = 1.0F;
-				}
-				else
-				{
-					mult = 1.0F / current_stat.average;
-					add = 0.0F;
-				}
+				mult = 1.0F;
+				add = 0.0F;
 			}
 
 			mul_add_list.push_back(std::make_pair(mult, add));

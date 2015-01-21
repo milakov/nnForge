@@ -51,7 +51,7 @@ namespace nnforge
 			const std::vector<unsigned int>& dimension_sizes = original_config.dimension_sizes;
 
 			if (dimension_sizes.size() != input_window_sizes.size())
-				throw neural_network_exception((boost::format("extract_data_transformer is created with %1%-dimensional rotations, data has %2% dimensions") % input_window_sizes.size() % dimension_sizes.size()).str());
+				throw neural_network_exception((boost::format("extract_data_transformer is created with %1%-dimensions, data has %2% dimensions") % input_window_sizes.size() % dimension_sizes.size()).str());
 
 			size_t elem_size = neuron_data_type::get_input_size(type);
 

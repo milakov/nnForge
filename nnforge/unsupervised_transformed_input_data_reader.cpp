@@ -105,4 +105,9 @@ namespace nnforge
 	{
 		throw std::runtime_error("raw_read not implemented for unsupervised_transformed_input_data_reader");
 	}
+
+	unsigned int unsupervised_transformed_input_data_reader::get_sample_count() const
+	{
+		return transformer_sample_count * original_reader->get_sample_count();
+	}
 }

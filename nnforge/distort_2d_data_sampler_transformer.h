@@ -33,13 +33,16 @@ namespace nnforge
 	class distort_2d_data_sampler_transformer : public data_transformer
 	{
 	public:
-		distort_2d_data_sampler_transformer(const std::vector<distort_2d_data_sampler_param>& params);
+		distort_2d_data_sampler_transformer(
+			const std::vector<distort_2d_data_sampler_param>& params,
+			unsigned char border_value = 128);
 
 		distort_2d_data_sampler_transformer(
 			const std::vector<float>& rotation_angle_in_degrees_list,
 			const std::vector<float>& scale_list, // 1.0F - no scaling
 			const std::vector<float>& shift_right_x_list,
-			const std::vector<float>& shift_down_y_list);
+			const std::vector<float>& shift_down_y_list,
+			unsigned char border_value = 128);
 
 		virtual ~distort_2d_data_sampler_transformer();
 
@@ -58,5 +61,6 @@ namespace nnforge
 
 	protected:
 		std::vector<distort_2d_data_sampler_param> params;
+		unsigned char border_value;
 	};
 }

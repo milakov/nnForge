@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,18 +44,19 @@ namespace nnforge
 		if (type != neuron_data_type::type_byte)
 			throw neural_network_exception("flip_2d_data_sampler_transformer is implemented for data stored as bytes only");
 
-		if (original_config.dimension_sizes.size() != 2)
-			throw neural_network_exception((boost::format("flip_2d_data_sampler_transformer is processing 2d data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
+		if (original_config.dimension_sizes.size() < 2)
+			throw neural_network_exception((boost::format("flip_2d_data_sampler_transformer is processing at least 2d data, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
 
-		unsigned int neuron_count_per_feature_map = original_config.get_neuron_count_per_feature_map();
-		for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
+		unsigned int neuron_count_per_image = original_config.dimension_sizes[0] * original_config.dimension_sizes[1];
+		unsigned int image_count = original_config.get_neuron_count() / neuron_count_per_image;
+		for(unsigned int image_id = 0; image_id < image_count; ++image_id)
 		{
-			cv::Mat1b src_image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), const_cast<unsigned char *>(static_cast<const unsigned char *>(data)) + (neuron_count_per_feature_map * feature_map_id));
-			cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed) + (neuron_count_per_feature_map * feature_map_id));
+			cv::Mat1b src_image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), const_cast<unsigned char *>(static_cast<const unsigned char *>(data)) + (image_id * neuron_count_per_image));
+			cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed) + (image_id * neuron_count_per_image));
 			memcpy(
-				((unsigned char *)data_transformed) + neuron_count_per_feature_map * feature_map_id,
-				((unsigned char *)data) + neuron_count_per_feature_map * feature_map_id,
-				neuron_count_per_feature_map * neuron_data_type::get_input_size(type));
+				((unsigned char *)data_transformed) + image_id * neuron_count_per_image,
+				((unsigned char *)data) + image_id * neuron_count_per_image,
+				neuron_count_per_image * neuron_data_type::get_input_size(type));
 
 			if (sample_id == 1)
 			{

@@ -34,7 +34,8 @@ namespace nnforge
 			float max_shift_down_y, // in pixels
 			bool flip_around_x_axis_allowed,
 			bool flip_around_y_axis_allowed,
-			float max_stretch_factor = 1.0F); // >=1
+			float max_stretch_factor = 1.0F, // >=1
+			unsigned char border_value = 128); 
 
 		virtual ~distort_2d_data_transformer();
 
@@ -48,6 +49,8 @@ namespace nnforge
 		virtual bool is_deterministic() const;
 
 	protected:
+		unsigned char border_value;
+
 		random_generator generator;
 
 		nnforge_uniform_real_distribution<float> rotate_angle_distribution;

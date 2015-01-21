@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ namespace nnforge
 		if (type != neuron_data_type::type_byte)
 			throw neural_network_exception("intensity_2d_data_transformer is implemented for data stored as bytes only");
 
-		if (original_config.dimension_sizes.size() != 2)
-			throw neural_network_exception((boost::format("intensity_2d_data_transformer is processing 2d data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
+		if (original_config.dimension_sizes.size() < 2)
+			throw neural_network_exception((boost::format("intensity_2d_data_transformer is processing at least 2d data, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
 
 		float contrast = contrast_distribution.min();
 		if (contrast_distribution.max() > contrast_distribution.min())
@@ -58,10 +58,11 @@ namespace nnforge
 		if (brightness_shift_distribution.max() > brightness_shift_distribution.min())
 			brightness_shift = brightness_shift_distribution(generator) * 255.0F;
 
-		unsigned int neuron_count_per_feature_map = original_config.get_neuron_count_per_feature_map();
-		for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
+		unsigned int neuron_count_per_image = original_config.dimension_sizes[0] * original_config.dimension_sizes[1];
+		unsigned int image_count = original_config.get_neuron_count() / neuron_count_per_image;
+		for(unsigned int image_id = 0; image_id < image_count; ++image_id)
 		{
-			cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed) + (neuron_count_per_feature_map * feature_map_id));
+			cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed) + (image_id * neuron_count_per_image));
 
 			data_transformer_util::change_brightness_and_contrast(
 				image,

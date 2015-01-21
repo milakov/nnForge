@@ -50,6 +50,8 @@ namespace nnforge
 
 		virtual unsigned int get_entry_count() const;
 
+		virtual unsigned int get_sample_count() const;
+
 	protected:
 		unsupervised_transformed_input_data_reader();
 

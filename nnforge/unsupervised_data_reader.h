@@ -50,6 +50,8 @@ namespace nnforge
 
 		virtual unsigned int get_entry_count() const = 0;
 
+		virtual unsigned int get_sample_count() const;
+
 		size_t get_input_neuron_elem_size() const;
 
 		std::vector<feature_map_data_stat> get_feature_map_input_data_stat_list();

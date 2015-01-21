@@ -29,56 +29,79 @@ namespace nnforge
 		float shift_x,
 		float shift_y,
 		float stretch,
-		float stretch_angle_in_degrees)
+		float stretch_angle_in_degrees,
+		unsigned char border_value)
 	{
-		if ((angle_in_degrees != 0.0F) || (scale != 1.0F) || (shift_x != 0.0F) || (shift_y != 0.0F) || (stretch != 1.0F))
+		cv::Mat copy = image.clone();
+		rotate_scale_shift(
+			image,
+			copy,
+			rotation_center,
+			angle_in_degrees,
+			scale,
+			shift_x,
+			shift_y,
+			stretch,
+			stretch_angle_in_degrees,
+			border_value);
+	}
+
+	void data_transformer_util::rotate_scale_shift(
+		cv::Mat dest_image,
+		const cv::Mat image,
+		cv::Point2f rotation_center,
+		float angle_in_degrees,
+		float scale,
+		float shift_x,
+		float shift_y,
+		float stretch,
+		float stretch_angle_in_degrees,
+		unsigned char border_value)
+	{
+		cv::Mat stretch_full_mat(3, 3, CV_64FC1);
+		stretch_full_mat.at<double>(2, 0) = 0.0;
+		stretch_full_mat.at<double>(2, 1) = 0.0;
+		stretch_full_mat.at<double>(2, 2) = 1.0;
 		{
-			cv::Mat stretch_full_mat(3, 3, CV_64FC1);
-			stretch_full_mat.at<double>(2, 0) = 0.0;
-			stretch_full_mat.at<double>(2, 1) = 0.0;
-			stretch_full_mat.at<double>(2, 2) = 1.0;
-			{
-				float stretch_angle_in_radians = stretch_angle_in_degrees * (2.0F * 3.14159265358979F / 360.0F);
-				float x = cosf(stretch_angle_in_radians);
-				float y = sinf(stretch_angle_in_radians);
-				cv::Point2f src[3];
-				cv::Point2f dst[3];
-				src[0] = rotation_center;
-				dst[0] = src[0];
-				src[1] = rotation_center + cv::Point2f(x, y);
-				dst[1] = rotation_center + cv::Point2f(x * stretch, y * stretch);
-				src[2] = rotation_center + cv::Point2f(y, -x);
-				dst[2] = src[2];
-				cv::Mat stretch_mat = cv::getAffineTransform(src, dst);
+			float stretch_angle_in_radians = stretch_angle_in_degrees * (2.0F * 3.14159265358979F / 360.0F);
+			float x = cosf(stretch_angle_in_radians);
+			float y = sinf(stretch_angle_in_radians);
+			cv::Point2f src[3];
+			cv::Point2f dst[3];
+			src[0] = rotation_center;
+			dst[0] = src[0];
+			src[1] = rotation_center + cv::Point2f(x, y);
+			dst[1] = rotation_center + cv::Point2f(x * stretch, y * stretch);
+			src[2] = rotation_center + cv::Point2f(y, -x);
+			dst[2] = src[2];
+			cv::Mat stretch_mat = cv::getAffineTransform(src, dst);
 
-				stretch_full_mat.at<double>(0, 0) = stretch_mat.at<double>(0, 0);
-				stretch_full_mat.at<double>(0, 1) = stretch_mat.at<double>(0, 1);
-				stretch_full_mat.at<double>(0, 2) = stretch_mat.at<double>(0, 2);
-				stretch_full_mat.at<double>(1, 0) = stretch_mat.at<double>(1, 0);
-				stretch_full_mat.at<double>(1, 1) = stretch_mat.at<double>(1, 1);
-				stretch_full_mat.at<double>(1, 2) = stretch_mat.at<double>(1, 2);
-			}
-
-			cv::Mat rot_mat = cv::getRotationMatrix2D(
-				rotation_center,
-				static_cast<double>(angle_in_degrees),
-				static_cast<double>(scale));
-
-			cv::Mat stretch_and_rot_mat = rot_mat * stretch_full_mat;
-
-			stretch_and_rot_mat.at<double>(0, 2) += static_cast<double>(shift_x);
-			stretch_and_rot_mat.at<double>(1, 2) += static_cast<double>(shift_y);
-
-			cv::Mat copy = image.clone();
-			cv::warpAffine(
-				copy,
-				image,
-				stretch_and_rot_mat,
-				image.size(),
-				cv::INTER_LINEAR,
-				cv::BORDER_CONSTANT,
-				128);
+			stretch_full_mat.at<double>(0, 0) = stretch_mat.at<double>(0, 0);
+			stretch_full_mat.at<double>(0, 1) = stretch_mat.at<double>(0, 1);
+			stretch_full_mat.at<double>(0, 2) = stretch_mat.at<double>(0, 2);
+			stretch_full_mat.at<double>(1, 0) = stretch_mat.at<double>(1, 0);
+			stretch_full_mat.at<double>(1, 1) = stretch_mat.at<double>(1, 1);
+			stretch_full_mat.at<double>(1, 2) = stretch_mat.at<double>(1, 2);
 		}
+
+		cv::Mat rot_mat = cv::getRotationMatrix2D(
+			rotation_center,
+			static_cast<double>(angle_in_degrees),
+			static_cast<double>(scale));
+
+		cv::Mat stretch_and_rot_mat = rot_mat * stretch_full_mat;
+
+		stretch_and_rot_mat.at<double>(0, 2) += static_cast<double>(shift_x);
+		stretch_and_rot_mat.at<double>(1, 2) += static_cast<double>(shift_y);
+
+		cv::warpAffine(
+			image,
+			dest_image,
+			stretch_and_rot_mat,
+			dest_image.size(),
+			cv::INTER_LINEAR,
+			cv::BORDER_CONSTANT,
+			border_value);
 	}
 
 	void data_transformer_util::change_brightness_and_contrast(

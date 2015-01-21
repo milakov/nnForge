@@ -31,7 +31,20 @@ namespace nnforge
 			float shift_x,
 			float shift_y,
 			float stretch = 1.0F,
-			float stretch_angle_in_degrees = 0.0F);
+			float stretch_angle_in_degrees = 0.0F,
+			unsigned char border_value = 128);
+
+		static void rotate_scale_shift(
+			cv::Mat dest_image,
+			const cv::Mat image,
+			cv::Point2f rotation_center,
+			float angle_in_degrees,
+			float scale,
+			float shift_x,
+			float shift_y,
+			float stretch = 1.0F,
+			float stretch_angle_in_degrees = 0.0F,
+			unsigned char border_value = 128);
 
 		// contrast: relative multiplication, about 1.0
 		// brightness: change in luminocity for the middle lightness
