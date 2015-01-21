@@ -71,8 +71,6 @@ namespace nnforge
 
 		virtual network_schema_smart_ptr get_schema() const;
 
-		virtual std::map<unsigned int, float> get_dropout_rate_map() const;
-
 		virtual boost::filesystem::path get_input_data_folder() const;
 
 		virtual boost::filesystem::path get_working_data_folder() const;
@@ -130,7 +128,7 @@ namespace nnforge
 
 		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_normalizing() const;
 
-		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_training() const;
+		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_training(bool force_deterministic) const;
 
 		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_validating() const;
 
@@ -193,6 +191,7 @@ namespace nnforge
 		std::string check_gradient_weights;
 		float check_gradient_threshold;
 		float check_gradient_base_step;
+		int shuffle_block_size;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
@@ -244,7 +243,9 @@ namespace nnforge
 
 		normalize_data_transformer_smart_ptr get_reverse_output_data_normalize_transformer() const;
 
-		supervised_data_reader_smart_ptr get_data_reader_for_training(bool deterministic_transformers_only = false) const;
+		supervised_data_reader_smart_ptr get_data_reader_for_training(
+			bool deterministic_transformers_only,
+			bool shuffle_entries) const;
 
 		std::pair<supervised_data_reader_smart_ptr, unsigned int> get_data_reader_for_validating_and_sample_count() const;
 

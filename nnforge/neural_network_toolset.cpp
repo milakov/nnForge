@@ -54,6 +54,7 @@
 #include "save_resume_network_data_pusher.h"
 #include "network_data_peeker_load_resume.h"
 #include "debug_util.h"
+#include "supervised_shuffle_entries_data_reader.h"
 
 namespace nnforge
 {
@@ -222,6 +223,7 @@ namespace nnforge
 			("weight_decay", boost::program_options::value<float>(&weight_decay)->default_value(0.0F), "Weight decay.")
 			("batch_size,B", boost::program_options::value<unsigned int>(&batch_size)->default_value(1), "Training mini-batch size.")
 			("momentum,M", boost::program_options::value<float>(&momentum)->default_value(0.0F), "Momentum in training.")
+			("shuffle_block_size", boost::program_options::value<int>(&shuffle_block_size)->default_value(-1), "The size of contiguous blocks when shuffling training data, -1 indicates no shuffling.")
 			;
 
 		{
@@ -387,6 +389,7 @@ namespace nnforge
 			std::cout << "weight_decay" << "=" << weight_decay << std::endl;
 			std::cout << "batch_size" << "=" << batch_size << std::endl;
 			std::cout << "momentum" << "=" << momentum << std::endl;
+			std::cout << "shuffle_block_size" << "=" << shuffle_block_size << std::endl;
 		}
 		{
 			std::vector<string_option> additional_string_options = get_string_options();
@@ -497,7 +500,6 @@ namespace nnforge
 		res->weight_decay = weight_decay;
 		res->batch_size = batch_size;
 		res->momentum = momentum;
-		res->layer_to_dropout_rate_map = get_dropout_rate_map();
 
 		return res;
 	}
@@ -505,7 +507,7 @@ namespace nnforge
 	std::pair<unsupervised_data_reader_smart_ptr, unsigned int> neural_network_toolset::get_data_reader_and_sample_count_for_snapshots() const
 	{
 		if (snapshot_data_set == "training")
-			return std::make_pair(get_data_reader_for_training(), 1);
+			return std::make_pair(get_data_reader_for_training(false, false), 1);
 		else if (snapshot_data_set == "validating")
 		{
 			std::pair<supervised_data_reader_smart_ptr, unsigned int> p = get_data_reader_for_validating_and_sample_count();
@@ -1293,14 +1295,21 @@ namespace nnforge
 		return res;
 	}
 
-	supervised_data_reader_smart_ptr neural_network_toolset::get_data_reader_for_training(bool deterministic_transformers_only) const
+	supervised_data_reader_smart_ptr neural_network_toolset::get_data_reader_for_training(
+		bool deterministic_transformers_only,
+		bool shuffle_entries) const
 	{
-		supervised_data_reader_smart_ptr current_reader = get_initial_data_reader_for_training();
+		supervised_data_reader_smart_ptr current_reader = get_initial_data_reader_for_training(deterministic_transformers_only);
 
-		unsigned int epoch_count = epoch_count_in_training_set;
-		if (epoch_count > 1)
+		if (shuffle_entries && (shuffle_block_size > 0))
 		{
-			supervised_data_reader_smart_ptr new_reader(new supervised_multiple_epoch_data_reader(current_reader, epoch_count));
+			supervised_data_reader_smart_ptr new_reader(new supervised_shuffle_entries_data_reader(current_reader, shuffle_block_size));
+			current_reader = new_reader;
+		}
+
+		if (epoch_count_in_training_set > 1)
+		{
+			supervised_data_reader_smart_ptr new_reader(new supervised_multiple_epoch_data_reader(current_reader, epoch_count_in_training_set));
 			current_reader = new_reader;
 		}
 
@@ -1329,7 +1338,7 @@ namespace nnforge
 		return current_reader;
 	}
 
-	supervised_data_reader_smart_ptr neural_network_toolset::get_initial_data_reader_for_training() const
+	supervised_data_reader_smart_ptr neural_network_toolset::get_initial_data_reader_for_training(bool force_deterministic) const
 	{
 		nnforge_shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::in | std::ios_base::binary));
 		supervised_data_reader_smart_ptr current_reader(new supervised_data_stream_reader(training_data_stream));
@@ -1347,13 +1356,11 @@ namespace nnforge
 	{
 		supervised_data_reader_smart_ptr current_reader = get_initial_data_reader_for_validating();
 
-		unsigned int sample_count = get_validating_sample_count();
 		{
 			std::vector<data_transformer_smart_ptr> data_transformer_list = get_input_data_transformer_list_for_validating();
 			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
 			{
 				supervised_data_reader_smart_ptr new_reader(new supervised_transformed_input_data_reader(current_reader, *it));
-				sample_count *= (*it)->get_sample_count();
 				current_reader = new_reader;
 			}
 		}
@@ -1362,12 +1369,11 @@ namespace nnforge
 			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
 			{
 				supervised_data_reader_smart_ptr new_reader(new supervised_transformed_output_data_reader(current_reader, *it));
-				sample_count *= (*it)->get_sample_count();
 				current_reader = new_reader;
 			}
 		}
 
-		return std::make_pair(current_reader, sample_count);
+		return std::make_pair(current_reader, get_validating_sample_count() * current_reader->get_sample_count());
 	}
 
 	supervised_data_reader_smart_ptr neural_network_toolset::get_initial_data_reader_for_validating() const
@@ -1380,13 +1386,11 @@ namespace nnforge
 	std::pair<supervised_data_reader_smart_ptr, unsigned int> neural_network_toolset::get_data_reader_for_testing_supervised_and_sample_count() const
 	{
 		supervised_data_reader_smart_ptr current_reader = get_initial_data_reader_for_testing_supervised();
-		unsigned int sample_count = get_testing_sample_count();
 		{
 			std::vector<data_transformer_smart_ptr> data_transformer_list = get_input_data_transformer_list_for_testing();
 			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
 			{
 				supervised_data_reader_smart_ptr new_reader(new supervised_transformed_input_data_reader(current_reader, *it));
-				sample_count *= (*it)->get_sample_count();
 				current_reader = new_reader;
 			}
 		}
@@ -1395,12 +1399,11 @@ namespace nnforge
 			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
 			{
 				supervised_data_reader_smart_ptr new_reader(new supervised_transformed_output_data_reader(current_reader, *it));
-				sample_count *= (*it)->get_sample_count();
 				current_reader = new_reader;
 			}
 		}
 
-		return std::make_pair(current_reader, sample_count);
+		return std::make_pair(current_reader, get_testing_sample_count() * current_reader->get_sample_count());
 	}
 
 	supervised_data_reader_smart_ptr neural_network_toolset::get_initial_data_reader_for_testing_supervised() const
@@ -1413,18 +1416,16 @@ namespace nnforge
 	std::pair<unsupervised_data_reader_smart_ptr, unsigned int> neural_network_toolset::get_data_reader_for_testing_unsupervised_and_sample_count() const
 	{
 		unsupervised_data_reader_smart_ptr current_reader = get_initial_data_reader_for_testing_unsupervised();
-		unsigned int sample_count = get_testing_sample_count();
 		{
 			std::vector<data_transformer_smart_ptr> data_transformer_list = get_input_data_transformer_list_for_testing();
 			for(std::vector<data_transformer_smart_ptr>::iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
 			{
 				unsupervised_data_reader_smart_ptr new_reader(new unsupervised_transformed_input_data_reader(current_reader, *it));
-				sample_count *= (*it)->get_sample_count();
 				current_reader = new_reader;
 			}
 		}
 
-		return std::make_pair(current_reader, sample_count);
+		return std::make_pair(current_reader, get_testing_sample_count() * current_reader->get_sample_count());
 	}
 
 	unsupervised_data_reader_smart_ptr neural_network_toolset::get_initial_data_reader_for_testing_unsupervised() const
@@ -1444,7 +1445,7 @@ namespace nnforge
 
 		network_trainer_smart_ptr trainer = get_network_trainer(schema);
 
-		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training();
+		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(false, true);
 
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
@@ -1494,11 +1495,8 @@ namespace nnforge
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
 			get_error_function());
-		// !!! Seeding to constant number will not guarantee that updater will run determnistically:
-		// Different updaters might use different internal batch sizes
-		updater->set_random_generator_seed(12349087);
 
-		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
+		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true, false);
 		training_data_reader = supervised_data_reader_smart_ptr(new supervised_limited_entry_count_data_reader(training_data_reader, profile_updater_entry_count));
 
 		network_data_smart_ptr data(new network_data(*schema));
@@ -1515,12 +1513,6 @@ namespace nnforge
 		for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
 			learning_rates.push_back(std::vector<float>((*it)->size(), learning_rate));
 
-		std::vector<float> random_uniform_list(1 << 10);
-		random_generator gen = rnd::get_random_generator();
-		nnforge_uniform_real_distribution<float> dist(0.0F, 1.0F);
-		for(std::vector<float>::iterator it = random_uniform_list.begin(); it != random_uniform_list.end(); ++it)
-			*it = dist(gen);
-
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> training_result = updater->update(
 			*training_data_reader,
@@ -1529,7 +1521,7 @@ namespace nnforge
 			batch_size,
 			weight_decay,
 			momentum,
-			get_dropout_rate_map());
+			true);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 
 		/*
@@ -1567,7 +1559,7 @@ namespace nnforge
 			schema,
 			get_error_function());
 
-		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true);
+		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(true, false);
 		training_data_reader = supervised_data_reader_smart_ptr(new supervised_limited_entry_count_data_reader(training_data_reader, 1));
 
 		network_data_smart_ptr data(new network_data(*schema));
@@ -1646,7 +1638,7 @@ namespace nnforge
 						1,
 						0.0F,
 						0.0F,
-						std::map<unsigned int, float>());
+						true);
 					double original_error = res.first->get_error();
 					float gradient_backprop = -(data->data_list[layer_id]->at(weight_set).at(weight_id) - original_weight) / 1.0e+6F;
 
@@ -1670,7 +1662,7 @@ namespace nnforge
 								1,
 								0.0F,
 								0.0F,
-								std::map<unsigned int, float>());
+								true);
 							float new_error = res.first->get_error();
 							float gradient_check = static_cast<float>(new_error - original_error) / check_gradient_step;
 
@@ -1752,11 +1744,6 @@ namespace nnforge
 	bool neural_network_toolset::is_training_with_validation() const
 	{
 		return true;
-	}
-
-	std::map<unsigned int, float> neural_network_toolset::get_dropout_rate_map() const
-	{
-		return std::map<unsigned int, float>();
 	}
 
 	std::vector<data_transformer_smart_ptr> neural_network_toolset::get_input_data_transformer_list_for_training() const
