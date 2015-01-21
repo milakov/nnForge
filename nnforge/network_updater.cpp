@@ -24,25 +24,16 @@
 
 namespace nnforge
 {
-	const unsigned int network_updater::random_list_bits = 18;
-
 	network_updater::network_updater(
 		network_schema_smart_ptr schema,
 		const_error_function_smart_ptr ef)
 		: schema(schema)
 		, ef(ef)
-		, random_uniform_list(1 << random_list_bits)
-		, gen(rnd::get_random_generator())
 	{
 	}
 
 	network_updater::~network_updater()
 	{
-	}
-
-	void network_updater::set_random_generator_seed(int seed)
-	{
-		gen = rnd::get_random_generator(seed);
 	}
 
 	void network_updater::set_input_configuration_specific(const layer_configuration_specific& input_configuration_specific)
@@ -64,7 +55,7 @@ namespace nnforge
 		unsigned int batch_size,
 		float weight_decay,
 		float momentum,
-		const std::map<unsigned int, float>& layer_to_dropout_rate_map)
+		bool deterministic_only)
 	{
 		// Check data-schema consistency
 		data->check_network_data_consistency(*schema);
@@ -74,11 +65,7 @@ namespace nnforge
 		// Check schema-reader consistency
 		layer_config_list[layer_config_list.size() - 1].check_equality(reader.get_output_configuration());
 
-		nnforge_uniform_real_distribution<float> dist(0.0F, 1.0F);
-		for(std::vector<float>::iterator it = random_uniform_list.begin(); it != random_uniform_list.end(); ++it)
-			*it = dist(gen);
-
-		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = actual_update(reader, learning_rates, data, batch_size, weight_decay, momentum, layer_to_dropout_rate_map);
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = actual_update(reader, learning_rates, data, batch_size, weight_decay, momentum, deterministic_only);
 
 		return res;
 	}

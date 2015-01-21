@@ -1209,7 +1209,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count)
+				unsigned int entry_count,
+				bool force_deterministic)
 			{
 				if (dynamic_memobjects[0] == 0)
 					dynamic_memobjects[0] = cuda_texture_smart_ptr(new cuda_texture(additional_buffers[0], 2));
@@ -1261,7 +1262,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count)
+				unsigned int entry_count,
+				bool force_deterministic)
 			{
 				if (!backprop_required)
 					throw neural_network_exception("convolution_layer_updater_cuda_kepler is not configured to do backprop but requested to");
@@ -1305,7 +1307,8 @@ namespace nnforge
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count)
+				unsigned int entry_count,
+				bool force_deterministic)
 			{
 				// Update biases
 				{

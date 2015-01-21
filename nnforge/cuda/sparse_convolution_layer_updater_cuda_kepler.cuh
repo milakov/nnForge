@@ -25,9 +25,12 @@
 #include "util_cuda.h"
 #include "cuda_texture.h"
 #include "neural_network_cuda_exception.h"
+#include "neural_network_cudnn_exception.h"
 
 #include "../sparse_convolution_layer.h"
 #include "../nn_types.h"
+
+#include <cudnn.h>
 
 #define MAX_DIMENSION_COUNT 4
 
@@ -690,51 +693,6 @@ namespace nnforge
 			} // if (in_bounds)
 		}
 
-		extern __shared__ float arr[];
-		__global__ void sparse_convolution_update_biases_upd_kernel_kepler(
-			float * __restrict gradient_biases,
-			const float * __restrict output_errors,
-			int block_size,
-			int output_elem_count_per_feature_map,
-			int output_feature_map_count,
-			int entry_count)
-		{
-			int output_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int output_feature_map_id = blockIdx.y;
-			int block_id = blockIdx.z * blockDim.z + threadIdx.z;
-			int base_entry_id = block_size * block_id;
-			int thread_id = blockDim.x * threadIdx.z + threadIdx.x;
-			int threadblock_size = blockDim.x * blockDim.z;
-			float sum = 0.0F;
-			int iteration_count = min(entry_count - base_entry_id, block_size);
-			if (output_neuron_id < output_elem_count_per_feature_map)
-			{
-				const float * current_error = output_errors + (base_entry_id * output_feature_map_count + output_feature_map_id) * output_elem_count_per_feature_map + output_neuron_id;
-				int output_elem_count_per_entry = output_elem_count_per_feature_map * output_feature_map_count;
-				for(int i = 0; i < iteration_count; ++i)
-				{
-					sum += *current_error;
-					current_error += output_elem_count_per_entry;
-				}
-			}
-			arr[thread_id] = sum;
-			__syncthreads();
-
-			int t_add_elems = threadblock_size >> 1;
-			int t_working_elems = (threadblock_size + 1) >> 1;
-			while (t_add_elems > 0)
-			{
-				if (thread_id < t_add_elems)
-					arr[thread_id] += arr[thread_id + t_working_elems];
-				t_add_elems = t_working_elems >> 1;
-				t_working_elems = (t_working_elems + 1) >> 1;
-				__syncthreads();
-			}
-
-			if (thread_id == 0)
-				atomicAdd(gradient_biases + output_feature_map_id, arr[0]);
-		}
-
 		template<int DIMENSION_COUNT, int WINDOW_WIDTH, int WINDOW_HEIGHT>
 		__launch_bounds__(256, 3)
 		__global__ void sparse_convolution_update_gradient_tex_exact_blocked_upd_kernel_kepler(
@@ -1382,18 +1340,22 @@ namespace nnforge
 		break; \
 	};
 
-
-
 		template<int dimension_count>
 		class sparse_convolution_layer_updater_cuda_kepler : public layer_updater_cuda
 		{
 		public:
 			sparse_convolution_layer_updater_cuda_kepler()
+				: output_data_desc(0)
+				, bias_desc(0)
 			{
+				cudnn_safe_call(cudnnCreateTensorDescriptor(&output_data_desc));
+				cudnn_safe_call(cudnnCreateTensorDescriptor(&bias_desc));
 			}
 
 			virtual ~sparse_convolution_layer_updater_cuda_kepler()
 			{
+				cudnnDestroyTensorDescriptor(output_data_desc);
+				cudnnDestroyTensorDescriptor(bias_desc);
 			}
 
 			virtual void enqueue_test(
@@ -1406,7 +1368,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count)
+				unsigned int entry_count,
+				bool force_deterministic)
 			{
 				cuda_texture input_tex(input_neurons_buffer);
 
@@ -1432,7 +1395,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count)
+				unsigned int entry_count,
+				bool force_deterministic)
 			{
 				if (!backprop_required)
 					throw neural_network_exception("sparse_convolution_layer_updater_cuda_kepler is not configured to do backprop but requested to");
@@ -1460,29 +1424,9 @@ namespace nnforge
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count)
+				unsigned int entry_count,
+				bool force_deterministic)
 			{
-				// Update biases
-				{
-					int block_size = get_bias_update_block_size(entry_count);
-					int block_count = (entry_count + block_size - 1) / block_size;
-					std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
-						*cuda_config,
-						output_elem_count_per_feature_map,
-						1,
-						block_count);
-					kernel_dims.first.y = output_configuration_specific.feature_map_count;
-					int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
-					int smem_size = threadblock_size * sizeof(float);
-					sparse_convolution_update_biases_upd_kernel_kepler<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-						*gradient[1],
-						*output_errors_buffer,
-						block_size,
-						output_elem_count_per_feature_map,
-						output_configuration_specific.feature_map_count,
-						entry_count);
-				}
-
 				// Update weights
 				{
 					const row_index_col_index_pair * row_index_col_index_pairs = (row_index_col_index_pair *)((void *)(*data_custom[4]));
@@ -1515,6 +1459,30 @@ namespace nnforge
 					int input_elem_offset = offset_input_entry_id * input_elem_count_per_entry;
 
 					launch_update_gradient_kernel(dimension_count, window_sizes[0], ((dimension_count > 1) ? window_sizes[1] : 1));
+				}
+
+				// Update bias
+				{
+					cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
+					cudnn_safe_call(cudnnSetTensor4dDescriptor(
+						output_data_desc,
+						CUDNN_TENSOR_NCHW,
+						CUDNN_DATA_FLOAT,
+						entry_count,
+						output_configuration_specific.feature_map_count,
+						1,
+						output_elem_count_per_feature_map));
+
+					float alpha = 1.0F;
+					float beta = 1.0F;
+					cudnn_safe_call(cudnnConvolutionBackwardBias(
+						cuda_config->get_cudnn_handle(),
+						&alpha,
+						output_data_desc,
+						*output_errors_buffer,
+						&beta,
+						bias_desc,
+						*gradient[1]));
 				}
 			}
 
@@ -1560,6 +1528,15 @@ namespace nnforge
 					block_count_per_input_feature_map *= input_block_sizes[i];
 					weight_count_per_block *= window_sizes[i];
 				}
+
+				cudnn_safe_call(cudnnSetTensor4dDescriptor(
+					bias_desc,
+					CUDNN_TENSOR_NCHW,
+					CUDNN_DATA_FLOAT,
+					1,
+					output_configuration_specific.feature_map_count,
+					1,
+					1));
 			}
 
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const
@@ -1645,12 +1622,6 @@ namespace nnforge
 			}
 
 		private:
-			static int get_bias_update_block_size(int entry_count)
-			{
-				int block_size = std::min(std::max(static_cast<int>(sqrtf(static_cast<float>(entry_count))), 1), entry_count);
-				return block_size;
-			}
-
 			std::pair<int, int> get_entry_group_size_and_count(int entry_count) const
 			{
 				int group_count = (entry_count + preferred_entry_group_size - 1) / preferred_entry_group_size;
@@ -1672,6 +1643,9 @@ namespace nnforge
 			int feature_map_connection_count;
 
 			static const int preferred_entry_group_size = 8;
+
+			cudnnTensorDescriptor_t output_data_desc;
+			cudnnTensorDescriptor_t bias_desc;
 		};
 	}
 }

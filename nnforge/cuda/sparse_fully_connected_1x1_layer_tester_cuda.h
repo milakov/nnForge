@@ -18,6 +18,8 @@
 
 #include "layer_tester_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
@@ -49,6 +51,9 @@ namespace nnforge
 
 		private:
 			int feature_map_connection_count;
+
+			cudnnTensorDescriptor_t output_data_desc;
+			cudnnTensorDescriptor_t bias_desc;
 		};
 	}
 }

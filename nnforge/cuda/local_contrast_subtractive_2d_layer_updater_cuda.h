@@ -39,7 +39,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 			virtual void enqueue_backprop(
 				cudaStream_t stream_id,
@@ -52,7 +53,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 		protected:
 			virtual void updater_configured();

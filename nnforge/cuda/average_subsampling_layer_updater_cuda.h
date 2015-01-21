@@ -18,16 +18,18 @@
 
 #include "layer_updater_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
 	{
-		class sigmoid_layer_updater_cuda : public layer_updater_cuda
+		class average_subsampling_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			sigmoid_layer_updater_cuda();
+			average_subsampling_layer_updater_cuda();
 
-			virtual ~sigmoid_layer_updater_cuda();
+			virtual ~average_subsampling_layer_updater_cuda();
 
 			virtual void enqueue_test(
 				unsigned int offset_input_entry_id,
@@ -39,7 +41,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 			virtual void enqueue_backprop(
 				cudaStream_t stream_id,
@@ -52,10 +55,18 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 		protected:
+			virtual void updater_configured();
+
 			virtual bool is_in_place_backprop() const;
+
+		private:
+			cudnnTensorDescriptor_t input_data_desc;
+			cudnnTensorDescriptor_t output_data_desc;
+			cudnnPoolingDescriptor_t subsampling_desc;
 		};
 	}
 }

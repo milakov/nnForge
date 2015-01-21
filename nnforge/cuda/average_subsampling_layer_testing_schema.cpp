@@ -18,7 +18,7 @@
 
 #include "../neural_network_exception.h"
 #include "../average_subsampling_layer.h"
-#include "average_subsampling_2d_layer_tester_cuda.h"
+#include "average_subsampling_layer_tester_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -52,8 +52,9 @@ namespace nnforge
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
+			case 1:
 			case 2:
-				res = layer_tester_cuda_smart_ptr(new average_subsampling_2d_layer_tester_cuda());
+				res = layer_tester_cuda_smart_ptr(new average_subsampling_layer_tester_cuda());
 				break;
 			default:
 				throw neural_network_exception((boost::format("No CUDA tester for the average subsampling layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());

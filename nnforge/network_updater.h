@@ -45,12 +45,10 @@ namespace nnforge
 			unsigned int batch_size,
 			float weight_decay,
 			float momentum,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map);
+			bool deterministic_only);
 
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
 		float get_flops_for_single_entry() const;
-
-		void set_random_generator_seed(int seed);
 
 	protected:
 		network_updater(
@@ -65,7 +63,7 @@ namespace nnforge
 			unsigned int batch_size,
 			float weight_decay,
 			float momentum,
-			const std::map<unsigned int, float>& layer_to_dropout_rate_map) = 0;
+			bool deterministic_only) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 		// The layer_config_list is guaranteed to be compatible with schema
@@ -77,17 +75,12 @@ namespace nnforge
 		network_schema_smart_ptr schema;
 		const_error_function_smart_ptr ef;
 		layer_configuration_specific_list layer_config_list;
-		std::vector<float> random_uniform_list;
 		float flops;
-
-		random_generator gen;
 
 	private:
 		network_updater();
 		network_updater(const network_updater&);
 		network_updater& operator =(const network_updater&);
-
-		static const unsigned int random_list_bits;
 	};
 
 	typedef nnforge_shared_ptr<network_updater> network_updater_smart_ptr;

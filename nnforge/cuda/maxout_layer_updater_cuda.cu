@@ -110,7 +110,8 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			bool force_deterministic)
 		{
 			if (offset_input_entry_id > 0)
 				throw neural_network_exception("maxout_layer_updater_cuda is not able to run using offset");
@@ -147,7 +148,8 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			bool force_deterministic)
 		{
 			const float * output_errors = *output_errors_buffer;
 			int * max_feature_map_positions = *additional_buffers[0];

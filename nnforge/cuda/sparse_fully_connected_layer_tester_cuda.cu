@@ -19,6 +19,8 @@
 #include <cuda_runtime.h>
 
 #include "util_cuda.h"
+#include "neural_network_cudnn_exception.h"
+
 #include "../sparse_convolution_layer.h"
 
 namespace nnforge
@@ -101,32 +103,13 @@ namespace nnforge
 				}
 			}
 
-		#if __CUDA_ARCH__ < 300
-			int threadblock_size = blockDim.x * blockDim.y * blockDim.z;
-			volatile float * arr = arr_sh;
-			for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
-				arr[i * threadblock_size + thread_id] = sums[i];
-		#endif
 			#pragma unroll
 			for(int tx = 16; tx > 0; tx >>= 1)
 			{
-			#if __CUDA_ARCH__ < 300
-				if (lane_id < tx)
-				{
-					#pragma unroll
-					for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
-						arr[i * threadblock_size + thread_id] += arr[i * threadblock_size + thread_id + tx];
-				}
-			#else
 				#pragma unroll
 				for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
 					sums[i] += __shfl_xor(sums[i], tx);
-			#endif
 			}
-		#if __CUDA_ARCH__ < 300
-			for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
-				sums[i] = arr[i * threadblock_size + thread_id];
-		#endif
 
 			if (lane_id == 0)
 			{
@@ -139,11 +122,17 @@ namespace nnforge
 		const int sparse_fully_connected_layer_tester_cuda::max_input_feature_map_block_size = 32;
 
 		sparse_fully_connected_layer_tester_cuda::sparse_fully_connected_layer_tester_cuda()
+			: output_data_desc(0)
+			, bias_desc(0)
 		{
+			cudnn_safe_call(cudnnCreateTensorDescriptor(&output_data_desc));
+			cudnn_safe_call(cudnnCreateTensorDescriptor(&bias_desc));
 		}
 
 		sparse_fully_connected_layer_tester_cuda::~sparse_fully_connected_layer_tester_cuda()
 		{
+			cudnnDestroyTensorDescriptor(output_data_desc);
+			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
 		void sparse_fully_connected_layer_tester_cuda::enqueue_test(
@@ -155,13 +144,11 @@ namespace nnforge
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			unsigned int entry_count)
 		{
-			// Copy bias
-			cuda_util::duplicate_vector(
+			cuda_util::set_with_value(
 				*cuda_config,
-				*data[1],
 				*additional_buffers[0],
-				output_elem_count_per_entry,
-				entry_count,
+				0.0F,
+				output_elem_count_per_entry * entry_count,
 				stream_id);
 
 			std::pair<int, int> input_feature_map_block_size_and_count = get_input_feature_map_block_size_and_count();
@@ -172,7 +159,7 @@ namespace nnforge
 				(entry_count + OUTPUT_ELEM_COUNT_BLOCK_SIZE - 1) / OUTPUT_ELEM_COUNT_BLOCK_SIZE,
 				32);
 			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
-			int smem_size = (cuda_config->get_compute_capability() < 300) ? OUTPUT_ELEM_COUNT_BLOCK_SIZE * threadblock_size * sizeof(float) : threadblock_size * sizeof(float);
+			int smem_size = threadblock_size * sizeof(float);
 			sparse_fully_connected_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 				*additional_buffers[0],
 				*input_buffer,
@@ -184,6 +171,30 @@ namespace nnforge
 				entry_count,
 				input_feature_map_block_size_and_count.first,
 				window_size);
+
+			// Add bias
+			{
+				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
+				cudnn_safe_call(cudnnSetTensor4dDescriptor(
+					output_data_desc,
+					CUDNN_TENSOR_NCHW,
+					CUDNN_DATA_FLOAT,
+					entry_count,
+					output_configuration_specific.feature_map_count,
+					1,
+					1));
+				float alpha = 1.0F;
+				float beta = 1.0F;
+				cudnn_safe_call(cudnnAddTensor(
+					cuda_config->get_cudnn_handle(),
+					CUDNN_ADD_SAME_C,
+					&alpha,
+					bias_desc,
+					*data[1],
+					&beta,
+					output_data_desc,
+					*additional_buffers[0]));
+			}
 		}
 
 		std::vector<size_t> sparse_fully_connected_layer_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
@@ -211,6 +222,15 @@ namespace nnforge
 			window_size = 1;
 			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)
 				window_size *= *it;
+
+			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				bias_desc,
+				CUDNN_TENSOR_NCHW,
+				CUDNN_DATA_FLOAT,
+				1,
+				output_configuration_specific.feature_map_count,
+				1,
+				1));
 		}
 
 		void sparse_fully_connected_layer_tester_cuda::notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom)

@@ -18,6 +18,8 @@
 
 #include "layer_tester_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
@@ -38,8 +40,14 @@ namespace nnforge
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				unsigned int entry_count);
 
-		private:
-			static int get_threadblock_size(int output_neuron_count);
+			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
+				cuda_linear_buffer_device_smart_ptr input_buffer,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers);
+
+		protected:
+			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
+
+			cudnnTensorDescriptor_t input_data_desc;
 		};
 	}
 }

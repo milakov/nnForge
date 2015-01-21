@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -202,11 +202,11 @@ namespace nnforge
 		unsigned int input_neuron_count = input_feature_map_count;
 		std::for_each(window_sizes.begin(), window_sizes.end(), input_neuron_count *= boost::lambda::_1);
 
-		float standard_deviation = 1.0F / sqrtf(static_cast<float>(input_neuron_count));
-		float max_abs_value = 3.0F * standard_deviation;
+		// xavier
+		float standard_deviation = sqrtf(1.0F / static_cast<float>(input_neuron_count));
+		float max_abs_value = 100.0F * standard_deviation;
 
 		nnforge_normal_distribution<float> nd(0.0F, standard_deviation);
-		//nnforge_uniform_real_distribution<float> nd(-2.0F * standard_deviation, 2.0F * standard_deviation);
 
 		for(unsigned int i = 0; i < data[0].size(); ++i)
 		{

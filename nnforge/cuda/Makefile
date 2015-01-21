@@ -14,14 +14,8 @@ OBJECTS_CUDA=$(SOURCES_CUDA:%.cu=%.o)
 
 all: $(TARGET)
 
-%_cuda_fermi.o : %_cuda_fermi.cu
-	$(NVCC) -c $< $(NVCCFLAGS) $(CUDA_FLAGS_ARCH_FERMI) -o $@
-
-%_cuda_kepler.o : %_cuda_kepler.cu
-	$(NVCC) -c $< $(NVCCFLAGS) $(CUDA_FLAGS_ARCH_KEPLER) -o $@
-
-%_cuda.o : %_cuda.cu
-	$(NVCC) -c $< $(NVCCFLAGS) $(CUDA_FLAGS_ARCH_FERMI) $(CUDA_FLAGS_ARCH_KEPLER) -o $@
+%.o : %.cu
+	$(NVCC) -c $< $(NVCCFLAGS) $(CUDA_FLAGS_ARCH) -o $@
 
 $(OBJECTS): $(SOURCES)
 

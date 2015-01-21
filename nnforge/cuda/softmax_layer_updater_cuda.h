@@ -18,6 +18,8 @@
 
 #include "layer_updater_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
@@ -39,7 +41,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 			virtual void enqueue_backprop(
 				cudaStream_t stream_id,
@@ -52,12 +55,13 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 		protected:
 			virtual bool is_in_place_backprop() const;
 
-			static int get_threadblock_size(int output_neuron_count);
+			cudnnTensorDescriptor_t input_data_desc;
 		};
 	}
 }

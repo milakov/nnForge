@@ -20,6 +20,8 @@
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
+#include "neural_network_cudnn_exception.h"
+
 #include "../sparse_convolution_layer.h"
 
 namespace nnforge
@@ -27,31 +29,6 @@ namespace nnforge
 	namespace cuda
 	{
 		extern __shared__ float arr_sh[];
-
-		__global__ void sparse_fully_connected_update_biases_upd_kernel(
-			float * __restrict gradient_biases,
-			const float * __restrict output_errors,
-			int block_size,
-			int output_elem_count_per_entry,
-			int entry_count,
-			int block_count)
-		{
-			int output_neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int block_id = blockIdx.y * blockDim.y + threadIdx.y;
-			if ((output_neuron_id < output_elem_count_per_entry) && (block_id < block_count))
-			{
-				int base_entry_id = block_size * block_id;
-				int iteration_count = min(entry_count - base_entry_id, block_size);
-				const float * current_error = output_errors + (base_entry_id * output_elem_count_per_entry + output_neuron_id);
-				float sum = 0.0F;
-				for(int i = 0; i < iteration_count; ++i)
-				{
-					sum += *current_error;
-					current_error += output_elem_count_per_entry;
-				}
-				atomicAdd(gradient_biases + output_neuron_id, sum);
-			}
-		}
 
 		#define OUTPUT_ELEM_COUNT_BLOCK_SIZE 4
 		__global__ void sparse_fully_connected_upd_kernel(
@@ -128,32 +105,13 @@ namespace nnforge
 				}
 			}
 
-		#if __CUDA_ARCH__ < 300
-			int threadblock_size = blockDim.x * blockDim.y * blockDim.z;
-			volatile float * arr = arr_sh;
-			for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
-				arr[i * threadblock_size + thread_id] = sums[i];
-		#endif
 			#pragma unroll
 			for(int tx = 16; tx > 0; tx >>= 1)
 			{
-			#if __CUDA_ARCH__ < 300
-				if (lane_id < tx)
-				{
-					#pragma unroll
-					for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
-						arr[i * threadblock_size + thread_id] += arr[i * threadblock_size + thread_id + tx];
-				}
-			#else
 				#pragma unroll
 				for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
 					sums[i] += __shfl_xor(sums[i], tx);
-			#endif
 			}
-		#if __CUDA_ARCH__ < 300
-			for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
-				sums[i] = arr[i * threadblock_size + thread_id];
-		#endif
 
 			if (lane_id == 0)
 			{
@@ -292,11 +250,17 @@ namespace nnforge
 		const int sparse_fully_connected_layer_updater_cuda::absolute_max_update_entry_count_block_size = 32;
 
 		sparse_fully_connected_layer_updater_cuda::sparse_fully_connected_layer_updater_cuda()
+			: output_data_desc(0)
+			, bias_desc(0)
 		{
+			cudnn_safe_call(cudnnCreateTensorDescriptor(&output_data_desc));
+			cudnn_safe_call(cudnnCreateTensorDescriptor(&bias_desc));
 		}
 
 		sparse_fully_connected_layer_updater_cuda::~sparse_fully_connected_layer_updater_cuda()
 		{
+			cudnnDestroyTensorDescriptor(output_data_desc);
+			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
 		void sparse_fully_connected_layer_updater_cuda::enqueue_test(
@@ -309,15 +273,14 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			bool force_deterministic)
 		{
-			// Copy bias
-			cuda_util::duplicate_vector(
+			cuda_util::set_with_value(
 				*cuda_config,
-				*data[1],
 				*output_neurons_buffer,
-				output_elem_count_per_entry,
-				entry_count,
+				0.0F,
+				output_elem_count_per_entry * entry_count,
 				stream_id);
 
 			std::pair<int, int> input_feature_map_block_size_and_count = get_input_feature_map_block_size_and_count();
@@ -328,7 +291,7 @@ namespace nnforge
 				(entry_count + OUTPUT_ELEM_COUNT_BLOCK_SIZE - 1) / OUTPUT_ELEM_COUNT_BLOCK_SIZE,
 				32);
 			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
-			int smem_size = (cuda_config->get_compute_capability() < 300) ? OUTPUT_ELEM_COUNT_BLOCK_SIZE * threadblock_size * sizeof(float) : threadblock_size * sizeof(float);
+			int smem_size = threadblock_size * sizeof(float);
 			sparse_fully_connected_upd_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 				*output_neurons_buffer,
 				*input_neurons_buffer,
@@ -340,6 +303,30 @@ namespace nnforge
 				entry_count,
 				input_feature_map_block_size_and_count.first,
 				window_size);
+
+			// Add bias
+			{
+				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
+				cudnn_safe_call(cudnnSetTensor4dDescriptor(
+					output_data_desc,
+					CUDNN_TENSOR_NCHW,
+					CUDNN_DATA_FLOAT,
+					entry_count,
+					output_configuration_specific.feature_map_count,
+					1,
+					1));
+				float alpha = 1.0F;
+				float beta = 1.0F;
+				cudnn_safe_call(cudnnAddTensor(
+					cuda_config->get_cudnn_handle(),
+					CUDNN_ADD_SAME_C,
+					&alpha,
+					bias_desc,
+					*data[1],
+					&beta,
+					output_data_desc,
+					*output_neurons_buffer));
+			}
 		}
 
 		void sparse_fully_connected_layer_updater_cuda::enqueue_backprop(
@@ -353,8 +340,12 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			bool force_deterministic)
 		{
+			if (!backprop_required)
+				throw neural_network_exception("sparse_fully_connected_layer_updater_cuda is not configured to do backprop but requested to");
+
 			cuda_util::set_with_value(
 				*cuda_config,
 				*input_errors_buffer,
@@ -392,7 +383,8 @@ namespace nnforge
 			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			bool force_deterministic)
 		{
 			// Update weights
 			{
@@ -420,32 +412,32 @@ namespace nnforge
 
 			// Update biases
 			{
-				int block_size = get_block_size(entry_count);
-				int block_count = (entry_count + block_size - 1) / block_size;
-				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
-					*cuda_config,
-					output_elem_count_per_entry,
-					block_count,
-					1);
-				sparse_fully_connected_update_biases_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-					*gradient[1],
-					*output_errors_buffer,
-					block_size,
-					output_elem_count_per_entry,
+				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
+				cudnn_safe_call(cudnnSetTensor4dDescriptor(
+					output_data_desc,
+					CUDNN_TENSOR_NCHW,
+					CUDNN_DATA_FLOAT,
 					entry_count,
-					block_count);
+					output_configuration_specific.feature_map_count,
+					1,
+					output_elem_count_per_feature_map));
+
+				float alpha = 1.0F;
+				float beta = 1.0F;
+				cudnn_safe_call(cudnnConvolutionBackwardBias(
+					cuda_config->get_cudnn_handle(),
+					&alpha,
+					output_data_desc,
+					*output_errors_buffer,
+					&beta,
+					bias_desc,
+					*gradient[1]));
 			}
 		}
 
 		bool sparse_fully_connected_layer_updater_cuda::is_in_place_backprop() const
 		{
 			return false;
-		}
-
-		int sparse_fully_connected_layer_updater_cuda::get_block_size(int entry_count)
-		{
-			int block_size = std::min<int>(std::max<int>(static_cast<int>(sqrtf(static_cast<float>(entry_count))), 1), entry_count);
-			return block_size;
 		}
 
 		void sparse_fully_connected_layer_updater_cuda::updater_configured()
@@ -460,6 +452,15 @@ namespace nnforge
 
 			int input_data_single_backprop_entry_size = input_elem_count_per_entry * sizeof(float);
 			max_update_entry_count_block_size = std::min(std::max(absolute_min_update_entry_count_block_size, cuda_config->l2_cache_size / 2 / input_data_single_backprop_entry_size), absolute_max_update_entry_count_block_size);
+
+			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				bias_desc,
+				CUDNN_TENSOR_NCHW,
+				CUDNN_DATA_FLOAT,
+				1,
+				output_configuration_specific.feature_map_count,
+				1,
+				1));
 		}
 
 		std::vector<size_t> sparse_fully_connected_layer_updater_cuda::get_sizes_of_additional_buffers_per_entry() const

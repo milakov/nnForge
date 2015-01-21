@@ -47,7 +47,6 @@ namespace nnforge
 		float learning_rate_rise_rate;
 		float weight_decay;
 		float momentum;
-		std::map<unsigned int, float> layer_to_dropout_rate_map;
 
 	protected:
 		network_trainer(network_schema_smart_ptr schema);

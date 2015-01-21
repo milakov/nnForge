@@ -22,6 +22,7 @@
 #include "convolution_layer_updater_schema_helper_cuda_kepler.h"
 #include "convolution_layer_updater_schema_helper_cuda_fermi.h"
 #include "convolution_1x1_layer_updater_cuda.h"
+#include "convolution_layer_updater_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -66,12 +67,13 @@ namespace nnforge
 			{
 				res = layer_updater_cuda_smart_ptr(new convolution_1x1_layer_updater_cuda());
 			}
+			else if (input_configuration_specific.dimension_sizes.size() <= 2)
+			{
+				res = layer_updater_cuda_smart_ptr(new convolution_layer_updater_cuda());
+			}
 			else
 			{
-				if (cuda_config->get_compute_capability() >= 300)
-					res = convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific, output_configuration_specific);
-				else
-					res = convolution_layer_updater_schema_helper_cuda_fermi::create_updater_specific(input_configuration_specific, output_configuration_specific);
+				res = convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific, output_configuration_specific);
 			}
 
 			return res;

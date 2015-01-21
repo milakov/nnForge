@@ -18,6 +18,8 @@
 
 #include "layer_tester_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
@@ -44,6 +46,12 @@ namespace nnforge
 
 		protected:
 			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
+
+			virtual void tester_configured();
+
+		private:
+			cudnnTensorDescriptor_t output_data_desc;
+			cudnnTensorDescriptor_t bias_desc;
 		};
 	}
 }

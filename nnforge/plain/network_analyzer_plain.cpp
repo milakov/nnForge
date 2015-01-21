@@ -131,7 +131,8 @@ namespace nnforge
 					*input_config_it,
 					*(input_config_it + 1),
 					1,
-					0);
+					0,
+					true);
 			}
 		}
 
@@ -225,7 +226,8 @@ namespace nnforge
 						*data_custom_it,
 						*(input_config_it + 1),
 						*input_config_it,
-						1);
+						1,
+						true);
 				}
 			}
 

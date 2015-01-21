@@ -17,7 +17,8 @@
 #include "sigmoid_layer_updater_schema.h"
 
 #include "../sigmoid_layer.h"
-#include "sigmoid_layer_updater_cuda.h"
+
+#include "activation_layer_cudnn_updater_cuda.h"
 
 namespace nnforge
 {
@@ -45,7 +46,7 @@ namespace nnforge
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_updater_cuda_smart_ptr(new sigmoid_layer_updater_cuda());
+			return layer_updater_cuda_smart_ptr(new activation_layer_cudnn_updater_cuda(CUDNN_ACTIVATION_SIGMOID));
 		}
 	}
 }

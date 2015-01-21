@@ -18,6 +18,8 @@
 
 #include "layer_updater_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
@@ -39,7 +41,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 			virtual void enqueue_backprop(
 				cudaStream_t stream_id,
@@ -52,7 +55,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 			virtual void enqueue_update_weights(
 				unsigned int offset_input_entry_id,
@@ -64,7 +68,8 @@ namespace nnforge
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 		protected:
 			virtual bool is_in_place_backprop() const;
@@ -76,8 +81,6 @@ namespace nnforge
 			virtual void notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom);
 
 		private:
-			static int get_block_size(int entry_count);
-
 			std::pair<int, int> get_entry32_update_block_size_and_count(unsigned int entry_count) const;
 
 			std::pair<int, int> get_entry32_backprop_block_size_and_count(unsigned int entry_count) const;
@@ -87,6 +90,9 @@ namespace nnforge
 			int max_column_index_count_per_row;
 			int max_entry32_update_block_size;
 			int max_entry32_backprop_block_size;
+
+			cudnnTensorDescriptor_t output_data_desc;
+			cudnnTensorDescriptor_t bias_desc;
 		};
 	}
 }

@@ -17,7 +17,7 @@
 #include "sigmoid_layer_testing_schema.h"
 
 #include "../sigmoid_layer.h"
-#include "sigmoid_layer_tester_cuda.h"
+#include "activation_layer_cudnn_tester_cuda.h"
 
 namespace nnforge
 {
@@ -45,7 +45,7 @@ namespace nnforge
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_tester_cuda_smart_ptr(new sigmoid_layer_tester_cuda());
+			return layer_tester_cuda_smart_ptr(new activation_layer_cudnn_tester_cuda(CUDNN_ACTIVATION_SIGMOID));
 		}
 	}
 }

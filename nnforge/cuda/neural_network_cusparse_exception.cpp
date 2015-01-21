@@ -26,7 +26,7 @@ namespace nnforge
 			cusparseStatus_t error_code,
 			const char * filename,
 			int line_number)
-			: neural_network_exception((boost::format("CUSPARSE error: %1%") % error_code).str(), filename, line_number)
+			: neural_network_exception((boost::format("cuSPARSE error: %1%") % error_code).str(), filename, line_number)
 		{
 		}
 	}

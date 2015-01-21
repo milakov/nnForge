@@ -71,7 +71,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count) = 0;
+				unsigned int entry_count,
+				bool force_deterministic) = 0;
 
 			// input_errors_buffer is null if is_in_place_backprop() is true
 			virtual void enqueue_backprop(
@@ -85,7 +86,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count) = 0;
+				unsigned int entry_count,
+				bool force_deterministic) = 0;
 
 			virtual void enqueue_update_weights(
 				unsigned int offset_input_entry_id,
@@ -97,7 +99,8 @@ namespace nnforge
 				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 			std::vector<cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
 

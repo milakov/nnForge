@@ -59,24 +59,11 @@ namespace nnforge
 			err *= err;
 			int thread_id = threadIdx.x;
 			int lane_id = thread_id & 31;
-		#if __CUDA_ARCH__ < 300
-			volatile float * arr = arr_sh;
-			arr[thread_id] = err;
-		#endif
 			#pragma unroll
 			for(int tx = 16; tx > 0; tx >>= 1)
 			{
-			#if __CUDA_ARCH__ < 300
-				if (lane_id < tx)
-					arr[thread_id] += arr[thread_id + tx];
-			#else
 				err += __shfl_down(err, tx);
-			#endif
 			}
-		#if __CUDA_ARCH__ < 300
-			err = arr[thread_id];
-			__syncthreads();
-		#endif
 
 			if (blockDim.x > 32)
 			{

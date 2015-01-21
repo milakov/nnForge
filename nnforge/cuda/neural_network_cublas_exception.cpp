@@ -26,7 +26,7 @@ namespace nnforge
 			cublasStatus_t error_code,
 			const char * filename,
 			int line_number)
-			: neural_network_exception((boost::format("CUBLAS error: %1%") % error_code).str(), filename, line_number)
+			: neural_network_exception((boost::format("cuBLAS error: %1%") % error_code).str(), filename, line_number)
 		{
 		}
 	}

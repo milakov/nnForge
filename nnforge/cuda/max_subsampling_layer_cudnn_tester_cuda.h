@@ -18,16 +18,18 @@
 
 #include "layer_tester_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
 	{
-		class sigmoid_layer_tester_cuda : public layer_tester_cuda
+		class max_subsampling_layer_cudnn_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			sigmoid_layer_tester_cuda();
+			max_subsampling_layer_cudnn_tester_cuda();
 
-			virtual ~sigmoid_layer_tester_cuda();
+			virtual ~max_subsampling_layer_cudnn_tester_cuda();
 
 			virtual void enqueue_test(
 				cudaStream_t stream_id,
@@ -37,6 +39,19 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				unsigned int entry_count);
+
+			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
+				cuda_linear_buffer_device_smart_ptr input_buffer,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers);
+
+		protected:
+			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
+
+			virtual void tester_configured();
+
+			cudnnTensorDescriptor_t input_data_desc;
+			cudnnTensorDescriptor_t output_data_desc;
+			cudnnPoolingDescriptor_t subsampling_desc;
 		};
 	}
 }

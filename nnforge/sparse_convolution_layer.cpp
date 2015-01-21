@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ namespace nnforge
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count),
-		feature_map_connection_count(static_cast<unsigned int>(input_feature_map_count * output_feature_map_count * feature_map_connection_sparsity_ratio)),
+		feature_map_connection_count(static_cast<unsigned int>(input_feature_map_count * output_feature_map_count * feature_map_connection_sparsity_ratio + 0.5F)),
 		left_zero_padding(left_zero_padding),
 		right_zero_padding(right_zero_padding)
 	{
@@ -262,9 +262,10 @@ namespace nnforge
 			unsigned int current_input_feature_map_count = data_custom[1][output_feature_map_id + 1] - data_custom[1][output_feature_map_id];
 			if (current_input_feature_map_count > 0)
 			{
+				// xavier
 				unsigned int input_neuron_count = input_neuron_count_per_feature_map * current_input_feature_map_count;
-				float standard_deviation = 1.0F / sqrtf(static_cast<float>(input_neuron_count));
-				float max_abs_value = 3.0F * standard_deviation;
+				float standard_deviation = sqrtf(1.0F / static_cast<float>(input_neuron_count));
+				float max_abs_value = 100.0F * standard_deviation;
 				nnforge_normal_distribution<float> nd(0.0F, standard_deviation);
 
 				for(unsigned int i = 0; i < input_neuron_count; ++i)

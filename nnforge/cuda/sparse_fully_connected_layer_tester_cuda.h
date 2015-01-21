@@ -18,6 +18,8 @@
 
 #include "layer_tester_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
@@ -50,13 +52,16 @@ namespace nnforge
 			virtual void notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom);
 
 		private:
+			std::pair<int, int> get_input_feature_map_block_size_and_count() const;
+
 			int feature_map_connection_count;
 			int max_column_index_count_per_row;
 			int window_size;
 
 			static const int max_input_feature_map_block_size;
 
-			std::pair<int, int> get_input_feature_map_block_size_and_count() const;
+			cudnnTensorDescriptor_t output_data_desc;
+			cudnnTensorDescriptor_t bias_desc;
 		};
 	}
 }

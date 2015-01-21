@@ -18,16 +18,18 @@
 
 #include "layer_tester_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
 	{
-		class average_subsampling_2d_layer_tester_cuda : public layer_tester_cuda
+		class activation_layer_cudnn_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			average_subsampling_2d_layer_tester_cuda();
+			activation_layer_cudnn_tester_cuda(cudnnActivationMode_t af);
 
-			virtual ~average_subsampling_2d_layer_tester_cuda();
+			virtual ~activation_layer_cudnn_tester_cuda();
 
 			virtual void enqueue_test(
 				cudaStream_t stream_id,
@@ -38,20 +40,9 @@ namespace nnforge
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				unsigned int entry_count);
 
-			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers);
-
 		protected:
-			virtual void tester_configured();
-
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
-
-			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
-
-		private:
-			float subsampling_weight;
-			std::vector<unsigned int> subsampling_sizes;
+			cudnnActivationMode_t af;
+			cudnnTensorDescriptor_t input_data_desc;
 		};
 	}
 }

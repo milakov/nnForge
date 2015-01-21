@@ -19,6 +19,7 @@
 #include <ostream>
 #include <boost/format.hpp>
 #include <limits>
+#include <iostream>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -26,6 +27,9 @@
 #include "neural_network_cuda_exception.h"
 #include "neural_network_cublas_exception.h"
 #include "neural_network_cusparse_exception.h"
+#include "neural_network_cudnn_exception.h"
+#include "neural_network_curand_exception.h"
+#include "../rnd.h"
 
 namespace nnforge
 {
@@ -38,6 +42,8 @@ namespace nnforge
 			, max_global_memory_usage_ratio(max_global_memory_usage_ratio)
 			, cublas_handle(0)
 			, cusparse_handle(0)
+			, cudnn_handle(0)
+			, curand_gen(0)
 		{
 			update_parameters();
 		}
@@ -48,13 +54,17 @@ namespace nnforge
 				cublasDestroy(cublas_handle);
 			if (cusparse_handle)
 				cusparseDestroy(cusparse_handle);
+			if (cudnn_handle)
+				cudnnDestroy(cudnn_handle);
+			if (curand_gen)
+				curandDestroyGenerator(curand_gen);
 			cudaDeviceReset();
 		}
 
 		void cuda_running_configuration::update_parameters()
 		{
-	        cuda_safe_call(cudaDriverGetVersion(&driver_version));
-	        cuda_safe_call(cudaRuntimeGetVersion(&runtime_version));
+			cuda_safe_call(cudaDriverGetVersion(&driver_version));
+			cuda_safe_call(cudaRuntimeGetVersion(&runtime_version));
 
 			int device_count;
 		    cuda_safe_call(cudaGetDeviceCount(&device_count));
@@ -84,18 +94,28 @@ namespace nnforge
 			for(int i = 0; i < sizeof(max_grid_size) / sizeof(max_grid_size[0]); ++i)
 				max_grid_size[i] = device_prop.maxGridSize[i];
 			max_texture_1d_linear = device_prop.maxTexture1DLinear;
-			texture_alignment = device_prop.textureAlignment;
+			texture_alignment = static_cast<int>(device_prop.textureAlignment);
 			pci_bus_id = device_prop.pciBusID;
 			pci_device_id = device_prop.pciDeviceID;
 		#ifdef _WIN32
 			tcc_mode = (device_prop.tccDriver != 0);
 		#endif
 
+			if (compute_capability_major < 3)
+			{
+				throw neural_network_exception((boost::format("Insufficient compute capability %1%.%2% for device #%3% \"%4%\". Kepler and above architectures supported only.") % compute_capability_major % compute_capability_minor % device_id % device_name).str());
+			}
+
 			cuda_safe_call(cudaSetDevice(device_id));
 
 			cublas_safe_call(cublasCreate(&cublas_handle));
 
 			cusparse_safe_call(cusparseCreate(&cusparse_handle));
+
+			cudnn_safe_call(cudnnCreate(&cudnn_handle));
+
+			curand_safe_call(curandCreateGenerator(&curand_gen, CURAND_RNG_PSEUDO_DEFAULT));
+			curand_safe_call(curandSetPseudoRandomGeneratorSeed(curand_gen, rnd::get_time_dependent_seed()));
 		}
 
 		void cuda_running_configuration::set_device() const
@@ -190,6 +210,16 @@ namespace nnforge
 		cusparseHandle_t cuda_running_configuration::get_cusparse_handle() const
 		{
 			return cusparse_handle;
+		}
+
+		cudnnHandle_t cuda_running_configuration::get_cudnn_handle() const
+		{
+			return cudnn_handle;
+		}
+
+		curandGenerator_t cuda_running_configuration::get_curand_generator() const
+		{
+			return curand_gen;
 		}
 	}
 }

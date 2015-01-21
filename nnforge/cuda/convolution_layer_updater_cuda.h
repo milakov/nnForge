@@ -18,16 +18,18 @@
 
 #include "layer_updater_cuda.h"
 
+#include <cudnn.h>
+
 namespace nnforge
 {
 	namespace cuda
 	{
-		class average_subsampling_2d_layer_updater_cuda : public layer_updater_cuda
+		class convolution_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			average_subsampling_2d_layer_updater_cuda();
+			convolution_layer_updater_cuda();
 
-			virtual ~average_subsampling_2d_layer_updater_cuda();
+			virtual ~convolution_layer_updater_cuda();
 
 			virtual void enqueue_test(
 				unsigned int offset_input_entry_id,
@@ -39,7 +41,8 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
 
 			virtual void enqueue_backprop(
 				cudaStream_t stream_id,
@@ -52,19 +55,38 @@ namespace nnforge
 				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
 				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
 				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				bool force_deterministic);
+
+			virtual void enqueue_update_weights(
+				unsigned int offset_input_entry_id,
+				cudaStream_t stream_id,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
+				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
+				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
+				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
+				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
+				unsigned int entry_count,
+				bool force_deterministic);
 
 		protected:
-			virtual void updater_configured();
-
 			virtual bool is_in_place_backprop() const;
 
-			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
+			virtual void updater_configured();
 
-		private:
-			float subsampling_weight;
-			std::vector<unsigned int> subsampling_sizes;
-			bool is_even_subsampling;
+			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const;
+
+		protected:
+			std::vector<unsigned int> window_sizes;
+			std::vector<unsigned int> zero_padding;
+
+			cudnnTensorDescriptor_t input_data_desc;
+			cudnnTensorDescriptor_t output_data_desc;
+			cudnnFilterDescriptor_t weights_desc;
+			cudnnConvolutionDescriptor_t convolution_desc;
+			cudnnTensorDescriptor_t bias_desc;
 		};
 	}
 }

@@ -60,24 +60,11 @@ namespace nnforge
 
 			int thread_id = threadIdx.x;
 			int lane_id = thread_id & 31;
-		#if __CUDA_ARCH__ < 300
-			volatile float * arr = arr_sh;
-			arr[thread_id] = err;
-		#endif
 			#pragma unroll
 			for(int tx = 16; tx > 0; tx >>= 1)
 			{
-			#if __CUDA_ARCH__ < 300
-				if (lane_id < tx)
-					arr[thread_id] += arr[thread_id + tx];
-			#else
 				err += __shfl_down(err, tx);
-			#endif
 			}
-		#if __CUDA_ARCH__ < 300
-			err = arr[thread_id];
-			__syncthreads();
-		#endif
 
 			if (blockDim.x > 32)
 			{
@@ -112,33 +99,17 @@ namespace nnforge
 			int thread_id = threadIdx.x;
 			int lane_id = thread_id & 31;
 
-		#if __CUDA_ARCH__ < 300
-			volatile float * arr2 = arr_sh;
-		#endif
-
 			// calculate max value
 			float max_value;
 			{
 				max_value = -1.0e+37F;
 				for(int neuron_id = start_neuron_id; neuron_id < neuron_count; neuron_id += threadblock_size)
 					max_value = max(max_value, predicted_output_neurons[updater_entry_id * neuron_count + neuron_id]);
-			#if __CUDA_ARCH__ < 300
-				arr2[thread_id] = max_value;
-			#endif
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
-				#if __CUDA_ARCH__ < 300
-					if (lane_id < tx)
-						arr2[thread_id] = max(arr2[thread_id], arr2[thread_id + tx]);
-				#else
 					max_value = max(max_value, __shfl_down(max_value, tx));
-				#endif
 				}
-			#if __CUDA_ARCH__ < 300
-				max_value = arr2[thread_id];
-				__syncthreads();
-			#endif
 				if (lane_id == 0)
 					arr_sh[thread_id >> 5] = max_value;
 				__syncthreads();
@@ -161,23 +132,11 @@ namespace nnforge
 				for(int neuron_id = start_neuron_id; neuron_id < neuron_count; neuron_id += threadblock_size)
 					predicted_sum += __expf(predicted_output_neurons[updater_entry_id * neuron_count + neuron_id] - max_value);
 
-			#if __CUDA_ARCH__ < 300
-				arr2[thread_id] = predicted_sum;
-			#endif
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
-				#if __CUDA_ARCH__ < 300
-					if (lane_id < tx)
-						arr2[thread_id] += arr2[thread_id + tx];
-				#else
 					predicted_sum += __shfl_down(predicted_sum, tx);
-				#endif
 				}
-			#if __CUDA_ARCH__ < 300
-				predicted_sum = arr2[thread_id];
-				__syncthreads();
-			#endif
 
 				if (lane_id == 0)
 					arr_sh[thread_id >> 5] = predicted_sum;
@@ -207,24 +166,11 @@ namespace nnforge
 						err -= actual_val * __logf(max(predicted_val, 1.0e-20F));
 				}
 
-			#if __CUDA_ARCH__ < 300
-				volatile float * arr = arr_sh;
-				arr[thread_id] = err;
-			#endif
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
-				#if __CUDA_ARCH__ < 300
-					if (lane_id < tx)
-						arr[thread_id] += arr[thread_id + tx];
-				#else
 					err += __shfl_down(err, tx);
-				#endif
 				}
-			#if __CUDA_ARCH__ < 300
-				err = arr[thread_id];
-				__syncthreads();
-			#endif
 
 				if (threadblock_size > 32)
 				{

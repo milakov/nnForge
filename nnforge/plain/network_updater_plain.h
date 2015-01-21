@@ -46,7 +46,7 @@ namespace nnforge
 				unsigned int batch_size,
 				float weight_decay,
 				float momentum,
-				const std::map<unsigned int, float>& layer_to_dropout_rate_map);
+				bool deterministic_only);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 			// The layer_config_list is guaranteed to be compatible with schema
@@ -61,13 +61,6 @@ namespace nnforge
 			void update_buffers_configuration(
 				buffer_plain_size_configuration& buffer_configuration,
 				unsigned int updater_entry_count) const;
-
-			void apply_dropout(
-				additional_buffer_smart_ptr target_buffer,
-				const float dropout_rate,
-				const unsigned int mask,
-				const unsigned int updater_count,
-				const unsigned int offset_in_random_list) const;
 
 			void apply_gradient(
 				std::vector<layer_data_smart_ptr>& data,

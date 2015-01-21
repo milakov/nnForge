@@ -215,7 +215,8 @@ namespace nnforge
 						input_and_all_buffers_pack_it->second.output_neurons_buffer,
 						input_and_all_buffers_pack_it->second.additional_buffers,
 						input_and_all_buffers_pack_it->second.dynamic_memobjects,
-						1);
+						1,
+						true);
 				}
 			}
 
@@ -308,7 +309,8 @@ namespace nnforge
 					input_and_all_buffers_pack_it->second.input_errors_buffer,
 					input_and_all_buffers_pack_it->second.additional_buffers,
 					input_and_all_buffers_pack_it->second.dynamic_memobjects,
-					1);
+					1,
+					true);
 			}
 
 			layer_configuration_specific_snapshot_smart_ptr res(new layer_configuration_specific_snapshot());

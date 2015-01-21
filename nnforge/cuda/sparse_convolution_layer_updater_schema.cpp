@@ -70,10 +70,7 @@ namespace nnforge
 			}
 			else
 			{
-				if (cuda_config->get_compute_capability() >= 300)
-					res = sparse_convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific, output_configuration_specific);
-				else
-					throw neural_network_exception("sparse convolutional layer has spatial fully connected updater implementation in CUDA backend for Kepler and above GPUs only");
+				res = sparse_convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific, output_configuration_specific);
 			}
 
 			return res;

@@ -47,7 +47,7 @@ namespace nnforge
 				unsigned int batch_size,
 				float weight_decay,
 				float momentum,
-				const std::map<unsigned int, float>& layer_to_dropout_rate_map);
+				bool deterministic_only);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
 			// The layer_config_list is guaranteed to be compatible with schema
@@ -73,15 +73,6 @@ namespace nnforge
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >& data_list,
 				network_data_smart_ptr res,
 				cudaStream_t stream_id) const;
-
-			void enqueue_dropout(
-				cudaStream_t stream_id,
-				const_cuda_linear_buffer_device_smart_ptr random_buffer,
-				cuda_linear_buffer_device_smart_ptr target_buffer,
-				float dropout_rate,
-				unsigned int mask,
-				unsigned int elem_count,
-				unsigned int offset_in_random_list);
 
 			void enqueue_apply_gradient(
 				cudaStream_t stream_id,

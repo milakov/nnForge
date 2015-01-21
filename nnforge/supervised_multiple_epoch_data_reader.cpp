@@ -65,9 +65,13 @@ namespace nnforge
 	void supervised_multiple_epoch_data_reader::next_epoch()
 	{
 		epoch_id = (epoch_id + 1) % epoch_count;
+		if (epoch_id == 0)
+			original_reader->next_epoch();
+
 		start_original_entry_id = (static_cast<unsigned long long>(epoch_id) * original_reader->get_entry_count()) / epoch_count;
 		local_entry_count = (static_cast<unsigned long long>(epoch_id + 1) * original_reader->get_entry_count()) / epoch_count - start_original_entry_id;
 		entry_read_count = 0;
+
 		original_reader->rewind(start_original_entry_id);
 	}
 

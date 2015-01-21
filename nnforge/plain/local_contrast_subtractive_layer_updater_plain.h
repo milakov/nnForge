@@ -42,7 +42,8 @@ namespace nnforge
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int updater_count,
-				unsigned int offset_input_entry_id) const;
+				unsigned int offset_input_entry_id,
+				bool force_deterministic) const;
 
 			virtual void backprop(
 				additional_buffer_smart_ptr input_errors,
@@ -56,7 +57,8 @@ namespace nnforge
 				const_layer_data_custom_smart_ptr data_custom,
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
-				unsigned int updater_count) const;
+				unsigned int updater_count,
+				bool force_deterministic) const;
 
 		protected:
 			virtual bool is_in_place_backprop() const;

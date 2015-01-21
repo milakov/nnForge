@@ -20,6 +20,8 @@
 
 #include <cublas_v2.h>
 #include <cusparse_v2.h>
+#include <cudnn.h>
+#include <curand.h>
 
 #include "buffer_cuda_size_configuration.h"
 #include "../nn_types.h"
@@ -44,6 +46,10 @@ namespace nnforge
 			cublasHandle_t get_cublas_handle() const;
 
 			cusparseHandle_t get_cusparse_handle() const;
+
+			cudnnHandle_t get_cudnn_handle() const;
+
+			curandGenerator_t get_curand_generator() const;
 
 			bool is_flush_required() const;
 
@@ -94,6 +100,8 @@ namespace nnforge
 
 			cublasHandle_t cublas_handle;
 			cusparseHandle_t cusparse_handle;
+			cudnnHandle_t cudnn_handle;
+			curandGenerator_t curand_gen;
 		};
 
 		typedef nnforge_shared_ptr<const cuda_running_configuration> cuda_running_configuration_const_smart_ptr;
