@@ -92,4 +92,15 @@ namespace nnforge
 		++entry_read_count;
 		return original_reader->raw_read(all_elems);
 	}
+
+	void supervised_limited_entry_count_data_reader::next_epoch()
+	{
+		entry_read_count = 0;
+		original_reader->next_epoch();
+	}
+
+	unsigned int supervised_limited_entry_count_data_reader::get_sample_count() const
+	{
+		return original_reader->get_sample_count();
+	}
 }

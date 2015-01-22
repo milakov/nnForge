@@ -39,6 +39,8 @@ namespace nnforge
 
 		virtual bool raw_read(std::vector<unsigned char>& all_elems);
 
+		virtual void next_epoch();
+
 		virtual void rewind(unsigned int entry_id);
 
 		virtual void reset();
@@ -50,6 +52,8 @@ namespace nnforge
 		virtual neuron_data_type::input_type get_input_type() const;
 
 		virtual unsigned int get_entry_count() const;
+
+		virtual unsigned int get_sample_count() const;
 
 	protected:
 		supervised_limited_entry_count_data_reader();
