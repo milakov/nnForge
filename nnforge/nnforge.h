@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,10 +42,9 @@
 #include "supervised_data_mem_reader.h"
 #include "supervised_limited_entry_count_data_reader.h"
 #include "supervised_multiple_epoch_data_reader.h"
-#include "supervised_center_image_data_stream_reader.h"
+#include "supervised_image_data_sampler_stream_reader.h"
 #include "supervised_transformed_input_data_reader.h"
 #include "supervised_transformed_output_data_reader.h"
-#include "supervised_center_image_data_stream_reader.h"
 #include "supervised_random_image_data_stream_reader.h"
 #include "supervised_image_stream_reader.h"
 #include "rnd.h"
@@ -67,6 +66,8 @@
 #include "squared_hinge_loss_error_function.h"
 #include "negative_log_likelihood_error_function.h"
 #include "cross_entropy_error_function.h"
+
+#include "validate_progress_network_data_pusher.h"
 
 #include "nn_types.h"
 

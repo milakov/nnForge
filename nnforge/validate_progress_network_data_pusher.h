@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ namespace nnforge
 			supervised_data_reader_smart_ptr reader,
 			testing_complete_result_set_visualizer_smart_ptr visualizer,
 			const_error_function_smart_ptr ef,
-			unsigned int sample_count);
+			unsigned int sample_count,
+			unsigned int report_frequency = 1);
 
 		virtual ~validate_progress_network_data_pusher();
 
@@ -46,5 +47,7 @@ namespace nnforge
 		output_neuron_value_set_smart_ptr actual_output_neuron_value_set;
 		testing_complete_result_set_visualizer_smart_ptr visualizer;
 		const_error_function_smart_ptr ef;
+		unsigned int sample_count;
+		unsigned int report_frequency;
 	};
 }
