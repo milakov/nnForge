@@ -20,11 +20,11 @@
 
 namespace nnforge
 {
-	class supervised_center_image_data_stream_reader : public supervised_image_stream_reader
+	class supervised_image_data_sampler_stream_reader : public supervised_image_stream_reader
 	{
 	public:
 		// The constructor modifies input_stream to throw exceptions in case of failure
-		supervised_center_image_data_stream_reader(
+		supervised_image_data_sampler_stream_reader(
 			nnforge_shared_ptr<std::istream> input_stream,
 			unsigned int original_image_width,
 			unsigned int original_image_height,
@@ -33,13 +33,16 @@ namespace nnforge
 			unsigned int class_count,
 			bool fit_image,
 			bool is_color = true,
-			unsigned char backfill_intensity = 128);
+			unsigned char backfill_intensity = 128,
+			const std::vector<std::pair<float, float> >& position_list = std::vector<std::pair<float, float> >(1, std::make_pair(0.5F, 0.5F)));
 
-		virtual ~supervised_center_image_data_stream_reader();
+		virtual ~supervised_image_data_sampler_stream_reader();
 
 		virtual bool read(
 			void * input_neurons,
 			float * output_neurons);
+
+		virtual bool raw_read(std::vector<unsigned char>& all_elems);
 
 		virtual layer_configuration_specific get_input_configuration() const
 		{
@@ -51,11 +54,28 @@ namespace nnforge
 			return output_configuration;
 		}
 
+		virtual void next_epoch();
+
+		virtual void reset();
+
+		virtual unsigned int get_entry_count() const;
+
+		virtual void rewind(unsigned int entry_id);
+
+		bool entry_available();
+
+		virtual unsigned int get_sample_count() const;
+
 	protected:
 		layer_configuration_specific input_configuration;
 		layer_configuration_specific output_configuration;
 		unsigned int input_neuron_count;
 		unsigned int output_neuron_count;
 		unsigned char backfill_intensity;
+		const std::vector<std::pair<float, float> > position_list;
+
+		unsigned int current_sample_id;
+		cv::Mat image;
+		unsigned int class_id;
 	};
 }

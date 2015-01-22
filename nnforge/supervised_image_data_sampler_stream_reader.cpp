@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "supervised_center_image_data_stream_reader.h"
+#include "supervised_image_data_sampler_stream_reader.h"
 
 #include "neural_network_exception.h"
 
@@ -22,7 +22,7 @@
 
 namespace nnforge
 {
-	supervised_center_image_data_stream_reader::supervised_center_image_data_stream_reader(
+	supervised_image_data_sampler_stream_reader::supervised_image_data_sampler_stream_reader(
 		nnforge_shared_ptr<std::istream> input_stream,
 		unsigned int original_image_width,
 		unsigned int original_image_height,
@@ -31,9 +31,12 @@ namespace nnforge
 		unsigned int class_count,
 		bool fit_image,
 		bool is_color,
-		unsigned char backfill_intensity)
+		unsigned char backfill_intensity,
+		const std::vector<std::pair<float, float> >& position_list)
 		: supervised_image_stream_reader(input_stream, original_image_width, original_image_height, fit_image, is_color)
+		, position_list(position_list)
 		, backfill_intensity(backfill_intensity)
+		, current_sample_id(0)
 	{
 		if (fit_image && ((cropped_image_width != original_image_width) || (cropped_image_height != original_image_height)))
 			throw neural_network_exception("supervised_center_image_data_stream_reader: When in fit_image mode, cropped and original images sizes should match");
@@ -49,19 +52,20 @@ namespace nnforge
 		output_neuron_count = output_configuration.get_neuron_count();
 	}
 
-	supervised_center_image_data_stream_reader::~supervised_center_image_data_stream_reader()
+	supervised_image_data_sampler_stream_reader::~supervised_image_data_sampler_stream_reader()
 	{
 	}
 
-	bool supervised_center_image_data_stream_reader::read(
+	bool supervised_image_data_sampler_stream_reader::read(
 		void * input_neurons,
 		float * output_neurons)
 	{
-		cv::Mat image;
-		unsigned int class_id;
-
-		bool res = read_image(input_neurons ? &image : 0, output_neurons ? &class_id : 0);
-		if (!res)
+		bool read = true;
+		if (current_sample_id == 0)
+		{
+			read = read_image(input_neurons ? &image : 0, output_neurons ? &class_id : 0);
+		}
+		if (!read)
 			return false;
 
 		if (input_neurons)
@@ -69,8 +73,8 @@ namespace nnforge
 			if (fit_into_target)
 			{
 				memset(input_neurons, backfill_intensity, input_neuron_count);
-				unsigned int start_dst_x = (input_configuration.dimension_sizes[0] - image.cols) / 2;
-				unsigned int start_dst_y = (input_configuration.dimension_sizes[1] - image.rows) / 2;
+				unsigned int start_dst_x = static_cast<unsigned int>((input_configuration.dimension_sizes[0] - image.cols) * position_list[current_sample_id].first + 0.5F);
+				unsigned int start_dst_y = static_cast<unsigned int>((input_configuration.dimension_sizes[1] - image.rows) * position_list[current_sample_id].second + 0.5F);
 
 				unsigned int dst_y = start_dst_y;
 				for(unsigned int src_y = 0; src_y < static_cast<unsigned int>(image.rows); ++src_y, ++dst_y)
@@ -99,8 +103,8 @@ namespace nnforge
 			}
 			else
 			{
-				unsigned int start_src_x = (image.cols - input_configuration.dimension_sizes[0]) / 2;
-				unsigned int start_src_y = (image.rows - input_configuration.dimension_sizes[1]) / 2;
+				unsigned int start_src_x = static_cast<unsigned int>((image.cols - input_configuration.dimension_sizes[0]) * position_list[current_sample_id].first + 0.5F);
+				unsigned int start_src_y = static_cast<unsigned int>((image.rows - input_configuration.dimension_sizes[1]) * position_list[current_sample_id].second + 0.5F);
 				unsigned int src_y = start_src_y;
 				for(unsigned int dst_y = 0; dst_y < input_configuration.dimension_sizes[1]; ++dst_y, ++src_y)
 				{
@@ -134,6 +138,43 @@ namespace nnforge
 			output_neurons[class_id] = 1.0F;
 		}
 
+		current_sample_id = (current_sample_id + 1) % position_list.size();
+
 		return true;
+	}
+
+	void supervised_image_data_sampler_stream_reader::next_epoch()
+	{
+		current_sample_id = 0;
+		supervised_image_stream_reader::next_epoch();
+	}
+
+	void supervised_image_data_sampler_stream_reader::reset()
+	{
+		current_sample_id = 0;
+		supervised_image_stream_reader::reset();
+	}
+
+	unsigned int supervised_image_data_sampler_stream_reader::get_entry_count() const
+	{
+		return supervised_image_stream_reader::get_entry_count() * static_cast<unsigned int>(position_list.size());
+	}
+
+	void supervised_image_data_sampler_stream_reader::rewind(unsigned int entry_id)
+	{
+		if (entry_id % position_list.size())
+			throw std::runtime_error("rewind is only partlially implemented for supervised_image_data_sampler_stream_reader");
+
+		supervised_image_stream_reader::rewind(entry_id / static_cast<unsigned int>(position_list.size()));
+	}
+
+	bool supervised_image_data_sampler_stream_reader::raw_read(std::vector<unsigned char>& all_elems)
+	{
+		throw std::runtime_error("raw_read not implemented for supervised_image_data_sampler_stream_reader");
+	}
+
+	unsigned int supervised_image_data_sampler_stream_reader::get_sample_count() const
+	{
+		return static_cast<unsigned int>(position_list.size()) * supervised_image_stream_reader::get_sample_count();
 	}
 }
