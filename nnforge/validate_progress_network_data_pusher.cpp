@@ -60,7 +60,7 @@ namespace nnforge
 			std::cout << "# " << task_state.index_peeked
 				<< ", Epoch " << task_state.get_current_epoch()
 				<< ", Validating ";
-			if (task_state.get_current_epoch() > 1)
+			if (sample_count > 1)
 				std::cout << "(" << sample_count << " samples) ";
 			visualizer->dump(std::cout, testing_res);
 			std::cout << std::endl;
