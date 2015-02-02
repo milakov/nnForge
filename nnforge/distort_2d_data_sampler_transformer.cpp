@@ -38,6 +38,7 @@ namespace nnforge
 		const std::vector<float>& scale_list,
 		const std::vector<float>& shift_right_x_list,
 		const std::vector<float>& shift_down_y_list,
+		const std::vector<std::pair<float, float> >& stretch_factor_and_angle,
 		unsigned char border_value)
 		: border_value(border_value)
 	{
@@ -45,14 +46,16 @@ namespace nnforge
 			for(std::vector<float>::const_iterator it2 = scale_list.begin(); it2 != scale_list.end(); ++it2)
 				for(std::vector<float>::const_iterator it3 = shift_right_x_list.begin(); it3 != shift_right_x_list.end(); ++it3)
 					for(std::vector<float>::const_iterator it4 = shift_down_y_list.begin(); it4 != shift_down_y_list.end(); ++it4)
-					{
-						distort_2d_data_sampler_param new_item;
-						new_item.rotation_angle_in_degrees = *it1;
-						new_item.scale = *it2;
-						new_item.shift_right_x = *it3;
-						new_item.shift_down_y = *it4;
-						params.push_back(new_item);
-					}
+						for(std::vector<std::pair<float, float> >::const_iterator it5 = stretch_factor_and_angle.begin(); it5 != stretch_factor_and_angle.end(); ++it5)
+						{
+							distort_2d_data_sampler_param new_item;
+							new_item.rotation_angle_in_degrees = *it1;
+							new_item.scale = *it2;
+							new_item.shift_right_x = *it3;
+							new_item.shift_down_y = *it4;
+							new_item.stretch_factor_and_angle = *it5;
+							params.push_back(new_item);
+						}
 	}
 
 	distort_2d_data_sampler_transformer::~distort_2d_data_sampler_transformer()
@@ -76,6 +79,8 @@ namespace nnforge
 		float scale = params[sample_id].scale;
 		float shift_x = params[sample_id].shift_right_x;
 		float shift_y = params[sample_id].shift_down_y;
+		float stretch_factor = params[sample_id].stretch_factor_and_angle.first;
+		float stretch_angle = params[sample_id].stretch_factor_and_angle.second;
 
 		unsigned int neuron_count_per_image = original_config.dimension_sizes[0] * original_config.dimension_sizes[1];
 		unsigned int image_count = original_config.get_neuron_count() / neuron_count_per_image;
@@ -95,8 +100,8 @@ namespace nnforge
 				scale,
 				shift_x,
 				shift_y,
-				1.0F,
-				0.0F,
+				stretch_factor,
+				stretch_angle,
 				border_value);
 		}
 	}

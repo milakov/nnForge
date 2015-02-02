@@ -28,6 +28,7 @@ namespace nnforge
 		float scale;
 		float shift_right_x;
 		float shift_down_y;
+		std::pair<float, float> stretch_factor_and_angle;
 	};
 
 	class distort_2d_data_sampler_transformer : public data_transformer
@@ -42,6 +43,7 @@ namespace nnforge
 			const std::vector<float>& scale_list, // 1.0F - no scaling
 			const std::vector<float>& shift_right_x_list,
 			const std::vector<float>& shift_down_y_list,
+			const std::vector<std::pair<float, float> >& stretch_factor_and_angle,
 			unsigned char border_value = 128);
 
 		virtual ~distort_2d_data_sampler_transformer();
