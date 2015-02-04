@@ -558,16 +558,7 @@ namespace nnforge
 
 		std::cout << "Randomizing " << reader->get_entry_count() << " entries" << std::endl;
 
-		switch(get_network_output_type())
-		{
-		case network_output_type::type_classifier:
-		case network_output_type::type_roc:
-			writer->write_randomized_classifier(*reader);
-			break;
-		default:
-			writer->write_randomized(*reader);
-			break;
-		}
+		writer->write_randomized(*reader);
 	}
 
 	void neural_network_toolset::create()
