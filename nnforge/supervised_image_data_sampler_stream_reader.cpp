@@ -170,7 +170,10 @@ namespace nnforge
 
 	bool supervised_image_data_sampler_stream_reader::raw_read(std::vector<unsigned char>& all_elems)
 	{
-		throw std::runtime_error("raw_read not implemented for supervised_image_data_sampler_stream_reader");
+		if (position_list.size() != 1)
+			throw std::runtime_error("raw_read is not implemented for supervised_image_data_sampler_stream_reader with non-unit sampling");
+
+		return supervised_image_stream_reader::raw_read(all_elems);
 	}
 
 	unsigned int supervised_image_data_sampler_stream_reader::get_sample_count() const
