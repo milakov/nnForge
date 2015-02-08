@@ -20,6 +20,8 @@
 #include "rnd.h"
 #include "nn_types.h"
 
+#include <limits>
+
 namespace nnforge
 {
 	class distort_2d_data_transformer : public data_transformer
@@ -34,7 +36,8 @@ namespace nnforge
 			float max_shift_down_y, // in pixels
 			bool flip_around_x_axis_allowed,
 			bool flip_around_y_axis_allowed,
-			float max_stretch_factor = 1.0F, // >=1
+			float max_stretch_factor, // >=1
+			float min_perspective_distance, // std::numeric_limits<float>::max()
 			unsigned char border_value = 128); 
 
 		virtual ~distort_2d_data_transformer();
@@ -61,5 +64,7 @@ namespace nnforge
 		nnforge_uniform_int_distribution<int> flip_around_y_distribution;
 		nnforge_uniform_real_distribution<float> stretch_distribution;
 		nnforge_uniform_real_distribution<float> stretch_angle_distribution;
+		nnforge_uniform_real_distribution<float> perspective_reverse_distance_distribution;
+		nnforge_uniform_real_distribution<float> perspective_angle_distribution;
 	};
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 namespace nnforge
 {
-	void data_transformer_util::rotate_scale_shift(
+	void data_transformer_util::stretch_rotate_scale_shift_perspective(
 		cv::Mat image,
 		cv::Point2f rotation_center,
 		float angle_in_degrees,
@@ -30,10 +30,12 @@ namespace nnforge
 		float shift_y,
 		float stretch,
 		float stretch_angle_in_degrees,
+		float perspective_view_distance,
+		float perspective_view_angle,
 		unsigned char border_value)
 	{
 		cv::Mat copy = image.clone();
-		rotate_scale_shift(
+		stretch_rotate_scale_shift_perspective(
 			image,
 			copy,
 			rotation_center,
@@ -43,10 +45,12 @@ namespace nnforge
 			shift_y,
 			stretch,
 			stretch_angle_in_degrees,
+			perspective_view_distance,
+			perspective_view_angle,
 			border_value);
 	}
 
-	void data_transformer_util::rotate_scale_shift(
+	void data_transformer_util::stretch_rotate_scale_shift_perspective(
 		cv::Mat dest_image,
 		const cv::Mat image,
 		cv::Point2f rotation_center,
@@ -56,6 +60,8 @@ namespace nnforge
 		float shift_y,
 		float stretch,
 		float stretch_angle_in_degrees,
+		float perspective_view_distance,
+		float perspective_view_angle,
 		unsigned char border_value)
 	{
 		cv::Mat stretch_full_mat(3, 3, CV_64FC1);
@@ -94,14 +100,77 @@ namespace nnforge
 		stretch_and_rot_mat.at<double>(0, 2) += static_cast<double>(shift_x);
 		stretch_and_rot_mat.at<double>(1, 2) += static_cast<double>(shift_y);
 
-		cv::warpAffine(
-			image,
-			dest_image,
-			stretch_and_rot_mat,
-			dest_image.size(),
-			cv::INTER_LINEAR,
-			cv::BORDER_CONSTANT,
-			border_value);
+		if (perspective_view_distance >= std::numeric_limits<float>::max())
+		{
+			cv::warpAffine(
+				image,
+				dest_image,
+				stretch_and_rot_mat,
+				dest_image.size(),
+				cv::INTER_LINEAR,
+				cv::BORDER_CONSTANT,
+				border_value);
+		}
+		else
+		{
+			cv::Point2f perspective_no_change_center = rotation_center;
+
+			cv::Point2f unit[4];
+			unit[0] = rotation_center + cv::Point2f(1.0F, 1.0F);
+			unit[1] = rotation_center + cv::Point2f(1.0F, -1.0F);
+			unit[2] = rotation_center + cv::Point2f(-1.0F, 1.0F);
+			unit[3] = rotation_center + cv::Point2f(-1.0F, -1.0F);
+
+			float perspective_step = 1.0F / perspective_view_distance;
+			cv::Point2f perspective_unit[4];
+			perspective_unit[0] = rotation_center + cv::Point2f(1.0F, 1.0F - perspective_step);
+			perspective_unit[1] = rotation_center + cv::Point2f(1.0F, -1.0F + perspective_step);
+			perspective_unit[2] = rotation_center + cv::Point2f(-1.0F, 1.0F + perspective_step);
+			perspective_unit[3] = rotation_center + cv::Point2f(-1.0F, -1.0F - perspective_step);
+
+			// rotate on perspective_view_angle
+			{
+				cv::Mat perspective_rot_mat = cv::getRotationMatrix2D(
+					rotation_center,
+					static_cast<double>(perspective_view_angle),
+					1.0);
+
+				for(int i = 0; i < 4; ++i)
+				{
+					unit[i] = cv::Point2f(
+						static_cast<float>(perspective_rot_mat.at<double>(0, 0) * unit[i].x + perspective_rot_mat.at<double>(0, 1) * unit[i].y + perspective_rot_mat.at<double>(0, 2)),
+						static_cast<float>(perspective_rot_mat.at<double>(1, 0) * unit[i].x + perspective_rot_mat.at<double>(1, 1) * unit[i].y + perspective_rot_mat.at<double>(1, 2)));
+					perspective_unit[i] = cv::Point2f(
+						static_cast<float>(perspective_rot_mat.at<double>(0, 0) * perspective_unit[i].x + perspective_rot_mat.at<double>(0, 1) * perspective_unit[i].y + perspective_rot_mat.at<double>(0, 2)),
+						static_cast<float>(perspective_rot_mat.at<double>(1, 0) * perspective_unit[i].x + perspective_rot_mat.at<double>(1, 1) * perspective_unit[i].y + perspective_rot_mat.at<double>(1, 2)));
+				}
+			}
+
+			cv::Point2f original_unit[4];
+			// apply inverted_affine_mat
+			{
+				cv::Mat inverted_affine_mat;
+				cv::invertAffineTransform(stretch_and_rot_mat, inverted_affine_mat);
+
+				for(int i = 0; i < 4; ++i)
+				{
+					original_unit[i] = cv::Point2f(
+						static_cast<float>(stretch_and_rot_mat.at<double>(0, 0) * unit[i].x + stretch_and_rot_mat.at<double>(0, 1) * unit[i].y + stretch_and_rot_mat.at<double>(0, 2)),
+						static_cast<float>(stretch_and_rot_mat.at<double>(1, 0) * unit[i].x + stretch_and_rot_mat.at<double>(1, 1) * unit[i].y + stretch_and_rot_mat.at<double>(1, 2)));
+				}
+			}
+
+			cv::Mat perspective_mat = cv::getPerspectiveTransform(perspective_unit, original_unit);
+
+			cv::warpPerspective(
+				image,
+				dest_image,
+				perspective_mat,
+				dest_image.size(),
+				cv::INTER_LINEAR,
+				cv::BORDER_CONSTANT,
+				border_value);
+		}
 	}
 
 	void data_transformer_util::change_brightness_and_contrast(

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -221,13 +221,17 @@ void gtsrb_toolset::write_single_entry(
 			contrast,
 			brightness_shift);
 
-		nnforge::data_transformer_util::rotate_scale_shift(
+		nnforge::data_transformer_util::stretch_rotate_scale_shift_perspective(
 			image,
 			cv::Point2f(static_cast<float>(roi_top_left_x + roi_bottom_right_x) * 0.5F, static_cast<float>(roi_top_left_y + roi_bottom_right_y) * 0.5F),
 			rotation_angle_in_degrees,
 			scale_factor,
 			shift_x,
-			shift_y);
+			shift_y,
+			1.0F,
+			0.0F,
+			std::numeric_limits<float>::max(),
+			0.0F);
 
 		if (use_roi)
 			image = image.rowRange(roi_top_left_y, roi_bottom_right_y).colRange(roi_top_left_x, roi_bottom_right_x);

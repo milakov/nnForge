@@ -34,6 +34,7 @@ namespace nnforge
 		bool flip_around_x_axis_allowed,
 		bool flip_around_y_axis_allowed,
 		float max_stretch_factor,
+		float min_perspective_distance,
 		unsigned char border_value)
 		: border_value(border_value)
 	{
@@ -47,6 +48,8 @@ namespace nnforge
 		flip_around_y_distribution = nnforge_uniform_int_distribution<int>(0, flip_around_y_axis_allowed ? 1 : 0);
 		stretch_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_stretch_factor, max_stretch_factor);
 		stretch_angle_distribution = nnforge_uniform_real_distribution<float>(-180.0F, 180.0F);
+		perspective_reverse_distance_distribution = nnforge_uniform_real_distribution<float>(0.0F, (min_perspective_distance == std::numeric_limits<float>::max()) ? 0.0F : 1.0F / min_perspective_distance);
+		perspective_angle_distribution = nnforge_uniform_real_distribution<float>(-180.0F, 180.0F);
 	}
 
 	distort_2d_data_transformer::~distort_2d_data_transformer()
@@ -90,6 +93,15 @@ namespace nnforge
 		float stretch_angle = stretch_angle_distribution.min();
 		if (stretch_angle_distribution.max() > stretch_angle_distribution.min())
 			stretch_angle = stretch_angle_distribution(generator);
+		float perspective_reverse_distance = perspective_reverse_distance_distribution.min();
+		if (perspective_reverse_distance_distribution.max() > perspective_reverse_distance_distribution.min())
+			perspective_reverse_distance = perspective_reverse_distance_distribution(generator);
+		float perspective_distance = std::numeric_limits<float>::max();
+		if (perspective_reverse_distance > 0.0F)
+			perspective_distance = 1.0F / perspective_reverse_distance;
+		float perspective_angle = perspective_angle_distribution.min();
+		if (perspective_angle_distribution.max() > perspective_angle_distribution.min())
+			perspective_angle = perspective_angle_distribution(generator);
 
 		unsigned int neuron_count_per_image = original_config.dimension_sizes[0] * original_config.dimension_sizes[1];
 		unsigned int image_count = original_config.get_neuron_count() / neuron_count_per_image;
@@ -97,7 +109,7 @@ namespace nnforge
 		{
 			cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed) + (image_id * neuron_count_per_image));
 
-			data_transformer_util::rotate_scale_shift(
+			data_transformer_util::stretch_rotate_scale_shift_perspective(
 				image,
 				cv::Point2f(static_cast<float>(image.cols) * 0.5F, static_cast<float>(image.rows) * 0.5F),
 				rotation_angle,
@@ -106,6 +118,8 @@ namespace nnforge
 				shift_y,
 				stretch,
 				stretch_angle,
+				perspective_distance,
+				perspective_angle,
 				border_value);
 
 			data_transformer_util::flip(

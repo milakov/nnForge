@@ -38,7 +38,8 @@ namespace nnforge
 		const std::vector<float>& scale_list,
 		const std::vector<float>& shift_right_x_list,
 		const std::vector<float>& shift_down_y_list,
-		const std::vector<std::pair<float, float> >& stretch_factor_and_angle,
+		const std::vector<std::pair<float, float> >& stretch_factor_and_angle_list,
+		const std::vector<std::pair<float, float> >& perspective_distance_and_angle_list,
 		unsigned char border_value)
 		: border_value(border_value)
 	{
@@ -46,16 +47,18 @@ namespace nnforge
 			for(std::vector<float>::const_iterator it2 = scale_list.begin(); it2 != scale_list.end(); ++it2)
 				for(std::vector<float>::const_iterator it3 = shift_right_x_list.begin(); it3 != shift_right_x_list.end(); ++it3)
 					for(std::vector<float>::const_iterator it4 = shift_down_y_list.begin(); it4 != shift_down_y_list.end(); ++it4)
-						for(std::vector<std::pair<float, float> >::const_iterator it5 = stretch_factor_and_angle.begin(); it5 != stretch_factor_and_angle.end(); ++it5)
-						{
-							distort_2d_data_sampler_param new_item;
-							new_item.rotation_angle_in_degrees = *it1;
-							new_item.scale = *it2;
-							new_item.shift_right_x = *it3;
-							new_item.shift_down_y = *it4;
-							new_item.stretch_factor_and_angle = *it5;
-							params.push_back(new_item);
-						}
+						for(std::vector<std::pair<float, float> >::const_iterator it5 = stretch_factor_and_angle_list.begin(); it5 != stretch_factor_and_angle_list.end(); ++it5)
+							for(std::vector<std::pair<float, float> >::const_iterator it6 = perspective_distance_and_angle_list.begin(); it6 != perspective_distance_and_angle_list.end(); ++it6)
+							{
+								distort_2d_data_sampler_param new_item;
+								new_item.rotation_angle_in_degrees = *it1;
+								new_item.scale = *it2;
+								new_item.shift_right_x = *it3;
+								new_item.shift_down_y = *it4;
+								new_item.stretch_factor_and_angle = *it5;
+								new_item.perspective_distance_and_angle = *it6;
+								params.push_back(new_item);
+							}
 	}
 
 	distort_2d_data_sampler_transformer::~distort_2d_data_sampler_transformer()
@@ -81,6 +84,8 @@ namespace nnforge
 		float shift_y = params[sample_id].shift_down_y;
 		float stretch_factor = params[sample_id].stretch_factor_and_angle.first;
 		float stretch_angle = params[sample_id].stretch_factor_and_angle.second;
+		float perspective_distance = params[sample_id].perspective_distance_and_angle.first;
+		float perspective_angle = params[sample_id].perspective_distance_and_angle.second;
 
 		unsigned int neuron_count_per_image = original_config.dimension_sizes[0] * original_config.dimension_sizes[1];
 		unsigned int image_count = original_config.get_neuron_count() / neuron_count_per_image;
@@ -93,7 +98,7 @@ namespace nnforge
 				((unsigned char *)data) + image_id * neuron_count_per_image,
 				neuron_count_per_image * neuron_data_type::get_input_size(type));
 
-			data_transformer_util::rotate_scale_shift(
+			data_transformer_util::stretch_rotate_scale_shift_perspective(
 				image,
 				cv::Point2f(static_cast<float>(image.cols) * 0.5F, static_cast<float>(image.rows) * 0.5F),
 				rotation_angle,
@@ -102,6 +107,8 @@ namespace nnforge
 				shift_y,
 				stretch_factor,
 				stretch_angle,
+				perspective_distance,
+				perspective_angle,
 				border_value);
 		}
 	}
