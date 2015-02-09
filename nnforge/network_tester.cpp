@@ -64,24 +64,26 @@ namespace nnforge
 
 		set_input_configuration_specific(reader.get_input_configuration());
 
+		unsigned int sample_count;
+		{
+			unsigned int actual_entry_count = static_cast<unsigned int>(result.actual_output_neuron_value_set->neuron_value_list.size());
+			unsigned int predicted_entry_count = reader.get_entry_count();
+			unsigned int mod = predicted_entry_count % actual_entry_count;
+			if (mod != 0)
+				throw nnforge::neural_network_exception("Predicted entry count is not evenly divisible by actual entry count");
+			sample_count = predicted_entry_count / actual_entry_count;
+		}
+
 		// Check schema-reader consistency
 		layer_config_list[layer_config_list.size() - 1].check_equality(reader.get_output_configuration());
 
-		result.predicted_output_neuron_value_set = actual_run(reader);
+		result.predicted_output_neuron_value_set = actual_run(reader, sample_count);
 
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 
-		unsigned int actual_entry_count = static_cast<unsigned int>(result.actual_output_neuron_value_set->neuron_value_list.size());
-		unsigned int predicted_entry_count = static_cast<unsigned int>(result.predicted_output_neuron_value_set->neuron_value_list.size());
-		unsigned int mod = predicted_entry_count % actual_entry_count;
-		if (mod != 0)
-			throw nnforge::neural_network_exception("Predicted entry count is not evenly divisible by actual entry count");
-		unsigned int sample_count = predicted_entry_count / actual_entry_count;
-
-		size_t original_entry_count = result.predicted_output_neuron_value_set->neuron_value_list.size();
-		result.predicted_output_neuron_value_set->compact(sample_count);
 		result.recalculate_mse();
 
+		unsigned int original_entry_count = reader.get_entry_count();
 		result.tr->flops = static_cast<float>(original_entry_count) * flops;
 		result.tr->time_to_complete_seconds = sec.count();
 	}
@@ -92,9 +94,7 @@ namespace nnforge
 	{
 		set_input_configuration_specific(reader.get_input_configuration());
 
-		output_neuron_value_set_smart_ptr result = actual_run(reader);
-
-		result->compact(sample_count);
+		output_neuron_value_set_smart_ptr result = actual_run(reader, sample_count);
 
 		return result;
 	}

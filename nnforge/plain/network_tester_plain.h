@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ namespace nnforge
 
 		protected:
 			// schema, data and reader are guaranteed to be compatible
-			virtual output_neuron_value_set_smart_ptr actual_run(unsupervised_data_reader& reader);
+			virtual output_neuron_value_set_smart_ptr actual_run(
+				unsupervised_data_reader& reader,
+				unsigned int sample_count);
 
 			// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
 			virtual void actual_set_data(network_data_smart_ptr data);

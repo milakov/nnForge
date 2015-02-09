@@ -82,7 +82,9 @@ namespace nnforge
 		network_tester(network_schema_smart_ptr schema);
 
 		// schema, data and reader are guaranteed to be compatible
-		virtual output_neuron_value_set_smart_ptr actual_run(unsupervised_data_reader& reader) = 0;
+		virtual output_neuron_value_set_smart_ptr actual_run(
+			unsupervised_data_reader& reader,
+			unsigned int sample_count) = 0;
 
 		// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
 		virtual void actual_set_data(network_data_smart_ptr data) = 0;

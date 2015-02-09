@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -161,7 +161,9 @@ namespace nnforge
 				(*it)->update_buffer_configuration(buffer_configuration);
 		}
 
-		output_neuron_value_set_smart_ptr network_tester_cuda::actual_run(unsupervised_data_reader& reader)
+		output_neuron_value_set_smart_ptr network_tester_cuda::actual_run(
+			unsupervised_data_reader& reader,
+			unsigned int sample_count)
 		{
 			cuda_config->set_device();
 
@@ -176,7 +178,7 @@ namespace nnforge
 			neuron_data_type::input_type type_code = reader.get_input_type();
 			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
-			output_neuron_value_set_smart_ptr predicted_output_neuron_value_set(new output_neuron_value_set(entry_count, output_neuron_count));
+			output_neuron_value_set_smart_ptr predicted_output_neuron_value_set(new output_neuron_value_set(entry_count / sample_count, output_neuron_count));
 
 			buffer_cuda_size_configuration buffers_config;
 			update_buffers_configuration_testing(buffers_config);
@@ -354,13 +356,14 @@ namespace nnforge
 						*data_stream));
 					cuda_safe_call(cudaStreamSynchronize(*data_stream));
 
+					float mult = 1.0F / static_cast<float>(sample_count);
 					const float * predicted_it = output_predicted;
-					for(std::vector<std::vector<float> >::iterator it = predicted_output_neuron_value_set->neuron_value_list.begin() + entries_processed_count;
-						it != predicted_output_neuron_value_set->neuron_value_list.begin() + entries_processed_count + entries_available_for_copy_out_count;
-						it++, predicted_it += output_neuron_count)
+					for(unsigned int i = 0; i < entries_available_for_copy_out_count; ++i)
 					{
-						std::vector<float>& value_list = *it;
-						std::copy(predicted_it, predicted_it + output_neuron_count, value_list.begin());
+						std::vector<float>& dst = predicted_output_neuron_value_set->neuron_value_list[(i + entries_processed_count) / sample_count];
+						const float * src_it = predicted_it + (i * output_neuron_count);
+						for(unsigned int j = 0; j < output_neuron_count; ++j)
+							dst[j] += mult * *(src_it + j);
 					}
 					
 					entries_processed_count += entries_available_for_copy_out_count;

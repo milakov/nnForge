@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ namespace nnforge
 		{
 		}
 
-		output_neuron_value_set_smart_ptr network_tester_plain::actual_run(unsupervised_data_reader& reader)
+		output_neuron_value_set_smart_ptr network_tester_plain::actual_run(
+			unsupervised_data_reader& reader,
+			unsigned int sample_count)
 		{
 			reader.reset();
 
@@ -54,7 +56,7 @@ namespace nnforge
 			neuron_data_type::input_type type_code = reader.get_input_type();
 			size_t input_neuron_elem_size = reader.get_input_neuron_elem_size();
 
-			output_neuron_value_set_smart_ptr predicted_output_neuron_value_set(new output_neuron_value_set(entry_count, output_neuron_count));
+			output_neuron_value_set_smart_ptr predicted_output_neuron_value_set(new output_neuron_value_set(entry_count / sample_count, output_neuron_count));
 
 			buffer_plain_size_configuration buffers_config;
 			update_buffers_configuration_testing(buffers_config);
@@ -175,15 +177,13 @@ namespace nnforge
 
 				// Copy predicted values
 				{
-					const int total_workload = static_cast<int>(entries_available_for_processing_count);
-					const std::vector<float>::const_iterator output_buffer_it = output_buffer->begin();
-					const std::vector<std::vector<float> >::iterator neuron_value_list_it = predicted_output_neuron_value_set->neuron_value_list.begin() + entries_copied_count;
-					#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-					for(int i = 0; i < total_workload; ++i)
+					float mult = 1.0F / static_cast<float>(sample_count);
+					for(unsigned int i = 0; i < entries_available_for_processing_count; ++i)
 					{
-						std::vector<float>::const_iterator src_it = output_buffer_it + (i * output_neuron_count);
-						std::vector<float>& value_list_dest = *(neuron_value_list_it + i);
-						std::copy(src_it, src_it + output_neuron_count, value_list_dest.begin());
+						std::vector<float>& dst = predicted_output_neuron_value_set->neuron_value_list[(i + entries_copied_count) / sample_count];
+						std::vector<float>::const_iterator src_it = output_buffer->begin() + (i * output_neuron_count);
+						for(unsigned int j = 0; j < output_neuron_count; ++j)
+							dst[j] += mult * *(src_it + j);
 					}
 				}
 
