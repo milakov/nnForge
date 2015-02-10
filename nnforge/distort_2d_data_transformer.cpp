@@ -109,18 +109,21 @@ namespace nnforge
 		{
 			cv::Mat1b image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), static_cast<unsigned char *>(data_transformed) + (image_id * neuron_count_per_image));
 
-			data_transformer_util::stretch_rotate_scale_shift_perspective(
-				image,
-				cv::Point2f(static_cast<float>(image.cols) * 0.5F, static_cast<float>(image.rows) * 0.5F),
-				rotation_angle,
-				scale,
-				shift_x,
-				shift_y,
-				stretch,
-				stretch_angle,
-				perspective_distance,
-				perspective_angle,
-				border_value);
+			if ((rotation_angle != 0.0F) || (scale != 1.0F) || (shift_x != 0.0F) || (shift_y != 0.0F) || (stretch != 1.0F) || (perspective_distance != std::numeric_limits<float>::max()))
+			{
+				data_transformer_util::stretch_rotate_scale_shift_perspective(
+					image,
+					cv::Point2f(static_cast<float>(image.cols) * 0.5F, static_cast<float>(image.rows) * 0.5F),
+					rotation_angle,
+					scale,
+					shift_x,
+					shift_y,
+					stretch,
+					stretch_angle,
+					perspective_distance,
+					perspective_angle,
+					border_value);
+			}
 
 			data_transformer_util::flip(
 				image,
