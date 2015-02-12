@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,8 +28,9 @@ namespace nnforge
 	public:
 		network_data_peeker_random(
 			network_output_type::output_type network_type,
-			unsigned int max_network_data_count = 1,
-			unsigned int base_index = 0);
+			unsigned int max_network_data_count,
+			unsigned int base_index,
+			const std::vector<network_data_peek_entry>& leading_tasks);
 
 		virtual ~network_data_peeker_random();
 
@@ -39,10 +40,12 @@ namespace nnforge
 
 	protected:
 		unsigned int max_network_data_count;
+		unsigned int trained_network_data_count;
 		unsigned int generated_network_data_count;
 		unsigned int base_index;
 		random_generator gen;
 		network_data_initializer init;
 		network_output_type::output_type network_type;
+		std::vector<network_data_peek_entry> leading_tasks;
 	};
 }

@@ -156,6 +156,7 @@ namespace nnforge
 		static const char * ann_subfolder_name;
 		static const char * ann_resume_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
+		static const char * resume_ann_index_extractor_pattern;
 		static const char * logfile_name;
 
 		network_tester_factory_smart_ptr tester_factory;
@@ -265,6 +266,14 @@ namespace nnforge
 		void dump_settings();
 
 		float get_gradient_rate(float gradient_backprop, float gradient_check) const;
+
+		std::map<unsigned int, unsigned int> get_resume_ann_list(const std::set<unsigned int>& exclusion_ann_list) const;
+
+		std::set<unsigned int> get_trained_ann_list() const;
+
+		std::vector<network_data_peek_entry> get_resume_ann_list_entry_list() const;
+
+		static bool compare_entry(network_data_peek_entry i, network_data_peek_entry j);
 
 	private:
 		factory_generator_smart_ptr factory;

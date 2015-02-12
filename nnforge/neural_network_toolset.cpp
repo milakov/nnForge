@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@
 #include "supervised_limited_entry_count_data_reader.h"
 #include "network_trainer_sgd.h"
 #include "save_resume_network_data_pusher.h"
-#include "network_data_peeker_load_resume.h"
 #include "debug_util.h"
 #include "supervised_shuffle_entries_data_reader.h"
 
@@ -73,6 +72,7 @@ namespace nnforge
 	const char * neural_network_toolset::ann_subfolder_name = "batch";
 	const char * neural_network_toolset::ann_resume_subfolder_name = "resume";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
+	const char * neural_network_toolset::resume_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)\\.data$";
 	const char * neural_network_toolset::logfile_name = "log.txt";
 	float neural_network_toolset::check_gradient_step_modifiers[] = {1.0, sqrtf(10.0F), 1.0F / sqrtf(10.0F), 10.0F, 0.1F, 10.0F * sqrtf(10.0F), 1.0F / (sqrtf(10.0F) * 10.0F), 100.0F, 0.01F, 100.0F * sqrtf(10.0F), 1.0F / (sqrtf(10.0F) * 100.0F), 1000.0F, 0.001F, -1.0F};
 
@@ -1426,6 +1426,109 @@ namespace nnforge
 		return current_reader;
 	}
 
+	std::map<unsigned int, unsigned int> neural_network_toolset::get_resume_ann_list(const std::set<unsigned int>& exclusion_ann_list) const
+	{
+		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
+		boost::filesystem::create_directories(batch_folder);
+		boost::filesystem::path resume_ann_folder_path = batch_folder / ann_resume_subfolder_name;
+		boost::filesystem::create_directories(resume_ann_folder_path);
+
+		std::map<unsigned int, unsigned int> res;
+		nnforge_regex expression(resume_ann_index_extractor_pattern);
+		nnforge_cmatch what;
+
+		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(resume_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
+		{
+			if (it->status().type() == boost::filesystem::regular_file)
+			{
+				boost::filesystem::path file_path = it->path();
+				std::string file_name = file_path.filename().string();
+
+				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				{
+					unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
+					if (exclusion_ann_list.find(index) == exclusion_ann_list.end())
+					{
+						unsigned int epoch = static_cast<unsigned int>(atol(std::string(what[2].first, what[2].second).c_str()));
+						std::map<unsigned int, unsigned int>::iterator it2 = res.find(index);
+						if (it2 == res.end())
+							res.insert(std::make_pair(index, epoch));
+						else
+							it2->second = std::max(it2->second, epoch);
+					}
+				}
+			}
+		}
+
+		return res;
+	}
+
+	std::set<unsigned int> neural_network_toolset::get_trained_ann_list() const
+	{
+		boost::filesystem::path trained_ann_folder_path = get_working_data_folder() / get_ann_subfolder_name();
+		boost::filesystem::create_directories(trained_ann_folder_path);
+
+		std::set<unsigned int> res;
+		nnforge_regex expression(trained_ann_index_extractor_pattern);
+		nnforge_cmatch what;
+
+		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(trained_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
+		{
+			if (it->status().type() == boost::filesystem::regular_file)
+			{
+				boost::filesystem::path file_path = it->path();
+				std::string file_name = file_path.filename().string();
+
+				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				{
+					unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
+					res.insert(index);
+				}
+			}
+		}
+
+		return res;
+	}
+
+	std::vector<network_data_peek_entry> neural_network_toolset::get_resume_ann_list_entry_list() const
+	{
+		std::vector<network_data_peek_entry> res;
+
+		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
+		boost::filesystem::create_directories(batch_folder);
+		boost::filesystem::path resume_ann_folder_path = batch_folder / ann_resume_subfolder_name;
+		boost::filesystem::create_directories(resume_ann_folder_path);
+
+		std::set<unsigned int> trained_ann_list = get_trained_ann_list();
+
+		std::map<unsigned int, unsigned int> resume_ann_list = get_resume_ann_list(trained_ann_list);
+
+		for(std::map<unsigned int, unsigned int>::const_iterator it = resume_ann_list.begin(); it != resume_ann_list.end(); ++it)
+		{
+			network_data_peek_entry new_item;
+			new_item.index = it->first;
+			new_item.start_epoch = it->second;
+			std::string filename = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|.data") % new_item.index % new_item.start_epoch).str();
+			boost::filesystem::path filepath = resume_ann_folder_path / filename;
+			new_item.data = network_data_smart_ptr(new network_data());
+			{
+				boost::filesystem::ifstream in(filepath, std::ios_base::in | std::ios_base::binary);
+				new_item.data->read(in);
+			}
+
+			res.push_back(new_item);
+		}
+
+		std::sort(res.begin(), res.end(), compare_entry);
+
+		return res;
+	}
+
+	bool neural_network_toolset::compare_entry(network_data_peek_entry i, network_data_peek_entry j)
+	{
+		return (i.index > j.index);
+	}
+
 	void neural_network_toolset::train()
 	{
 		network_schema_smart_ptr schema(new network_schema());
@@ -1443,16 +1546,15 @@ namespace nnforge
 		boost::filesystem::path batch_resume_folder = batch_folder / ann_resume_subfolder_name;
 		boost::filesystem::create_directories(batch_resume_folder);
 
-		nnforge_shared_ptr<network_data_peeker> peeker;
+		std::vector<network_data_peek_entry> leading_tasks;
 		if (load_resume)
 		{
-			peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_load_resume(batch_folder, batch_resume_folder));
+			leading_tasks = get_resume_ann_list_entry_list();
 		}
-		else
-		{
-			unsigned int starting_index = get_starting_index_for_batch_training();
-			peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_random(get_network_output_type(), ann_count, starting_index));
-		}
+		unsigned int starting_index = get_starting_index_for_batch_training();
+		for(std::vector<network_data_peek_entry>::const_iterator it = leading_tasks.begin(); it != leading_tasks.end(); ++it)
+			starting_index = std::max(starting_index, it->index + 1);
+		nnforge_shared_ptr<network_data_peeker> peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_random(get_network_output_type(), ann_count, starting_index, leading_tasks));
 
 		complex_network_data_pusher progress;
 
