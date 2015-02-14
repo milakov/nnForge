@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,22 +64,24 @@ namespace nnforge
 			}
 		}
 
-		/*
-		for(int i = 0; i < layer_list.size() - 1; ++i)
+		float weight_multiplier = 1.0F;
+		for(int i = 0; i < layer_list.size(); ++i)
 		{
-			if ((layer_list[i + 1]->get_uuid() == rectified_linear_layer::layer_guid)
-				&& (layer_list[i]->get_uuid() == convolution_layer::layer_guid))
+			if (layer_list[i]->get_uuid() == rectified_linear_layer::layer_guid)
+			{
+				weight_multiplier *= sqrtf(2.0F);
+			}
+			else if ((layer_list[i]->get_uuid() == convolution_layer::layer_guid) && (weight_multiplier != 1.0F))
 			{
 				nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[layer_list.size() - 2]);
 
 				std::vector<float>::iterator it_start = data_list[i]->at(0).begin();
 				std::vector<float>::iterator it_end = data_list[i]->at(0).end();
 				for(std::vector<float>::iterator it = it_start; it != it_end; ++it)
-					*it *= 0.9F;
+					*it *= weight_multiplier;
 
-				std::fill(data_list[i]->at(1).begin(), data_list[i]->at(1).end(), 0.1F);
+				weight_multiplier = 1.0F;
 			}
 		}
-		*/
 	}
 }
