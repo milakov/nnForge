@@ -253,8 +253,8 @@ namespace nnforge
 		const layer_data_custom& data_custom,
 		random_generator& generator) const
 	{
-		unsigned int input_neuron_count_per_feature_map = 1;
-		std::for_each(window_sizes.begin(), window_sizes.end(), input_neuron_count_per_feature_map *= boost::lambda::_1);
+		unsigned int weight_count = 1;
+		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
 
 		unsigned int current_weight_index = 0;
 		for(unsigned int output_feature_map_id = 0; output_feature_map_id < output_feature_map_count; ++output_feature_map_id)
@@ -262,13 +262,13 @@ namespace nnforge
 			unsigned int current_input_feature_map_count = data_custom[1][output_feature_map_id + 1] - data_custom[1][output_feature_map_id];
 			if (current_input_feature_map_count > 0)
 			{
-				// xavier
-				unsigned int input_neuron_count = input_neuron_count_per_feature_map * current_input_feature_map_count;
-				float standard_deviation = sqrtf(1.0F / static_cast<float>(input_neuron_count));
+				float current_average_feature_map_count = sqrtf(static_cast<float>(current_input_feature_map_count) * static_cast<float>(output_feature_map_count));
+				float standard_deviation = sqrtf(1.0F / (current_average_feature_map_count * static_cast<float>(weight_count)));
 				float max_abs_value = 100.0F * standard_deviation;
 				nnforge_normal_distribution<float> nd(0.0F, standard_deviation);
 
-				for(unsigned int i = 0; i < input_neuron_count; ++i)
+				unsigned int currrent_input_neuron_count = weight_count * current_input_feature_map_count;
+				for(unsigned int i = 0; i < currrent_input_neuron_count; ++i)
 				{
 					float val = nd(generator);
 					while (fabs(val) > max_abs_value)

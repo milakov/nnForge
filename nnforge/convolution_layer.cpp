@@ -199,11 +199,12 @@ namespace nnforge
 		layer_data_custom& data_custom,
 		random_generator& generator) const
 	{
-		unsigned int input_neuron_count = input_feature_map_count;
-		std::for_each(window_sizes.begin(), window_sizes.end(), input_neuron_count *= boost::lambda::_1);
+		unsigned int weight_count = 1;
+		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
 
-		// xavier
-		float standard_deviation = sqrtf(1.0F / static_cast<float>(input_neuron_count));
+		float average_feature_map_count = sqrtf(static_cast<float>(input_feature_map_count) * static_cast<float>(output_feature_map_count));
+
+		float standard_deviation = sqrtf(1.0F / (average_feature_map_count * static_cast<float>(weight_count)));
 		float max_abs_value = 100.0F * standard_deviation;
 
 		nnforge_normal_distribution<float> nd(0.0F, standard_deviation);

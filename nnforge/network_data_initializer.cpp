@@ -73,7 +73,7 @@ namespace nnforge
 			}
 			else if ((layer_list[i]->get_uuid() == convolution_layer::layer_guid) && (weight_multiplier != 1.0F))
 			{
-				nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[layer_list.size() - 2]);
+				nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[i]);
 
 				std::vector<float>::iterator it_start = data_list[i]->at(0).begin();
 				std::vector<float>::iterator it_end = data_list[i]->at(0).end();
