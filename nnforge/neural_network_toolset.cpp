@@ -1373,7 +1373,7 @@ namespace nnforge
 		supervised_data_reader_smart_ptr current_reader(new supervised_data_stream_reader(validating_data_stream));
 		return current_reader;
 	}
-
+	
 	std::pair<supervised_data_reader_smart_ptr, unsigned int> neural_network_toolset::get_data_reader_for_testing_supervised_and_sample_count() const
 	{
 		supervised_data_reader_smart_ptr current_reader = get_initial_data_reader_for_testing_supervised();
@@ -1605,7 +1605,12 @@ namespace nnforge
 		std::vector<std::vector<float> > learning_rates;
 		for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
 			learning_rates.push_back(std::vector<float>((*it)->size(), learning_rate));
-
+		/*
+		{
+			boost::filesystem::ofstream data_file(get_working_data_folder() / ann_subfolder_name / "ann_trained_000_profile_updater_init.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+			data->write(data_file);
+		}
+		*/
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> training_result = updater->update(
 			*training_data_reader,
@@ -1616,14 +1621,12 @@ namespace nnforge
 			momentum,
 			true);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
-
 		/*
 		{
 			boost::filesystem::ofstream data_file(get_working_data_folder() / ann_subfolder_name / "ann_trained_000_profile_updater.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
 			data->write(data_file);
 		}
 		*/
-
 		// save_ann_snapshot_raw("ann_snapshot_profile_updater", *data);
 
 		float time_to_complete_seconds = sec.count();

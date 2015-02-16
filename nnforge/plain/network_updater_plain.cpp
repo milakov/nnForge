@@ -368,6 +368,20 @@ namespace nnforge
 						unsigned int reverse_layer_id = static_cast<unsigned int>(updater_list.size() + testing_layer_count) - 1;
 						for(std::vector<const_layer_updater_plain_smart_ptr>::const_reverse_iterator it = updater_list.rbegin(); it != updater_list.rend(); ++it, ++layer_it, ++input_config_it, ++updater_buffers_it, ++data_it, ++data_custom_it, ++gradient_it, --reverse_layer_id)
 						{
+							(*it)->update_weights(
+								updater_buffers_it->first,
+								output_errors,
+								updater_buffers_it->second.additional_buffers,
+								*gradient_it,
+								*data_custom_it,
+								plain_config,
+								*layer_it,
+								*(input_config_it + 1),
+								*input_config_it,
+								current_updater_entry_count,
+								(it == updater_list.rend() - 1) ? base_input_entry_id : 0,
+								deterministic_only);
+
 							if (it != updater_list.rend() - 1)
 							{
 								(*it)->backprop(
@@ -397,20 +411,6 @@ namespace nnforge
 								}
 								*/
 							}
-
-							(*it)->update_weights(
-								updater_buffers_it->first,
-								output_errors,
-								updater_buffers_it->second.additional_buffers,
-								*gradient_it,
-								*data_custom_it,
-								plain_config,
-								*layer_it,
-								*(input_config_it + 1),
-								*input_config_it,
-								current_updater_entry_count,
-								(it == updater_list.rend() - 1) ? base_input_entry_id : 0,
-								deterministic_only);
 
 							output_errors = updater_buffers_it->second.input_errors_buffer;
 						}

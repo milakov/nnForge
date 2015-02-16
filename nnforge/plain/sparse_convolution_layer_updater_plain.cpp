@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -545,9 +545,12 @@ namespace nnforge
 				float sum = 0.0F;
 				for(int entry_id = 0; entry_id < const_updater_count; ++entry_id)
 				{
+					float local_sum = 0.0F;
 					std::vector<float>::const_iterator out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
 					for(std::vector<float>::const_iterator out_err_it = out_err_it_base; out_err_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it)
-						sum += *out_err_it;
+						local_sum += *out_err_it;
+
+					sum += local_sum;
 				}
 
 				*(gradient_biases + output_feature_map_id) += sum;

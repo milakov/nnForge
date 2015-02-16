@@ -20,9 +20,11 @@
 #include "hyperbolic_tangent_layer.h"
 #include "convolution_layer.h"
 #include "rectified_linear_layer.h"
+#include "parametric_rectified_linear_layer.h"
 #include "nn_types.h"
 
 #include <cmath>
+#include <numeric>
 
 namespace nnforge
 {
@@ -42,7 +44,6 @@ namespace nnforge
 				if ((layer_list[layer_list.size() - 1]->get_uuid() == sigmoid_layer::layer_guid)
 					&& (layer_list[layer_list.size() - 2]->get_uuid() == convolution_layer::layer_guid))
 				{
-					nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[layer_list.size() - 2]);
 					unsigned int output_feature_map_count = static_cast<unsigned int>(data_list[data_list.size() - 2]->at(1).size());
 					if (output_feature_map_count > 1)
 					{
@@ -53,7 +54,6 @@ namespace nnforge
 				else if ((layer_list[layer_list.size() - 1]->get_uuid() == hyperbolic_tangent_layer::layer_guid)
 					&& (layer_list[layer_list.size() - 2]->get_uuid() == convolution_layer::layer_guid))
 				{
-					nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[layer_list.size() - 2]);
 					unsigned int output_feature_map_count = static_cast<unsigned int>(data_list[data_list.size() - 2]->at(1).size());
 					if (output_feature_map_count > 1)
 					{
@@ -71,10 +71,13 @@ namespace nnforge
 			{
 				weight_multiplier *= sqrtf(2.0F);
 			}
+			if (layer_list[i]->get_uuid() == parametric_rectified_linear_layer::layer_guid)
+			{
+				float a = std::accumulate(data_list[i]->at(0).begin(), data_list[i]->at(0).end(), 0.0F) / static_cast<float>(data_list[i]->at(0).size());
+				weight_multiplier *= sqrtf(2.0F / (1.0F + a * a));
+			}
 			else if ((layer_list[i]->get_uuid() == convolution_layer::layer_guid) && (weight_multiplier != 1.0F))
 			{
-				nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_list[i]);
-
 				std::vector<float>::iterator it_start = data_list[i]->at(0).begin();
 				std::vector<float>::iterator it_end = data_list[i]->at(0).end();
 				for(std::vector<float>::iterator it = it_start; it != it_end; ++it)

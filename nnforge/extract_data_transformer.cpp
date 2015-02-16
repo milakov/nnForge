@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,7 +57,11 @@ namespace nnforge
 
 			std::vector<unsigned int> src_offset_list;
 			for(unsigned int i = 0; i < dimension_sizes.size(); ++i)
+			{
+				if (dimension_sizes[i] < output_window_sizes[i])
+					throw neural_network_exception((boost::format("Dimension %1% of original config has %2% size while minimum is %3%") % i % dimension_sizes[i] % output_window_sizes[i]).str());
 				src_offset_list.push_back((dimension_sizes[i] - output_window_sizes[i]) / 2);
+			}
 
 			std::vector<unsigned int> dst_pos_list(dimension_sizes.size(), 0);
 
