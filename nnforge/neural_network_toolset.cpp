@@ -69,6 +69,8 @@ namespace nnforge
 	const char * neural_network_toolset::snapshot_data_subfolder_name = "snapshot_data";
 	const char * neural_network_toolset::ann_snapshot_subfolder_name = "ann_snapshot";
 	const char * neural_network_toolset::snapshot_invalid_subfolder_name = "invalid";
+	const char * neural_network_toolset::output_subfolder_name = "output";
+	const char * neural_network_toolset::output_neurons_filename = "output_neurons.dt";
 	const char * neural_network_toolset::ann_subfolder_name = "batch";
 	const char * neural_network_toolset::ann_resume_subfolder_name = "resume";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
@@ -211,6 +213,8 @@ namespace nnforge
 			("learning_rate_rise_rate", boost::program_options::value<float>(&learning_rate_rise_rate)->default_value(0.1F), "Increase factor of learning rate at each head epoch (<1.0).")
 			("batch_offset", boost::program_options::value<unsigned int>(&batch_offset)->default_value(0), "shift initial ANN ID when batch training.")
 			("test_validate_ann_index", boost::program_options::value<int>(&test_validate_ann_index)->default_value(-1), "Index of ANN to test/validate. -1 indicates all ANNs, batch mode.")
+			("test_validate_save_output", boost::program_options::value<bool>(&test_validate_save_output)->default_value(false), "Dump output neurons when doing validating/testing.")
+			("test_validate_load_output", boost::program_options::value<bool>(&test_validate_load_output)->default_value(false), "Load output neurons when doing validating/testing.")
 			("snapshot_data_set", boost::program_options::value<std::string>(&snapshot_data_set)->default_value("training"), "Type of the dataset to use for snapshots (training, validating, testing).")
 			("profile_updater_entry_count", boost::program_options::value<unsigned int>(&profile_updater_entry_count)->default_value(1), "The number of entries to process when profiling updater.")
 			("check_gradient_weights", boost::program_options::value<std::string>(&check_gradient_weights)->default_value("::"), "The set of weights to check for gradient, in the form Layer:WeightSet:WeightID.")
@@ -718,11 +722,24 @@ namespace nnforge
 			if (actual_neuron_value_set->neuron_value_list.empty())
 				throw neural_network_exception("Empty validating/testing value set");
 
-			std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(*reader_and_sample_count.first, actual_neuron_value_set);
+			output_neuron_value_set_smart_ptr aggr_neuron_value_set;
+			if (test_validate_load_output)
+			{
+				aggr_neuron_value_set = load_output_neuron_value_set();
+			}
+			else
+			{
+				std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(*reader_and_sample_count.first, actual_neuron_value_set);
+
+				aggr_neuron_value_set = output_neuron_value_set_smart_ptr(new output_neuron_value_set(predicted_neuron_value_set_list, output_neuron_value_set::merge_average));
+			}
+
+			if (test_validate_save_output)
+				save_output_neuron_value_set(*aggr_neuron_value_set);
 
 			testing_complete_result_set complete_result_set_avg(get_error_function(), actual_neuron_value_set);
 			{
-				complete_result_set_avg.predicted_output_neuron_value_set = output_neuron_value_set_smart_ptr(new output_neuron_value_set(predicted_neuron_value_set_list, output_neuron_value_set::merge_average));
+				complete_result_set_avg.predicted_output_neuron_value_set = aggr_neuron_value_set;
 				complete_result_set_avg.recalculate_mse();
 				std::cout << "Merged (average), ";
 				get_validating_visualizer()->dump(std::cout, complete_result_set_avg);
@@ -731,16 +748,54 @@ namespace nnforge
 		}
 		else if (boost::filesystem::exists(get_working_data_folder() / testing_unsupervised_data_filename))
 		{
-			std::pair<unsupervised_data_reader_smart_ptr, unsigned int> reader_and_sample_count = get_data_reader_for_testing_unsupervised_and_sample_count();
+			output_neuron_value_set_smart_ptr aggr_neuron_value_set;
+			if (test_validate_load_output)
+			{
+				aggr_neuron_value_set = load_output_neuron_value_set();
+			}
+			else
+			{
+				std::pair<unsupervised_data_reader_smart_ptr, unsigned int> reader_and_sample_count = get_data_reader_for_testing_unsupervised_and_sample_count();
 
-			std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(*reader_and_sample_count.first, reader_and_sample_count.second);
+				std::vector<output_neuron_value_set_smart_ptr> predicted_neuron_value_set_list = run_batch(*reader_and_sample_count.first, reader_and_sample_count.second);
 
-			run_test_with_unsupervised_data(predicted_neuron_value_set_list);
+				aggr_neuron_value_set = output_neuron_value_set_smart_ptr(new output_neuron_value_set(predicted_neuron_value_set_list, nnforge::output_neuron_value_set::merge_average));
+			}
+
+			if (test_validate_save_output)
+				save_output_neuron_value_set(*aggr_neuron_value_set);
+
+			run_test_with_unsupervised_data(*aggr_neuron_value_set);
 		}
 		else throw neural_network_exception((boost::format("File %1% doesn't exist - nothing to test") % (get_working_data_folder() / testing_unsupervised_data_filename).string()).str());
 	}
 
-	void neural_network_toolset::run_test_with_unsupervised_data(std::vector<output_neuron_value_set_smart_ptr>& predicted_neuron_value_set_list)
+	void neural_network_toolset::save_output_neuron_value_set(const output_neuron_value_set& neuron_value_set) const
+	{
+		boost::filesystem::path output_folder = get_working_data_folder() / output_subfolder_name;
+		boost::filesystem::create_directories(output_folder);
+		boost::filesystem::path output_neurons_filepath = output_folder / output_neurons_filename;
+
+		boost::filesystem::ofstream output_neurons_file(output_neurons_filepath, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+		std::cout << "Writing output neurons to " << output_neurons_filepath.string() << " ..." << std::endl;
+		neuron_value_set.write(output_neurons_file);
+	}
+
+	output_neuron_value_set_smart_ptr neural_network_toolset::load_output_neuron_value_set() const
+	{
+		boost::filesystem::path output_folder = get_working_data_folder() / output_subfolder_name;
+		boost::filesystem::create_directories(output_folder);
+		boost::filesystem::path output_neurons_filepath = output_folder / output_neurons_filename;
+
+		boost::filesystem::ifstream output_neurons_file(output_neurons_filepath, std::ios_base::in | std::ios_base::binary);
+		std::cout << "Reading output neurons from " << output_neurons_filepath.string() << " ..." << std::endl;
+		output_neuron_value_set_smart_ptr res(new output_neuron_value_set());
+		res->read(output_neurons_file);
+
+		return res;
+	}
+
+	void neural_network_toolset::run_test_with_unsupervised_data(const output_neuron_value_set& neuron_value_set)
 	{
 		throw neural_network_exception("Running test with unsupervised data is not implemented by the derived toolset");
 	}

@@ -17,6 +17,10 @@
 #pragma once
 
 #include <vector>
+#include <ostream>
+#include <istream>
+#include <boost/uuid/uuid.hpp>
+
 #include "nn_types.h"
 
 namespace nnforge
@@ -40,13 +44,27 @@ namespace nnforge
 			const std::vector<nnforge_shared_ptr<output_neuron_value_set> >& source_output_neuron_value_set_list,
 			merge_type_enum merge_type);
 
+		// The stream should be created with std::ios_base::binary flag
+		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure
+		void write(std::ostream& binary_stream_to_write_to) const;
+
+		// The stream should be created with std::ios_base::binary flag
+		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
+		void read(std::istream& binary_stream_to_read_from);
+
 		void clamp(
 			float min_val,
 			float max_val);
 
 		void compact(unsigned int sample_count);
 
+		const boost::uuids::uuid& get_uuid() const;
+
+	public:
 		std::vector<std::vector<float> > neuron_value_list;
+
+	private:
+		static const boost::uuids::uuid output_neuron_value_set_guid;
 	};
 
 	typedef nnforge_shared_ptr<output_neuron_value_set> output_neuron_value_set_smart_ptr;

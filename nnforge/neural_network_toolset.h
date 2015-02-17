@@ -89,7 +89,7 @@ namespace nnforge
 
 		virtual testing_complete_result_set_visualizer_smart_ptr get_validating_visualizer() const;
 
-		virtual void run_test_with_unsupervised_data(std::vector<output_neuron_value_set_smart_ptr>& predicted_neuron_value_set_list);
+		virtual void run_test_with_unsupervised_data(const output_neuron_value_set& neuron_value_set);
 
 		virtual unsigned int get_testing_sample_count() const;
 
@@ -153,6 +153,8 @@ namespace nnforge
 		static const char * snapshot_data_subfolder_name;
 		static const char * ann_snapshot_subfolder_name;
 		static const char * snapshot_invalid_subfolder_name;
+		static const char * output_subfolder_name;
+		static const char * output_neurons_filename;
 		static const char * ann_subfolder_name;
 		static const char * ann_resume_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
@@ -177,6 +179,8 @@ namespace nnforge
 		unsigned int batch_offset;
 		unsigned int snapshot_video_fps;
 		int test_validate_ann_index;
+		bool test_validate_save_output;
+		bool test_validate_load_output;
 		unsigned int snapshot_ann_index;
 		std::string snapshot_ann_type;
 		std::string snapshot_data_set;
@@ -272,6 +276,10 @@ namespace nnforge
 		std::set<unsigned int> get_trained_ann_list() const;
 
 		std::vector<network_data_peek_entry> get_resume_ann_list_entry_list() const;
+
+		void save_output_neuron_value_set(const output_neuron_value_set& neuron_value_set) const;
+
+		output_neuron_value_set_smart_ptr load_output_neuron_value_set() const;
 
 		static bool compare_entry(network_data_peek_entry i, network_data_peek_entry j);
 
