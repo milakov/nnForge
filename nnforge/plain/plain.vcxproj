@@ -1,0 +1,166 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="absolute_layer_tester_plain.h" />
+    <ClInclude Include="absolute_layer_updater_plain.h" />
+    <ClInclude Include="average_subsampling_layer_tester_plain.h" />
+    <ClInclude Include="average_subsampling_layer_updater_plain.h" />
+    <ClInclude Include="buffer_plain_size_configuration.h" />
+    <ClInclude Include="convolution_layer_tester_plain.h" />
+    <ClInclude Include="convolution_layer_updater_plain.h" />
+    <ClInclude Include="dropout_layer_tester_plain.h" />
+    <ClInclude Include="dropout_layer_updater_plain.h" />
+    <ClInclude Include="factory_generator_plain.h" />
+    <ClInclude Include="hyperbolic_tangent_layer_tester_plain.h" />
+    <ClInclude Include="hyperbolic_tangent_layer_updater_plain.h" />
+    <ClInclude Include="layer_tester_plain.h" />
+    <ClInclude Include="layer_tester_plain_factory.h" />
+    <ClInclude Include="layer_updater_plain.h" />
+    <ClInclude Include="layer_updater_plain_factory.h" />
+    <ClInclude Include="local_contrast_subtractive_layer_tester_plain.h" />
+    <ClInclude Include="local_contrast_subtractive_layer_updater_plain.h" />
+    <ClInclude Include="maxout_layer_tester_plain.h" />
+    <ClInclude Include="maxout_layer_updater_plain.h" />
+    <ClInclude Include="max_subsampling_layer_tester_plain.h" />
+    <ClInclude Include="max_subsampling_layer_updater_plain.h" />
+    <ClInclude Include="network_analyzer_plain.h" />
+    <ClInclude Include="network_analyzer_plain_factory.h" />
+    <ClInclude Include="network_tester_plain.h" />
+    <ClInclude Include="network_tester_plain_factory.h" />
+    <ClInclude Include="network_updater_plain.h" />
+    <ClInclude Include="network_updater_plain_factory.h" />
+    <ClInclude Include="parametric_rectified_linear_layer_tester_plain.h" />
+    <ClInclude Include="parametric_rectified_linear_layer_updater_plain.h" />
+    <ClInclude Include="plain.h" />
+    <ClInclude Include="plain_running_configuration.h" />
+    <ClInclude Include="rectified_linear_layer_tester_plain.h" />
+    <ClInclude Include="rectified_linear_layer_updater_plain.h" />
+    <ClInclude Include="rgb_to_yuv_convert_layer_tester_plain.h" />
+    <ClInclude Include="sigmoid_layer_tester_plain.h" />
+    <ClInclude Include="sigmoid_layer_updater_plain.h" />
+    <ClInclude Include="softmax_layer_tester_plain.h" />
+    <ClInclude Include="softmax_layer_updater_plain.h" />
+    <ClInclude Include="sparse_convolution_layer_tester_plain.h" />
+    <ClInclude Include="sparse_convolution_layer_updater_plain.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="absolute_layer_tester_plain.cpp" />
+    <ClCompile Include="absolute_layer_updater_plain.cpp" />
+    <ClCompile Include="average_subsampling_layer_tester_plain.cpp" />
+    <ClCompile Include="average_subsampling_layer_updater_plain.cpp" />
+    <ClCompile Include="buffer_plain_size_configuration.cpp" />
+    <ClCompile Include="convolution_layer_tester_plain.cpp" />
+    <ClCompile Include="convolution_layer_updater_plain.cpp" />
+    <ClCompile Include="dropout_layer_tester_plain.cpp" />
+    <ClCompile Include="dropout_layer_updater_plain.cpp" />
+    <ClCompile Include="factory_generator_plain.cpp" />
+    <ClCompile Include="hyperbolic_tangent_layer_tester_plain.cpp" />
+    <ClCompile Include="hyperbolic_tangent_layer_updater_plain.cpp" />
+    <ClCompile Include="layer_tester_plain.cpp" />
+    <ClCompile Include="layer_tester_plain_factory.cpp" />
+    <ClCompile Include="layer_updater_plain.cpp" />
+    <ClCompile Include="layer_updater_plain_factory.cpp" />
+    <ClCompile Include="local_contrast_subtractive_layer_tester_plain.cpp" />
+    <ClCompile Include="local_contrast_subtractive_layer_updater_plain.cpp" />
+    <ClCompile Include="maxout_layer_tester_plain.cpp" />
+    <ClCompile Include="maxout_layer_updater_plain.cpp" />
+    <ClCompile Include="max_subsampling_layer_tester_plain.cpp" />
+    <ClCompile Include="max_subsampling_layer_updater_plain.cpp" />
+    <ClCompile Include="network_analyzer_plain.cpp" />
+    <ClCompile Include="network_analyzer_plain_factory.cpp" />
+    <ClCompile Include="network_tester_plain.cpp" />
+    <ClCompile Include="network_tester_plain_factory.cpp" />
+    <ClCompile Include="network_updater_plain.cpp" />
+    <ClCompile Include="network_updater_plain_factory.cpp" />
+    <ClCompile Include="parametric_rectified_linear_layer_tester_plain.cpp" />
+    <ClCompile Include="parametric_rectified_linear_layer_updater_plain.cpp" />
+    <ClCompile Include="plain.cpp" />
+    <ClCompile Include="plain_running_configuration.cpp" />
+    <ClCompile Include="rectified_linear_layer_tester_plain.cpp" />
+    <ClCompile Include="rectified_linear_layer_updater_plain.cpp" />
+    <ClCompile Include="rgb_to_yuv_convert_layer_tester_plain.cpp" />
+    <ClCompile Include="sigmoid_layer_tester_plain.cpp" />
+    <ClCompile Include="sigmoid_layer_updater_plain.cpp" />
+    <ClCompile Include="softmax_layer_tester_plain.cpp" />
+    <ClCompile Include="softmax_layer_updater_plain.cpp" />
+    <ClCompile Include="sparse_convolution_layer_tester_plain.cpp" />
+    <ClCompile Include="sparse_convolution_layer_updater_plain.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1E4C82DC-0C7F-43C1-8C1F-1F1B5FD54487}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>plain</RootNamespace>
+    <SccProjectName>Svn</SccProjectName>
+    <SccAuxPath>Svn</SccAuxPath>
+    <SccLocalPath>Svn</SccLocalPath>
+    <SccProvider>SubversionScc</SccProvider>
+    <ProjectName>nnforge_plain</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

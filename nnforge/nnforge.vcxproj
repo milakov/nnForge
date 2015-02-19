@@ -1,0 +1,292 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="absolute_layer.h" />
+    <ClInclude Include="average_subsampling_layer.h" />
+    <ClInclude Include="classifier_result.h" />
+    <ClInclude Include="complex_network_data_pusher.h" />
+    <ClInclude Include="config_options.h" />
+    <ClInclude Include="convert_data_type_transformer.h" />
+    <ClInclude Include="convert_to_polar_data_transformer.h" />
+    <ClInclude Include="convolution_layer.h" />
+    <ClInclude Include="cross_entropy_error_function.h" />
+    <ClInclude Include="debug_util.h" />
+    <ClInclude Include="dropout_layer.h" />
+    <ClInclude Include="negate_data_transformer.h" />
+    <ClInclude Include="parametric_rectified_linear_layer.h" />
+    <ClInclude Include="supervised_image_data_sampler_stream_reader.h" />
+    <ClInclude Include="layer_data_custom.h" />
+    <ClInclude Include="layer_data_list.h" />
+    <ClInclude Include="negative_log_likelihood_error_function.h" />
+    <ClInclude Include="data_transformer.h" />
+    <ClInclude Include="data_transformer_util.h" />
+    <ClInclude Include="distort_2d_data_sampler_transformer.h" />
+    <ClInclude Include="distort_2d_data_transformer.h" />
+    <ClInclude Include="error_function.h" />
+    <ClInclude Include="extract_data_transformer.h" />
+    <ClInclude Include="factory_generator.h" />
+    <ClInclude Include="feature_map_data_stat.h" />
+    <ClInclude Include="flip_2d_data_sampler_transformer.h" />
+    <ClInclude Include="hyperbolic_tangent_layer.h" />
+    <ClInclude Include="intensity_2d_data_transformer.h" />
+    <ClInclude Include="layer.h" />
+    <ClInclude Include="layer_configuration.h" />
+    <ClInclude Include="layer_configuration_specific.h" />
+    <ClInclude Include="layer_configuration_specific_snapshot.h" />
+    <ClInclude Include="layer_data.h" />
+    <ClInclude Include="layer_data_configuration.h" />
+    <ClInclude Include="layer_factory.h" />
+    <ClInclude Include="network_data_initializer.h" />
+    <ClInclude Include="local_contrast_subtractive_layer.h" />
+    <ClInclude Include="maxout_layer.h" />
+    <ClInclude Include="max_subsampling_layer.h" />
+    <ClInclude Include="mse_error_function.h" />
+    <ClInclude Include="network_data_peeker.h" />
+    <ClInclude Include="network_data_peeker_random.h" />
+    <ClInclude Include="network_data_peeker_single.h" />
+    <ClInclude Include="network_trainer_sgd.h" />
+    <ClInclude Include="save_resume_network_data_pusher.h" />
+    <ClInclude Include="sigmoid_layer.h" />
+    <ClInclude Include="sparse_convolution_layer.h" />
+    <ClInclude Include="stream_duplicator.h" />
+    <ClInclude Include="supervised_image_stream_reader.h" />
+    <ClInclude Include="supervised_limited_entry_count_data_reader.h" />
+    <ClInclude Include="supervised_multiple_epoch_data_reader.h" />
+    <ClInclude Include="network_analyzer.h" />
+    <ClInclude Include="network_analyzer_factory.h" />
+    <ClInclude Include="network_data.h" />
+    <ClInclude Include="network_data_pusher.h" />
+    <ClInclude Include="network_output_type.h" />
+    <ClInclude Include="network_schema.h" />
+    <ClInclude Include="network_tester.h" />
+    <ClInclude Include="network_tester_factory.h" />
+    <ClInclude Include="network_trainer.h" />
+    <ClInclude Include="network_updater.h" />
+    <ClInclude Include="network_updater_factory.h" />
+    <ClInclude Include="neural_network_exception.h" />
+    <ClInclude Include="neural_network_toolset.h" />
+    <ClInclude Include="neuron_data_type.h" />
+    <ClInclude Include="nnforge.h" />
+    <ClInclude Include="nn_types.h" />
+    <ClInclude Include="noise_data_transformer.h" />
+    <ClInclude Include="normalize_data_transformer.h" />
+    <ClInclude Include="output_neuron_class_set.h" />
+    <ClInclude Include="output_neuron_value_set.h" />
+    <ClInclude Include="rectified_linear_layer.h" />
+    <ClInclude Include="report_progress_network_data_pusher.h" />
+    <ClInclude Include="rgb_to_yuv_convert_layer.h" />
+    <ClInclude Include="rnd.h" />
+    <ClInclude Include="roc_result.h" />
+    <ClInclude Include="rotate_band_data_transformer.h" />
+    <ClInclude Include="snapshot_visualizer.h" />
+    <ClInclude Include="softmax_layer.h" />
+    <ClInclude Include="squared_hinge_loss_error_function.h" />
+    <ClInclude Include="summarize_network_data_pusher.h" />
+    <ClInclude Include="supervised_data_mem_reader.h" />
+    <ClInclude Include="supervised_data_reader.h" />
+    <ClInclude Include="supervised_data_stream_reader.h" />
+    <ClInclude Include="supervised_data_stream_schema.h" />
+    <ClInclude Include="supervised_data_stream_writer.h" />
+    <ClInclude Include="supervised_random_image_data_stream_reader.h" />
+    <ClInclude Include="supervised_shuffle_entries_data_reader.h" />
+    <ClInclude Include="supervised_transformed_input_data_reader.h" />
+    <ClInclude Include="supervised_transformed_output_data_reader.h" />
+    <ClInclude Include="training_stat.h" />
+    <ClInclude Include="varying_data_stream_schema.h" />
+    <ClInclude Include="varying_data_stream_writer.h" />
+    <ClInclude Include="testing_complete_result_set.h" />
+    <ClInclude Include="testing_complete_result_set_classifier_visualizer.h" />
+    <ClInclude Include="testing_complete_result_set_roc_visualizer.h" />
+    <ClInclude Include="testing_complete_result_set_visualizer.h" />
+    <ClInclude Include="testing_result.h" />
+    <ClInclude Include="training_task_state.h" />
+    <ClInclude Include="unsupervised_data_reader.h" />
+    <ClInclude Include="unsupervised_data_stream_reader.h" />
+    <ClInclude Include="unsupervised_data_stream_schema.h" />
+    <ClInclude Include="unsupervised_data_stream_writer.h" />
+    <ClInclude Include="data_writer.h" />
+    <ClInclude Include="unsupervised_transformed_input_data_reader.h" />
+    <ClInclude Include="validate_progress_network_data_pusher.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="absolute_layer.cpp" />
+    <ClCompile Include="average_subsampling_layer.cpp" />
+    <ClCompile Include="classifier_result.cpp" />
+    <ClCompile Include="complex_network_data_pusher.cpp" />
+    <ClCompile Include="convert_data_type_transformer.cpp" />
+    <ClCompile Include="convert_to_polar_data_transformer.cpp" />
+    <ClCompile Include="convolution_layer.cpp" />
+    <ClCompile Include="cross_entropy_error_function.cpp" />
+    <ClCompile Include="debug_util.cpp" />
+    <ClCompile Include="dropout_layer.cpp" />
+    <ClCompile Include="negate_data_transformer.cpp" />
+    <ClCompile Include="parametric_rectified_linear_layer.cpp" />
+    <ClCompile Include="supervised_image_data_sampler_stream_reader.cpp" />
+    <ClCompile Include="layer_data_custom.cpp" />
+    <ClCompile Include="layer_data_list.cpp" />
+    <ClCompile Include="negative_log_likelihood_error_function.cpp" />
+    <ClCompile Include="data_transformer.cpp" />
+    <ClCompile Include="data_transformer_util.cpp" />
+    <ClCompile Include="distort_2d_data_sampler_transformer.cpp" />
+    <ClCompile Include="distort_2d_data_transformer.cpp" />
+    <ClCompile Include="error_function.cpp" />
+    <ClCompile Include="extract_data_transformer.cpp" />
+    <ClCompile Include="factory_generator.cpp" />
+    <ClCompile Include="feature_map_data_stat.cpp" />
+    <ClCompile Include="flip_2d_data_sampler_transformer.cpp" />
+    <ClCompile Include="hyperbolic_tangent_layer.cpp" />
+    <ClCompile Include="intensity_2d_data_transformer.cpp" />
+    <ClCompile Include="layer.cpp" />
+    <ClCompile Include="layer_configuration.cpp" />
+    <ClCompile Include="layer_configuration_specific.cpp" />
+    <ClCompile Include="layer_configuration_specific_snapshot.cpp" />
+    <ClCompile Include="layer_data.cpp" />
+    <ClCompile Include="layer_data_configuration.cpp" />
+    <ClCompile Include="layer_factory.cpp" />
+    <ClCompile Include="network_data_initializer.cpp" />
+    <ClCompile Include="local_contrast_subtractive_layer.cpp" />
+    <ClCompile Include="maxout_layer.cpp" />
+    <ClCompile Include="max_subsampling_layer.cpp" />
+    <ClCompile Include="mse_error_function.cpp" />
+    <ClCompile Include="network_trainer_sgd.cpp" />
+    <ClCompile Include="save_resume_network_data_pusher.cpp" />
+    <ClCompile Include="sigmoid_layer.cpp" />
+    <ClCompile Include="sparse_convolution_layer.cpp" />
+    <ClCompile Include="stream_duplicator.cpp" />
+    <ClCompile Include="supervised_image_stream_reader.cpp" />
+    <ClCompile Include="supervised_limited_entry_count_data_reader.cpp" />
+    <ClCompile Include="supervised_multiple_epoch_data_reader.cpp" />
+    <ClCompile Include="network_analyzer.cpp" />
+    <ClCompile Include="network_analyzer_factory.cpp" />
+    <ClCompile Include="network_data.cpp" />
+    <ClCompile Include="network_data_peeker.cpp" />
+    <ClCompile Include="network_data_peeker_random.cpp" />
+    <ClCompile Include="network_data_peeker_single.cpp" />
+    <ClCompile Include="network_data_pusher.cpp" />
+    <ClCompile Include="network_schema.cpp" />
+    <ClCompile Include="network_tester.cpp" />
+    <ClCompile Include="network_tester_factory.cpp" />
+    <ClCompile Include="network_trainer.cpp" />
+    <ClCompile Include="network_updater.cpp" />
+    <ClCompile Include="network_updater_factory.cpp" />
+    <ClCompile Include="neural_network_exception.cpp" />
+    <ClCompile Include="neural_network_toolset.cpp" />
+    <ClCompile Include="neuron_data_type.cpp" />
+    <ClCompile Include="nnforge.cpp" />
+    <ClCompile Include="noise_data_transformer.cpp" />
+    <ClCompile Include="normalize_data_transformer.cpp" />
+    <ClCompile Include="output_neuron_class_set.cpp" />
+    <ClCompile Include="output_neuron_value_set.cpp" />
+    <ClCompile Include="rectified_linear_layer.cpp" />
+    <ClCompile Include="report_progress_network_data_pusher.cpp" />
+    <ClCompile Include="rgb_to_yuv_convert_layer.cpp" />
+    <ClCompile Include="rnd.cpp" />
+    <ClCompile Include="roc_result.cpp" />
+    <ClCompile Include="rotate_band_data_transformer.cpp" />
+    <ClCompile Include="snapshot_visualizer.cpp" />
+    <ClCompile Include="softmax_layer.cpp" />
+    <ClCompile Include="squared_hinge_loss_error_function.cpp" />
+    <ClCompile Include="summarize_network_data_pusher.cpp" />
+    <ClCompile Include="supervised_data_mem_reader.cpp" />
+    <ClCompile Include="supervised_data_reader.cpp" />
+    <ClCompile Include="supervised_data_stream_reader.cpp" />
+    <ClCompile Include="supervised_data_stream_schema.cpp" />
+    <ClCompile Include="supervised_data_stream_writer.cpp" />
+    <ClCompile Include="supervised_random_image_data_stream_reader.cpp" />
+    <ClCompile Include="supervised_shuffle_entries_data_reader.cpp" />
+    <ClCompile Include="supervised_transformed_input_data_reader.cpp" />
+    <ClCompile Include="supervised_transformed_output_data_reader.cpp" />
+    <ClCompile Include="training_stat.cpp" />
+    <ClCompile Include="varying_data_stream_schema.cpp" />
+    <ClCompile Include="varying_data_stream_writer.cpp" />
+    <ClCompile Include="testing_complete_result_set.cpp" />
+    <ClCompile Include="testing_complete_result_set_classifier_visualizer.cpp" />
+    <ClCompile Include="testing_complete_result_set_roc_visualizer.cpp" />
+    <ClCompile Include="testing_complete_result_set_visualizer.cpp" />
+    <ClCompile Include="testing_result.cpp" />
+    <ClCompile Include="training_task_state.cpp" />
+    <ClCompile Include="unsupervised_data_reader.cpp" />
+    <ClCompile Include="unsupervised_data_stream_reader.cpp" />
+    <ClCompile Include="unsupervised_data_stream_schema.cpp" />
+    <ClCompile Include="unsupervised_data_stream_writer.cpp" />
+    <ClCompile Include="data_writer.cpp" />
+    <ClCompile Include="unsupervised_transformed_input_data_reader.cpp" />
+    <ClCompile Include="validate_progress_network_data_pusher.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{435CF80F-3A53-4B85-8569-3C477F3CEEFC}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>nnforge</RootNamespace>
+    <SccProjectName>Svn</SccProjectName>
+    <SccAuxPath>Svn</SccAuxPath>
+    <SccLocalPath>Svn</SccLocalPath>
+    <SccProvider>SubversionScc</SccProvider>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
