@@ -206,6 +206,7 @@ namespace nnforge
 			("snapshot_video_fps", boost::program_options::value<unsigned int>(&snapshot_video_fps)->default_value(5), "Frames per second when saving video snapshot.")
 			("snapshot_ann_index", boost::program_options::value<unsigned int>(&snapshot_ann_index)->default_value(0), "Index of ANN for snapshots.")
 			("snapshot_ann_type", boost::program_options::value<std::string>(&snapshot_ann_type)->default_value("image"), "Type of the output for ann data (image, raw).")
+			("snapshot_layer_id", boost::program_options::value<int>(&snapshot_layer_id)->default_value(-1), "ID of the layer snapshots should be created for.")
 			("learning_rate,L", boost::program_options::value<float>(&learning_rate)->default_value(0.02F), "Global learning rate, Eta/Mu ratio for Stochastic Diagonal Levenberg Marquardt.")
 			("learning_rate_decay_tail", boost::program_options::value<unsigned int>(&learning_rate_decay_tail_epoch_count)->default_value(0), "Number of tail iterations with gradually lowering learning rates.")
 			("learning_rate_decay_rate", boost::program_options::value<float>(&learning_rate_decay_rate)->default_value(0.5F), "Degradation of learning rate at each tail epoch.")
@@ -374,6 +375,7 @@ namespace nnforge
 			std::cout << "snapshot_video_fps" << "=" << snapshot_video_fps << std::endl;
 			std::cout << "snapshot_ann_index" << "=" << snapshot_ann_index << std::endl;
 			std::cout << "snapshot_ann_type" << "=" << snapshot_ann_type << std::endl;
+			std::cout << "snapshot_layer_id" << "=" << snapshot_layer_id << std::endl;
 			std::cout << "learning_rate" << "=" << learning_rate << std::endl;
 			std::cout << "learning_rate_decay_tail" << "=" << learning_rate_decay_tail_epoch_count << std::endl;
 			std::cout << "learning_rate_decay_rate" << "=" << learning_rate_decay_rate << std::endl;
@@ -858,6 +860,11 @@ namespace nnforge
 		return res;
 	}
 
+	normalize_data_transformer_smart_ptr neural_network_toolset::get_reverse_input_data_normalize_transformer() const
+	{
+		return get_input_data_normalize_transformer()->get_inverted_transformer();
+	}
+
 	normalize_data_transformer_smart_ptr neural_network_toolset::get_reverse_output_data_normalize_transformer() const
 	{
 		return get_output_data_normalize_transformer()->get_inverted_transformer();
@@ -934,7 +941,7 @@ namespace nnforge
 						unsigned int offset = static_cast<unsigned int>(max_it - src_it);
 						float val = *max_it;
 
-						if (val < *max_val_it)
+						if (val > *max_val_it)
 						{
 							*max_val_it = val;
 							sample_and_offset_it->first = current_sample_id;
@@ -1049,6 +1056,9 @@ namespace nnforge
 		unsigned int snapshot_count = 0;
 		for(unsigned int layer_id = 0; layer_id < layer_feature_map_sample_and_offset_list.size(); ++layer_id)
 		{
+			if ((snapshot_layer_id != -1) && (snapshot_layer_id != layer_id))
+				continue;
+
 			const std::vector<std::pair<unsigned int, unsigned int> >& feature_map_sample_and_offset_list = layer_feature_map_sample_and_offset_list[layer_id];
 			for(unsigned int feature_map_id = 0; feature_map_id < feature_map_sample_and_offset_list.size(); ++feature_map_id)
 			{
@@ -1107,6 +1117,9 @@ namespace nnforge
 				for(std::vector<sample_location>::const_iterator sample_location_it = location_list.begin(); sample_location_it != location_list.end(); ++sample_location_it)
 				{
 					unsigned int layer_id = sample_location_it->layer_id;
+					if ((snapshot_layer_id != -1) && (snapshot_layer_id != layer_id))
+						continue;
+
 					unsigned int feature_map_id = sample_location_it->feature_map_id;
 					unsigned int offset = sample_location_it->offset;
 
@@ -1134,6 +1147,11 @@ namespace nnforge
 							true,
 							snapshot_scale,
 							snapshot_data_dimension_list);
+
+						if (should_apply_data_transform_to_input_when_visualizing())
+						{
+							get_reverse_input_data_normalize_transformer()->transform(0, &input_image_pair.second->data[0], neuron_data_type::type_float, input_image_pair.second->config, 0);
+						}
 
 						snapshot_visualizer::save_2d_snapshot(
 							*(input_image_pair.second),
@@ -1935,5 +1953,10 @@ namespace nnforge
 	bool neural_network_toolset::is_rgb_input() const
 	{
 		return true;
+	}
+
+	bool neural_network_toolset::should_apply_data_transform_to_input_when_visualizing() const
+	{
+		return false;
 	}
 }

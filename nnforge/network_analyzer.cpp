@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -71,6 +71,9 @@ namespace nnforge
 			output_rectangle_borders.push_back(std::make_pair(output_offset_list[i], output_offset_list[i] + output_data.config.dimension_sizes[i]));
 
 		std::vector<std::pair<unsigned int, unsigned int> > input_rectangle_borders = schema->get_input_rectangle_borders(output_rectangle_borders, output_layer_id);
+
+		for(unsigned int i = 0; i < input_rectangle_borders.size(); ++i)
+			input_rectangle_borders[i].second = std::min(input_rectangle_borders[i].second, layer_config_list[0].dimension_sizes[i]);
 
 		return actual_run_backprop(
 			output_data,

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -298,19 +298,37 @@ namespace nnforge
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::reverse_iterator net_data_custom_it = net_data_custom.rbegin() + (net_data.size() - output_layer_id - 1);
 			for(std::vector<layer_updater_cuda_smart_ptr>::reverse_iterator it = updater_list.rbegin() + (updater_list.size() - output_layer_id - 1); it != updater_list.rend(); ++it, ++input_and_all_buffers_pack_it, ++schema_data_it, ++output_errors_it, ++net_data_it, ++net_data_custom_it)
 			{
-				(*it)->enqueue_backprop(
-					*command_stream,
-					*schema_data_it,
-					*net_data_it,
-					*net_data_custom_it,
-					input_and_all_buffers_pack_it->second.output_neurons_buffer,
-					input_and_all_buffers_pack_it->first,
-					*output_errors_it,
-					input_and_all_buffers_pack_it->second.input_errors_buffer,
-					input_and_all_buffers_pack_it->second.additional_buffers,
-					input_and_all_buffers_pack_it->second.dynamic_memobjects,
-					1,
-					true);
+				if (input_and_all_buffers_pack_it->second.input_errors_buffer)
+				{
+					(*it)->enqueue_backprop(
+						*command_stream,
+						*schema_data_it,
+						*net_data_it,
+						*net_data_custom_it,
+						input_and_all_buffers_pack_it->second.output_neurons_buffer,
+						input_and_all_buffers_pack_it->first,
+						*output_errors_it,
+						input_and_all_buffers_pack_it->second.input_errors_buffer,
+						input_and_all_buffers_pack_it->second.additional_buffers,
+						input_and_all_buffers_pack_it->second.dynamic_memobjects,
+						1,
+						true);
+				}
+				else
+				{
+					(*it)->enqueue_test(
+						0,
+						*command_stream,
+						*schema_data_it,
+						*net_data_it,
+						*net_data_custom_it,
+						*output_errors_it,
+						*output_errors_it,
+						input_and_all_buffers_pack_it->second.additional_buffers,
+						input_and_all_buffers_pack_it->second.dynamic_memobjects,
+						1,
+						true);
+				}
 			}
 
 			layer_configuration_specific_snapshot_smart_ptr res(new layer_configuration_specific_snapshot());

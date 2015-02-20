@@ -140,6 +140,8 @@ namespace nnforge
 
 		virtual std::vector<unsigned int> get_snapshot_data_dimension_list(unsigned int original_dimension_count) const;
 
+		virtual bool should_apply_data_transform_to_input_when_visualizing() const;
+
 	protected:
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
@@ -171,6 +173,7 @@ namespace nnforge
 		unsigned int ann_count;
 		unsigned int training_epoch_count;
 		unsigned int snapshot_count;
+		int snapshot_layer_id;
 		float learning_rate;
 		unsigned int learning_rate_decay_tail_epoch_count;
 		float learning_rate_decay_rate;
@@ -245,6 +248,8 @@ namespace nnforge
 		normalize_data_transformer_smart_ptr get_input_data_normalize_transformer() const;
 
 		normalize_data_transformer_smart_ptr get_output_data_normalize_transformer() const;
+
+		normalize_data_transformer_smart_ptr get_reverse_input_data_normalize_transformer() const;
 
 		normalize_data_transformer_smart_ptr get_reverse_output_data_normalize_transformer() const;
 
