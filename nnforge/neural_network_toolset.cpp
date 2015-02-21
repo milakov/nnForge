@@ -71,10 +71,12 @@ namespace nnforge
 	const char * neural_network_toolset::snapshot_invalid_subfolder_name = "invalid";
 	const char * neural_network_toolset::output_subfolder_name = "output";
 	const char * neural_network_toolset::output_neurons_filename = "output_neurons.dt";
+	const char * neural_network_toolset::mixture_filename = "mixture.txt";
 	const char * neural_network_toolset::ann_subfolder_name = "batch";
 	const char * neural_network_toolset::ann_resume_subfolder_name = "resume";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
 	const char * neural_network_toolset::resume_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)\\.data$";
+	const char * neural_network_toolset::output_neurons_extractor_pattern = "output_neurons(.*)\\.dt";
 	const char * neural_network_toolset::logfile_name = "log.txt";
 	float neural_network_toolset::check_gradient_step_modifiers[] = {1.0, sqrtf(10.0F), 1.0F / sqrtf(10.0F), 10.0F, 0.1F, 10.0F * sqrtf(10.0F), 1.0F / (sqrtf(10.0F) * 10.0F), 100.0F, 0.01F, 100.0F * sqrtf(10.0F), 1.0F / (sqrtf(10.0F) * 100.0F), 1000.0F, 0.001F, -1.0F};
 
@@ -786,15 +788,81 @@ namespace nnforge
 	output_neuron_value_set_smart_ptr neural_network_toolset::load_output_neuron_value_set() const
 	{
 		boost::filesystem::path output_folder = get_working_data_folder() / output_subfolder_name;
-		boost::filesystem::create_directories(output_folder);
-		boost::filesystem::path output_neurons_filepath = output_folder / output_neurons_filename;
+		boost::filesystem::path mixture_filepath = output_folder / mixture_filename;
 
-		boost::filesystem::ifstream output_neurons_file(output_neurons_filepath, std::ios_base::in | std::ios_base::binary);
-		std::cout << "Reading output neurons from " << output_neurons_filepath.string() << " ..." << std::endl;
-		output_neuron_value_set_smart_ptr res(new output_neuron_value_set());
-		res->read(output_neurons_file);
+		std::vector<std::pair<std::string, float> > filename_weight_list;
+		if (boost::filesystem::exists(mixture_filepath))
+		{
+			boost::filesystem::ifstream file_input(mixture_filepath, std::ios_base::in);
+			float weight_sum = 0.0F;
+			unsigned int no_weight_count = 0;
+			while (true)
+			{
+				std::string str;
+				std::getline(file_input, str);
+				boost::trim(str);
+				if (str.empty())
+					break;
+				std::vector<std::string> strs;
+				boost::split(strs, str, boost::is_any_of("\t"));
 
-		return res;
+				if ((strs.size() == 1) || (strs[1].empty()))
+				{
+					++no_weight_count;
+					filename_weight_list.push_back(std::make_pair(strs[0], -1.0F));
+				}
+				else
+				{
+					float weight = static_cast<float>(atof(strs[1].c_str()));
+					weight_sum += weight;
+					filename_weight_list.push_back(std::make_pair(strs[0], weight));
+				}
+			}
+			if (no_weight_count > 0)
+			{
+				float weight = (1.0F - weight_sum) / static_cast<float>(no_weight_count);
+				for(std::vector<std::pair<std::string, float> >::iterator it = filename_weight_list.begin(); it != filename_weight_list.end(); ++it)
+				{
+					if (it->second < 0.0F)
+						it->second = weight;
+				}
+			}
+		}
+		else
+		{
+			nnforge_regex expression(output_neurons_extractor_pattern);
+			nnforge_cmatch what;
+
+			for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(output_folder); it != boost::filesystem::directory_iterator(); ++it)
+			{
+				boost::filesystem::path file_path = it->path();
+				std::string file_name = file_path.filename().string();
+
+				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				{
+					filename_weight_list.push_back(std::make_pair(file_name, 0.0F));
+				}
+			}
+
+			float weight = 1.0F / static_cast<float>(filename_weight_list.size());
+			for(std::vector<std::pair<std::string, float> >::iterator it = filename_weight_list.begin(); it != filename_weight_list.end(); ++it)
+				it->second = weight;
+		}
+
+		std::vector<std::pair<output_neuron_value_set_smart_ptr, float> > output_neuron_value_set_weight_list;
+		for(std::vector<std::pair<std::string, float> >::const_iterator it = filename_weight_list.begin(); it != filename_weight_list.end(); ++it)
+		{
+			std::cout << "Using output neurons from " << it->first << " with weight " << it->second << std::endl;
+			boost::filesystem::path output_filepath = output_folder / it->first;
+			boost::filesystem::ifstream output_neurons_file(output_filepath, std::ios_base::in | std::ios_base::binary);
+			output_neuron_value_set_smart_ptr output_neurons(new output_neuron_value_set());
+			output_neurons->read(output_neurons_file);
+			output_neuron_value_set_weight_list.push_back(std::make_pair(output_neurons, it->second));
+		}
+
+		output_neuron_value_set_smart_ptr aggr_neuron_value_set(new output_neuron_value_set(output_neuron_value_set_weight_list));
+
+		return aggr_neuron_value_set;
 	}
 
 	void neural_network_toolset::run_test_with_unsupervised_data(const output_neuron_value_set& neuron_value_set)

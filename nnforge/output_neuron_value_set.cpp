@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -94,6 +94,27 @@ namespace nnforge
 
 					neuron_value_list[entry_id][neuron_id] = val;
 				}
+			}
+		}
+	}
+
+	output_neuron_value_set::output_neuron_value_set(const std::vector<std::pair<nnforge_shared_ptr<output_neuron_value_set>, float> >& source_output_neuron_value_set_list)
+		: neuron_value_list(source_output_neuron_value_set_list[0].first->neuron_value_list.size(), std::vector<float>(source_output_neuron_value_set_list[0].first->neuron_value_list[0].size()))
+	{
+		for(unsigned int entry_id = 0; entry_id < neuron_value_list.size(); entry_id++)
+		{
+			std::vector<float>& neuron_value_list_for_single_entry = neuron_value_list[entry_id];
+			for(unsigned int neuron_id = 0; neuron_id < neuron_value_list_for_single_entry.size(); neuron_id++)
+			{
+				float sum = 0.0F;
+				for(std::vector<std::pair<output_neuron_value_set_smart_ptr, float> >::const_iterator it = source_output_neuron_value_set_list.begin();
+					it != source_output_neuron_value_set_list.end();
+					it++)
+				{
+					sum += it->first->neuron_value_list[entry_id][neuron_id] * it->second;
+				}
+
+				neuron_value_list[entry_id][neuron_id] = sum;
 			}
 		}
 	}

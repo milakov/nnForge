@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,6 +43,9 @@ namespace nnforge
 		output_neuron_value_set(
 			const std::vector<nnforge_shared_ptr<output_neuron_value_set> >& source_output_neuron_value_set_list,
 			merge_type_enum merge_type);
+
+		output_neuron_value_set(
+			const std::vector<std::pair<nnforge_shared_ptr<output_neuron_value_set>, float> >& source_output_neuron_value_set_list);
 
 		// The stream should be created with std::ios_base::binary flag
 		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure

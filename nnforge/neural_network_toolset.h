@@ -157,10 +157,12 @@ namespace nnforge
 		static const char * snapshot_invalid_subfolder_name;
 		static const char * output_subfolder_name;
 		static const char * output_neurons_filename;
+		static const char * mixture_filename;
 		static const char * ann_subfolder_name;
 		static const char * ann_resume_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
 		static const char * resume_ann_index_extractor_pattern;
+		static const char * output_neurons_extractor_pattern;
 		static const char * logfile_name;
 
 		network_tester_factory_smart_ptr tester_factory;
