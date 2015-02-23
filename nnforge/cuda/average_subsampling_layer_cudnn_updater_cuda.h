@@ -24,12 +24,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class average_subsampling_layer_updater_cuda : public layer_updater_cuda
+		class average_subsampling_layer_cudnn_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			average_subsampling_layer_updater_cuda();
+			average_subsampling_layer_cudnn_updater_cuda();
 
-			virtual ~average_subsampling_layer_updater_cuda();
+			virtual ~average_subsampling_layer_cudnn_updater_cuda();
 
 			virtual void enqueue_test(
 				unsigned int offset_input_entry_id,

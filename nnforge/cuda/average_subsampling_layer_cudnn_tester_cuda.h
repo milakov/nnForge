@@ -24,12 +24,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class average_subsampling_layer_tester_cuda : public layer_tester_cuda
+		class average_subsampling_layer_cudnn_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			average_subsampling_layer_tester_cuda();
+			average_subsampling_layer_cudnn_tester_cuda();
 
-			virtual ~average_subsampling_layer_tester_cuda();
+			virtual ~average_subsampling_layer_cudnn_tester_cuda();
 
 			virtual void enqueue_test(
 				cudaStream_t stream_id,

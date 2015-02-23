@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "average_subsampling_layer_updater_cuda.h"
+#include "average_subsampling_layer_cudnn_tester_cuda.h"
 
 #include "neural_network_cudnn_exception.h"
 
@@ -24,7 +24,7 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		average_subsampling_layer_updater_cuda::average_subsampling_layer_updater_cuda()
+		average_subsampling_layer_cudnn_tester_cuda::average_subsampling_layer_cudnn_tester_cuda()
 			: input_data_desc(0)
 			, output_data_desc(0)
 			, subsampling_desc(0)
@@ -34,25 +34,21 @@ namespace nnforge
 			cudnn_safe_call(cudnnCreatePoolingDescriptor(&subsampling_desc));
 		}
 
-		average_subsampling_layer_updater_cuda::~average_subsampling_layer_updater_cuda()
+		average_subsampling_layer_cudnn_tester_cuda::~average_subsampling_layer_cudnn_tester_cuda()
 		{
 			cudnnDestroyTensorDescriptor(input_data_desc);
 			cudnnDestroyTensorDescriptor(output_data_desc);
 			cudnnDestroyPoolingDescriptor(subsampling_desc);
 		}
 
-		void average_subsampling_layer_updater_cuda::enqueue_test(
-			unsigned int offset_input_entry_id,
+		void average_subsampling_layer_cudnn_tester_cuda::enqueue_test(
 			cudaStream_t stream_id,
 			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
+			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
+			cuda_linear_buffer_device_smart_ptr input_buffer,
 			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			unsigned int entry_count)
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
@@ -80,63 +76,20 @@ namespace nnforge
 				subsampling_desc,
 				&alpha,
 				input_data_desc,
-				*input_neurons_buffer,
+				*input_buffer,
 				&beta,
 				output_data_desc,
-				*output_neurons_buffer));
+				*additional_buffers[0]));
 		}
 
-		void average_subsampling_layer_updater_cuda::enqueue_backprop(
-			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+		cuda_linear_buffer_device_smart_ptr average_subsampling_layer_cudnn_tester_cuda::get_output_buffer(
+			cuda_linear_buffer_device_smart_ptr input_buffer,
+			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
 		{
-			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
-
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
-				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				input_configuration_specific.feature_map_count,
-				(input_configuration_specific.dimension_sizes.size() > 1) ? input_configuration_specific.dimension_sizes[1] : 1,
-				input_configuration_specific.dimension_sizes[0]));
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
-				output_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				(output_configuration_specific.dimension_sizes.size() > 1) ? output_configuration_specific.dimension_sizes[1] : 1,
-				output_configuration_specific.dimension_sizes[0]));
-
-			float alpha = 1.0F;
-			float beta = 0.0F;
-			cudnn_safe_call(cudnnPoolingBackward(
-				cuda_config->get_cudnn_handle(),
-				subsampling_desc,
-				&alpha,
-				output_data_desc,
-				*output_neurons_buffer,
-				output_data_desc,
-				*output_errors_buffer,
-				input_data_desc,
-				*input_neurons_buffer,
-				&beta,
-				input_data_desc,
-				*input_errors_buffer));
+			return additional_buffers[0];
 		}
 
-		void average_subsampling_layer_updater_cuda::updater_configured()
+		void average_subsampling_layer_cudnn_tester_cuda::tester_configured()
 		{
 			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 
@@ -151,9 +104,13 @@ namespace nnforge
 				layer_derived->subsampling_sizes[0]));
 		}
 
-		bool average_subsampling_layer_updater_cuda::is_in_place_backprop() const
+		std::vector<size_t> average_subsampling_layer_cudnn_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
 		{
-			return false;
+			std::vector<size_t> res;
+
+			res.push_back(output_elem_count_per_entry * sizeof(float));
+
+			return res;
 		}
 	}
 }

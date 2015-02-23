@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2014 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@
 
 #include "../neural_network_exception.h"
 #include "../average_subsampling_layer.h"
-#include "average_subsampling_layer_updater_cuda.h"
+
+#include "average_subsampling_layer_updater_cuda.cuh"
+#include "average_subsampling_layer_cudnn_updater_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -52,13 +54,21 @@ namespace nnforge
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
-			case 1:
-			case 2:
-				res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda());
-				break;
-			default:
-				throw neural_network_exception((boost::format("No CUDA updater for the average subsampling layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
-				break;
+				case 1:
+					res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda<1>());
+					break;
+				case 2:
+					res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda<2>());
+					//res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_cudnn_updater_cuda());
+					break;
+				case 3:
+					res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda<3>());
+					break;
+				case 4:
+					res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda<4>());
+					break;
+				default:
+					throw neural_network_exception((boost::format("No CUDA updater for the average subsampling of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
 			}
 
 			return res;

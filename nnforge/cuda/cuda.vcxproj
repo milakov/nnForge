@@ -16,9 +16,11 @@
     <ClInclude Include="absolute_layer_updater_cuda.h" />
     <ClInclude Include="absolute_layer_updater_schema.h" />
     <ClInclude Include="activation_layer_cudnn_updater_cuda.h" />
-    <ClInclude Include="average_subsampling_layer_tester_cuda.h" />
+    <ClInclude Include="average_subsampling_layer_tester_cuda.cuh" />
+    <ClInclude Include="average_subsampling_layer_cudnn_tester_cuda.h" />
     <ClInclude Include="average_subsampling_layer_testing_schema.h" />
-    <ClInclude Include="average_subsampling_layer_updater_cuda.h" />
+    <ClInclude Include="average_subsampling_layer_cudnn_updater_cuda.h" />
+    <ClInclude Include="average_subsampling_layer_updater_cuda.cuh" />
     <ClInclude Include="average_subsampling_layer_updater_schema.h" />
     <ClInclude Include="buffer_cuda_size_configuration.h" />
     <ClInclude Include="convolution_1x1_layer_tester_cuda.h" />
@@ -129,10 +131,8 @@
     <ClCompile Include="absolute_layer_testing_schema.cpp" />
     <ClCompile Include="absolute_layer_updater_schema.cpp" />
     <ClCompile Include="activation_layer_cudnn_updater_cuda.cpp" />
-    <ClCompile Include="average_subsampling_layer_tester_cuda.cpp" />
-    <ClCompile Include="average_subsampling_layer_testing_schema.cpp" />
-    <ClCompile Include="average_subsampling_layer_updater_cuda.cpp" />
-    <ClCompile Include="average_subsampling_layer_updater_schema.cpp" />
+    <ClCompile Include="average_subsampling_layer_cudnn_tester_cuda.cpp" />
+    <ClCompile Include="average_subsampling_layer_cudnn_updater_cuda.cpp" />
     <ClCompile Include="buffer_cuda_size_configuration.cpp" />
     <ClCompile Include="convolution_1x1_layer_tester_cuda.cpp" />
     <ClCompile Include="convolution_layer_tester_cuda.cpp" />
@@ -192,6 +192,8 @@
     <ClCompile Include="softmax_layer_updater_schema.cpp" />
     <ClCompile Include="sparse_convolution_layer_testing_schema.cpp" />
     <ClCompile Include="sparse_convolution_layer_updater_schema.cpp" />
+    <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
+    <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
     <CudaCompile Include="dropout_layer_updater_cuda.cu" />
     <CudaCompile Include="parametric_rectified_linear_layer_tester_cuda.cu" />
     <CudaCompile Include="parametric_rectified_linear_layer_updater_cuda.cu" />

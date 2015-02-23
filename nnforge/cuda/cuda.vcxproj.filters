@@ -374,9 +374,6 @@
     <ClInclude Include="neural_network_cudnn_exception.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="average_subsampling_layer_tester_cuda.h">
-      <Filter>Header Files\layer_testers</Filter>
-    </ClInclude>
     <ClInclude Include="convolution_layer_tester_cuda.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
@@ -393,9 +390,6 @@
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
     <ClInclude Include="activation_layer_cudnn_updater_cuda.h">
-      <Filter>Header Files\layer_updaters</Filter>
-    </ClInclude>
-    <ClInclude Include="average_subsampling_layer_updater_cuda.h">
       <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
     <ClInclude Include="max_subsampling_layer_cudnn_updater_cuda.h">
@@ -427,6 +421,18 @@
     </ClInclude>
     <ClInclude Include="parametric_rectified_linear_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="average_subsampling_layer_tester_cuda.cuh">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="average_subsampling_layer_cudnn_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="average_subsampling_layer_cudnn_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="average_subsampling_layer_updater_cuda.cuh">
+      <Filter>Source Files\layer_updaters</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -475,9 +481,6 @@
     <ClCompile Include="absolute_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
     </ClCompile>
-    <ClCompile Include="average_subsampling_layer_testing_schema.cpp">
-      <Filter>Source Files\testing_schemas</Filter>
-    </ClCompile>
     <ClCompile Include="convolution_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
     </ClCompile>
@@ -500,9 +503,6 @@
       <Filter>Source Files\network_updater</Filter>
     </ClCompile>
     <ClCompile Include="absolute_layer_updater_schema.cpp">
-      <Filter>Source Files\updater_schemas</Filter>
-    </ClCompile>
-    <ClCompile Include="average_subsampling_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
     <ClCompile Include="convolution_layer_updater_schema.cpp">
@@ -583,9 +583,6 @@
     <ClCompile Include="convolution_1x1_layer_tester_cuda.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
-    <ClCompile Include="average_subsampling_layer_tester_cuda.cpp">
-      <Filter>Source Files\layer_testers</Filter>
-    </ClCompile>
     <ClCompile Include="convolution_layer_tester_cuda.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
@@ -605,9 +602,6 @@
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
     <ClCompile Include="activation_layer_cudnn_updater_cuda.cpp">
-      <Filter>Source Files\layer_updaters</Filter>
-    </ClCompile>
-    <ClCompile Include="average_subsampling_layer_updater_cuda.cpp">
       <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
     <ClCompile Include="max_subsampling_layer_cudnn_updater_cuda.cpp">
@@ -633,6 +627,12 @@
     </ClCompile>
     <ClCompile Include="parametric_rectified_linear_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="average_subsampling_layer_cudnn_tester_cuda.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="average_subsampling_layer_cudnn_updater_cuda.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -737,6 +737,12 @@
     </CudaCompile>
     <CudaCompile Include="parametric_rectified_linear_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu">
+      <Filter>Source Files\testing_schemas</Filter>
+    </CudaCompile>
+    <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu">
+      <Filter>Source Files\updater_schemas</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

@@ -25,6 +25,7 @@
 #include <regex>
 #include <algorithm>
 #include <numeric>
+#include <limits>
 
 #include "snapshot_visualizer.h"
 #include "output_neuron_class_set.h"
@@ -809,7 +810,7 @@ namespace nnforge
 				if ((strs.size() == 1) || (strs[1].empty()))
 				{
 					++no_weight_count;
-					filename_weight_list.push_back(std::make_pair(strs[0], -1.0F));
+					filename_weight_list.push_back(std::make_pair(strs[0], -std::numeric_limits<float>::max()));
 				}
 				else
 				{
@@ -823,7 +824,7 @@ namespace nnforge
 				float weight = (1.0F - weight_sum) / static_cast<float>(no_weight_count);
 				for(std::vector<std::pair<std::string, float> >::iterator it = filename_weight_list.begin(); it != filename_weight_list.end(); ++it)
 				{
-					if (it->second < 0.0F)
+					if (it->second == -std::numeric_limits<float>::max())
 						it->second = weight;
 				}
 			}
