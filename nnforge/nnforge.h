@@ -62,6 +62,7 @@
 #include "convert_data_type_transformer.h"
 #include "negate_data_transformer.h"
 #include "convert_to_polar_data_transformer.h"
+#include "reshape_data_transformer.h"
 
 #include "mse_error_function.h"
 #include "squared_hinge_loss_error_function.h"

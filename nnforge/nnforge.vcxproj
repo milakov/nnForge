@@ -24,6 +24,7 @@
     <ClInclude Include="dropout_layer.h" />
     <ClInclude Include="negate_data_transformer.h" />
     <ClInclude Include="parametric_rectified_linear_layer.h" />
+    <ClInclude Include="reshape_data_transformer.h" />
     <ClInclude Include="supervised_image_data_sampler_stream_reader.h" />
     <ClInclude Include="layer_data_custom.h" />
     <ClInclude Include="layer_data_list.h" />
@@ -131,6 +132,7 @@
     <ClCompile Include="dropout_layer.cpp" />
     <ClCompile Include="negate_data_transformer.cpp" />
     <ClCompile Include="parametric_rectified_linear_layer.cpp" />
+    <ClCompile Include="reshape_data_transformer.cpp" />
     <ClCompile Include="supervised_image_data_sampler_stream_reader.cpp" />
     <ClCompile Include="layer_data_custom.cpp" />
     <ClCompile Include="layer_data_list.cpp" />
