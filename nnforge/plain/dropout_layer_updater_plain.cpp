@@ -20,6 +20,8 @@
 #include "../neural_network_exception.h"
 #include "../nn_types.h"
 
+#include <cstring>
+
 namespace nnforge
 {
 	namespace plain
