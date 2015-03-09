@@ -440,6 +440,9 @@
     <ClInclude Include="reshape_data_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
     </ClInclude>
+    <ClInclude Include="elastic_deformation_2d_data_transformer.h">
+      <Filter>Header Files\data_transformers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -752,6 +755,9 @@
       <Filter>Source Files\layers</Filter>
     </ClCompile>
     <ClCompile Include="reshape_data_transformer.cpp">
+      <Filter>Source Files\data_transformers</Filter>
+    </ClCompile>
+    <ClCompile Include="elastic_deformation_2d_data_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
     </ClCompile>
   </ItemGroup>

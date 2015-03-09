@@ -22,6 +22,7 @@
     <ClInclude Include="cross_entropy_error_function.h" />
     <ClInclude Include="debug_util.h" />
     <ClInclude Include="dropout_layer.h" />
+    <ClInclude Include="elastic_deformation_2d_data_transformer.h" />
     <ClInclude Include="negate_data_transformer.h" />
     <ClInclude Include="parametric_rectified_linear_layer.h" />
     <ClInclude Include="reshape_data_transformer.h" />
@@ -130,6 +131,7 @@
     <ClCompile Include="cross_entropy_error_function.cpp" />
     <ClCompile Include="debug_util.cpp" />
     <ClCompile Include="dropout_layer.cpp" />
+    <ClCompile Include="elastic_deformation_2d_data_transformer.cpp" />
     <ClCompile Include="negate_data_transformer.cpp" />
     <ClCompile Include="parametric_rectified_linear_layer.cpp" />
     <ClCompile Include="reshape_data_transformer.cpp" />
