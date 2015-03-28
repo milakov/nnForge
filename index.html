@@ -34,12 +34,12 @@
         <h2>
 <a id="what-is-nnforge" class="anchor" href="#what-is-nnforge" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is nnForge?</h2>
 
-<p>nnForge is a library for training convolutional and fully-connected neural networks. It includes CPU and GPU (CUDA) backends.</p>
+<p>nnForge is a framework for training convolutional and fully-connected neural networks. It includes CPU and GPU (CUDA) backends.</p>
 
 <h2>
 <a id="layers" class="anchor" href="#layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Layers</h2>
 
-<p>The library has a number of layers defined:</p>
+<p>The framework has a number of layers defined:</p>
 
 <ul>
 <li>Convolutional (1D, 2D, 3D, and 4D)</li>
@@ -48,16 +48,17 @@
 <li>Local contrast subtractive (CPU backend - no limitations, GPU backend - 2D only)</li>
 <li>RGB-&gt;YUV conversion (CPU backend: forward propagation only, GPU backend - forward + backward prop)</li>
 <li>Max spatial subsampling (1D, 2D, 3D, and 4D)</li>
-<li>Average spatial subsampling (CPU backend - no limitations, GPU backend - 1D and 2D only)</li>
+<li>Average spatial subsampling (1D, 2D, 3D, and 4D)</li>
 <li>Maxout - <a href="http://arxiv.org/abs/1302.4389">arXiv:1302.4389</a>
 </li>
 <li>Rectification - |x|</li>
-<li>Hyperbolic tangent - 1.7159<em>tanh(0.666666</em>x)</li>
+<li>Hyperbolic tangent - 1.7159*tanh(0.666666*x)</li>
 <li>Sigmoid</li>
-<li>Rectified linear unit - max(0,x)</li>
-<li>Softmax</li>
-<li>Dropout, see Improving neural networks by preventing co-adaptation of feature detectors, Geoffery Hinton, Nitish Srivastava, Alex Krizhevsky, Ilya Sutskever, and Ruslan Salakhutdinov, <a href="http://arxiv.org/abs/1207.0580">arXiv:1207.0580</a>
+<li>ReLU (rectified linear unit) - max(0,x)</li>
+<li>Parametric ReLU - <a href="http://arxiv.org/abs/1502.01852">arXiv:1502.01852</a>
 </li>
+<li>Softmax</li>
+<li>Dropout</li>
 </ul>
 
 <h2>
@@ -96,14 +97,14 @@
 
 <p>Download the <a href="https://github.com/milakov/nnForge/tarball/master">latest version</a>. Access all the releases along with release notes on <a href="https://github.com/milakov/nnForge/releases">GitHub</a>.</p>
 
-<p>The package contains nnForge library as well as examples - applications using the library.</p>
+<p>The package contains nnForge framework as well as examples - applications using the framework.</p>
 
 <h2>
 <a id="prerequisites" class="anchor" href="#prerequisites" aria-hidden="true"><span class="octicon octicon-link"></span></a>Prerequisites</h2>
 
-<p>The library depends on <a href="http://www.boost.org/">Boost</a> and <a href="http://opencv.org/">OpenCV</a>.</p>
+<p>The framework depends on <a href="http://www.boost.org/">Boost</a> and <a href="http://opencv.org/">OpenCV</a>.</p>
 
-<p>If you want to use CUDA backend you will also need <a href="https://developer.nvidia.com/cuda-toolkit">CUDA Toolkit</a> installed and <a href="https://developer.nvidia.com/cuDNN">cuDNN</a> <strong>v2 RC2</strong> installed.</p>
+<p>If you want to use CUDA backend you will also need <a href="https://developer.nvidia.com/cuda-toolkit">CUDA Toolkit</a> installed and <a href="https://developer.nvidia.com/cuDNN">cuDNN</a> v2 installed.</p>
 
 <h2>
 <a id="authors" class="anchor" href="#authors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors</h2>
@@ -116,7 +117,7 @@
     <div id="footer_wrap" class="outer">
       <footer class="inner">
         <p class="copyright">nnForge maintained by <a href="https://github.com/milakov">milakov</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
 
