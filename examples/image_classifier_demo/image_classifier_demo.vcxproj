@@ -65,7 +65,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>cudnn.lib;curand.lib;cusparse.lib;cublas.lib;cudart.lib;nvToolsExt64_1.lib;opencv_imgproc249d.lib;opencv_highgui249d.lib;opencv_core249d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libprotobuf-lited.lib;cudnn.lib;curand.lib;cusparse.lib;cublas.lib;cudart.lib;nvToolsExt64_1.lib;opencv_imgproc249d.lib;opencv_highgui249d.lib;opencv_core249d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -84,7 +84,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>cudnn.lib;curand.lib;cusparse.lib;cublas.lib;cudart.lib;nvToolsExt64_1.lib;opencv_imgproc249.lib;opencv_highgui249.lib;opencv_core249.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libprotobuf-lite.lib;cudnn.lib;curand.lib;cusparse.lib;cublas.lib;cudart.lib;nvToolsExt64_1.lib;opencv_imgproc249.lib;opencv_highgui249.lib;opencv_core249.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

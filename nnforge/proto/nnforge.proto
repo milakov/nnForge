@@ -1,0 +1,7 @@
+package nnforge.protobuf;
+
+option optimize_for = LITE_RUNTIME;
+
+message NetworkSchema {
+	optional string name = 1;
+}

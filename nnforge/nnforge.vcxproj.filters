@@ -117,6 +117,9 @@
     <Filter Include="Source Files\data_transformers">
       <UniqueIdentifier>{c0e5e03a-e459-485a-9f40-204d438403bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Proto">
+      <UniqueIdentifier>{04441ca2-091a-4182-b23d-05f99b276a4a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rnd.h">
@@ -443,6 +446,9 @@
     <ClInclude Include="elastic_deformation_2d_data_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
     </ClInclude>
+    <ClInclude Include="proto\nnforge.pb.h">
+      <Filter>Proto</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -760,5 +766,13 @@
     <ClCompile Include="elastic_deformation_2d_data_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
     </ClCompile>
+    <ClCompile Include="proto\nnforge.pb.cc">
+      <Filter>Proto</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="proto\nnforge.proto">
+      <Filter>Proto</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -165,7 +165,7 @@ namespace nnforge
 			out << "Texture alignment = " << running_configuration.texture_alignment << " bytes" << std::endl;
 			out << "PCI Bus ID = " << running_configuration.pci_bus_id << std::endl;
 			out << "PCI Location ID = " << running_configuration.pci_device_id << std::endl;
-			#ifdef WIN32
+			#ifdef _WIN32
 				out << "Driver mode = " << (running_configuration.tcc_mode ? "TCC" : "WDDM") << std::endl;
 			#endif
 

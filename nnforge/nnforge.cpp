@@ -2,10 +2,14 @@
 
 #include "layer_factory.h"
 
+#include <google/protobuf/stubs/common.h>
+
 namespace nnforge
 {
 	void nnforge::init()
 	{
+		GOOGLE_PROTOBUF_VERIFY_VERSION;
+
 		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new convolution_layer(std::vector<unsigned int>(1, 1), 1, 1)));
 		single_layer_factory::get_mutable_instance().register_layer(convolution_layer::layer_guid_v1, layer_smart_ptr(new convolution_layer(std::vector<unsigned int>(1, 1), 1, 1)));
 		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new sparse_convolution_layer(std::vector<unsigned int>(1, 1), 1, 1, 1U)));
