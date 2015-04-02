@@ -34,12 +34,14 @@ namespace nnforge
 		unsigned int target_image_width,
 		unsigned int target_image_height,
 		bool fit_into_target,
+		bool dynamic_output,
 		bool is_color,
 		unsigned int prefetch_count)
 		: in_stream(input_stream)
 		, target_image_width(target_image_width)
 		, target_image_height(target_image_height)
 		, fit_into_target(fit_into_target)
+		, dynamic_output(dynamic_output)
 		, is_color(is_color)
 		, prefetch_count(prefetch_count)
 		, entry_read_count(0)
@@ -91,12 +93,16 @@ namespace nnforge
 	void supervised_image_stream_reader::read(
 		unsigned int entry_id,
 		cv::Mat * image,
-		unsigned int * class_id)
+		std::vector<unsigned char>* output_data)
 	{
 		in_stream->seekg(reset_pos + (std::istream::off_type)(entry_offsets[entry_id]), std::ios::beg);
 
 		unsigned long long total_entry_size = entry_offsets[entry_id + 1] - entry_offsets[entry_id];
-		unsigned input_data_size = static_cast<unsigned int>(total_entry_size - sizeof(unsigned int));
+		unsigned int input_data_size;
+		if (dynamic_output)
+			in_stream->read(reinterpret_cast<char*>(&input_data_size), sizeof(unsigned int));
+		else
+			input_data_size = static_cast<unsigned int>(total_entry_size - sizeof(unsigned int));
 
 		if (image)
 		{
@@ -108,23 +114,30 @@ namespace nnforge
 		else
 			in_stream->seekg(input_data_size, std::ios_base::cur);
 
-		if (class_id)
+		unsigned int output_data_size;
+		if (dynamic_output)
+			output_data_size = static_cast<unsigned int>(total_entry_size - input_data_size - sizeof(unsigned int));
+		else
+			output_data_size = sizeof(unsigned int);
+		if (output_data)
 		{
-			in_stream->read(reinterpret_cast<char*>(class_id), sizeof(*class_id));
+			output_data->resize(output_data_size);
+			if (output_data_size > 0)
+				in_stream->read(reinterpret_cast<char*>(&(output_data->at(0))), output_data_size);
 		}
 		else
-			in_stream->seekg(sizeof(unsigned int), std::ios_base::cur);
+			in_stream->seekg(output_data_size, std::ios_base::cur);
 	}
 
 	bool supervised_image_stream_reader::read_image(
 		cv::Mat * image,
-		unsigned int * class_id)
+		std::vector<unsigned char> * output_data)
 	{
 		if (!entry_available())
 			return false;
 
 		// Set command
-		current_request = nnforge_shared_ptr<request>(new read_request(entry_read_count, image, class_id));
+		current_request = nnforge_shared_ptr<request>(new read_request(entry_read_count, image, output_data));
 		prefetch_request_processed = false;
 		{
 			boost::lock_guard<boost::mutex> lock(request_pending_mutex);
@@ -226,12 +239,12 @@ namespace nnforge
 				{
 					if (read_request_derived->image)
 					{
-						read_data_from_cache(read_request_derived->entry_id, read_request_derived->image, read_request_derived->class_id);
+						read_data_from_cache(read_request_derived->entry_id, read_request_derived->image, read_request_derived->output_data);
 						run_prefetch = true;
 					}
 					else
 					{
-						read(read_request_derived->entry_id, read_request_derived->image, read_request_derived->class_id);
+						read(read_request_derived->entry_id, read_request_derived->image, read_request_derived->output_data);
 					}
 				}
 				else
@@ -292,13 +305,13 @@ namespace nnforge
 	void supervised_image_stream_reader::read_data_from_cache(
 		unsigned int entry_id,
 		cv::Mat * image,
-		unsigned int * class_id)
+		std::vector<unsigned char> * output_data)
 	{
 		std::map<unsigned int, nnforge_shared_ptr<decode_data_info> >::iterator it = decode_cache_map.find(entry_id);
 		if (it == decode_cache_map.end())
 		{
 			// Not in cache
-			read(entry_id, image, class_id);
+			read(entry_id, image, output_data);
 		}
 		else
 		{
@@ -313,8 +326,8 @@ namespace nnforge
 				throw std::runtime_error((boost::format("Error when decoding entry %1%: %2%") % entry_id % info->decode_worker_error).str());
 
 			*image = info->image;
-			if (class_id)
-				*class_id = info->class_id;
+			if (output_data)
+				*output_data = info->output_data;
 		}
 	}
 
@@ -350,15 +363,25 @@ namespace nnforge
 		in_stream->seekg(reset_pos + (std::istream::off_type)(entry_offsets[entry_id]), std::ios::beg);
 
 		unsigned long long total_entry_size = entry_offsets[entry_id + 1] - entry_offsets[entry_id];
-		unsigned input_data_size = static_cast<unsigned int>(total_entry_size - sizeof(unsigned int));
+		unsigned int input_data_size;
+		if (dynamic_output)
+			in_stream->read(reinterpret_cast<char*>(&input_data_size), sizeof(unsigned int));
+		else
+			input_data_size = static_cast<unsigned int>(total_entry_size - sizeof(unsigned int));
 
 		nnforge_shared_ptr<std::vector<unsigned char> > raw_input_data(new std::vector<unsigned char>(input_data_size));
 		in_stream->read(reinterpret_cast<char*>(&(*raw_input_data->begin())), input_data_size);
 
-		unsigned int class_id;
-		in_stream->read(reinterpret_cast<char*>(&class_id), sizeof(class_id));
+		unsigned int output_data_size;
+		if (dynamic_output)
+			output_data_size = static_cast<unsigned int>(total_entry_size - input_data_size - sizeof(unsigned int));
+		else
+			output_data_size = sizeof(unsigned int);
+		std::vector<unsigned char> output_data(output_data_size);
+		if (output_data_size > 0)
+			in_stream->read(reinterpret_cast<char*>(&(output_data[0])), output_data_size);
 
-		nnforge_shared_ptr<decode_data_info> decode_info(new decode_data_info(class_id));
+		nnforge_shared_ptr<decode_data_info> decode_info(new decode_data_info(output_data));
 		decode_cache_map.insert(std::make_pair(entry_id, decode_info));
 
 		io_service.post(boost::bind(prefetch_worker, this, raw_input_data, decode_info));
@@ -392,8 +415,8 @@ namespace nnforge
 		cv::resize(original_image, image, cv::Size(image.cols, image.rows), 0.0, 0.0, CV_INTER_AREA);
 	}
 
-	supervised_image_stream_reader::decode_data_info::decode_data_info(unsigned int class_id)
-		: class_id(class_id)
+	supervised_image_stream_reader::decode_data_info::decode_data_info(const std::vector<unsigned char>& output_data)
+		: output_data(output_data)
 		, is_ready(false)
 	{
 	}

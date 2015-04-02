@@ -40,6 +40,7 @@ namespace nnforge
 			unsigned int target_image_width,
 			unsigned int target_image_height,
 			bool fit_into_target,
+			bool dynamic_output,
 			bool is_color = true,
 			unsigned int prefetch_count = 3);
 
@@ -66,7 +67,7 @@ namespace nnforge
 
 		virtual bool read_image(
 			cv::Mat * image,
-			unsigned int * class_id);
+			std::vector<unsigned char>* output_data);
 
 	protected:
 		class request
@@ -80,16 +81,16 @@ namespace nnforge
 		class read_request : public request
 		{
 		public:
-			read_request(unsigned int entry_id, cv::Mat * image, unsigned int * class_id)
+			read_request(unsigned int entry_id, cv::Mat * image, std::vector<unsigned char> * output_data)
 				: entry_id(entry_id)
 				, image(image)
-				, class_id(class_id)
+				, output_data(output_data)
 			{
 			};
 
 			unsigned int entry_id;
 			cv::Mat * image;
-			unsigned int * class_id;
+			std::vector<unsigned char>* output_data;
 		};
 
 		class raw_read_request : public request
@@ -108,10 +109,10 @@ namespace nnforge
 		class decode_data_info
 		{
 		public:
-			decode_data_info(unsigned int class_id);
+			decode_data_info(const std::vector<unsigned char>& output_data);
 
 			cv::Mat image;
-			unsigned int class_id;
+			std::vector<unsigned char> output_data;
 			bool is_ready;
 			boost::mutex is_ready_mutex;
 			boost::condition_variable is_ready_condition;
@@ -123,6 +124,7 @@ namespace nnforge
 		unsigned int target_image_width;
 		unsigned int target_image_height;
 		bool fit_into_target;
+		bool dynamic_output;
 		bool is_color;
 		unsigned int prefetch_count;
 
@@ -153,7 +155,7 @@ namespace nnforge
 		void read(
 			unsigned int entry_id,
 			cv::Mat * image,
-			unsigned int * class_id);
+			std::vector<unsigned char>* output_data);
 
 		void raw_read(
 			unsigned int entry_id,
@@ -162,7 +164,7 @@ namespace nnforge
 		void read_data_from_cache(
 			unsigned int entry_id,
 			cv::Mat * image,
-			unsigned int * class_id);
+			std::vector<unsigned char>* output_data);
 
 		void start_prefetch(
 			boost::asio::io_service& io_service,

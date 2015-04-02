@@ -29,7 +29,7 @@ namespace nnforge
 		unsigned int class_count,
 		bool is_color,
 		bool is_deterministic)
-		: supervised_image_stream_reader(input_stream, original_image_width, original_image_height, false, is_color)
+		: supervised_image_stream_reader(input_stream, original_image_width, original_image_height, false, false, is_color)
 		, is_deterministic(is_deterministic)
 		, gen(rnd::get_random_generator())
 	{
@@ -55,9 +55,13 @@ namespace nnforge
 		cv::Mat image;
 		unsigned int class_id;
 
-		bool res = read_image(input_neurons ? &image : 0, output_neurons ? &class_id : 0);
+		std::vector<unsigned char> output_data;
+		bool res = read_image(input_neurons ? &image : 0, output_neurons ? &output_data : 0);
 		if (!res)
 			return false;
+
+		if (output_neurons)
+			class_id = *reinterpret_cast<int *>(&output_data[0]);
 
 		if (input_neurons)
 		{

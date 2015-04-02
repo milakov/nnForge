@@ -33,7 +33,7 @@ namespace nnforge
 		bool is_color,
 		unsigned char backfill_intensity,
 		const std::vector<std::pair<float, float> >& position_list)
-		: supervised_image_stream_reader(input_stream, original_image_width, original_image_height, fit_image, is_color)
+		: supervised_image_stream_reader(input_stream, original_image_width, original_image_height, fit_image, false, is_color)
 		, position_list(position_list)
 		, backfill_intensity(backfill_intensity)
 		, current_sample_id(0)
@@ -63,7 +63,11 @@ namespace nnforge
 		bool read = true;
 		if (current_sample_id == 0)
 		{
-			read = read_image(input_neurons ? &image : 0, output_neurons ? &class_id : 0);
+			std::vector<unsigned char> output_data;
+			read = read_image(input_neurons ? &image : 0, output_neurons ? &output_data : 0);
+
+			if (output_neurons)
+				class_id = *reinterpret_cast<int *>(&output_data[0]);
 		}
 		if (!read)
 			return false;
