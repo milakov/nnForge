@@ -34,13 +34,24 @@ namespace nnforge
 
 		virtual const boost::uuids::uuid& get_uuid() const;
 
+		virtual const std::string& get_type_name() const;
+
 		virtual void write(std::ostream& binary_stream_to_write_to) const;
+
+		virtual void write_proto(void * layer_proto) const;
 
 		virtual void read(
 			std::istream& binary_stream_to_read_from,
 			const boost::uuids::uuid& layer_read_guid);
 
+		virtual void read_proto(const void * layer_proto);
+
 		static const boost::uuids::uuid layer_guid;
+
+		static const std::string layer_type_name;
+
+	private:
+		void check();
 
 	public:
 		float dropout_rate;

@@ -371,11 +371,7 @@ void image_classifier_demo_toolset::safe_set_fps(float val)
 
 void image_classifier_demo_toolset::init_input_config()
 {
-	nnforge::network_schema_smart_ptr schema(new nnforge::network_schema());
-	{
-		boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-		schema->read(in);
-	}
+	nnforge::network_schema_smart_ptr schema = load_schema();
 	const nnforge::const_layer_list& layer_list = *schema;
 	std::vector<std::pair<unsigned int, unsigned int> > output_rectangle_borders;
 	for(int i = 0; i < 2; ++i)

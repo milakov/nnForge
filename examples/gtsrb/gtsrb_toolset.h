@@ -44,8 +44,6 @@ public:
 	virtual ~gtsrb_toolset();
 
 protected:
-	virtual nnforge::network_schema_smart_ptr get_schema() const;
-
 	virtual void prepare_training_data();
 
 	void write_single_entry(
@@ -72,7 +70,6 @@ protected:
 	static const unsigned int image_width;
 	static const unsigned int image_height;
 	static const unsigned int class_count;
-	static const bool is_color;
 	static const bool use_roi;
 	static const float max_rotation_angle_in_degrees;
 	static const float max_scale_factor;

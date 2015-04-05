@@ -17,6 +17,7 @@
 #include "dropout_layer.h"
 
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <boost/format.hpp>
 
@@ -30,8 +31,15 @@ namespace nnforge
 		, 0x99, 0x5b
 		, 0x79, 0x7a, 0xf2, 0x65, 0xf8, 0x3 };
 
+	const std::string dropout_layer::layer_type_name = "Dropout";
+
 	dropout_layer::dropout_layer(float dropout_rate)
 		: dropout_rate(dropout_rate)
+	{
+		check();
+	}
+
+	void dropout_layer::check()
 	{
 		if ((dropout_rate < 0.0F) || (dropout_rate >= 1.0F))
 			throw neural_network_exception((boost::format("Error constructing dropout_layer: dropout_rate equals %1%, it should be in [0.0F,1.0F)") % dropout_rate).str());
@@ -40,6 +48,11 @@ namespace nnforge
 	const boost::uuids::uuid& dropout_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& dropout_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr dropout_layer::clone() const
@@ -62,10 +75,35 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&dropout_rate), sizeof(dropout_rate));
 	}
 
+	void dropout_layer::write_proto(void * layer_proto) const
+	{
+		if (dropout_rate != 0.5F)
+		{
+			protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
+			nnforge::protobuf::DropoutParam * param = layer_proto_typed->mutable_dropout_param();
+			param->set_dropout_rate(dropout_rate);
+		}
+	}
+
 	void dropout_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
 	{
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dropout_rate), sizeof(dropout_rate));
+	}
+
+	void dropout_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_dropout_param())
+		{
+			dropout_rate = 0.5F;
+		}
+		else
+		{
+			dropout_rate = layer_proto_typed->dropout_param().dropout_rate();
+		}
+
+		check();
 	}
 }

@@ -18,7 +18,8 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
- #include "nn_types.h"
+#include "nn_types.h"
+#include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <set>
@@ -43,6 +44,8 @@ namespace nnforge
 		, 0x89, 0xe6
 		, 0xe7, 0x22, 0xb4, 0x33, 0xf9, 0x5c };
 
+	const std::string sparse_convolution_layer::layer_type_name = "SparseConvolution";
+
 	sparse_convolution_layer::sparse_convolution_layer(
 		const std::vector<unsigned int>& window_sizes,
 		unsigned int input_feature_map_count,
@@ -53,11 +56,27 @@ namespace nnforge
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count),
+		feature_map_connection_sparsity_ratio(-1.0F),
 		feature_map_connection_count(feature_map_connection_count),
 		left_zero_padding(left_zero_padding),
 		right_zero_padding(right_zero_padding)
 	{
-		check_consistency();
+		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
+		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for right zero padding") % right_zero_padding.size()).str());
+
+		if (left_zero_padding.empty())
+			this->left_zero_padding.resize(window_sizes.size(), 0);
+		else
+			this->left_zero_padding = left_zero_padding;
+
+		if (right_zero_padding.empty())
+			this->right_zero_padding.resize(window_sizes.size(), 0);
+		else
+			this->right_zero_padding = right_zero_padding;
+
+		check();
 	}
 
 	sparse_convolution_layer::sparse_convolution_layer(
@@ -70,23 +89,37 @@ namespace nnforge
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count),
+		feature_map_connection_sparsity_ratio(feature_map_connection_sparsity_ratio),
 		feature_map_connection_count(static_cast<unsigned int>(input_feature_map_count * output_feature_map_count * feature_map_connection_sparsity_ratio + 0.5F)),
 		left_zero_padding(left_zero_padding),
 		right_zero_padding(right_zero_padding)
 	{
-		check_consistency();
+		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
+		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for right zero padding") % right_zero_padding.size()).str());
+
+		if (left_zero_padding.empty())
+			this->left_zero_padding.resize(window_sizes.size(), 0);
+		else
+			this->left_zero_padding = left_zero_padding;
+
+		if (right_zero_padding.empty())
+			this->right_zero_padding.resize(window_sizes.size(), 0);
+		else
+			this->right_zero_padding = right_zero_padding;
+
+		check();
 	}
 
-	void sparse_convolution_layer::check_consistency()
+	void sparse_convolution_layer::check()
 	{
 		if (window_sizes.size() == 0)
 			throw neural_network_exception("window sizes for sparse convolution layer may not be empty");
 
 		for(unsigned int i = 0; i < window_sizes.size(); i++)
-		{
 			if (window_sizes[i] == 0)
 				throw neural_network_exception("window dimension for sparse convolution layer may not be zero");
-		}
 
 		if (feature_map_connection_count < input_feature_map_count)
 			throw neural_network_exception("feature_map_connection_count may not be smaller than input_feature_map_count");
@@ -95,33 +128,23 @@ namespace nnforge
 		if (feature_map_connection_count > input_feature_map_count * output_feature_map_count)
 			throw neural_network_exception("feature_map_connection_count may not be larger than in dense case");
 
-		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
-			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
-		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
-			throw std::runtime_error((boost::format("Invalid dimension count %1% for right zero padding") % right_zero_padding.size()).str());
+		for(unsigned int i = 0; i < window_sizes.size(); i++)
+			if (left_zero_padding[i] >= window_sizes[i])
+				throw neural_network_exception((boost::format("left zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % left_zero_padding[i] % i % window_sizes[i]).str());
 
-		if (left_zero_padding.empty())
-			left_zero_padding.resize(window_sizes.size(), 0);
-		else
-		{
-			for(unsigned int i = 0; i < window_sizes.size(); i++)
-				if (left_zero_padding[i] >= window_sizes[i])
-					throw neural_network_exception((boost::format("left zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % left_zero_padding[i] % i % window_sizes[i]).str());
-		}
-
-		if (right_zero_padding.empty())
-			right_zero_padding.resize(window_sizes.size(), 0);
-		else
-		{
-			for(unsigned int i = 0; i < window_sizes.size(); i++)
-				if (right_zero_padding[i] >= window_sizes[i])
-					throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
-		}
+		for(unsigned int i = 0; i < window_sizes.size(); i++)
+			if (right_zero_padding[i] >= window_sizes[i])
+				throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
 	}
 
 	const boost::uuids::uuid& sparse_convolution_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& sparse_convolution_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr sparse_convolution_layer::clone() const
@@ -193,6 +216,30 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
+	void sparse_convolution_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
+		nnforge::protobuf::SparseConvolutionalParam * param = layer_proto_typed->mutable_sparse_convolution_param();
+
+		param->set_output_feature_map_count(output_feature_map_count);
+		param->set_input_feature_map_count(input_feature_map_count);
+
+		if (feature_map_connection_sparsity_ratio >= 0.0F)
+			param->set_feature_map_connection_sparsity_ratio(feature_map_connection_sparsity_ratio);
+		else
+			param->set_feature_map_connection_count(feature_map_connection_count);
+
+		for(int i = 0; i < window_sizes.size(); ++i)
+		{
+			nnforge::protobuf::SparseConvolutionalParam_SparseConvolutionalDimensionParam * dim_param = param->add_dimension_param();
+			dim_param->set_kernel_size(window_sizes[i]);
+			if (left_zero_padding[i] > 0)
+				dim_param->set_left_padding(left_zero_padding[i]);
+			if (right_zero_padding[i] > 0)
+				dim_param->set_right_padding(right_zero_padding[i]);
+		}
+	}
+
 	void sparse_convolution_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
@@ -200,6 +247,7 @@ namespace nnforge
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&input_feature_map_count), sizeof(input_feature_map_count));
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&output_feature_map_count), sizeof(output_feature_map_count));
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&feature_map_connection_count), sizeof(feature_map_connection_count));
+		feature_map_connection_sparsity_ratio = -1.0F;
 
 		unsigned int dimension_count;
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));
@@ -213,6 +261,42 @@ namespace nnforge
 			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*left_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 		}
+	}
+
+	void sparse_convolution_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_sparse_convolution_param())
+			throw neural_network_exception((boost::format("No sparse_convolution_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		input_feature_map_count = layer_proto_typed->sparse_convolution_param().input_feature_map_count();
+		output_feature_map_count = layer_proto_typed->sparse_convolution_param().output_feature_map_count();
+
+		window_sizes.resize(layer_proto_typed->sparse_convolution_param().dimension_param_size());
+		left_zero_padding.resize(layer_proto_typed->sparse_convolution_param().dimension_param_size());
+		right_zero_padding.resize(layer_proto_typed->sparse_convolution_param().dimension_param_size());
+
+		for(int i = 0; i < layer_proto_typed->sparse_convolution_param().dimension_param_size(); ++i)
+		{
+			window_sizes[i] = layer_proto_typed->sparse_convolution_param().dimension_param(i).kernel_size();
+			left_zero_padding[i] = layer_proto_typed->sparse_convolution_param().dimension_param(i).left_padding();
+			right_zero_padding[i] = layer_proto_typed->sparse_convolution_param().dimension_param(i).right_padding();
+		}
+
+		if (layer_proto_typed->sparse_convolution_param().has_feature_map_connection_count())
+		{
+			feature_map_connection_sparsity_ratio = -1.0F;
+			feature_map_connection_count = layer_proto_typed->sparse_convolution_param().feature_map_connection_count();
+		}
+		else if (layer_proto_typed->sparse_convolution_param().has_feature_map_connection_sparsity_ratio())
+		{
+			feature_map_connection_sparsity_ratio = layer_proto_typed->sparse_convolution_param().feature_map_connection_sparsity_ratio();
+			feature_map_connection_count = static_cast<unsigned int>(input_feature_map_count * output_feature_map_count * feature_map_connection_sparsity_ratio + 0.5F);
+		}
+		else
+			throw neural_network_exception((boost::format("No sparsity pattern defined in sparse_convolution_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		check();
 	}
 
 	data_config sparse_convolution_layer::get_data_config() const

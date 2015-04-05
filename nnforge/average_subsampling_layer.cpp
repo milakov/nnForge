@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
@@ -33,9 +34,15 @@ namespace nnforge
 		, 0x99, 0xef
 		, 0xda, 0x7b, 0x5a, 0x97, 0xca, 0x68 };
 
+	const std::string average_subsampling_layer::layer_type_name = "AverageSubsampling";
 
 	average_subsampling_layer::average_subsampling_layer(const std::vector<unsigned int>& subsampling_sizes)
 		: subsampling_sizes(subsampling_sizes)
+	{
+		check();
+	}
+
+	void average_subsampling_layer::check()
 	{
 		if (subsampling_sizes.size() == 0)
 			throw neural_network_exception("subsampling sizes for average subsampling layer may not be empty");
@@ -50,6 +57,11 @@ namespace nnforge
 	const boost::uuids::uuid& average_subsampling_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& average_subsampling_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr average_subsampling_layer::clone() const
@@ -103,6 +115,17 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*subsampling_sizes.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
+	void average_subsampling_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
+		nnforge::protobuf::AverageSubsamplingParam * param = layer_proto_typed->mutable_average_subsampling_param();
+		for(int i = 0; i < subsampling_sizes.size(); ++i)
+		{
+			nnforge::protobuf::AverageSubsamplingParam_AverageSubsamplingDimensionParam * dim_param = param->add_dimension_param();
+			dim_param->set_subsampling_size(subsampling_sizes[i]);
+		}
+	}
+
 	void average_subsampling_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
@@ -111,6 +134,22 @@ namespace nnforge
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));
 		subsampling_sizes.resize(dimension_count);
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*subsampling_sizes.begin())), sizeof(unsigned int) * dimension_count);
+	}
+
+	void average_subsampling_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_average_subsampling_param())
+			throw neural_network_exception((boost::format("No average_subsampling_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		subsampling_sizes.resize(layer_proto_typed->average_subsampling_param().dimension_param_size());
+
+		for(int i = 0; i < layer_proto_typed->average_subsampling_param().dimension_param_size(); ++i)
+		{
+			subsampling_sizes[i] = layer_proto_typed->average_subsampling_param().dimension_param(i).subsampling_size();
+		}
+
+		check();
 	}
 
 	float average_subsampling_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const

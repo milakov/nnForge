@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,15 +20,19 @@
 
 namespace nnforge
 {
-	// f(x) = 1.7159 * tanh(steepness * x)
+	// f(x) = scale * tanh(steepness * x)
 	// tanh(x) = (exp(2 * x) - 1) / (exp(2 * x) + 1)
 	// Derivative:
-	// f'(x) = 1.7159 * steepness * (1 - (f(x) / 1.7159)^2)
-	// steepness = 0.666666F
+	// f'(x) = scale * steepness * (1 - (f(x) / scale)^2)
+	// Typical values:
+	// 1) scale = 1, steepness = 1
+	// 2) scale = 1.7159, steepness = 0.666666F
 	class hyperbolic_tangent_layer : public layer
 	{
 	public:
-		hyperbolic_tangent_layer();
+		hyperbolic_tangent_layer(
+			float scale = 1.0F,
+			float steepness = 1.0F);
 
 		virtual layer_smart_ptr clone() const;
 
@@ -38,10 +42,22 @@ namespace nnforge
 
 		virtual const boost::uuids::uuid& get_uuid() const;
 
+		virtual const std::string& get_type_name() const;
+
+		virtual void write_proto(void * layer_proto) const;
+
+		virtual void read(
+			std::istream& binary_stream_to_read_from,
+			const boost::uuids::uuid& layer_read_guid);
+
+		virtual void read_proto(const void * layer_proto);
+
 		static const boost::uuids::uuid layer_guid;
 
+		static const std::string layer_type_name;
+
 	public:
-		static const float steepness;
-		static const float major_multiplier;
+		float scale;
+		float steepness;
 	};
 }

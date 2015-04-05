@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
@@ -34,6 +35,8 @@ namespace nnforge
 		, 0x96, 0x63
 		, 0x3d, 0xf, 0x38, 0x87, 0xe4, 0x8a };
 
+	const std::string local_contrast_subtractive_layer::layer_type_name = "LCS";
+
 	const float local_contrast_subtractive_layer::c = 2.0F;
 
 	local_contrast_subtractive_layer::local_contrast_subtractive_layer(
@@ -44,6 +47,15 @@ namespace nnforge
 		, feature_maps_affected(feature_maps_affected)
 		, feature_map_count(feature_map_count)
 	{
+		if (this->feature_maps_affected.empty())
+			for(unsigned int i = 0; i < feature_map_count; i++)
+				this->feature_maps_affected.push_back(i);
+
+		check_and_update();
+	}
+
+	void local_contrast_subtractive_layer::check_and_update()
+	{
 		if (window_sizes.size() == 0)
 			throw neural_network_exception("window sizes for local contrast subtractive layer may not be empty");
 
@@ -52,10 +64,6 @@ namespace nnforge
 			if (window_sizes[i] == 0)
 				throw neural_network_exception("window dimension for local contrast subtractive layer may not be zero");
 		}
-
-		if (this->feature_maps_affected.empty())
-			for(unsigned int i = 0; i < feature_map_count; i++)
-				this->feature_maps_affected.push_back(i);
 
 		std::sort(this->feature_maps_affected.begin(), this->feature_maps_affected.end());
 		for(unsigned int i = 0; i < feature_map_count; i++)
@@ -72,6 +80,11 @@ namespace nnforge
 	const boost::uuids::uuid& local_contrast_subtractive_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& local_contrast_subtractive_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr local_contrast_subtractive_layer::clone() const
@@ -126,6 +139,23 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*feature_maps_affected.begin())), sizeof(unsigned int) * feature_maps_affected_count);
 	}
 
+	void local_contrast_subtractive_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
+		nnforge::protobuf::LCSParam * param = layer_proto_typed->mutable_lcs_param();
+
+		param->set_feature_map_count(feature_map_count);
+		for(int i = 0; i < feature_maps_affected.size(); ++i)
+		{
+			param->add_feature_map_affected(feature_maps_affected[i]);
+		}
+		for(int i = 0; i < window_sizes.size(); ++i)
+		{
+			nnforge::protobuf::LCSParam_LCSDimensionParam * dim_param = param->add_dimension_param();
+			dim_param->set_kernel_size(window_sizes[i]);
+		}
+	}
+
 	void local_contrast_subtractive_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
@@ -152,6 +182,28 @@ namespace nnforge
 		}
 
 		setup_window_weights_list();
+	}
+
+	void local_contrast_subtractive_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_lcs_param())
+			throw neural_network_exception((boost::format("No lcs_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		feature_map_count = layer_proto_typed->lcs_param().feature_map_count();
+		feature_maps_affected.resize(layer_proto_typed->lcs_param().feature_map_affected_size());
+		for(int i = 0; i < layer_proto_typed->lcs_param().feature_map_affected_size(); ++i)
+		{
+			feature_maps_affected[i] = layer_proto_typed->lcs_param().feature_map_affected(i);
+		}
+
+		window_sizes.resize(layer_proto_typed->lcs_param().dimension_param_size());
+		for(int i = 0; i < layer_proto_typed->lcs_param().dimension_param_size(); ++i)
+		{
+			window_sizes[i] = layer_proto_typed->lcs_param().dimension_param(i).kernel_size();
+		}
+
+		check_and_update();
 	}
 
 	float local_contrast_subtractive_layer::get_std_dev(unsigned int dimension_id) const

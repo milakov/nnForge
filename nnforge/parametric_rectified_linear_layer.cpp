@@ -18,6 +18,7 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <boost/format.hpp>
 
@@ -31,14 +32,28 @@ namespace nnforge
 		, 0xa6, 0x8e
 		, 0x91, 0x51, 0x3f, 0x88, 0x85, 0x44 };
 
+	const std::string parametric_rectified_linear_layer::layer_type_name = "PReLU";
+
 	parametric_rectified_linear_layer::parametric_rectified_linear_layer(unsigned int feature_map_count)
 		: feature_map_count(feature_map_count)
 	{
+		check();
+	}
+
+	void parametric_rectified_linear_layer::check()
+	{
+		if (feature_map_count == 0)
+			throw neural_network_exception("Feature map count should be > 0 for parametric rectified linear layer");
 	}
 
 	const boost::uuids::uuid& parametric_rectified_linear_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& parametric_rectified_linear_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr parametric_rectified_linear_layer::clone() const
@@ -66,7 +81,7 @@ namespace nnforge
 		if (input_configuration.feature_map_count >= 0)
 		{
 			if (input_configuration.feature_map_count != feature_map_count)
-				throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not rqual to feature map count (%2%) in perametric_rectified_linear_layer") % input_configuration.feature_map_count % feature_map_count).str());
+				throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not equal to feature map count (%2%) in perametric_rectified_linear_layer") % input_configuration.feature_map_count % feature_map_count).str());
 		}
 
 		return input_configuration;
@@ -75,7 +90,7 @@ namespace nnforge
 	layer_configuration_specific parametric_rectified_linear_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
 	{
 		if (input_configuration_specific.feature_map_count != feature_map_count)
-			throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not rqual to feature map count (%2%) in perametric_rectified_linear_layer") % input_configuration_specific.feature_map_count % feature_map_count).str());
+			throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not equal to feature map count (%2%) in perametric_rectified_linear_layer") % input_configuration_specific.feature_map_count % feature_map_count).str());
 
 		return input_configuration_specific;
 	}
@@ -85,11 +100,30 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&feature_map_count), sizeof(feature_map_count));
 	}
 
+	void parametric_rectified_linear_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
+		nnforge::protobuf::PReLUParam * param = layer_proto_typed->mutable_prelu_param();
+
+		param->set_feature_map_count(feature_map_count);
+	}
+
 	void parametric_rectified_linear_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
 	{
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&feature_map_count), sizeof(feature_map_count));
+	}
+
+	void parametric_rectified_linear_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_prelu_param())
+			throw neural_network_exception((boost::format("No prelu_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		feature_map_count = layer_proto_typed->prelu_param().feature_map_count();
+
+		check();
 	}
 
 	data_config parametric_rectified_linear_layer::get_data_config() const

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include <vector>
 #include <ostream>
 #include <istream>
+#include <string>
 #include <boost/uuid/uuid.hpp>
 
 namespace nnforge
@@ -48,6 +49,10 @@ namespace nnforge
 		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
 		void read(std::istream& binary_stream_to_read_from);
 
+		void write_proto(std::ostream& stream_to_write_to) const;
+
+		void read_proto(std::istream& stream_to_read_from);
+
 		// The result includes input configuration
 		layer_configuration_specific_list get_layer_configuration_specific_list(const layer_configuration_specific& input_layer_configuration_specific) const;
 
@@ -59,6 +64,9 @@ namespace nnforge
 		std::vector<layer_data_configuration_list> get_layer_data_configuration_list_list() const;
 
 		operator const const_layer_list&() const;
+
+	public:
+		std::string name;
 
 	private:
 		void clear();

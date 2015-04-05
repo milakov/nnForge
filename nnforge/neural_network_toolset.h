@@ -69,8 +69,6 @@ namespace nnforge
 
 		virtual void prepare_testing_data();
 
-		virtual network_schema_smart_ptr get_schema() const;
-
 		virtual boost::filesystem::path get_input_data_folder() const;
 
 		virtual boost::filesystem::path get_working_data_folder() const;
@@ -142,13 +140,14 @@ namespace nnforge
 
 		virtual bool should_apply_data_transform_to_input_when_visualizing() const;
 
+		virtual network_schema_smart_ptr load_schema() const;
+
 	protected:
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
 		static const char * validating_data_filename;
 		static const char * testing_data_filename;
 		static const char * testing_unsupervised_data_filename;
-		static const char * schema_filename;
 		static const char * normalizer_input_filename;
 		static const char * normalizer_output_filename;
 		static const char * snapshot_subfolder_name;
@@ -202,6 +201,7 @@ namespace nnforge
 		float check_gradient_threshold;
 		float check_gradient_base_step;
 		int shuffle_block_size;
+		std::string schema_filename;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
@@ -212,7 +212,7 @@ namespace nnforge
 
 		void randomize_data();
 
-		void create();
+		void convert_schema();
 
 		void generate_input_normalizer();
 

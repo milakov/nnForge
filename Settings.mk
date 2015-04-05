@@ -18,7 +18,7 @@ NNFORGE_PATH=../..
 NNFORGE_INPUT_DATA_PATH=/home/max/nnforge/input_data
 NNFORGE_WORKING_DATA_PATH=/home/max/nnforge/working_data
 
-PROTOBUF_LIBS=-lprotobuf-lite
+PROTOBUF_LIBS=-lprotobuf
 BOOST_LIBS=-lboost_thread -lboost_regex -lboost_chrono -lboost_filesystem -lboost_program_options -lboost_random -lboost_system -lboost_date_time
 OPENCV_LIBS=-lopencv_highgui -lopencv_imgproc -lopencv_core
 CUDA_LIBS=-lcudnn -lcurand -lcusparse -lcublas -lcudart

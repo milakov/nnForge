@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ namespace nnforge
 			const output_neuron_value_set& predicted_value_set,
 			const output_neuron_value_set& actual_value_set,
 			unsigned int segment_count = 1000,
-			float min_val = - hyperbolic_tangent_layer::major_multiplier,
-			float max_val = hyperbolic_tangent_layer::major_multiplier);
+			float min_val = -2.0F,
+			float max_val = 2.0F);
 
 		float get_accuracy(float threshold) const;
 

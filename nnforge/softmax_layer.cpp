@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ namespace nnforge
 		, 0xb7, 0x4e
 		, 0xda, 0x63, 0xd0, 0x75, 0x6e, 0xb5 };
 
+	const std::string softmax_layer::layer_type_name = "Softmax";
+
 	softmax_layer::softmax_layer()
 	{
 	}
@@ -34,6 +36,11 @@ namespace nnforge
 	const boost::uuids::uuid& softmax_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& softmax_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr softmax_layer::clone() const

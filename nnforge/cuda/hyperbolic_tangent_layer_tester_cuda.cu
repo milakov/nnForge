@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ namespace nnforge
 			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 
 			hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
-			hyperbolic_tangent_major_multiplier = layer_derived->major_multiplier;
+			hyperbolic_tangent_major_multiplier = layer_derived->scale;
 		}
 	}
 }

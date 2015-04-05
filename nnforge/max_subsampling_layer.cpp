@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
@@ -33,8 +34,15 @@ namespace nnforge
 		, 0xa2, 0x4b
 		, 0xa0, 0xf2, 0xb9, 0x41, 0x27, 0x72 };
 
+	const std::string max_subsampling_layer::layer_type_name = "MaxSubsampling";
+
 	max_subsampling_layer::max_subsampling_layer(const std::vector<unsigned int>& subsampling_sizes)
 		: subsampling_sizes(subsampling_sizes)
+	{
+		check();
+	}
+
+	void max_subsampling_layer::check()
 	{
 		if (subsampling_sizes.size() == 0)
 			throw neural_network_exception("subsampling sizes for max subsampling layer may not be empty");
@@ -49,6 +57,11 @@ namespace nnforge
 	const boost::uuids::uuid& max_subsampling_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& max_subsampling_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr max_subsampling_layer::clone() const
@@ -102,6 +115,17 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*subsampling_sizes.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
+	void max_subsampling_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
+		nnforge::protobuf::MaxSubsamplingParam * param = layer_proto_typed->mutable_max_subsampling_param();
+		for(int i = 0; i < subsampling_sizes.size(); ++i)
+		{
+			nnforge::protobuf::MaxSubsamplingParam_MaxSubsamplingDimensionParam * dim_param = param->add_dimension_param();
+			dim_param->set_subsampling_size(subsampling_sizes[i]);
+		}
+	}
+
 	void max_subsampling_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
@@ -110,6 +134,23 @@ namespace nnforge
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));
 		subsampling_sizes.resize(dimension_count);
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*subsampling_sizes.begin())), sizeof(unsigned int) * dimension_count);
+
+		check();
+	}
+
+	void max_subsampling_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_max_subsampling_param())
+			throw neural_network_exception((boost::format("No max_subsampling_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		subsampling_sizes.resize(layer_proto_typed->max_subsampling_param().dimension_param_size());
+		for(int i = 0; i < layer_proto_typed->max_subsampling_param().dimension_param_size(); ++i)
+		{
+			subsampling_sizes[i] = layer_proto_typed->max_subsampling_param().dimension_param(i).subsampling_size();
+		}
+
+		check();
 	}
 
 	float max_subsampling_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const

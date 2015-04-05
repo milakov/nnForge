@@ -1,0 +1,97 @@
+name: "GTSRB"
+layer {
+	type: "LCS"
+	lcs_param {
+		feature_map_count: 1
+		feature_map_affected: 0
+		dimension_param { kernel_size: 9 }
+		dimension_param { kernel_size: 9 }
+	}
+}
+layer {
+	type: "Convolution"
+	convolution_param {
+		input_feature_map_count: 1
+		output_feature_map_count: 38
+	        dimension_param { kernel_size: 5 }
+	        dimension_param { kernel_size: 5 }
+	}
+}
+layer {
+	type: "TanH"
+	tanh_param {
+		scale: 1.7159
+		steepness: 0.666666
+	}
+}
+layer {	type: "Absolute" }
+layer {
+	type: "AverageSubsampling"
+	average_subsampling_param {
+	        dimension_param { subsampling_size: 2 }
+	        dimension_param { subsampling_size: 2 }
+	}
+}
+layer {
+	type: "Convolution"
+	convolution_param {
+		input_feature_map_count: 38
+		output_feature_map_count: 96
+	        dimension_param { kernel_size: 5 }
+	        dimension_param { kernel_size: 5 }
+	}
+}
+layer {
+	type: "TanH"
+	tanh_param {
+		scale: 1.7159
+		steepness: 0.666666
+	}
+}
+layer {	type: "Absolute" }
+layer {
+	type: "AverageSubsampling"
+	average_subsampling_param {
+	        dimension_param { subsampling_size: 2 }
+	        dimension_param { subsampling_size: 2 }
+	}
+}
+layer {
+	type: "SparseConvolution"
+	sparse_convolution_param {
+		input_feature_map_count: 96
+		output_feature_map_count: 200
+		feature_map_connection_sparsity_ratio: 0.3
+	        dimension_param { kernel_size: 5 }
+	        dimension_param { kernel_size: 5 }
+	}
+}
+layer {
+	type: "TanH"
+	tanh_param {
+		scale: 1.7159
+		steepness: 0.666666
+	}
+}
+layer {	type: "Absolute" }
+layer {
+	type: "Dropout"
+	dropout_param { dropout_rate: 0.1 }
+}
+layer {
+	type: "SparseConvolution"
+	sparse_convolution_param {
+		input_feature_map_count: 200
+		output_feature_map_count: 43
+		feature_map_connection_sparsity_ratio: 0.3
+	        dimension_param { kernel_size: 1 }
+	        dimension_param { kernel_size: 1 }
+	}
+}
+layer {
+	type: "TanH"
+	tanh_param {
+		scale: 1.7159
+		steepness: 0.666666
+	}
+}

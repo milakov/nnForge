@@ -1,7 +1,106 @@
 package nnforge.protobuf;
 
-option optimize_for = LITE_RUNTIME;
-
 message NetworkSchema {
 	optional string name = 1;
+	repeated Layer layer = 2;
+}
+
+message Layer {
+	required string type = 1;
+	optional string name = 2;
+
+	optional ConvolutionalParam convolution_param = 3;
+	optional AverageSubsamplingParam average_subsampling_param = 4;
+	optional SparseConvolutionalParam sparse_convolution_param = 5;
+	optional DropoutParam dropout_param = 6;
+	optional LCSParam lcs_param = 7;
+	optional MaxSubsamplingParam max_subsampling_param = 8;
+	optional MaxoutParam maxout_param = 9;
+	optional PReLUParam prelu_param = 10;
+	optional RGBToYUVConvertParam rgb_to_yuv_convert_param = 11;
+	optional TanHParam tanh_param = 12;
+	optional CustomParam custom_param = 1000;
+}
+
+message ConvolutionalParam {
+	message ConvolutionalDimensionParam {
+		required uint32 kernel_size = 1;
+		optional uint32 left_padding = 2;
+		optional uint32 right_padding = 3;
+	}
+	required uint32 input_feature_map_count = 1;
+	required uint32 output_feature_map_count = 2;
+	repeated ConvolutionalDimensionParam dimension_param = 3;
+}
+
+message AverageSubsamplingParam {
+	message AverageSubsamplingDimensionParam {
+		required uint32 subsampling_size = 1;
+	}
+	repeated AverageSubsamplingDimensionParam dimension_param = 1;
+}
+
+message MaxSubsamplingParam {
+	message MaxSubsamplingDimensionParam {
+		required uint32 subsampling_size = 1;
+	}
+	repeated MaxSubsamplingDimensionParam dimension_param = 1;
+}
+
+message SparseConvolutionalParam {
+	message SparseConvolutionalDimensionParam {
+		required uint32 kernel_size = 1;
+		optional uint32 left_padding = 2;
+		optional uint32 right_padding = 3;
+	}
+	required uint32 input_feature_map_count = 1;
+	required uint32 output_feature_map_count = 2;
+	optional uint32 feature_map_connection_count = 3;
+	optional float feature_map_connection_sparsity_ratio = 4;
+	repeated SparseConvolutionalDimensionParam dimension_param = 5;
+}
+
+message DropoutParam {
+	optional float dropout_rate = 1 [default = 0.5];
+}
+
+message LCSParam {
+	message LCSDimensionParam {
+		required uint32 kernel_size = 1;
+	}
+	required uint32 feature_map_count = 1;
+	repeated uint32 feature_map_affected = 2;
+	repeated LCSDimensionParam dimension_param = 3;
+}
+
+message MaxoutParam {
+	required uint32 feature_map_subsampling_size = 1;
+}
+
+message PReLUParam {
+	required uint32 feature_map_count = 1;
+}
+
+message RGBToYUVConvertParam {
+	message ColorFeatureMapParam {
+		required uint32 red_and_y_feature_map_id = 1;
+		required uint32 green_and_u_feature_map_id = 2;
+		required uint32 blue_and_v_feature_map_id = 3;
+	}
+	repeated ColorFeatureMapParam color_feature_map_param = 1;
+}
+
+message TanHParam {
+	optional float scale = 1 [default = 1.0];
+	optional float steepness = 2 [default = 1.0];
+}
+
+message CustomParam {
+	message CustomDimensionParam {
+		repeated sint32 int_param = 1;
+		repeated float float_param = 2;
+	}
+	repeated sint32 int_param = 1;
+	repeated float float_param = 2;
+	repeated CustomDimensionParam dimension_param = 3;
 }

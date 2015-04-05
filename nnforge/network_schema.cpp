@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/format.hpp>
+#include <google/protobuf/text_format.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 namespace nnforge
 {
@@ -113,6 +116,46 @@ namespace nnforge
 
 			layer_smart_ptr new_layer = single_layer_factory::get_const_instance().create_layer(layer_read_guid);
 			new_layer->read(binary_stream_to_read_from, layer_read_guid);
+			add_layer(new_layer);
+		}
+	}
+
+	void network_schema::write_proto(std::ostream& stream_to_write_to) const
+	{
+		protobuf::NetworkSchema schema;
+		if (!name.empty())
+			schema.set_name(name);
+
+		for(int i = 0; i < layers.size(); ++i)
+		{
+			protobuf::Layer * layer_proto = schema.add_layer();
+			const_layer_smart_ptr current_layer = layers[i];
+			layer_proto->set_type(current_layer->get_type_name());
+			if (!current_layer->instance_name.empty())
+				layer_proto->set_name(current_layer->instance_name);
+
+			current_layer->write_proto(layer_proto);
+		}
+
+		google::protobuf::io::OstreamOutputStream output_stream(&stream_to_write_to);
+		google::protobuf::TextFormat::Print(schema, &output_stream);
+	}
+
+	void network_schema::read_proto(std::istream& stream_to_read_from)
+	{
+		clear();
+
+		protobuf::NetworkSchema schema;
+		google::protobuf::io::IstreamInputStream input_stream(&stream_to_read_from);
+		google::protobuf::TextFormat::Parse(&input_stream, &schema);
+
+		name = schema.name();
+
+		for(int i = 0; i < schema.layer_size(); ++i)
+		{
+			layer_smart_ptr new_layer = single_layer_factory::get_const_instance().create_layer(schema.layer(i).type());
+			new_layer->instance_name = schema.layer(i).name();
+			new_layer->read_proto(&schema.layer(i));
 			add_layer(new_layer);
 		}
 	}

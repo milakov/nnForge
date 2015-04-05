@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
@@ -33,8 +34,15 @@ namespace nnforge
 		, 0x87, 0x1d
 		, 0x05, 0x50, 0xf9, 0xfd, 0xc, 0xe2 };
 
+	const std::string maxout_layer::layer_type_name = "Maxout";
+
 	maxout_layer::maxout_layer(unsigned int feature_map_subsampling_size)
 		: feature_map_subsampling_size(feature_map_subsampling_size)
+	{
+		check();
+	}
+
+	void maxout_layer::check()
 	{
 		if (feature_map_subsampling_size < 2)
 			throw neural_network_exception("Feature map subsampling size should be >= 2 for maxout layer");
@@ -43,6 +51,11 @@ namespace nnforge
 	const boost::uuids::uuid& maxout_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& maxout_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr maxout_layer::clone() const
@@ -78,11 +91,30 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&feature_map_subsampling_size), sizeof(feature_map_subsampling_size));
 	}
 
+	void maxout_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
+		nnforge::protobuf::MaxoutParam * param = layer_proto_typed->mutable_maxout_param();
+
+		param->set_feature_map_subsampling_size(feature_map_subsampling_size);
+	}
+
 	void maxout_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
 	{
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&feature_map_subsampling_size), sizeof(feature_map_subsampling_size));
+	}
+
+	void maxout_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_maxout_param())
+			throw neural_network_exception((boost::format("No maxout_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		feature_map_subsampling_size = layer_proto_typed->maxout_param().feature_map_subsampling_size();
+
+		check();
 	}
 
 	float maxout_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const

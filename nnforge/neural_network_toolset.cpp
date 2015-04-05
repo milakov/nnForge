@@ -63,7 +63,6 @@ namespace nnforge
 	const char * neural_network_toolset::validating_data_filename = "validating.sdt";
 	const char * neural_network_toolset::testing_data_filename = "testing.sdt";
 	const char * neural_network_toolset::testing_unsupervised_data_filename = "testing.udt";
-	const char * neural_network_toolset::schema_filename = "ann.schema";
 	const char * neural_network_toolset::normalizer_input_filename = "normalizer_input.data";
 	const char * neural_network_toolset::normalizer_output_filename = "normalizer_output.data";
 	const char * neural_network_toolset::snapshot_subfolder_name = "snapshot";
@@ -92,9 +91,9 @@ namespace nnforge
 
 	void neural_network_toolset::do_action()
 	{
-		if (!action.compare("create"))
+		if (!action.compare("convert_schema"))
 		{
-			create();
+			convert_schema();
 		}
 		else if (!action.compare("prepare_training_data"))
 		{
@@ -172,11 +171,6 @@ namespace nnforge
 		throw std::runtime_error("This toolset doesn't implement preparing training data");
 	}
 
-	network_schema_smart_ptr neural_network_toolset::get_schema() const
-	{
-		throw std::runtime_error("This toolset doesn't implement get_schema");
-	}
-	
 	bool neural_network_toolset::parse(int argc, char* argv[])
 	{
 		boost::filesystem::path config_file;
@@ -189,7 +183,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action)->default_value(get_default_action()), "run action (info, create, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
+			("action,A", boost::program_options::value<std::string>(&action)->default_value(get_default_action()), "run action (info, convert_schema, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -200,6 +194,7 @@ namespace nnforge
 		config.add_options()
 			("input_data_folder,I", boost::program_options::value<boost::filesystem::path>(&input_data_folder)->default_value(""), "path to the folder where input data are located.")
 			("working_data_folder,W", boost::program_options::value<boost::filesystem::path>(&working_data_folder)->default_value(""), "path to the folder where data are processed.")
+			("schema", boost::program_options::value<std::string>(&schema_filename)->default_value("schema.txt"), "Name of the file with schema of the network, in protobuf format.")
 			("ann_count,N", boost::program_options::value<unsigned int>(&ann_count)->default_value(1), "amount of networks to train.")
 			("training_epoch_count,E", boost::program_options::value<unsigned int>(&training_epoch_count)->default_value(50), "amount of epochs to perform during single ANN training.")
 			("snapshot_count", boost::program_options::value<unsigned int>(&snapshot_count)->default_value(100), "amount of snapshots to generate.")
@@ -369,6 +364,7 @@ namespace nnforge
 			std::cout << "action" << "=" << action << std::endl;
 			std::cout << "input_data_folder" << "=" << input_data_folder << std::endl;
 			std::cout << "working_data_folder" << "=" << working_data_folder << std::endl;
+			std::cout << "schema" << "=" << schema_filename << std::endl;
 			std::cout << "ann_count" << "=" << ann_count << std::endl;
 			std::cout << "training_epoch_count" << "=" << training_epoch_count << std::endl;
 			std::cout << "snapshot_count" << "=" << snapshot_count << std::endl;
@@ -570,36 +566,37 @@ namespace nnforge
 		writer->write_randomized(*reader);
 	}
 
-	void neural_network_toolset::create()
+	void neural_network_toolset::convert_schema()
 	{
-		network_schema_smart_ptr schema = get_schema();
-
+		network_schema_smart_ptr schema(new network_schema());
 		{
-			boost::filesystem::ofstream file_with_schema(get_working_data_folder() / schema_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			schema->write(file_with_schema);
+			boost::filesystem::ifstream in(get_working_data_folder() / "ann.schema", std::ios_base::in | std::ios_base::binary);
+			schema->read(in);
 		}
+		{
+			boost::filesystem::ofstream out(get_working_data_folder() / schema_filename, std::ios_base::out);
+			schema->write_proto(out);
+		}
+	}
+
+	network_schema_smart_ptr neural_network_toolset::load_schema() const
+	{
+		network_schema_smart_ptr schema(new network_schema());
+		{
+			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in);
+			schema->read_proto(in);
+		}
+		return schema;
 	}
 
 	network_tester_smart_ptr neural_network_toolset::get_tester()
 	{
-		network_schema_smart_ptr schema(new network_schema());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-			schema->read(in);
-		}
-
-		return tester_factory->create(schema);
+		return tester_factory->create(load_schema());
 	}
 
 	network_analyzer_smart_ptr neural_network_toolset::get_analyzer()
 	{
-		network_schema_smart_ptr schema(new network_schema());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-			schema->read(in);
-		}
-
-		return analyzer_factory->create(schema);
+		return analyzer_factory->create(load_schema());
 	}
 
 	network_data_smart_ptr neural_network_toolset::load_ann_data(unsigned int ann_id)
@@ -1150,11 +1147,7 @@ namespace nnforge
 
 		reader->reset();
 
-		network_schema_smart_ptr schema(new network_schema());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-			schema->read(in);
-		}
+		network_schema_smart_ptr schema = load_schema();
 		layer_configuration_specific_list layer_config_list = schema->get_layer_configuration_specific_list(reader->get_input_configuration());
 
 		network_analyzer_smart_ptr analyzer = get_analyzer();
@@ -1262,11 +1255,7 @@ namespace nnforge
 
 	void neural_network_toolset::ann_snapshot()
 	{
-		network_schema_smart_ptr schema(new network_schema());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-			schema->read(in);
-		}
+		network_schema_smart_ptr schema = load_schema();
 		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
 
 		if (snapshot_ann_type == "image")
@@ -1673,12 +1662,7 @@ namespace nnforge
 
 	void neural_network_toolset::train()
 	{
-		network_schema_smart_ptr schema(new network_schema());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-			schema->read(in);
-		}
-
+		network_schema_smart_ptr schema = load_schema();
 		network_trainer_smart_ptr trainer = get_network_trainer(schema);
 
 		supervised_data_reader_smart_ptr training_data_reader = get_data_reader_for_training(false, true);
@@ -1721,11 +1705,7 @@ namespace nnforge
 
 	void neural_network_toolset::profile_updater()
 	{
-		network_schema_smart_ptr schema(new network_schema());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-			schema->read(in);
-		}
+		network_schema_smart_ptr schema = load_schema();
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
@@ -1787,11 +1767,7 @@ namespace nnforge
 
 	void neural_network_toolset::check_gradient()
 	{
-		network_schema_smart_ptr schema(new network_schema());
-		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in | std::ios_base::binary);
-			schema->read(in);
-		}
+		network_schema_smart_ptr schema = load_schema();
 
 		network_updater_smart_ptr updater = updater_factory->create(
 			schema,
