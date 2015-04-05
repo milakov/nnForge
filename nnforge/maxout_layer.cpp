@@ -93,8 +93,8 @@ namespace nnforge
 
 	void maxout_layer::write_proto(void * layer_proto) const
 	{
-		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
-		nnforge::protobuf::MaxoutParam * param = layer_proto_typed->mutable_maxout_param();
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+		protobuf::MaxoutParam * param = layer_proto_typed->mutable_maxout_param();
 
 		param->set_feature_map_subsampling_size(feature_map_subsampling_size);
 	}
@@ -108,7 +108,7 @@ namespace nnforge
 
 	void maxout_layer::read_proto(const void * layer_proto)
 	{
-		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_maxout_param())
 			throw neural_network_exception((boost::format("No maxout_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
 

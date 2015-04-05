@@ -449,6 +449,9 @@
     <ClInclude Include="proto\nnforge.pb.h">
       <Filter>Proto Files</Filter>
     </ClInclude>
+    <ClInclude Include="proto\data_normalizer.pb.h">
+      <Filter>Proto Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -769,9 +772,15 @@
     <ClCompile Include="proto\nnforge.pb.cc">
       <Filter>Proto Files</Filter>
     </ClCompile>
+    <ClCompile Include="proto\data_normalizer.pb.cc">
+      <Filter>Proto Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="proto\nnforge.proto">
+      <Filter>Proto Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="proto\data_normalizer.proto">
       <Filter>Proto Files</Filter>
     </CustomBuild>
   </ItemGroup>

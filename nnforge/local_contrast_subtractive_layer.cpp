@@ -141,8 +141,8 @@ namespace nnforge
 
 	void local_contrast_subtractive_layer::write_proto(void * layer_proto) const
 	{
-		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
-		nnforge::protobuf::LCSParam * param = layer_proto_typed->mutable_lcs_param();
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+		protobuf::LCSParam * param = layer_proto_typed->mutable_lcs_param();
 
 		param->set_feature_map_count(feature_map_count);
 		for(int i = 0; i < feature_maps_affected.size(); ++i)
@@ -151,7 +151,7 @@ namespace nnforge
 		}
 		for(int i = 0; i < window_sizes.size(); ++i)
 		{
-			nnforge::protobuf::LCSParam_LCSDimensionParam * dim_param = param->add_dimension_param();
+			protobuf::LCSParam_LCSDimensionParam * dim_param = param->add_dimension_param();
 			dim_param->set_kernel_size(window_sizes[i]);
 		}
 	}
@@ -186,7 +186,7 @@ namespace nnforge
 
 	void local_contrast_subtractive_layer::read_proto(const void * layer_proto)
 	{
-		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_lcs_param())
 			throw neural_network_exception((boost::format("No lcs_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
 

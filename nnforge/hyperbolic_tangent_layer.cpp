@@ -67,8 +67,8 @@ namespace nnforge
 	{
 		if ((scale != 1.0F) || (steepness != 1.0F))
 		{
-			protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
-			nnforge::protobuf::TanHParam * param = layer_proto_typed->mutable_tanh_param();
+			protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+			protobuf::TanHParam * param = layer_proto_typed->mutable_tanh_param();
 
 			if (scale != 1.0F)
 				param->set_scale(scale);
@@ -87,7 +87,7 @@ namespace nnforge
 
 	void hyperbolic_tangent_layer::read_proto(const void * layer_proto)
 	{
-		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_tanh_param())
 		{
 			scale = 1.0F;

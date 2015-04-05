@@ -63,8 +63,8 @@ namespace nnforge
 	const char * neural_network_toolset::validating_data_filename = "validating.sdt";
 	const char * neural_network_toolset::testing_data_filename = "testing.sdt";
 	const char * neural_network_toolset::testing_unsupervised_data_filename = "testing.udt";
-	const char * neural_network_toolset::normalizer_input_filename = "normalizer_input.data";
-	const char * neural_network_toolset::normalizer_output_filename = "normalizer_output.data";
+	const char * neural_network_toolset::normalizer_input_filename = "normalizer_input.txt";
+	const char * neural_network_toolset::normalizer_output_filename = "normalizer_output.txt";
 	const char * neural_network_toolset::snapshot_subfolder_name = "snapshot";
 	const char * neural_network_toolset::snapshot_data_subfolder_name = "snapshot_data";
 	const char * neural_network_toolset::ann_snapshot_subfolder_name = "ann_snapshot";
@@ -94,6 +94,14 @@ namespace nnforge
 		if (!action.compare("convert_schema"))
 		{
 			convert_schema();
+		}
+		else if (!action.compare("convert_input_normalizer"))
+		{
+			convert_input_normalizer();
+		}
+		else if (!action.compare("convert_output_normalizer"))
+		{
+			convert_output_normalizer();
 		}
 		else if (!action.compare("prepare_training_data"))
 		{
@@ -183,7 +191,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action)->default_value(get_default_action()), "run action (info, convert_schema, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
+			("action,A", boost::program_options::value<std::string>(&action)->default_value(get_default_action()), "run action (info, convert_schema, convert_input_normalizer, convert_output_normalizer, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -579,6 +587,32 @@ namespace nnforge
 		}
 	}
 
+	void neural_network_toolset::convert_input_normalizer()
+	{
+		normalize_data_transformer normalizer;
+		{
+			boost::filesystem::ifstream in(get_working_data_folder() / "normalizer_input.data", std::ios_base::in | std::ios_base::binary);
+			normalizer.read(in);
+		}
+		{
+			boost::filesystem::ofstream out(get_working_data_folder() / normalizer_input_filename, std::ios_base::out);
+			normalizer.write_proto(out);
+		}
+	}
+
+	void neural_network_toolset::convert_output_normalizer()
+	{
+		normalize_data_transformer normalizer;
+		{
+			boost::filesystem::ifstream in(get_working_data_folder() / "normalizer_output.data", std::ios_base::in | std::ios_base::binary);
+			normalizer.read(in);
+		}
+		{
+			boost::filesystem::ofstream out(get_working_data_folder() / normalizer_output_filename, std::ios_base::out);
+			normalizer.write_proto(out);
+		}
+	}
+
 	network_schema_smart_ptr neural_network_toolset::load_schema() const
 	{
 		network_schema_smart_ptr schema(new network_schema());
@@ -879,8 +913,8 @@ namespace nnforge
 
 		normalize_data_transformer normalizer(feature_map_data_stat_list);
 
-		boost::filesystem::ofstream file_with_schema(get_working_data_folder() / normalizer_input_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-		normalizer.write(file_with_schema);
+		boost::filesystem::ofstream file_with_schema(get_working_data_folder() / normalizer_input_filename, std::ios_base::out | std::ios_base::trunc);
+		normalizer.write_proto(file_with_schema);
 	}
 
 	void neural_network_toolset::generate_output_normalizer()
@@ -894,8 +928,8 @@ namespace nnforge
 
 		normalize_data_transformer normalizer(feature_map_data_stat_list);
 
-		boost::filesystem::ofstream file_with_schema(get_working_data_folder() / normalizer_output_filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-		normalizer.write(file_with_schema);
+		boost::filesystem::ofstream file_with_schema(get_working_data_folder() / normalizer_output_filename, std::ios_base::out | std::ios_base::trunc);
+		normalizer.write_proto(file_with_schema);
 	}
 
 	normalize_data_transformer_smart_ptr neural_network_toolset::get_input_data_normalize_transformer() const
@@ -906,8 +940,8 @@ namespace nnforge
 
 		normalize_data_transformer_smart_ptr res(new normalize_data_transformer());
 
-		boost::filesystem::ifstream file_with_schema(normalizer_filepath, std::ios_base::in | std::ios_base::binary);
-		res->read(file_with_schema);
+		boost::filesystem::ifstream file_with_schema(normalizer_filepath, std::ios_base::in);
+		res->read_proto(file_with_schema);
 
 		return res;
 	}
@@ -920,8 +954,8 @@ namespace nnforge
 
 		normalize_data_transformer_smart_ptr res(new normalize_data_transformer());
 
-		boost::filesystem::ifstream file_with_schema(normalizer_filepath, std::ios_base::in | std::ios_base::binary);
-		res->read(file_with_schema);
+		boost::filesystem::ifstream file_with_schema(normalizer_filepath, std::ios_base::in);
+		res->read_proto(file_with_schema);
 
 		return res;
 	}

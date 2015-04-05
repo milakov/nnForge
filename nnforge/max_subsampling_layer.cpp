@@ -117,11 +117,11 @@ namespace nnforge
 
 	void max_subsampling_layer::write_proto(void * layer_proto) const
 	{
-		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
-		nnforge::protobuf::MaxSubsamplingParam * param = layer_proto_typed->mutable_max_subsampling_param();
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+		protobuf::MaxSubsamplingParam * param = layer_proto_typed->mutable_max_subsampling_param();
 		for(int i = 0; i < subsampling_sizes.size(); ++i)
 		{
-			nnforge::protobuf::MaxSubsamplingParam_MaxSubsamplingDimensionParam * dim_param = param->add_dimension_param();
+			protobuf::MaxSubsamplingParam_MaxSubsamplingDimensionParam * dim_param = param->add_dimension_param();
 			dim_param->set_subsampling_size(subsampling_sizes[i]);
 		}
 	}
@@ -140,7 +140,7 @@ namespace nnforge
 
 	void max_subsampling_layer::read_proto(const void * layer_proto)
 	{
-		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_max_subsampling_param())
 			throw neural_network_exception((boost::format("No max_subsampling_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
 

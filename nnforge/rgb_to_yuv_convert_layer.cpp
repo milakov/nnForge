@@ -105,11 +105,11 @@ namespace nnforge
 
 	void rgb_to_yuv_convert_layer::write_proto(void * layer_proto) const
 	{
-		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
-		nnforge::protobuf::RGBToYUVConvertParam * param = layer_proto_typed->mutable_rgb_to_yuv_convert_param();
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+		protobuf::RGBToYUVConvertParam * param = layer_proto_typed->mutable_rgb_to_yuv_convert_param();
 		for(int i = 0; i < color_feature_map_config_list.size(); ++i)
 		{
-			nnforge::protobuf::RGBToYUVConvertParam_ColorFeatureMapParam * color_param = param->add_color_feature_map_param();
+			protobuf::RGBToYUVConvertParam_ColorFeatureMapParam * color_param = param->add_color_feature_map_param();
 			color_param->set_red_and_y_feature_map_id(color_feature_map_config_list[i].red_and_y_feature_map_id);
 			color_param->set_green_and_u_feature_map_id(color_feature_map_config_list[i].green_and_u_feature_map_id);
 			color_param->set_blue_and_v_feature_map_id(color_feature_map_config_list[i].blue_and_v_feature_map_id);
@@ -134,7 +134,7 @@ namespace nnforge
 
 	void rgb_to_yuv_convert_layer::read_proto(const void * layer_proto)
 	{
-		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_rgb_to_yuv_convert_param())
 			throw neural_network_exception((boost::format("No rgb_to_yuv_convert_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
 

@@ -214,6 +214,10 @@ namespace nnforge
 
 		void convert_schema();
 
+		void convert_input_normalizer();
+
+		void convert_output_normalizer();
+
 		void generate_input_normalizer();
 
 		void generate_output_normalizer();

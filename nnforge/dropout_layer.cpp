@@ -79,8 +79,8 @@ namespace nnforge
 	{
 		if (dropout_rate != 0.5F)
 		{
-			protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
-			nnforge::protobuf::DropoutParam * param = layer_proto_typed->mutable_dropout_param();
+			protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+			protobuf::DropoutParam * param = layer_proto_typed->mutable_dropout_param();
 			param->set_dropout_rate(dropout_rate);
 		}
 	}
@@ -94,7 +94,7 @@ namespace nnforge
 
 	void dropout_layer::read_proto(const void * layer_proto)
 	{
-		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_dropout_param())
 		{
 			dropout_rate = 0.5F;

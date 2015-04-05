@@ -218,8 +218,8 @@ namespace nnforge
 
 	void sparse_convolution_layer::write_proto(void * layer_proto) const
 	{
-		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
-		nnforge::protobuf::SparseConvolutionalParam * param = layer_proto_typed->mutable_sparse_convolution_param();
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+		protobuf::SparseConvolutionalParam * param = layer_proto_typed->mutable_sparse_convolution_param();
 
 		param->set_output_feature_map_count(output_feature_map_count);
 		param->set_input_feature_map_count(input_feature_map_count);
@@ -231,7 +231,7 @@ namespace nnforge
 
 		for(int i = 0; i < window_sizes.size(); ++i)
 		{
-			nnforge::protobuf::SparseConvolutionalParam_SparseConvolutionalDimensionParam * dim_param = param->add_dimension_param();
+			protobuf::SparseConvolutionalParam_SparseConvolutionalDimensionParam * dim_param = param->add_dimension_param();
 			dim_param->set_kernel_size(window_sizes[i]);
 			if (left_zero_padding[i] > 0)
 				dim_param->set_left_padding(left_zero_padding[i]);
@@ -265,7 +265,7 @@ namespace nnforge
 
 	void sparse_convolution_layer::read_proto(const void * layer_proto)
 	{
-		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_sparse_convolution_param())
 			throw neural_network_exception((boost::format("No sparse_convolution_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
 

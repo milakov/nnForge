@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,9 +48,13 @@ namespace nnforge
 		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure
 		void write(std::ostream& binary_stream_to_write_to) const;
 
+		void write_proto(std::ostream& stream_to_write_to) const;
+
 		// The stream should be created with std::ios_base::binary flag
 		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
 		void read(std::istream& binary_stream_to_read_from);
+
+		void read_proto(std::istream& stream_to_read_from);
 
 		nnforge_shared_ptr<normalize_data_transformer> get_inverted_transformer() const;
 
