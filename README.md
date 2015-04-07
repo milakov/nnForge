@@ -12,7 +12,7 @@ Build
 -----
 
 1. Check Settings.mk file, you might need to make some changes to it:
-	* Define paths to [Boost](http://www.boost.org/) and [OpenCV](http://opencv.org/) installations nnForge depends on.
+	* Define paths to [Boost](http://www.boost.org/), [OpenCV](http://opencv.org/), and [Protobuf](https://developers.google.com/protocol-buffers/) installations nnForge depends on.
 	* Set NETCDF_INSTALLED to _no_ if you don't have [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) installed
 	* Set MATIO_INSTALLED to _no_ if you don't have [MatIO](http://sourceforge.net/projects/matio/) installed
 	* Enable or disable CUDA backend - you will need to disable it if you don't have [CUDA toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN](https://developer.nvidia.com/cuDNN) *v2 RC2 installed*.
