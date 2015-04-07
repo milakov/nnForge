@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ namespace nnforge
 		, 0xb4, 0x83
 		, 0x5e, 0x9b, 0xe, 0xfe, 0x87, 0x7f };
 
+	const std::string rectified_linear_layer::layer_type_name = "ReLU";
+
 	rectified_linear_layer::rectified_linear_layer()
 	{
 	}
@@ -34,6 +36,11 @@ namespace nnforge
 	const boost::uuids::uuid& rectified_linear_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& rectified_linear_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr rectified_linear_layer::clone() const

@@ -38,15 +38,21 @@ namespace nnforge
 
 		virtual const boost::uuids::uuid& get_uuid() const;
 
+		virtual const std::string& get_type_name() const;
+
 		virtual layer_configuration get_layer_configuration(const layer_configuration& input_configuration) const;
 
 		virtual layer_configuration_specific get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
 
 		virtual void write(std::ostream& binary_stream_to_write_to) const;
 
+		virtual void write_proto(void * layer_proto) const;
+
 		virtual void read(
 			std::istream& binary_stream_to_read_from,
 			const boost::uuids::uuid& layer_read_guid);
+
+		virtual void read_proto(const void * layer_proto);
 
 		virtual data_config get_data_config() const;
 
@@ -60,6 +66,11 @@ namespace nnforge
 		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;
 
 		static const boost::uuids::uuid layer_guid;
+
+		static const std::string layer_type_name;
+
+	private:
+		void check();
 
 	public:
 		unsigned int feature_map_count;

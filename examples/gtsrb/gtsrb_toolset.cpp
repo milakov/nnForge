@@ -28,7 +28,6 @@
 const unsigned int gtsrb_toolset::image_width = 32;
 const unsigned int gtsrb_toolset::image_height = 32;
 const unsigned int gtsrb_toolset::class_count = 43;
-const bool gtsrb_toolset::is_color = false;
 const bool gtsrb_toolset::use_roi = true;
 const float gtsrb_toolset::max_rotation_angle_in_degrees = 15.0F;
 const float gtsrb_toolset::max_scale_factor = 1.1F;
@@ -54,7 +53,7 @@ void gtsrb_toolset::prepare_training_data()
 
 		nnforge_shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific input_configuration;
-		input_configuration.feature_map_count = is_color ? 3 : 1;
+		input_configuration.feature_map_count = 1;
 		input_configuration.dimension_sizes.push_back(image_width);
 		input_configuration.dimension_sizes.push_back(image_height);
 		nnforge::layer_configuration_specific output_configuration;
@@ -85,7 +84,7 @@ void gtsrb_toolset::prepare_training_data()
 
 		nnforge_shared_ptr<std::ofstream> file_with_data(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific input_configuration;
-		input_configuration.feature_map_count = is_color ? 3 : 1;
+		input_configuration.feature_map_count = 1;
 		input_configuration.dimension_sizes.push_back(image_width);
 		input_configuration.dimension_sizes.push_back(image_height);
 		nnforge::layer_configuration_specific output_configuration;
@@ -211,7 +210,7 @@ void gtsrb_toolset::write_single_entry(
 		float contrast,
 		float brightness_shift)
 {
-	std::vector<unsigned char> inp(image_width * image_height * (is_color ? 3 : 1));
+	std::vector<unsigned char> inp(image_width * image_height);
 
 	{
 		cv::Mat3b image = cv::imread(absolute_file_path.string());
@@ -240,28 +239,6 @@ void gtsrb_toolset::write_single_entry(
 		cv::resize(image, image_resized, cv::Size(image_width, image_height));
 
 
-		if (is_color)
-		{
-			// Red
-			std::transform(
-				image_resized.begin(),
-				image_resized.end(),
-				inp.begin(),
-				vector_element_extractor<2U>());
-			// Green
-			std::transform(
-				image_resized.begin(),
-				image_resized.end(),
-				inp.begin() + (image_width * image_height),
-				vector_element_extractor<1U>());
-			// Blue
-			std::transform(
-				image_resized.begin(),
-				image_resized.end(),
-				inp.begin() + (image_width * image_height * 2),
-				vector_element_extractor<0U>());
-		}
-		else
 		{
 			cv::Mat1b image_monochrome;
 			cv::cvtColor(image_resized, image_monochrome, CV_BGR2GRAY);
@@ -278,78 +255,3 @@ void gtsrb_toolset::write_single_entry(
 
 	writer.write(&(*inp.begin()), &(*output.begin()));
 }
-
-nnforge::network_schema_smart_ptr gtsrb_toolset::get_schema() const
-{
-	nnforge::network_schema_smart_ptr schema(new nnforge::network_schema());
-	if (is_color)
-	{
-		std::vector<nnforge::color_feature_map_config> color_feature_map_config_list;
-		color_feature_map_config_list.push_back(nnforge::color_feature_map_config(0, 1, 2));
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::rgb_to_yuv_convert_layer(color_feature_map_config_list)));
-	}
-
-	{
-		std::vector<unsigned int> layer_window_sizes;
-		layer_window_sizes.push_back(9);
-		layer_window_sizes.push_back(9);
-		std::vector<unsigned int> affected_layers;
-		affected_layers.push_back(0);
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::local_contrast_subtractive_layer(layer_window_sizes, affected_layers, is_color ? 3 : 1)));
-	}
-
-	{
-		std::vector<unsigned int> layer_window_sizes;
-		layer_window_sizes.push_back(5);
-		layer_window_sizes.push_back(5);
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::convolution_layer(layer_window_sizes, is_color ? 3 : 1, 38)));
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::hyperbolic_tangent_layer()));
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::absolute_layer()));
-	}
-
-	{
-		std::vector<unsigned int> layer_subsampling_sizes;
-		layer_subsampling_sizes.push_back(2);
-		layer_subsampling_sizes.push_back(2);
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::average_subsampling_layer(layer_subsampling_sizes)));
-	}
-
-	{
-		std::vector<unsigned int> layer_window_sizes;
-		layer_window_sizes.push_back(5);
-		layer_window_sizes.push_back(5); 
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::convolution_layer(layer_window_sizes, 38, 96)));
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::hyperbolic_tangent_layer()));
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::absolute_layer()));
-	}
-
-	{
-		std::vector<unsigned int> layer_subsampling_sizes;
-		layer_subsampling_sizes.push_back(2);
-		layer_subsampling_sizes.push_back(2);
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::average_subsampling_layer(layer_subsampling_sizes)));
-	}
-
-	{
-		std::vector<unsigned int> layer_window_sizes;
-		layer_window_sizes.push_back(5);
-		layer_window_sizes.push_back(5);
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::sparse_convolution_layer(layer_window_sizes, 96, 200, 0.3F)));
-		//schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::convolution_layer(layer_window_sizes, 96, 200)));
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::hyperbolic_tangent_layer()));
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::absolute_layer()));
-	}
-
-	schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::dropout_layer(0.1F)));
-
-	{
-		std::vector<unsigned int> layer_window_sizes;
-		layer_window_sizes.push_back(1);
-		layer_window_sizes.push_back(1);
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::sparse_convolution_layer(layer_window_sizes, 200, class_count, 0.3F)));
-		schema->add_layer(nnforge::const_layer_smart_ptr(new nnforge::hyperbolic_tangent_layer())); 
-	}
-
-	return schema;
-}
-

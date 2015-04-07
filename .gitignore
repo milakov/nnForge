@@ -3,6 +3,8 @@
 /bin/
 /apps/*/
 *.[oa]
+/nnforge/proto/*.pb.cc
+/nnforge/proto/*.pb.h
 *~
 private_nnForge.sln
 

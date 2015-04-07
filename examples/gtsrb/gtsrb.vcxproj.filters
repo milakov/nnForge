@@ -12,6 +12,9 @@
     <Filter Include="Config Files">
       <UniqueIdentifier>{d3437242-f71d-40c3-9324-860097a85e5c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Working Data">
+      <UniqueIdentifier>{80623340-6347-4988-95dd-0b3fe92545a1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gtsrb.cpp">
@@ -31,5 +34,10 @@
       <Filter>Config Files</Filter>
     </None>
     <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="working_data\schema.txt">
+      <Filter>Working Data</Filter>
+    </Text>
   </ItemGroup>
 </Project>

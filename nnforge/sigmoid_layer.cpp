@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ namespace nnforge
 		, 0xa7, 0x2c
 		, 0x31, 0x8b, 0xf0, 0xab, 0xfd, 0xe3 };
 
+	const std::string sigmoid_layer::layer_type_name = "Sigmoid";
+
 	sigmoid_layer::sigmoid_layer()
 	{
 	}
@@ -34,6 +36,11 @@ namespace nnforge
 	const boost::uuids::uuid& sigmoid_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& sigmoid_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr sigmoid_layer::clone() const

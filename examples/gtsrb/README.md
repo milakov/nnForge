@@ -3,12 +3,15 @@ GTSRB
 
 GTSRB stands for German Traffic Sign Recognition Benchmark. All the info is available at [INI website](http://benchmark.ini.rub.de/?section=gtsrb).
 
-J. Stallkamp, M. Schlipsing, J. Salmen, and C. Igel. The German Traffic Sign Recognition Benchmark: A multi-class classification competition. In _Proceedings of the IEEE International Joint Conference on Neural Networks_, pages 1453–1460. 2011.
+J. Stallkamp, M. Schlipsing, J. Salmen, and C. Igel. The German Traffic Sign Recognition Benchmark:
+A multi-class classification competition. In _Proceedings of the IEEE International Joint Conference on Neural Networks_, pages 1453–1460. 2011.
 
 Input data
 ----------
 
-Download _Images and annotations_ both for _official GTSRB training set_ and _official GTSRB test set_, and also _Extended annotations including class ids_ for the official GTSRB test set (this one is important!) from [Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset#Downloads).
+Download _Images and annotations_ both for _official GTSRB training set_ and _official GTSRB test set_,
+and also _Extended annotations including class ids_ for the official GTSRB test set (this one is important!)
+from [Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset#Downloads).
 
 Extract input files from archives and store them in the gtsrb input directory in the following way:
 
@@ -40,7 +43,6 @@ Train
 
 	./gtsrb prepare_training_data
 	./gtsrb randomize_data
-	./gtsrb create
 	./gtsrb train
 	
 Validate
@@ -48,4 +50,5 @@ Validate
 
 	./gtsrb validate
 
-I got about 0.45-0.70% error rate on validation data for a single neural network. You could get 0.4% on 10 networks (./gtsrb train -N 10) 
+I got about 0.45-0.70% error rate on validation data for a single neural network.
+You could get 0.5% on 10 networks (./gtsrb train -N 10) 

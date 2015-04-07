@@ -2,6 +2,7 @@ BUILD_MODE=release
 ENABLE_CUDA_BACKEND=yes
 ENABLE_CUDA_PROFILING=no
 CPP11COMPILER=no
+PROTOBUF_PATH=/usr
 BOOST_PATH=/usr
 OPENCV_PATH=/usr
 NETCDF_INSTALLED=yes
@@ -11,11 +12,13 @@ MATIO_PATH=
 CUDNN_PATH=/usr/local/cuDNN
 CUDA_PATH=/usr/local/cuda
 NVCC=nvcc
+PROTOC=protoc
 CUDA_FLAGS_ARCH=-gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_35,code=\"sm_35,compute_35\"
 NNFORGE_PATH=../..
 NNFORGE_INPUT_DATA_PATH=/home/max/nnforge/input_data
 NNFORGE_WORKING_DATA_PATH=/home/max/nnforge/working_data
 
+PROTOBUF_LIBS=-lprotobuf
 BOOST_LIBS=-lboost_thread -lboost_regex -lboost_chrono -lboost_filesystem -lboost_program_options -lboost_random -lboost_system -lboost_date_time
 OPENCV_LIBS=-lopencv_highgui -lopencv_imgproc -lopencv_core
 CUDA_LIBS=-lcudnn -lcurand -lcusparse -lcublas -lcudart

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -101,6 +101,14 @@ namespace nnforge
 	void layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
+	{
+	}
+
+	void layer::read_proto(const void * layer_proto)
+	{
+	}
+
+	void layer::write_proto(void * layer_proto) const
 	{
 	}
 

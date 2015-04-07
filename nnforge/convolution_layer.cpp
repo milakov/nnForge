@@ -18,7 +18,8 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
- #include "nn_types.h"
+#include "nn_types.h"
+#include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
@@ -42,6 +43,8 @@ namespace nnforge
 		, 0xb2, 0x6a
 		, 0x15, 0xca, 0x19, 0x15, 0x5a, 0x65 };
 
+	const std::string convolution_layer::layer_type_name = "Convolution";
+
 	convolution_layer::convolution_layer(
 		const std::vector<unsigned int>& window_sizes,
 		unsigned int input_feature_map_count,
@@ -52,14 +55,6 @@ namespace nnforge
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count)
 	{
-		if (window_sizes.size() == 0)
-			throw neural_network_exception("window sizes for convolution layer may not be empty");
-		for(unsigned int i = 0; i < window_sizes.size(); i++)
-		{
-			if (window_sizes[i] == 0)
-				throw neural_network_exception("window dimension for convolution layer may not be zero");
-		}
-
 		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
 		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
@@ -68,27 +63,42 @@ namespace nnforge
 		if (left_zero_padding.empty())
 			this->left_zero_padding.resize(window_sizes.size(), 0);
 		else
-		{
-			for(unsigned int i = 0; i < window_sizes.size(); i++)
-				if (left_zero_padding[i] >= window_sizes[i])
-					throw neural_network_exception((boost::format("left zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % left_zero_padding[i] % i % window_sizes[i]).str());
 			this->left_zero_padding = left_zero_padding;
-		}
 
 		if (right_zero_padding.empty())
 			this->right_zero_padding.resize(window_sizes.size(), 0);
 		else
-		{
-			for(unsigned int i = 0; i < window_sizes.size(); i++)
-				if (right_zero_padding[i] >= window_sizes[i])
-					throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
 			this->right_zero_padding = right_zero_padding;
-		}
+
+		check();
+	}
+
+	void convolution_layer::check()
+	{
+		if (window_sizes.size() == 0)
+			throw neural_network_exception("window sizes for convolution layer may not be empty");
+
+		for(unsigned int i = 0; i < window_sizes.size(); i++)
+			if (window_sizes[i] == 0)
+				throw neural_network_exception("window dimension for convolution layer may not be zero");
+
+		for(unsigned int i = 0; i < window_sizes.size(); i++)
+			if (left_zero_padding[i] >= window_sizes[i])
+				throw neural_network_exception((boost::format("left zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % left_zero_padding[i] % i % window_sizes[i]).str());
+
+		for(unsigned int i = 0; i < window_sizes.size(); i++)
+			if (right_zero_padding[i] >= window_sizes[i])
+				throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
 	}
 
 	const boost::uuids::uuid& convolution_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& convolution_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr convolution_layer::clone() const
@@ -159,6 +169,25 @@ namespace nnforge
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
+	void convolution_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+		protobuf::ConvolutionalParam * param = layer_proto_typed->mutable_convolution_param();
+
+		param->set_output_feature_map_count(output_feature_map_count);
+		param->set_input_feature_map_count(input_feature_map_count);
+
+		for(int i = 0; i < window_sizes.size(); ++i)
+		{
+			protobuf::ConvolutionalParam_ConvolutionalDimensionParam * dim_param = param->add_dimension_param();
+			dim_param->set_kernel_size(window_sizes[i]);
+			if (left_zero_padding[i] > 0)
+				dim_param->set_left_padding(left_zero_padding[i]);
+			if (right_zero_padding[i] > 0)
+				dim_param->set_right_padding(right_zero_padding[i]);
+		}
+	}
+
 	void convolution_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
@@ -178,6 +207,29 @@ namespace nnforge
 			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*left_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 		}
+	}
+
+	void convolution_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_convolution_param())
+			throw neural_network_exception((boost::format("No convolution_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		input_feature_map_count = layer_proto_typed->convolution_param().input_feature_map_count();
+		output_feature_map_count = layer_proto_typed->convolution_param().output_feature_map_count();
+
+		window_sizes.resize(layer_proto_typed->convolution_param().dimension_param_size());
+		left_zero_padding.resize(layer_proto_typed->convolution_param().dimension_param_size());
+		right_zero_padding.resize(layer_proto_typed->convolution_param().dimension_param_size());
+
+		for(int i = 0; i < layer_proto_typed->convolution_param().dimension_param_size(); ++i)
+		{
+			window_sizes[i] = layer_proto_typed->convolution_param().dimension_param(i).kernel_size();
+			left_zero_padding[i] = layer_proto_typed->convolution_param().dimension_param(i).left_padding();
+			right_zero_padding[i] = layer_proto_typed->convolution_param().dimension_param(i).right_padding();
+		}
+
+		check();
 	}
 
 	data_config convolution_layer::get_data_config() const

@@ -25,6 +25,8 @@
     <ClInclude Include="elastic_deformation_2d_data_transformer.h" />
     <ClInclude Include="negate_data_transformer.h" />
     <ClInclude Include="parametric_rectified_linear_layer.h" />
+    <ClInclude Include="proto\data_normalizer.pb.h" />
+    <ClInclude Include="proto\nnforge.pb.h" />
     <ClInclude Include="reshape_data_transformer.h" />
     <ClInclude Include="supervised_image_data_sampler_stream_reader.h" />
     <ClInclude Include="layer_data_custom.h" />
@@ -134,6 +136,8 @@
     <ClCompile Include="elastic_deformation_2d_data_transformer.cpp" />
     <ClCompile Include="negate_data_transformer.cpp" />
     <ClCompile Include="parametric_rectified_linear_layer.cpp" />
+    <ClCompile Include="proto\data_normalizer.pb.cc" />
+    <ClCompile Include="proto\nnforge.pb.cc" />
     <ClCompile Include="reshape_data_transformer.cpp" />
     <ClCompile Include="supervised_image_data_sampler_stream_reader.cpp" />
     <ClCompile Include="layer_data_custom.cpp" />
@@ -226,6 +230,28 @@
     <ClCompile Include="data_writer.cpp" />
     <ClCompile Include="unsupervised_transformed_input_data_reader.cpp" />
     <ClCompile Include="validate_progress_network_data_pusher.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="proto\nnforge.proto">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\protobuf\bin\protoc.exe -I=proto --cpp_out=proto proto\nnforge.proto</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating nnforge.pb.{h,cc}...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">proto\nnforge.pb.h;proto\nnforge.pb.cc</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\protobuf\bin\protoc.exe -I=proto --cpp_out=proto proto\nnforge.proto</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating nnforge.pb.{h,cc}...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">proto\nnforge.pb.h;proto\nnforge.pb.cc</Outputs>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="proto\data_normalizer.proto">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\protobuf\bin\protoc.exe -I=proto --cpp_out=proto proto\data_normalizer.proto</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\protobuf\bin\protoc.exe -I=proto --cpp_out=proto proto\data_normalizer.proto</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating data_normalizer.pb.{h,cc}...</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating data_normalizer.pb.{h,cc}...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">proto\data_normalizer.pb.h;proto\data_normalizer.pb.cc</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">proto\data_normalizer.pb.h;proto\data_normalizer.pb.cc</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{435CF80F-3A53-4B85-8569-3C477F3CEEFC}</ProjectGuid>

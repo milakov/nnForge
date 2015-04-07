@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ namespace nnforge
 
 		virtual const boost::uuids::uuid& get_uuid() const = 0;
 
+		virtual const std::string& get_type_name() const = 0;
+
 		// The method shouldn't write uuid of the layer type
 		// The stream should be created with std::ios_base::binary flag
 		virtual void write(std::ostream& binary_stream_to_write_to) const;
@@ -68,6 +70,10 @@ namespace nnforge
 		virtual void read(
 			std::istream& binary_stream_to_read_from,
 			const boost::uuids::uuid& layer_read_guid);
+
+		virtual void read_proto(const void * layer_proto);
+
+		virtual void write_proto(void * layer_proto) const;
 
 		// All values are set to 0.0F
 		layer_data_smart_ptr create_layer_data() const;
@@ -90,6 +96,9 @@ namespace nnforge
 		bool is_empty_data() const;
 
 		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;
+
+	public:
+		std::string instance_name;
 
 	protected:
 		layer();

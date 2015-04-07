@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ namespace nnforge
 		, 0x9c, 0x06
 		, 0x49, 0xd0, 0xec, 0x9f, 0x42, 0x49 };
 
+	const std::string absolute_layer::layer_type_name = "Absolute";
+
 	absolute_layer::absolute_layer()
 	{
 	}
@@ -33,6 +35,11 @@ namespace nnforge
 	const boost::uuids::uuid& absolute_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& absolute_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr absolute_layer::clone() const

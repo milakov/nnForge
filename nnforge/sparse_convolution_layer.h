@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -59,11 +59,17 @@ namespace nnforge
 
 		virtual const boost::uuids::uuid& get_uuid() const;
 
+		virtual const std::string& get_type_name() const;
+
 		virtual void write(std::ostream& binary_stream_to_write_to) const;
+
+		virtual void write_proto(void * layer_proto) const;
 
 		virtual void read(
 			std::istream& binary_stream_to_read_from,
 			const boost::uuids::uuid& layer_read_guid);
+
+		virtual void read_proto(const void * layer_proto);
 
 		virtual void randomize_data(
 			layer_data& data,
@@ -76,13 +82,15 @@ namespace nnforge
 
 		static const boost::uuids::uuid layer_guid_v1;
 
+		static const std::string layer_type_name;
+
 	protected:
 		virtual data_config get_data_config() const;
 
 		virtual data_custom_config get_data_custom_config() const;
 
 	private:
-		void check_consistency();
+		void check();
 
 		void randomize_custom_data(
 			layer_data_custom& data_custom,
@@ -100,5 +108,8 @@ namespace nnforge
 		unsigned int feature_map_connection_count;
 		std::vector<unsigned int> left_zero_padding;
 		std::vector<unsigned int> right_zero_padding;
+
+	private:
+		float feature_map_connection_sparsity_ratio;
 	};
 }

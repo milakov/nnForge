@@ -1,0 +1,9 @@
+package nnforge.protobuf;
+
+message DataNormalizer {
+	message FeatureMapParam {
+		required float mul = 1;
+		required float add = 2;
+	}
+	repeated FeatureMapParam feature_map_param = 1;
+}

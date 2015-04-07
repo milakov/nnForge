@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include "layer.h"
 
 #include <map>
+#include <string>
 #include <boost/uuid/uuid.hpp>
 #include <boost/serialization/singleton.hpp>
 
@@ -35,9 +36,14 @@ namespace nnforge
 
 		layer_smart_ptr create_layer(const boost::uuids::uuid& layer_guid) const;
 
+		layer_smart_ptr create_layer(const std::string& layer_type_name) const;
+
 	private:
-		typedef std::map<boost::uuids::uuid, layer_smart_ptr> sample_map;
-		sample_map sample_layer_map;
+		typedef std::map<boost::uuids::uuid, layer_smart_ptr> sample_uuid_map;
+		typedef std::map<std::string, layer_smart_ptr> sample_name_map;
+
+		sample_uuid_map sample_uuid_layer_map;
+		sample_name_map sample_name_layer_map;
 	};
 
 	typedef boost::serialization::singleton<layer_factory> single_layer_factory;

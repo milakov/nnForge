@@ -17,10 +17,13 @@
 #include "normalize_data_transformer.h"
 
 #include "neural_network_exception.h"
+#include "proto/data_normalizer.pb.h"
 
 #include <opencv2/core/core.hpp>
 #include <boost/format.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <google/protobuf/text_format.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
 namespace nnforge
 {
@@ -112,6 +115,21 @@ namespace nnforge
 		binary_stream_to_write_to.flush();
 	}
 
+	void normalize_data_transformer::write_proto(std::ostream& stream_to_write_to) const
+	{
+		protobuf::DataNormalizer normalizer;
+
+		for(std::vector<std::pair<float, float> >::const_iterator it =  mul_add_list.begin(); it != mul_add_list.end(); ++it)
+		{
+			protobuf::DataNormalizer_FeatureMapParam * feature_map_param = normalizer.add_feature_map_param();
+			feature_map_param->set_mul(it->first);
+			feature_map_param->set_add(it->second);
+		}
+
+		google::protobuf::io::OstreamOutputStream output_stream(&stream_to_write_to);
+		google::protobuf::TextFormat::Print(normalizer, &output_stream);
+	}
+
 	void normalize_data_transformer::read(std::istream& binary_stream_to_read_from)
 	{
  		mul_add_list.clear();
@@ -134,6 +152,20 @@ namespace nnforge
 			binary_stream_to_read_from.read(reinterpret_cast<char*>(&add), sizeof(float));
 
 			mul_add_list.push_back(std::make_pair(mult, add));
+		}
+	}
+
+	void normalize_data_transformer::read_proto(std::istream& stream_to_read_from)
+	{
+ 		mul_add_list.clear();
+
+		protobuf::DataNormalizer normalizer;
+		google::protobuf::io::IstreamInputStream input_stream(&stream_to_read_from);
+		google::protobuf::TextFormat::Parse(&input_stream, &normalizer);
+
+		for(int i = 0; i < normalizer.feature_map_param_size(); ++i)
+		{
+			mul_add_list.push_back(std::make_pair(normalizer.feature_map_param(i).mul(), normalizer.feature_map_param(i).add()));
 		}
 	}
 

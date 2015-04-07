@@ -4,12 +4,19 @@ CONFIG_FILE=$(TARGET).cfg
 SOURCES+=$(wildcard *.cpp)
 OBJECTS+=$(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
-all: $(TARGET) $(CONFIG_FILE)
+WORKING_FILES_SRC=$(wildcard working_data/*.*)
+WORKING_FILES_DST=$(WORKING_FILES_SRC:working_data/%=$(NNFORGE_WORKING_DATA_PATH)/$(APP_NAME)/%)
+
+all: $(TARGET) $(CONFIG_FILE) $(WORKING_FILES_DST)
 
 $(OBJECTS): $(SOURCES)
 
 $(TARGET): $(OBJECTS) $(LDLIBSDEPEND)
 	$(CXX) -o $(TARGET) $(OBJECTS) $(LDLIBSDEPEND) $(LDFLAGS)
+
+$(NNFORGE_WORKING_DATA_PATH)/$(APP_NAME)/%: working_data/%
+	mkdir -p $(NNFORGE_WORKING_DATA_PATH)/$(APP_NAME)
+	cp $< $@
 
 $(CONFIG_FILE): config.cfg
 	$(RM) $(CONFIG_FILE)

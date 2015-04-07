@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <boost/format.hpp>
 
@@ -30,6 +31,8 @@ namespace nnforge
 	, 0x4c, 0xf9
 	, 0xae, 0xfd
 	, 0x9d, 0xf, 0x2f, 0x5f, 0x60, 0xf3 };
+
+	const std::string rgb_to_yuv_convert_layer::layer_type_name = "RGBToYUVConvert";
 
 	color_feature_map_config::color_feature_map_config()
 	{
@@ -48,6 +51,11 @@ namespace nnforge
 	rgb_to_yuv_convert_layer::rgb_to_yuv_convert_layer(const std::vector<color_feature_map_config>& color_feature_map_config_list)
 		: color_feature_map_config_list(color_feature_map_config_list)
 	{
+		check();
+	}
+
+	void rgb_to_yuv_convert_layer::check()
+	{
 		if (color_feature_map_config_list.empty())
 			throw neural_network_exception("Configuration list for RGB to YUV conversion layer may not be empty");
 	}
@@ -55,6 +63,11 @@ namespace nnforge
 	const boost::uuids::uuid& rgb_to_yuv_convert_layer::get_uuid() const
 	{
 		return layer_guid;
+	}
+
+	const std::string& rgb_to_yuv_convert_layer::get_type_name() const
+	{
+		return layer_type_name;
 	}
 
 	layer_smart_ptr rgb_to_yuv_convert_layer::clone() const
@@ -90,6 +103,19 @@ namespace nnforge
 		}
 	}
 
+	void rgb_to_yuv_convert_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+		protobuf::RGBToYUVConvertParam * param = layer_proto_typed->mutable_rgb_to_yuv_convert_param();
+		for(int i = 0; i < color_feature_map_config_list.size(); ++i)
+		{
+			protobuf::RGBToYUVConvertParam_ColorFeatureMapParam * color_param = param->add_color_feature_map_param();
+			color_param->set_red_and_y_feature_map_id(color_feature_map_config_list[i].red_and_y_feature_map_id);
+			color_param->set_green_and_u_feature_map_id(color_feature_map_config_list[i].green_and_u_feature_map_id);
+			color_param->set_blue_and_v_feature_map_id(color_feature_map_config_list[i].blue_and_v_feature_map_id);
+		}
+	}
+
 	void rgb_to_yuv_convert_layer::read(
 		std::istream& binary_stream_to_read_from,
 		const boost::uuids::uuid& layer_read_guid)
@@ -104,6 +130,23 @@ namespace nnforge
 			binary_stream_to_read_from.read(reinterpret_cast<char*>(&it->green_and_u_feature_map_id), sizeof(it->green_and_u_feature_map_id));
 			binary_stream_to_read_from.read(reinterpret_cast<char*>(&it->blue_and_v_feature_map_id), sizeof(it->blue_and_v_feature_map_id));
 		}
+	}
+
+	void rgb_to_yuv_convert_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
+		if (!layer_proto_typed->has_rgb_to_yuv_convert_param())
+			throw neural_network_exception((boost::format("No rgb_to_yuv_convert_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+
+		color_feature_map_config_list.resize(layer_proto_typed->rgb_to_yuv_convert_param().color_feature_map_param_size());
+		for(int i = 0; i < layer_proto_typed->rgb_to_yuv_convert_param().color_feature_map_param_size(); ++i)
+		{
+			color_feature_map_config_list[i].red_and_y_feature_map_id = layer_proto_typed->rgb_to_yuv_convert_param().color_feature_map_param(i).red_and_y_feature_map_id();
+			color_feature_map_config_list[i].green_and_u_feature_map_id = layer_proto_typed->rgb_to_yuv_convert_param().color_feature_map_param(i).green_and_u_feature_map_id();
+			color_feature_map_config_list[i].blue_and_v_feature_map_id = layer_proto_typed->rgb_to_yuv_convert_param().color_feature_map_param(i).blue_and_v_feature_map_id();
+		}
+
+		check();
 	}
 
 	float rgb_to_yuv_convert_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
