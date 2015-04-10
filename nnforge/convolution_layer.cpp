@@ -22,8 +22,10 @@
 #include "proto/nnforge.pb.h"
 
 #include <algorithm>
+#include <numeric>
 #include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
+#include <opencv2/core/core.hpp>
 
 namespace nnforge
 {
@@ -269,6 +271,41 @@ namespace nnforge
 
 			data[0][i] = val;
 		}
+
+		std::fill(data[1].begin(), data[1].end(), 0.0F);
+	}
+
+	void convolution_layer::randomize_orthogonal_data(
+		layer_data& data,
+		layer_data_custom& data_custom,
+		random_generator& generator) const
+	{
+		unsigned int weight_count = 1;
+		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
+		unsigned int weight_col_count = weight_count * input_feature_map_count;
+		unsigned int weight_row_count = output_feature_map_count;
+
+		nnforge_normal_distribution<float> nd(0.0F, 1.0F);
+		for(unsigned int i = 0; i < data[0].size(); ++i)
+		{
+			float val = nd(generator);
+			data[0][i] = val;
+		}
+		cv::Mat1f weights(weight_row_count, weight_col_count, &(data[0][0]));
+		cv::Mat1f w;
+		cv::Mat1f u;
+		cv::Mat1f vt;
+		cv::SVD::compute(weights, w, u, vt, cv::SVD::MODIFY_A);
+
+		cv::Mat1f orth;
+		if ((u.rows == weights.rows) && (u.cols == weights.cols))
+			orth = u;
+		else if ((vt.rows == weights.rows) && (vt.cols == weights.cols))
+			orth = vt;
+		else
+			throw neural_network_exception("Internal error when doing SVD");
+
+		std::copy(orth.begin(), orth.end(), weights.begin());
 
 		std::fill(data[1].begin(), data[1].end(), 0.0F);
 	}

@@ -84,6 +84,17 @@ namespace nnforge
 	{
 	}
 
+	void layer::randomize_orthogonal_data(
+		layer_data& data,
+		layer_data_custom& data_custom,
+		random_generator& generator) const
+	{
+		randomize_data(
+			data,
+			data_custom,
+			generator);
+	}
+
 	data_config layer::get_data_config() const
 	{
 		return data_config();
