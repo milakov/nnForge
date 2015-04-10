@@ -452,6 +452,9 @@
     <ClInclude Include="proto\data_normalizer.pb.h">
       <Filter>Proto Files</Filter>
     </ClInclude>
+    <ClInclude Include="training_momentum.h">
+      <Filter>Header Files\training\trainer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -774,6 +777,9 @@
     </ClCompile>
     <ClCompile Include="proto\data_normalizer.pb.cc">
       <Filter>Proto Files</Filter>
+    </ClCompile>
+    <ClCompile Include="training_momentum.cpp">
+      <Filter>Source Files\training\trainer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

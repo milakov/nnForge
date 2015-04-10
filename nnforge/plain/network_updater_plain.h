@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ namespace nnforge
 				network_data_smart_ptr data,
 				unsigned int batch_size,
 				float weight_decay,
-				float momentum,
+				training_momentum momentum,
 				bool deterministic_only);
 
 			// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.
@@ -70,7 +70,7 @@ namespace nnforge
 				const std::vector<std::vector<float> >& learning_rates,
 				float normalizer,
 				float weight_decay,
-				float momentum) const;
+				training_momentum momentum) const;
 
 			plain_running_configuration_const_smart_ptr plain_config;
 

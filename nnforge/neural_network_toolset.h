@@ -196,7 +196,8 @@ namespace nnforge
 		float weight_decay;
 		unsigned int snapshot_scale;
 		unsigned int batch_size;
-		float momentum;
+		std::string momentum_type_str;
+		float momentum_val;
 		std::string check_gradient_weights;
 		float check_gradient_threshold;
 		float check_gradient_base_step;

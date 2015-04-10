@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ namespace nnforge
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
-			float momentum,
+			training_momentum momentum,
 			bool deterministic_only)
 		{
 			testing_result_smart_ptr testing_res(new testing_result(ef));
@@ -128,7 +128,7 @@ namespace nnforge
 			layer_data_list_smart_ptr gradient(new layer_data_list(*schema));
 			gradient->fill(0.0F);
 			layer_data_list_smart_ptr previous_upd;
-			if (momentum > 0.0F)
+			if (momentum.type != training_momentum::no_momentum)
 			{
 				previous_upd = layer_data_list_smart_ptr(new layer_data_list(*schema));
 				previous_upd->fill(0.0F);
@@ -147,7 +147,7 @@ namespace nnforge
 					{
 						buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // data
 						buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // gradient
-						if (momentum > 0.0F)
+						if (momentum.type != training_momentum::no_momentum)
 							buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // previous_upd
 					}
 				}
@@ -484,7 +484,7 @@ namespace nnforge
 			const std::vector<std::vector<float> >& learning_rates,
 			float normalizer,
 			float weight_decay,
-			float momentum) const
+			training_momentum momentum) const
 		{
 			const const_layer_list& layer_list = *schema;
 
@@ -492,7 +492,7 @@ namespace nnforge
 			std::vector<std::vector<float> >::const_iterator learning_rate_it0 = learning_rates.begin() + testing_layer_count;
 			const_layer_list::const_iterator layer_it = layer_list.begin() + testing_layer_count;
 			std::vector<std::vector<double> >::iterator updates_accumulated_it0 = updates_accumulated.begin() + testing_layer_count;
-			if (momentum > 0.0F)
+			if (momentum.type != training_momentum::no_momentum)
 			{
 				layer_data_list::iterator previous_upd_it0 = previous_upd.begin() + testing_layer_count;
 				for(layer_data_list::iterator data_it0 = data.begin() + testing_layer_count; data_it0 != data.end(); ++data_it0, ++gradient_it0, ++previous_upd_it0, ++learning_rate_it0, ++layer_it, ++updates_accumulated_it0)
@@ -510,17 +510,37 @@ namespace nnforge
 						std::vector<float>::iterator previous_upd_it2 = previous_upd_it->begin();
 						float learning_rate = *learning_rate_it;
 						double accum = 0.0;
-						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2)
+						if (momentum.type == training_momentum::vanilla_momentum)
 						{
-							float current_weight = *data_it2;
-							float gr = *gradient_it2;
-							float prev_upd = *previous_upd_it2;
-							float upd = prev_upd * momentum + learning_rate * (gr * normalizer - current_weight * actual_weight_decay);
-							accum += static_cast<double>(fabsf(upd));
-							float new_weight = current_weight + upd;
-							*data_it2 = new_weight;
-							*gradient_it2 = 0.0F;
-							*previous_upd_it2 = upd;
+							for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2)
+							{
+								float current_weight = *data_it2;
+								float gr = *gradient_it2;
+								float prev_upd = *previous_upd_it2;
+								float upd = prev_upd * momentum.momentum_val + learning_rate * (gr * normalizer - current_weight * actual_weight_decay);
+								accum += static_cast<double>(fabsf(upd));
+								float new_weight = current_weight + upd;
+								*data_it2 = new_weight;
+								*gradient_it2 = 0.0F;
+								*previous_upd_it2 = upd;
+							}
+						}
+						else if (momentum.type == training_momentum::nesterov_momentum)
+						{
+							float mp1 = momentum.momentum_val + 1.0F;
+							for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2)
+							{
+								float current_weight = *data_it2;
+								float gr = *gradient_it2;
+								float prev_upd = *previous_upd_it2;
+								float new_upd = prev_upd * momentum.momentum_val + learning_rate * (gr * normalizer - current_weight * actual_weight_decay);
+								float upd = mp1 * new_upd - momentum.momentum_val * prev_upd;
+								accum += static_cast<double>(fabsf(upd));
+								float new_weight = current_weight + upd;
+								*data_it2 = new_weight;
+								*gradient_it2 = 0.0F;
+								*previous_upd_it2 = new_upd;
+							}
 						}
 						*updates_accumulated_it += accum;
 					}

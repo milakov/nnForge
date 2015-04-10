@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ namespace nnforge
 			}
 		}
 
-		__global__ void apply_gradient_with_momentum_kernel(
+		__global__ void apply_gradient_with_vanilla_momentum_kernel(
 			float * __restrict data,
 			float * __restrict gradient,
 			float * __restrict previous_upd,
@@ -144,6 +144,62 @@ namespace nnforge
 				data[elem_id] = new_weight;
 				gradient[elem_id] = 0.0F;
 				previous_upd[elem_id] = upd;
+				upd_acc = fabs(upd);
+			}
+
+			int thread_id = threadIdx.x;
+			int lane_id = thread_id & 31;
+			#pragma unroll
+			for(int tx = 16; tx > 0; tx >>= 1)
+			{
+				upd_acc += __shfl_down(upd_acc, tx);
+			}
+
+			if (blockDim.x > 32)
+			{
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = upd_acc;
+				__syncthreads();
+			}
+
+			if (thread_id == 0)
+			{
+				for(int i = 1; i < (blockDim.x >> 5); ++i)
+					upd_acc += arr_sh[i];
+				double upd_acc_d = (double)upd_acc;
+
+				int accum_bucket_id = (elem_id >> 5) & update_accum_mask;
+
+				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+			}
+		}
+
+		__global__ void apply_gradient_with_nesterov_momentum_kernel(
+			float * __restrict data,
+			float * __restrict gradient,
+			float * __restrict previous_upd,
+			double * __restrict update_accum,
+			float learning_rate,
+			float normalizer,
+			float weight_decay,
+			float momentum,
+			float momentum_plus1,
+			int elem_count,
+			unsigned int update_accum_mask)
+		{
+			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			float upd_acc = 0.0F;
+			if (elem_id < elem_count)
+			{
+				float current_weight = __load_nc(data + elem_id);
+				float gr = __load_nc(gradient + elem_id);
+				float prev_upd = __load_nc(previous_upd + elem_id);
+				float new_upd = prev_upd * momentum + learning_rate * (gr * normalizer - current_weight * weight_decay);
+				float upd = momentum_plus1 * new_upd - momentum * prev_upd;
+				float new_weight = current_weight + upd;
+				data[elem_id] = new_weight;
+				gradient[elem_id] = 0.0F;
+				previous_upd[elem_id] = new_upd;
 				upd_acc = fabs(upd);
 			}
 
@@ -238,7 +294,7 @@ namespace nnforge
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
-			float momentum,
+			training_momentum momentum,
 			bool deterministic_only)
 		{
 			cuda_config->set_device();
@@ -269,7 +325,7 @@ namespace nnforge
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > net_data_custom = set_get_data_custom(data);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > gradient = get_zero_gradient(net_data);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > previous_upd;
-			if (momentum > 0.0F)
+			if (momentum.type != training_momentum::no_momentum)
 				previous_upd = get_zero_gradient(net_data);
 
 			unsigned int updater_max_count;
@@ -910,7 +966,7 @@ namespace nnforge
 			cuda_linear_buffer_device_smart_ptr update_accum,
 			float gradient_normalizer,
 			float weight_decay,
-			float momentum)
+			training_momentum momentum)
 		{
 			const const_layer_list& layer_list = *schema;
 
@@ -918,7 +974,7 @@ namespace nnforge
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator gradient_it = gradient.begin();
 			std::vector<std::vector<float> >::const_iterator learning_rate_it = learning_rates.begin() + testing_layer_count;
 			unsigned int total_part_id = 0;
-			if (momentum > 0.0F)
+			if (momentum.type != training_momentum::no_momentum)
 			{
 				std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator prev_upd_it = prev_upd.begin();
 				for(std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++gradient_it, ++prev_upd_it, ++learning_rate_it, ++layer_it)
@@ -941,17 +997,35 @@ namespace nnforge
 							32);
 						int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
 						int smem_size = threadblock_size * sizeof(float);
-						apply_gradient_with_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-							**data_it2,
-							**gradient_it2,
-							**prev_upd_it2,
-							((double *)(*update_accum)) + total_part_id * elem_count_update_accum_per_part,
-							learning_rate,
-							gradient_normalizer,
-							actual_weight_decay,
-							momentum,
-							elem_count,
-							elem_count_update_accum_per_part - 1);
+						if (momentum.type == training_momentum::vanilla_momentum)
+						{
+							apply_gradient_with_vanilla_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								**data_it2,
+								**gradient_it2,
+								**prev_upd_it2,
+								((double *)(*update_accum)) + total_part_id * elem_count_update_accum_per_part,
+								learning_rate,
+								gradient_normalizer,
+								actual_weight_decay,
+								momentum.momentum_val,
+								elem_count,
+								elem_count_update_accum_per_part - 1);
+						}
+						else if (momentum.type == training_momentum::nesterov_momentum)
+						{
+							apply_gradient_with_nesterov_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								**data_it2,
+								**gradient_it2,
+								**prev_upd_it2,
+								((double *)(*update_accum)) + total_part_id * elem_count_update_accum_per_part,
+								learning_rate,
+								gradient_normalizer,
+								actual_weight_decay,
+								momentum.momentum_val,
+								momentum.momentum_val + 1.0F,
+								elem_count,
+								elem_count_update_accum_per_part - 1);
+						}
 						++total_part_id;
 					}
 				}

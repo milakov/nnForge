@@ -24,6 +24,7 @@
 #include "training_stat.h"
 #include "error_function.h"
 #include "nn_types.h"
+#include "training_momentum.h"
 
 #include <map>
 
@@ -44,7 +45,7 @@ namespace nnforge
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
-			float momentum,
+			training_momentum momentum,
 			bool deterministic_only);
 
 		// set_input_configuration_specific should be called prior to this method call for this method to succeed
@@ -62,7 +63,7 @@ namespace nnforge
 			network_data_smart_ptr data,
 			unsigned int batch_size,
 			float weight_decay,
-			float momentum,
+			training_momentum momentum,
 			bool deterministic_only) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the convolution specific configuration is modified.

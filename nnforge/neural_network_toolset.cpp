@@ -55,6 +55,7 @@
 #include "save_resume_network_data_pusher.h"
 #include "debug_util.h"
 #include "supervised_shuffle_entries_data_reader.h"
+#include "training_momentum.h"
 
 namespace nnforge
 {
@@ -233,7 +234,8 @@ namespace nnforge
 			("epoch_count_in_training_set", boost::program_options::value<unsigned int>(&epoch_count_in_training_set)->default_value(1), "The whole should be split in this amount of epochs.")
 			("weight_decay", boost::program_options::value<float>(&weight_decay)->default_value(0.0F), "Weight decay.")
 			("batch_size,B", boost::program_options::value<unsigned int>(&batch_size)->default_value(1), "Training mini-batch size.")
-			("momentum,M", boost::program_options::value<float>(&momentum)->default_value(0.0F), "Momentum in training.")
+			("momentum_type", boost::program_options::value<std::string>(&momentum_type_str)->default_value("vanilla"), "Type of the momentum to use (none, vanilla, nesterov).")
+			("momentum,M", boost::program_options::value<float>(&momentum_val)->default_value(0.0F), "Momentum in training.")
 			("shuffle_block_size", boost::program_options::value<int>(&shuffle_block_size)->default_value(-1), "The size of contiguous blocks when shuffling training data, -1 indicates no shuffling.")
 			;
 
@@ -401,7 +403,8 @@ namespace nnforge
 			std::cout << "epoch_count_in_training_set" << "=" << epoch_count_in_training_set << std::endl;
 			std::cout << "weight_decay" << "=" << weight_decay << std::endl;
 			std::cout << "batch_size" << "=" << batch_size << std::endl;
-			std::cout << "momentum" << "=" << momentum << std::endl;
+			std::cout << "momentum_type" << "=" << momentum_type_str << std::endl;
+			std::cout << "momentum" << "=" << momentum_val << std::endl;
 			std::cout << "shuffle_block_size" << "=" << shuffle_block_size << std::endl;
 		}
 		{
@@ -512,7 +515,7 @@ namespace nnforge
 		res->learning_rate_rise_rate = learning_rate_rise_rate;
 		res->weight_decay = weight_decay;
 		res->batch_size = batch_size;
-		res->momentum = momentum;
+		res->momentum = training_momentum(momentum_type_str, momentum_val);
 
 		return res;
 	}
@@ -1774,7 +1777,7 @@ namespace nnforge
 			data,
 			batch_size,
 			weight_decay,
-			momentum,
+			training_momentum(momentum_type_str, momentum_val),
 			true);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		/*
@@ -1885,7 +1888,7 @@ namespace nnforge
 						data,
 						1,
 						0.0F,
-						0.0F,
+						training_momentum(),
 						true);
 					double original_error = res.first->get_error();
 					float gradient_backprop = -(data->data_list[layer_id]->at(weight_set).at(weight_id) - original_weight) / 1.0e+6F;
@@ -1909,7 +1912,7 @@ namespace nnforge
 								data,
 								1,
 								0.0F,
-								0.0F,
+								training_momentum(),
 								true);
 							float new_error = res.first->get_error();
 							float gradient_check = static_cast<float>(new_error - original_error) / check_gradient_step;
