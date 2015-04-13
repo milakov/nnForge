@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@
 #include "neuron_data_type.h"
 #include "feature_map_data_stat.h"
 #include "nn_types.h"
+#include "raw_data_reader.h"
 
 #include <vector>
 #include <memory>
 
 namespace nnforge
 {
-	class unsupervised_data_reader
+	class unsupervised_data_reader : public raw_data_reader
 	{
 	public:
 		virtual ~unsupervised_data_reader();
@@ -35,20 +36,11 @@ namespace nnforge
 		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
 		virtual bool read(void * input_elems) = 0;
 
-		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
-		virtual bool raw_read(std::vector<unsigned char>& all_elems) = 0;
-
-		virtual void reset() = 0;
-
 		virtual void next_epoch();
-
-		virtual void rewind(unsigned int entry_id) = 0;
 
 		virtual layer_configuration_specific get_input_configuration() const = 0;
 
 		virtual neuron_data_type::input_type get_input_type() const = 0;
-
-		virtual unsigned int get_entry_count() const = 0;
 
 		virtual unsigned int get_sample_count() const;
 

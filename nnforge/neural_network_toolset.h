@@ -118,10 +118,10 @@ namespace nnforge
 
 		virtual bool is_rgb_input() const;
 
-		virtual supervised_data_reader_smart_ptr get_original_training_data_reader(const boost::filesystem::path& path) const;
+		virtual raw_data_reader_smart_ptr get_original_training_data_reader(const boost::filesystem::path& path) const;
 
 		virtual data_writer_smart_ptr get_randomized_training_data_writer(
-			supervised_data_reader& reader,
+			raw_data_reader& reader,
 			const boost::filesystem::path& path) const;
 
 		virtual supervised_data_reader_smart_ptr get_initial_data_reader_for_normalizing() const;

@@ -542,7 +542,7 @@ namespace nnforge
 		else throw std::runtime_error((boost::format("Unknown data set for taking snapshots: %1%") % snapshot_data_set).str());
 	}
 
-	supervised_data_reader_smart_ptr neural_network_toolset::get_original_training_data_reader(const boost::filesystem::path& path) const
+	raw_data_reader_smart_ptr neural_network_toolset::get_original_training_data_reader(const boost::filesystem::path& path) const
 	{
 		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(path, std::ios_base::in | std::ios_base::binary));
 		supervised_data_reader_smart_ptr reader(new supervised_data_stream_reader(in));
@@ -550,7 +550,7 @@ namespace nnforge
 	}
 
 	data_writer_smart_ptr neural_network_toolset::get_randomized_training_data_writer(
-		supervised_data_reader& reader,
+		raw_data_reader& reader,
 		const boost::filesystem::path& path) const
 	{
 		nnforge_shared_ptr<std::ostream> out(new boost::filesystem::ofstream(path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
@@ -567,7 +567,7 @@ namespace nnforge
 	void neural_network_toolset::randomize_data()
 	{
 		boost::filesystem::path original_file_path = get_working_data_folder() / training_data_filename;
-		supervised_data_reader_smart_ptr reader = get_original_training_data_reader(original_file_path);
+		raw_data_reader_smart_ptr reader = get_original_training_data_reader(original_file_path);
 
 		boost::filesystem::path randomized_file_path = get_working_data_folder() / training_randomized_data_filename;
 		data_writer_smart_ptr writer = get_randomized_training_data_writer(*reader, randomized_file_path);

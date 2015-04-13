@@ -14,26 +14,15 @@
  *  limitations under the License.
  */
 
-#pragma once
-
 #include "raw_data_reader.h"
 
 namespace nnforge
 {
-	class data_writer
+	raw_data_reader::raw_data_reader()
 	{
-	public:
-		virtual ~data_writer();
+	}
 
-		virtual void raw_write(
-			const void * all_entry_data,
-			size_t data_length) = 0;
-
-		void write_randomized(raw_data_reader& reader);
-
-	protected:
-		data_writer();
-	};
-
-	typedef nnforge_shared_ptr<data_writer> data_writer_smart_ptr;
+	raw_data_reader::~raw_data_reader()
+	{
+	}
 }

@@ -29,7 +29,7 @@ namespace nnforge
 	{
 	}
 
-	void data_writer::write_randomized(unsupervised_data_reader& reader)
+	void data_writer::write_randomized(raw_data_reader& reader)
 	{
 		unsigned int entry_count = reader.get_entry_count();
 		if (entry_count == 0)

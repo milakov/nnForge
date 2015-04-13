@@ -16,24 +16,34 @@
 
 #pragma once
 
-#include "raw_data_reader.h"
+#include "nn_types.h"
+
+#include <vector>
+#include <memory>
 
 namespace nnforge
 {
-	class data_writer
+	class raw_data_reader
 	{
 	public:
-		virtual ~data_writer();
+		virtual ~raw_data_reader();
 
-		virtual void raw_write(
-			const void * all_entry_data,
-			size_t data_length) = 0;
+		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
+		virtual bool raw_read(std::vector<unsigned char>& all_elems) = 0;
 
-		void write_randomized(raw_data_reader& reader);
+		virtual void rewind(unsigned int entry_id) = 0;
+
+		virtual void reset() = 0;
+
+		virtual unsigned int get_entry_count() const = 0;
 
 	protected:
-		data_writer();
+		raw_data_reader();
+
+	private:
+		raw_data_reader(const raw_data_reader&);
+		raw_data_reader& operator =(const raw_data_reader&);
 	};
 
-	typedef nnforge_shared_ptr<data_writer> data_writer_smart_ptr;
+	typedef nnforge_shared_ptr<raw_data_reader> raw_data_reader_smart_ptr;
 }

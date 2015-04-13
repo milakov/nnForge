@@ -48,6 +48,7 @@
 #include "supervised_transformed_output_data_reader.h"
 #include "supervised_random_image_data_stream_reader.h"
 #include "supervised_image_stream_reader.h"
+#include "varying_data_stream_reader.h"
 #include "rnd.h"
 
 #include "data_transformer_util.h"

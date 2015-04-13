@@ -455,6 +455,12 @@
     <ClInclude Include="training_momentum.h">
       <Filter>Header Files\training\trainer</Filter>
     </ClInclude>
+    <ClInclude Include="raw_data_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="varying_data_stream_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -780,6 +786,12 @@
     </ClCompile>
     <ClCompile Include="training_momentum.cpp">
       <Filter>Source Files\training\trainer</Filter>
+    </ClCompile>
+    <ClCompile Include="raw_data_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="varying_data_stream_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
