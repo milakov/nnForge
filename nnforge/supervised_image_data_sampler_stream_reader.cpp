@@ -169,6 +169,7 @@ namespace nnforge
 		if (entry_id % position_list.size())
 			throw std::runtime_error("rewind is only partlially implemented for supervised_image_data_sampler_stream_reader");
 
+		current_sample_id = 0;
 		supervised_image_stream_reader::rewind(entry_id / static_cast<unsigned int>(position_list.size()));
 	}
 

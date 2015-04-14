@@ -62,8 +62,6 @@ namespace nnforge
 
 		virtual void rewind(unsigned int entry_id);
 
-		bool entry_available();
-
 		virtual unsigned int get_sample_count() const;
 
 	protected:
