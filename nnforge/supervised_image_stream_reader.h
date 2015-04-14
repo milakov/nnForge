@@ -37,7 +37,7 @@ namespace nnforge
 		// The constructor modifies input_stream to throw exceptions in case of failure
 		supervised_image_stream_reader(
 			nnforge_shared_ptr<std::istream> input_stream,
-			unsigned int target_image_width,
+			unsigned int target_image_width, // if target_image_width and target_image_height are 0 then read_image function will return original image
 			unsigned int target_image_height,
 			bool fit_into_target,
 			bool dynamic_output,

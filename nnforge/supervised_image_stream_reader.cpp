@@ -393,6 +393,12 @@ namespace nnforge
 	{
 		cv::Mat original_image = cv::imdecode(cv::InputArray(raw_data), is_color ? CV_LOAD_IMAGE_COLOR : CV_LOAD_IMAGE_GRAYSCALE);
 
+		if ((target_image_width == 0) && (target_image_height == 0))
+		{
+			image = original_image;
+			return;
+		}
+
 		float width_ratio = static_cast<float>(target_image_width) / static_cast<float>(original_image.cols);
 		float height_ratio = static_cast<float>(target_image_height) / static_cast<float>(original_image.rows);
 
