@@ -29,11 +29,16 @@ namespace nnforge
 		roc_result(
 			const output_neuron_value_set& predicted_value_set,
 			const output_neuron_value_set& actual_value_set,
+			float threshold = 0.5F,
+			float beta = 1.0F,
 			unsigned int segment_count = 1000,
 			float min_val = -2.0F,
 			float max_val = 2.0F);
 
-		float get_accuracy(float threshold) const;
+		float get_accuracy() const;
+
+		// See http://en.wikipedia.org/wiki/F1_score
+		float get_f_score() const;
 
 		float get_auc() const;
 
@@ -44,6 +49,8 @@ namespace nnforge
 
 		float min_val;
 		float max_val;
+		float threshold;
+		float beta;
 
 		unsigned int actual_positive_elem_count;
 		unsigned int actual_negative_elem_count;

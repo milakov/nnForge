@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,13 +23,19 @@ namespace nnforge
 	class testing_complete_result_set_roc_visualizer : public testing_complete_result_set_visualizer
 	{
 	public:
-		testing_complete_result_set_roc_visualizer();
+		testing_complete_result_set_roc_visualizer(
+			float threshold = 0.5F, // Used for accuracy and [optionally] for F-score
+			float beta = 1.0F); // Used for F-score
 
 		~testing_complete_result_set_roc_visualizer();
 
 		virtual void dump(
 			std::ostream& out,
 			const testing_complete_result_set& val) const;
+
+	public:
+		float threshold;
+		float beta;
 	};
 }
 

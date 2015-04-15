@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,11 @@
 
 namespace nnforge
 {
-	testing_complete_result_set_roc_visualizer::testing_complete_result_set_roc_visualizer()
+	testing_complete_result_set_roc_visualizer::testing_complete_result_set_roc_visualizer(
+		float threshold,
+		float beta)
+		: threshold(threshold)
+		, beta(beta)
 	{
 	}
 
@@ -36,7 +40,7 @@ namespace nnforge
 	{
 		testing_complete_result_set_visualizer::dump(out, val);
 
-		roc_result rr(*val.predicted_output_neuron_value_set, *val.actual_output_neuron_value_set);
+		roc_result rr(*val.predicted_output_neuron_value_set, *val.actual_output_neuron_value_set, threshold, beta);
 		out << ", " << rr;
 	}
 }
