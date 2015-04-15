@@ -1358,6 +1358,11 @@ namespace nnforge
 		snapshot_visualizer::save_ann_snapshot(data.data_list, layer_data_configuration_list_list, ann_snapshot_file_path.string().c_str());
 	}
 
+	float neural_network_toolset::get_threshold_for_binary_classifier() const
+	{
+		return 0.5F;
+	}
+
 	void neural_network_toolset::snapshot_invalid()
 	{
 		network_tester_smart_ptr tester = get_tester();
@@ -1986,7 +1991,7 @@ namespace nnforge
 		case network_output_type::type_classifier:
 			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_classifier_visualizer(get_classifier_visualizer_top_n()));
 		case network_output_type::type_roc:
-			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_roc_visualizer());
+			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_roc_visualizer(get_threshold_for_binary_classifier()));
 		default:
 			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_visualizer());
 		}

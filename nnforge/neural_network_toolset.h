@@ -142,6 +142,8 @@ namespace nnforge
 
 		virtual network_schema_smart_ptr load_schema() const;
 
+		virtual float get_threshold_for_binary_classifier() const;
+
 	protected:
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;
