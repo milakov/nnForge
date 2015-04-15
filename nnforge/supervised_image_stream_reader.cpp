@@ -87,7 +87,7 @@ namespace nnforge
 
 	void supervised_image_stream_reader::reset()
 	{
-		rewind(0);
+		entry_read_count = 0;
 	}
 
 	void supervised_image_stream_reader::read(
