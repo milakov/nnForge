@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,7 +30,10 @@ namespace nnforge
 	{
 	}
 
-	output_neuron_class_set::output_neuron_class_set(const output_neuron_value_set& neuron_value_set, unsigned int top_n)
+	output_neuron_class_set::output_neuron_class_set(
+		const output_neuron_value_set& neuron_value_set,
+		unsigned int top_n,
+		float threshold)
 		: top_n(top_n)
 		, class_id_list(neuron_value_set.neuron_value_list.size() * top_n)
 	{
@@ -85,7 +88,7 @@ namespace nnforge
 			{
 				const std::vector<float>& neuron_values = *it;
 				float val = neuron_values.front();
-				if (val >= 0.5F)
+				if (val >= threshold)
 				{
 					best_elems[0] = 1;
 					best_elems[1] = 0;

@@ -1365,6 +1365,9 @@ namespace nnforge
 
 	void neural_network_toolset::snapshot_invalid()
 	{
+		boost::filesystem::path snapshot_invalid_folder = get_working_data_folder() / snapshot_data_subfolder_name / snapshot_invalid_subfolder_name;
+		boost::filesystem::create_directories(snapshot_invalid_folder);
+
 		network_tester_smart_ptr tester = get_tester();
 
 		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
@@ -1375,29 +1378,40 @@ namespace nnforge
 		output_neuron_value_set_smart_ptr actual_neuron_value_set = reader_and_sample_count.first->get_output_neuron_value_set(reader_and_sample_count.second);
 
 		testing_complete_result_set testing_res(get_error_function(), actual_neuron_value_set);
-		if (reader_and_sample_count.first->get_output_configuration().get_neuron_count() == 1)
-			throw "Invalid snapshots is not implemented for single output neuron configuration";
 		tester->test(
 			*reader_and_sample_count.first,
 			testing_res);
 
-		output_neuron_class_set predicted_cs(*testing_res.predicted_output_neuron_value_set, 1);
-		output_neuron_class_set actual_cs(*testing_res.actual_output_neuron_value_set, 1);
+		output_neuron_class_set predicted_cs(*testing_res.predicted_output_neuron_value_set, 1, get_threshold_for_binary_classifier());
+		output_neuron_class_set actual_cs(*testing_res.actual_output_neuron_value_set, 1, get_threshold_for_binary_classifier());
 		classifier_result cr(predicted_cs, actual_cs);
 
 		reader_and_sample_count.first->reset();
 
 		tester->set_input_configuration_specific(reader_and_sample_count.first->get_input_configuration());
 
-		std::vector<unsigned char> input(reader_and_sample_count.first->get_input_configuration().get_neuron_count() * reader_and_sample_count.first->get_input_neuron_elem_size());
+		layer_configuration_specific_snapshot sn(reader_and_sample_count.first->get_input_configuration());
+		std::vector<unsigned int> snapshot_data_dimension_list = get_snapshot_data_dimension_list(static_cast<unsigned int>(sn.config.dimension_sizes.size()));
 		unsigned int entry_id = 0;
 		std::vector<unsigned int>::const_iterator actual_it = cr.actual_class_id_list.begin();
+		unsigned int invalid_count = 0;
 		for(std::vector<unsigned int>::const_iterator it = cr.predicted_class_id_list.begin();
 			it != cr.predicted_class_id_list.end();
 			++it, ++actual_it)
 		{
-			if (!reader_and_sample_count.first->read(&(*input.begin()), 0))
-				throw std::runtime_error("Not enough entries");
+			if (reader_and_sample_count.first->get_input_type() == neuron_data_type::type_float)
+			{
+				if (!reader_and_sample_count.first->read(&(sn.data[0]), 0))
+					throw std::runtime_error("Not enough entries");
+			}
+			else
+			{
+				std::vector<unsigned char> buf(sn.data.size());
+				if (!reader_and_sample_count.first->read(&(*buf.begin())))
+					throw std::runtime_error("Not enough entries");
+				for(int i = 0; i < sn.data.size(); ++i)
+					sn.data[i] = static_cast<float>(buf[i]) * (1.0F / 255.0F);
+			}
 			for(unsigned int i = 1; i < reader_and_sample_count.second; ++i)
 				if (!reader_and_sample_count.first->read(0, 0))
 					throw std::runtime_error("Not enough entries");
@@ -1408,10 +1422,41 @@ namespace nnforge
 			if (predicted_class_id != actual_class_id)
 			{
 				std::cout << "Actual: " << get_class_name_by_id(actual_class_id) << ", Predicted: " << get_class_name_by_id(predicted_class_id) << ", Entry ID: " << entry_id << std::endl;
+				++invalid_count;
+
+				if (snapshot_data_dimension_list.size() == 2)
+				{
+					boost::filesystem::path snapshot_file_path = snapshot_invalid_folder / (boost::format("snapshot_actual_%1%_predicted_%2%_entry_id_%3%.%4%") % get_class_name_by_id(actual_class_id) % get_class_name_by_id(predicted_class_id) % entry_id % snapshot_extension).str();
+
+					snapshot_visualizer::save_2d_snapshot(
+						sn,
+						snapshot_file_path.string().c_str(),
+						is_rgb_input() && (sn.config.feature_map_count == 3),
+						true,
+						snapshot_scale,
+						snapshot_data_dimension_list);
+				}
+				else if (snapshot_data_dimension_list.size() == 3)
+				{
+					boost::filesystem::path snapshot_file_path = snapshot_invalid_folder / (boost::format("snapshot_actual_%1%_predicted_%2%_entry_id_%3%.%4%") % get_class_name_by_id(actual_class_id) % get_class_name_by_id(predicted_class_id) % entry_id % snapshot_extension_video).str();
+
+					snapshot_visualizer::save_3d_snapshot(
+						sn,
+						snapshot_file_path.string().c_str(),
+						is_rgb_input() && (sn.config.feature_map_count == 3),
+						true,
+						snapshot_video_fps,
+						snapshot_scale,
+						snapshot_data_dimension_list);
+				}
+				else
+					throw neural_network_exception((boost::format("Saving snapshot for %1% dimensions is not implemented") % snapshot_data_dimension_list.size()).str());
 			}
 
 			entry_id++;
 		}
+
+		std::cout << invalid_count << " wrongly classified entries saved" << std::endl;
 	}
 
 	unsigned int neural_network_toolset::get_classifier_visualizer_top_n() const
