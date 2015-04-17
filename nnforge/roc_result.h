@@ -42,6 +42,10 @@ namespace nnforge
 
 		float get_auc() const;
 
+		float get_precision() const;
+
+		float get_recall() const;
+
 		unsigned int segment_count;
 
 		std::vector<unsigned int> values_for_positive_elems;

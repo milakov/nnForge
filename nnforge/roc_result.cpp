@@ -97,6 +97,26 @@ namespace nnforge
 			((1.0F + beta * beta) * static_cast<float>(true_positive) + (beta * beta) * static_cast<float>(false_negative) + static_cast<float>(false_positive));
 	}
 
+	float roc_result::get_precision() const
+	{
+		unsigned int starting_segment_id = static_cast<unsigned int>(std::max(std::min((threshold - min_val) / (max_val - min_val), 1.0F), 0.0F) * static_cast<float>(segment_count));
+
+		unsigned int true_positive = std::accumulate(values_for_positive_elems.begin() + starting_segment_id, values_for_positive_elems.end(), 0);
+		unsigned int false_positive = std::accumulate(values_for_positive_elems.begin(), values_for_positive_elems.begin() + starting_segment_id, 0);
+
+		return static_cast<float>(true_positive) / (static_cast<float>(true_positive) + static_cast<float>(false_positive));
+	}
+
+	float roc_result::get_recall() const
+	{
+		unsigned int starting_segment_id = static_cast<unsigned int>(std::max(std::min((threshold - min_val) / (max_val - min_val), 1.0F), 0.0F) * static_cast<float>(segment_count));
+
+		unsigned int true_positive = std::accumulate(values_for_positive_elems.begin() + starting_segment_id, values_for_positive_elems.end(), 0);
+		unsigned int false_negative = std::accumulate(values_for_negative_elems.begin() + starting_segment_id, values_for_negative_elems.end(), 0);
+
+		return static_cast<float>(true_positive) / (static_cast<float>(true_positive) + static_cast<float>(false_negative));
+	}
+
 	float roc_result::get_auc() const
 	{
 		std::vector<float> true_positive_rates;
@@ -144,7 +164,7 @@ namespace nnforge
 
 	std::ostream& operator<< (std::ostream& out, const roc_result& val)
 	{
-		out << (boost::format("AUC %|1$.5f|, Accuracy %|2$.5f| (at %|3$.3f|), F-score %|4$.5f| (beta %|5$.3f|)") % val.get_auc() % val.get_accuracy() % val.threshold % val.get_f_score() % val.beta).str();
+		out << (boost::format("AUC %|1$.5f|, (using threshold %|2$.3f|) Accuracy %|3$.5f|, Precision %|4$.5f|, Recall %|5$.5f|, F-score %|6$.5f| (beta %|7$.3f|)") % val.get_auc() % val.threshold % val.get_accuracy() % val.get_precision() % val.get_recall() % val.get_f_score() % val.beta).str();
 
 		return out;
 	}
