@@ -461,6 +461,9 @@
     <ClInclude Include="varying_data_stream_reader.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
+    <ClInclude Include="uniform_intensity_data_transformer.h">
+      <Filter>Header Files\data_transformers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -792,6 +795,9 @@
     </ClCompile>
     <ClCompile Include="varying_data_stream_reader.cpp">
       <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="uniform_intensity_data_transformer.cpp">
+      <Filter>Source Files\data_transformers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

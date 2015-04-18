@@ -65,6 +65,7 @@
 #include "convert_to_polar_data_transformer.h"
 #include "reshape_data_transformer.h"
 #include "elastic_deformation_2d_data_transformer.h"
+#include "uniform_intensity_data_transformer.h"
 
 #include "mse_error_function.h"
 #include "squared_hinge_loss_error_function.h"
