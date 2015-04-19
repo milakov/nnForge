@@ -35,9 +35,21 @@ namespace nnforge
 	void save_resume_network_data_pusher::push(const training_task_state& task_state)
 	{
 		unsigned int index = task_state.index_peeked;
-		network_data_smart_ptr data = task_state.data;
 
-		std::string filename = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|.data") % index % task_state.get_current_epoch()).str();
+		std::string data_filename = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|.data") % index % task_state.get_current_epoch()).str();
+		save_data_to_file(task_state.data, data_filename);
+
+		std::string momentum_data_filename = (boost::format("momentum_%|1$03d|.data") % index).str();
+		if (task_state.momentum_data)
+			save_data_to_file(task_state.momentum_data, momentum_data_filename);
+		else
+			boost::filesystem::remove(momentum_data_filename);
+	}
+
+	void save_resume_network_data_pusher::save_data_to_file(
+		network_data_smart_ptr data,
+		std::string filename) const
+	{
 		std::string temp_filename = filename + ".temp";
 
 		boost::filesystem::path filepath = folder_path / filename;

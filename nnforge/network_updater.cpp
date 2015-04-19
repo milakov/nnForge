@@ -52,6 +52,7 @@ namespace nnforge
 		supervised_data_reader& reader,
 		const std::vector<std::vector<float> >& learning_rates,
 		network_data_smart_ptr data,
+		network_data_smart_ptr momentum_data,
 		unsigned int batch_size,
 		float weight_decay,
 		training_momentum momentum,
@@ -65,7 +66,15 @@ namespace nnforge
 		// Check schema-reader consistency
 		layer_config_list[layer_config_list.size() - 1].check_equality(reader.get_output_configuration());
 
-		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = actual_update(reader, learning_rates, data, batch_size, weight_decay, momentum, deterministic_only);
+		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> res = actual_update(
+			reader,
+			learning_rates,
+			data,
+			momentum_data,
+			batch_size,
+			weight_decay,
+			momentum,
+			deterministic_only);
 
 		return res;
 	}

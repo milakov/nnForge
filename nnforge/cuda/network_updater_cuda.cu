@@ -292,6 +292,7 @@ namespace nnforge
 			supervised_data_reader& reader,
 			const std::vector<std::vector<float> >& learning_rates,
 			network_data_smart_ptr data,
+			network_data_smart_ptr momentum_data,
 			unsigned int batch_size,
 			float weight_decay,
 			training_momentum momentum,
@@ -326,7 +327,7 @@ namespace nnforge
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > gradient = get_zero_gradient(net_data);
 			std::vector<std::vector<cuda_linear_buffer_device_smart_ptr> > previous_upd;
 			if (momentum.type != training_momentum::no_momentum)
-				previous_upd = get_zero_gradient(net_data);
+				previous_upd = get_data(momentum_data);
 
 			unsigned int updater_max_count;
 			{
@@ -794,6 +795,9 @@ namespace nnforge
 			}
 
 			read_data(net_data, data, *command_stream);
+
+			if (momentum.type != training_momentum::no_momentum)
+				read_data(previous_upd, momentum_data, *command_stream);
 
 			double error;
 			cuda_safe_call(cudaMemcpyAsync(&error, *error_buf, sizeof(double), cudaMemcpyDeviceToHost, *command_stream));

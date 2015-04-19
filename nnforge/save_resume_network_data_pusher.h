@@ -32,6 +32,11 @@ namespace nnforge
 		virtual void push(const training_task_state& task_state);
 
 	private:
+		void save_data_to_file(
+			network_data_smart_ptr data,
+			std::string filename) const;
+
+	private:
 		boost::filesystem::path folder_path;
 	};
 }

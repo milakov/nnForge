@@ -43,6 +43,7 @@ namespace nnforge
 				supervised_data_reader& reader,
 				const std::vector<std::vector<float> >& learning_rates,
 				network_data_smart_ptr data,
+				network_data_smart_ptr momentum_data,
 				unsigned int batch_size,
 				float weight_decay,
 				training_momentum momentum,

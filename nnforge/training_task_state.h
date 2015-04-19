@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ namespace nnforge
 
 		unsigned int index_peeked;
 		network_data_smart_ptr data;
+		network_data_smart_ptr momentum_data;
 		std::vector<std::pair<testing_result_smart_ptr, training_stat_smart_ptr> > history;
 		std::vector<std::string> comments;
 		unsigned int initial_epoch;

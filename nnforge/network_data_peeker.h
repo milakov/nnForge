@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ namespace nnforge
 	{
 		unsigned int index;
 		network_data_smart_ptr data;
+		network_data_smart_ptr momentum_data;
 		unsigned int start_epoch;
 	};
 

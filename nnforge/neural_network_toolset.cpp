@@ -1726,12 +1726,24 @@ namespace nnforge
 			network_data_peek_entry new_item;
 			new_item.index = it->first;
 			new_item.start_epoch = it->second;
-			std::string filename = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|.data") % new_item.index % new_item.start_epoch).str();
-			boost::filesystem::path filepath = resume_ann_folder_path / filename;
-			new_item.data = network_data_smart_ptr(new network_data());
+			
 			{
+				std::string filename = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|.data") % new_item.index % new_item.start_epoch).str();
+				boost::filesystem::path filepath = resume_ann_folder_path / filename;
+				new_item.data = network_data_smart_ptr(new network_data());
 				boost::filesystem::ifstream in(filepath, std::ios_base::in | std::ios_base::binary);
 				new_item.data->read(in);
+			}
+
+			{
+				std::string momentum_filename = (boost::format("momentum_%|1$03d|.data") % new_item.index).str();
+				boost::filesystem::path momentum_filepath = resume_ann_folder_path / momentum_filename;
+				if (boost::filesystem::exists(momentum_filepath))
+				{
+					new_item.momentum_data = network_data_smart_ptr(new network_data());
+					boost::filesystem::ifstream in(momentum_filepath, std::ios_base::in | std::ios_base::binary);
+					new_item.momentum_data->read(in);
+				}
 			}
 
 			res.push_back(new_item);
@@ -1825,6 +1837,7 @@ namespace nnforge
 			*training_data_reader,
 			learning_rates,
 			data,
+			network_data_smart_ptr(),
 			batch_size,
 			weight_decay,
 			training_momentum(momentum_type_str, momentum_val),
@@ -1936,6 +1949,7 @@ namespace nnforge
 						*training_data_reader,
 						learning_rates,
 						data,
+						network_data_smart_ptr(),
 						1,
 						0.0F,
 						training_momentum(),
@@ -1960,6 +1974,7 @@ namespace nnforge
 								*training_data_reader,
 								learning_rates,
 								data,
+								network_data_smart_ptr(),
 								1,
 								0.0F,
 								training_momentum(),

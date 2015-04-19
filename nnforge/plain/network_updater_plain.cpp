@@ -81,6 +81,7 @@ namespace nnforge
 			supervised_data_reader& reader,
 			const std::vector<std::vector<float> >& learning_rates,
 			network_data_smart_ptr data,
+			network_data_smart_ptr momentum_data,
 			unsigned int batch_size,
 			float weight_decay,
 			training_momentum momentum,
@@ -127,12 +128,6 @@ namespace nnforge
 
 			layer_data_list_smart_ptr gradient(new layer_data_list(*schema));
 			gradient->fill(0.0F);
-			layer_data_list_smart_ptr previous_upd;
-			if (momentum.type != training_momentum::no_momentum)
-			{
-				previous_upd = layer_data_list_smart_ptr(new layer_data_list(*schema));
-				previous_upd->fill(0.0F);
-			}
 
 			{
 				buffer_plain_size_configuration buffers_config;
@@ -148,7 +143,7 @@ namespace nnforge
 						buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // data
 						buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // gradient
 						if (momentum.type != training_momentum::no_momentum)
-							buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // previous_upd
+							buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // momentum
 					}
 				}
 				for(std::vector<layer_data_custom_smart_ptr>::iterator it = data->data_custom_list.begin(); it != data->data_custom_list.end(); ++it)
@@ -156,6 +151,8 @@ namespace nnforge
 					for(layer_data_custom::const_iterator it2 = (*it)->begin(); it2 != (*it)->end(); ++it2)
 					{
 						buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // data
+						if (momentum.type != training_momentum::no_momentum)
+							buffers_config.add_constant_buffer(it2->size() * sizeof(float)); // momentum
 					}
 				}
 
@@ -425,7 +422,7 @@ namespace nnforge
 						apply_gradient(
 							data->data_list,
 							*gradient,
-							*previous_upd,
+							momentum_data->data_list,
 							updates_accumulated,
 							learning_rates,
 							gradient_normalizer,
@@ -443,7 +440,7 @@ namespace nnforge
 				apply_gradient(
 					data->data_list,
 					*gradient,
-					*previous_upd,
+					momentum_data->data_list,
 					updates_accumulated,
 					learning_rates,
 					gradient_normalizer,

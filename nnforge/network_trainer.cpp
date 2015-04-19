@@ -55,6 +55,22 @@ namespace nnforge
 			training_task_state new_task;
 			new_task.index_peeked = entry_peeked.index;
 			new_task.data = entry_peeked.data;
+
+			bool empty_momentum = false;
+			if (momentum.type == training_momentum::no_momentum)
+				new_task.momentum_data = network_data_smart_ptr();
+			else
+			{
+				if (entry_peeked.momentum_data)
+					new_task.momentum_data = entry_peeked.momentum_data;
+				else
+				{
+					new_task.momentum_data = network_data_smart_ptr(new network_data(*schema));
+					if (new_task.index_peeked > 0)
+						empty_momentum = true;
+				}
+			}
+			
 			new_task.initial_epoch = entry_peeked.start_epoch;
 
 			if (is_last_epoch(new_task))
@@ -63,7 +79,10 @@ namespace nnforge
 				continue;
 			}
 
-			std::cout << "New task allocated: Index " << new_task.index_peeked << ", Base epoch " << new_task.initial_epoch << std::endl;
+			std::cout << "New task allocated: Index " << new_task.index_peeked << ", Base epoch " << new_task.initial_epoch;
+			if (empty_momentum)
+				std::cout << ", Starting with empty momentum";
+			std::cout << std::endl;
 
 			if (new_task.initial_epoch > reader_epoch_id)
 			{
