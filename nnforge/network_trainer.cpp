@@ -66,7 +66,7 @@ namespace nnforge
 				else
 				{
 					new_task.momentum_data = network_data_smart_ptr(new network_data(*schema));
-					if (new_task.index_peeked > 0)
+					if (new_task.initial_epoch > 0)
 						empty_momentum = true;
 				}
 			}
