@@ -156,6 +156,11 @@ namespace nnforge
 		return layer_configuration_specific(input_configuration_specific);
 	}
 
+	layer_configuration_specific layer::get_input_layer_configuration_specific(const layer_configuration_specific& output_configuration_specific) const
+	{
+		return layer_configuration_specific(output_configuration_specific);
+	}
+
 	std::vector<std::pair<unsigned int, unsigned int> > layer::get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const
 	{
 		return output_rectangle_borders;

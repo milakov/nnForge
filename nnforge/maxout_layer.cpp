@@ -86,6 +86,11 @@ namespace nnforge
 		return layer_configuration_specific(input_configuration_specific.feature_map_count / feature_map_subsampling_size, input_configuration_specific.dimension_sizes);
 	}
 
+	layer_configuration_specific maxout_layer::get_input_layer_configuration_specific(const layer_configuration_specific& output_configuration_specific) const
+	{
+		return layer_configuration_specific(output_configuration_specific.feature_map_count * feature_map_subsampling_size, output_configuration_specific.dimension_sizes);
+	}
+
 	void maxout_layer::write(std::ostream& binary_stream_to_write_to) const
 	{
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&feature_map_subsampling_size), sizeof(feature_map_subsampling_size));

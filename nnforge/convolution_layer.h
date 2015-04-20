@@ -38,6 +38,8 @@ namespace nnforge
 
 		virtual layer_configuration_specific get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
 
+		virtual layer_configuration_specific get_input_layer_configuration_specific(const layer_configuration_specific& output_configuration_specific) const;
+
 		virtual std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const;
 
 		virtual layer_data_configuration_list get_layer_data_configuration_list() const;

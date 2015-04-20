@@ -179,6 +179,19 @@ namespace nnforge
 		return res;
 	}
 
+	layer_configuration_specific_list network_schema::get_layer_configuration_specific_list_reverse(const layer_configuration_specific& output_layer_configuration_specific) const
+	{
+		layer_configuration_specific_list res;
+
+		res.resize(layers.size() + 1);
+		res[layers.size()] = output_layer_configuration_specific;
+
+		for(unsigned int i = static_cast<unsigned int>(layers.size()); i > 0; --i)
+			res[i - 1] = (layers[i - 1]->get_input_layer_configuration_specific(res[i]));
+
+		return res;
+	}
+
 	std::vector<std::pair<unsigned int, unsigned int> > network_schema::get_input_rectangle_borders(
 		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
 		unsigned int output_layer_id) const
@@ -191,3 +204,4 @@ namespace nnforge
 		return input_rectangle_borders;
 	}
 }
+

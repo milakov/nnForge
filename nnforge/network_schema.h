@@ -56,6 +56,9 @@ namespace nnforge
 		// The result includes input configuration
 		layer_configuration_specific_list get_layer_configuration_specific_list(const layer_configuration_specific& input_layer_configuration_specific) const;
 
+		// The result includes output configuration
+		layer_configuration_specific_list get_layer_configuration_specific_list_reverse(const layer_configuration_specific& output_layer_configuration_specific) const;
+
 		// Returns minimal input rectangle which is quasi-transformed into output one covering the rectangle supplied
 		std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(
 			const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,

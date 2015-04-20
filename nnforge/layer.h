@@ -45,6 +45,8 @@ namespace nnforge
 
 		virtual layer_configuration_specific get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
 
+		virtual layer_configuration_specific get_input_layer_configuration_specific(const layer_configuration_specific& output_configuration_specific) const;
+
 		// Returns minimal input rectangle which this layer quasi-transforms into output one covering the one supplied as an argument to the function
 		// "Quasi" means that we don't take into account "soft" effects from nearby neurons, for example when doing local contrast subtracting blurred version
 		virtual std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const;
