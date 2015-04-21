@@ -66,6 +66,11 @@
 #include "reshape_data_transformer.h"
 #include "elastic_deformation_2d_data_transformer.h"
 #include "uniform_intensity_data_transformer.h"
+#include "embed_data_transformer.h"
+
+#include "unsupervised_transformed_input_data_reader.h"
+#include "supervised_transformed_input_data_reader.h"
+#include "supervised_transformed_output_data_reader.h"
 
 #include "mse_error_function.h"
 #include "squared_hinge_loss_error_function.h"
