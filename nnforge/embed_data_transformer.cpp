@@ -59,8 +59,8 @@ namespace nnforge
 		std::vector<unsigned int> dst_offset_list;
 		for(unsigned int i = 0; i < dimension_sizes.size(); ++i)
 		{
-			if (dimension_sizes[i] < output_sizes[i] + left_padding[i])
-				throw neural_network_exception((boost::format("Dimension %1% of original config has %2% size while minimum is %3%") % i % dimension_sizes[i] % (output_sizes[i] - left_padding[i])).str());
+			if (dimension_sizes[i] > output_sizes[i] - left_padding[i])
+				throw neural_network_exception((boost::format("Dimension %1% of original config has %2% size while maximum is %3%") % i % dimension_sizes[i] % (output_sizes[i] - left_padding[i])).str());
 			dst_offset_list.push_back(left_padding[i]);
 		}
 
