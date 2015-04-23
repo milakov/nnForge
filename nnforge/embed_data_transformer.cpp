@@ -79,7 +79,7 @@ namespace nnforge
 			{
 				unsigned int dst_offset = src_pos_list.back() + dst_offset_list.back();
 				for(int i = static_cast<int>(dimension_sizes.size()) - 2; i >= 0; --i)
-					dst_offset = dst_offset * dimension_sizes[i] + src_pos_list[i] + dst_offset_list[i];
+					dst_offset = dst_offset * output_sizes[i] + src_pos_list[i] + dst_offset_list[i];
 
 				memcpy(dst_begin + dst_offset, src, dimension_sizes[0]);
 				src += dimension_sizes[0];
