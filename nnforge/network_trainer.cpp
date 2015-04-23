@@ -55,6 +55,7 @@ namespace nnforge
 			training_task_state new_task;
 			new_task.index_peeked = entry_peeked.index;
 			new_task.data = entry_peeked.data;
+			new_task.initial_epoch = entry_peeked.start_epoch;
 
 			bool empty_momentum = false;
 			if (momentum.type == training_momentum::no_momentum)
@@ -71,8 +72,6 @@ namespace nnforge
 				}
 			}
 			
-			new_task.initial_epoch = entry_peeked.start_epoch;
-
 			if (is_last_epoch(new_task))
 			{
 				std::cout << "Warning: Task is allocated which is already complete. Index " << new_task.index_peeked << ", Base epoch " << new_task.initial_epoch << std::endl;
