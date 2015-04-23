@@ -192,7 +192,7 @@ namespace nnforge
 		boost::program_options::options_description gener("Generic options");
 		gener.add_options()
 			("help", "produce help message")
-			("action,A", boost::program_options::value<std::string>(&action)->default_value(get_default_action()), "run action (info, convert_schema, convert_input_normalizer, convert_output_normalizer, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, test_batch, validate, validate_batch, validate_infinite, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
+			("action,A", boost::program_options::value<std::string>(&action)->default_value(get_default_action()), "run action (info, convert_schema, convert_input_normalizer, convert_output_normalizer, prepare_training_data, prepare_testing_data, randomize_data, generate_input_normalizer, generate_output_normalizer, test, validate, train, snapshot, snapshot_data, snapshot_invalid, ann_snapshot, profile_updater, check_gradient)")
 			("config,C", boost::program_options::value<boost::filesystem::path>(&config_file)->default_value(default_config_path), "path to the configuration file.")
 			;
 
@@ -680,10 +680,12 @@ namespace nnforge
 				tester->set_data(data);
 
 				testing_complete_result_set testing_res(get_error_function(), actual_neuron_value_set);
+
 				tester->test(
 					reader,
 					testing_res);
-				std::cout << "# " << index << ", ";
+
+				std::cout << "Network # " << index << ", ";
 				get_validating_visualizer()->dump(std::cout, testing_res);
 				std::cout << std::endl;
 
@@ -729,10 +731,17 @@ namespace nnforge
 				boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 				output_neuron_value_set_smart_ptr new_res = tester->run(reader, sample_count);
 				boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
+				float time_to_complete_seconds = sec.count();
 
 				tester->clear_data();
 
-				std::cout << "# " << index;
+				std::cout << "Network # " << index;
+				if (time_to_complete_seconds != 0.0F)
+				{
+					float flops = tester->get_flops_for_single_entry() * static_cast<float>(reader.get_entry_count());
+					float gflops = flops / time_to_complete_seconds * 1.0e-9F;
+					std::cout << (boost::format(" (%|1$.1f| GFLOPs, %|2$.2f| seconds)") % gflops % time_to_complete_seconds);
+				}
 				std::cout << std::endl;
 
 				predicted_neuron_value_set_list.push_back(new_res);
