@@ -29,6 +29,16 @@ namespace nnforge
 	{
 	}
 
+	bool layer::is_empty_data() const
+	{
+		return get_data_config().empty();
+	}
+
+	bool layer::is_empty_data_custom() const
+	{
+		return get_data_custom_config().empty();
+	}
+
 	layer_data_smart_ptr layer::create_layer_data() const
 	{
 		layer_data_smart_ptr res(new layer_data());
@@ -121,19 +131,6 @@ namespace nnforge
 
 	void layer::write_proto(void * layer_proto) const
 	{
-	}
-
-	bool layer::is_empty_data() const
-	{
-		data_config dc = get_data_config();
-
-		for(std::vector<unsigned int>::const_iterator it = dc.begin(); it != dc.end(); it++)
-		{
-			if (*it > 0)
-				return false;
-		}
-
-		return true;
 	}
 
 	float layer::get_weights_update_flops(const layer_configuration_specific& input_configuration_specific) const

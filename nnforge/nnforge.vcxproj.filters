@@ -467,6 +467,9 @@
     <ClInclude Include="embed_data_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
     </ClInclude>
+    <ClInclude Include="layer_data_custom_list.h">
+      <Filter>Header Files\network_data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -804,6 +807,9 @@
     </ClCompile>
     <ClCompile Include="embed_data_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
+    </ClCompile>
+    <ClCompile Include="layer_data_custom_list.cpp">
+      <Filter>Source Files\network_data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

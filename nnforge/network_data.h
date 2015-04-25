@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include "nn_types.h"
 #include "rnd.h"
 #include "layer_data_list.h"
+#include "layer_data_custom_list.h"
 
 #include <vector>
 #include <ostream>
@@ -39,6 +40,9 @@ namespace nnforge
 		const boost::uuids::uuid& get_uuid() const;
 
 		network_data(const const_layer_list& layer_list, float val = 0.0F);
+
+		// This constructor maps existing network data to layer list effectively allowing any number of empty data layers
+		network_data(const const_layer_list& layer_list, const network_data& other);
 
 		// The stream should be created with std::ios_base::binary flag
 		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure

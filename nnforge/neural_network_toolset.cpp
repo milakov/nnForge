@@ -620,7 +620,10 @@ namespace nnforge
 	{
 		network_schema_smart_ptr schema(new network_schema());
 		{
-			boost::filesystem::ifstream in(get_working_data_folder() / schema_filename, std::ios_base::in);
+			boost::filesystem::path filepath = get_working_data_folder() / schema_filename;
+			if (!boost::filesystem::exists(filepath))
+				throw neural_network_exception((boost::format("Error loading schema, file not found: %1%") % filepath.string()).str());
+			boost::filesystem::ifstream in(filepath, std::ios_base::in);
 			schema->read_proto(in);
 		}
 		return schema;
@@ -636,13 +639,16 @@ namespace nnforge
 		return analyzer_factory->create(load_schema());
 	}
 
-	network_data_smart_ptr neural_network_toolset::load_ann_data(unsigned int ann_id)
+	network_data_smart_ptr neural_network_toolset::load_ann_data(
+		unsigned int ann_id,
+		const_network_schema_smart_ptr schema)
 	{
 		boost::filesystem::path data_filepath = get_working_data_folder() / get_ann_subfolder_name() / (boost::format("ann_trained_%|1$03d|.data") % ann_id).str();
 		network_data_smart_ptr data(new network_data());
 		{
 			boost::filesystem::ifstream in(data_filepath, std::ios_base::in | std::ios_base::binary);
 			data->read(in);
+			data = network_data_smart_ptr(new network_data(*schema, *data));
 		}
 		return data;
 	}
@@ -675,6 +681,7 @@ namespace nnforge
 				{
 					boost::filesystem::ifstream in(file_path, std::ios_base::in | std::ios_base::binary);
 					data->read(in);
+					data = network_data_smart_ptr(new network_data(*tester->get_schema(), *data));
 				}
 
 				tester->set_data(data);
@@ -724,6 +731,7 @@ namespace nnforge
 				{
 					boost::filesystem::ifstream in(file_path, std::ios_base::in | std::ios_base::binary);
 					data->read(in);
+					data = network_data_smart_ptr(new network_data(*tester->get_schema(), *data));
 				}
 
 				tester->set_data(data);
@@ -1152,7 +1160,9 @@ namespace nnforge
 		boost::filesystem::path snapshot_folder = get_working_data_folder() / snapshot_subfolder_name;
 		boost::filesystem::create_directories(snapshot_folder);
 
-		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
+		network_schema_smart_ptr schema = load_schema();
+
+		network_data_smart_ptr data = load_ann_data(snapshot_ann_index, schema);
 
 		std::pair<unsupervised_data_reader_smart_ptr, unsigned int> reader_and_sample_count = get_data_reader_and_sample_count_for_snapshots();
 		unsupervised_data_reader_smart_ptr reader = reader_and_sample_count.first;
@@ -1193,7 +1203,6 @@ namespace nnforge
 
 		reader->reset();
 
-		network_schema_smart_ptr schema = load_schema();
 		layer_configuration_specific_list layer_config_list = schema->get_layer_configuration_specific_list(reader->get_input_configuration());
 
 		network_analyzer_smart_ptr analyzer = get_analyzer();
@@ -1302,7 +1311,7 @@ namespace nnforge
 	void neural_network_toolset::ann_snapshot()
 	{
 		network_schema_smart_ptr schema = load_schema();
-		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
+		network_data_smart_ptr data = load_ann_data(snapshot_ann_index, schema);
 
 		if (snapshot_ann_type == "image")
 		{
@@ -1379,7 +1388,7 @@ namespace nnforge
 
 		network_tester_smart_ptr tester = get_tester();
 
-		network_data_smart_ptr data = load_ann_data(snapshot_ann_index);
+		network_data_smart_ptr data = load_ann_data(snapshot_ann_index, tester->get_schema());
 
 		tester->set_data(data);
 
@@ -1730,6 +1739,8 @@ namespace nnforge
 
 		std::map<unsigned int, unsigned int> resume_ann_list = get_resume_ann_list(trained_ann_list);
 
+		network_schema_smart_ptr schema = load_schema();
+
 		for(std::map<unsigned int, unsigned int>::const_iterator it = resume_ann_list.begin(); it != resume_ann_list.end(); ++it)
 		{
 			network_data_peek_entry new_item;
@@ -1742,6 +1753,7 @@ namespace nnforge
 				new_item.data = network_data_smart_ptr(new network_data());
 				boost::filesystem::ifstream in(filepath, std::ios_base::in | std::ios_base::binary);
 				new_item.data->read(in);
+				new_item.data = network_data_smart_ptr(new network_data(*schema, *new_item.data));
 			}
 
 			{
@@ -1752,6 +1764,7 @@ namespace nnforge
 					new_item.momentum_data = network_data_smart_ptr(new network_data());
 					boost::filesystem::ifstream in(momentum_filepath, std::ios_base::in | std::ios_base::binary);
 					new_item.momentum_data->read(in);
+					new_item.momentum_data = network_data_smart_ptr(new network_data(*schema, *new_item.momentum_data));
 				}
 			}
 

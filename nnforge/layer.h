@@ -101,9 +101,11 @@ namespace nnforge
 			layer_data_custom& data_custom,
 			random_generator& generator) const;
 
+		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;
+
 		bool is_empty_data() const;
 
-		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;
+		bool is_empty_data_custom() const;
 
 	public:
 		std::string instance_name;

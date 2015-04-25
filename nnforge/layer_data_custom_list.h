@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,26 +16,23 @@
 
 #pragma once
 
-#include "nn_types.h"
+#include "layer_data_custom.h"
+#include "layer.h"
 
 #include <vector>
-#include <ostream>
-#include <istream>
 
 namespace nnforge
 {
-	class layer_data_custom : public std::vector<std::vector<int> >
+	class layer_data_custom_list : public std::vector<layer_data_custom_smart_ptr>
 	{
 	public:
-		layer_data_custom();
+		layer_data_custom_list();
 
-		// The stream should be created with std::ios_base::binary flag
-		void write(std::ostream& binary_stream_to_write_to) const;
+		layer_data_custom_list(const const_layer_list& layer_list);
 
-		// The stream should be created with std::ios_base::binary flag
-		void read(std::istream& binary_stream_to_read_from);
+		void check_consistency(const const_layer_list& layer_list) const;
 	};
 
-	typedef nnforge_shared_ptr<layer_data_custom> layer_data_custom_smart_ptr;
-	typedef nnforge_shared_ptr<const layer_data_custom> const_layer_data_custom_smart_ptr;
+	typedef nnforge_shared_ptr<layer_data_custom_list> layer_data_custom_list_smart_ptr;
+	typedef nnforge_shared_ptr<const layer_data_custom_list> const_layer_data_custom_list_smart_ptr;
 }

@@ -81,4 +81,5 @@ namespace nnforge
 	};
 
 	typedef nnforge_shared_ptr<network_schema> network_schema_smart_ptr;
+	typedef nnforge_shared_ptr<const network_schema> const_network_schema_smart_ptr;
 }

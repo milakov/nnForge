@@ -179,13 +179,7 @@ void image_classifier_demo_toolset::run_classifier_loop()
 	{
 		nnforge::network_tester_smart_ptr tester = get_tester();
 		{
-			boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
-			boost::filesystem::path data_file_path = batch_folder / "ann_trained_000.data";
-			nnforge::network_data_smart_ptr data(new nnforge::network_data());
-			{
-				boost::filesystem::ifstream in(data_file_path, std::ios_base::in | std::ios_base::binary);
-				data->read(in);
-			}
+			nnforge::network_data_smart_ptr data = load_ann_data(0, tester->get_schema());
 			tester->set_data(data);
 		}
 		tester->set_input_configuration_specific(input_config);
@@ -214,7 +208,7 @@ void image_classifier_demo_toolset::run_classifier_loop()
 				std::partial_sort(full_output.begin(), full_output.begin() + top_n_actual, full_output.end(), compare_results);
 
 				nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > new_output(new std::vector<std::pair<unsigned int, float> >(top_n_actual));
-				for(int i = 0; i < top_n_actual; ++i)
+				for(unsigned int i = 0; i < top_n_actual; ++i)
 					new_output->at(i) = full_output[i];
 				safe_set_output_data(new_output);
 			}
@@ -376,7 +370,7 @@ void image_classifier_demo_toolset::init_input_config()
 	std::vector<std::pair<unsigned int, unsigned int> > output_rectangle_borders;
 	for(int i = 0; i < 2; ++i)
 		output_rectangle_borders.push_back(std::make_pair(0, 1));
-	std::vector<std::pair<unsigned int, unsigned int> > input_rectangle_borders = schema->get_input_rectangle_borders(output_rectangle_borders, layer_list.size() - 1);
+	std::vector<std::pair<unsigned int, unsigned int> > input_rectangle_borders = schema->get_input_rectangle_borders(output_rectangle_borders, static_cast<unsigned int>(layer_list.size() - 1));
 	std::vector<unsigned int> input_dimensions;
 	for(int i = 0; i < 2; ++i)
 		input_dimensions.push_back(input_rectangle_borders[i].second);

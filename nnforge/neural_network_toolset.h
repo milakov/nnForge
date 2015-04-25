@@ -246,7 +246,9 @@ namespace nnforge
 			const std::string& filename_prefix,
 			const network_data& data);
 
-		network_data_smart_ptr load_ann_data(unsigned int ann_id);
+		network_data_smart_ptr load_ann_data(
+			unsigned int ann_id,
+			const_network_schema_smart_ptr schema);
 
 		void train();
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,22 +46,54 @@ namespace nnforge
 
 	network_data::network_data(const const_layer_list& layer_list, float val)
 		: data_list(layer_list, val)
+		, data_custom_list(layer_list)
 	{
-		data_custom_list.resize(layer_list.size());
-		for(unsigned int i = 0; i < layer_list.size(); ++i)
+	}
+
+	network_data::network_data(const const_layer_list& layer_list, const network_data& other)
+	{
+		layer_data_list::const_iterator data_it = other.data_list.begin();
+		layer_data_custom_list::const_iterator data_custom_it = other.data_custom_list.begin();
+		for(const_layer_list::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
 		{
-			data_custom_list[i] = layer_list[i]->create_layer_data_custom();
+			bool empty_data = (*it)->is_empty_data() && (*it)->is_empty_data_custom();
+			if (empty_data)
+			{
+				data_list.push_back(layer_data_smart_ptr(new layer_data()));
+				data_custom_list.push_back(layer_data_custom_smart_ptr(new layer_data_custom()));
+			}
+			else
+			{
+				if (data_it == other.data_list.end())
+					throw neural_network_exception("data has less non-empty layers than schema does");
+				if (data_custom_it == other.data_custom_list.end())
+					throw neural_network_exception("custom data has less non-empty layers than schema does");
+
+				while ((*data_it)->empty() && (*data_custom_it)->empty())
+				{
+					if (data_it != other.data_list.end())
+						++data_it;
+					else
+						throw neural_network_exception("data has less non-empty layers than schema does");
+					if (data_custom_it != other.data_custom_list.end())
+						++data_custom_it;
+					else
+						throw neural_network_exception("custom data has less non-empty layers than schema does");
+				}
+
+				data_list.push_back(*data_it);
+				data_custom_list.push_back(*data_custom_it);
+
+				++data_it;
+				++data_custom_it;
+			}
 		}
 	}
 
 	void network_data::check_network_data_consistency(const const_layer_list& layer_list) const
 	{
 		data_list.check_consistency(layer_list);
-
-		if (data_custom_list.size() != layer_list.size())
-			throw neural_network_exception("data custom count is not equal layer count");
-		for(unsigned int i = 0; i < data_list.size(); ++i)
-			layer_list[i]->check_layer_data_custom_consistency(*data_custom_list[i]);
+		data_custom_list.check_consistency(layer_list);
 	}
 
 	const boost::uuids::uuid& network_data::get_uuid() const
