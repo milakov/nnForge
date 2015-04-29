@@ -112,6 +112,7 @@ namespace nnforge
 	protected:
 		network_schema_smart_ptr schema;
 		layer_configuration_specific_list layer_config_list;
+		std::vector<unsigned int> cumulative_tiling_factor_list;
 		float flops;
 
 	private:

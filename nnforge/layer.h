@@ -23,6 +23,7 @@
 #include "rnd.h"
 #include "layer_data_configuration.h"
 #include "nn_types.h"
+#include "tiling_factor.h"
 
 #include <boost/uuid/uuid.hpp>
 #include <ostream>
@@ -106,6 +107,8 @@ namespace nnforge
 		bool is_empty_data() const;
 
 		bool is_empty_data_custom() const;
+
+		virtual tiling_factor get_tiling_factor() const;
 
 	public:
 		std::string instance_name;

@@ -203,5 +203,21 @@ namespace nnforge
 
 		return input_rectangle_borders;
 	}
+
+	std::vector<unsigned int> network_schema::get_cumulative_tiling_factor_list(tiling_factor input_tiling_factor) const
+	{
+		std::vector<unsigned int> res;
+		res.push_back(input_tiling_factor);
+
+		tiling_factor current_tiling_factor = input_tiling_factor;
+		for(unsigned int i = 0; i < layers.size(); ++i)
+		{
+			tiling_factor new_tf = layers[i]->get_tiling_factor();
+			current_tiling_factor = current_tiling_factor * new_tf;
+			res.push_back(current_tiling_factor);
+		}
+
+		return res;
+	}
 }
 

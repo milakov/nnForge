@@ -26,5 +26,6 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new sigmoid_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new dropout_layer(0.5F)));
 		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new parametric_rectified_linear_layer(1)));
+		single_layer_factory::get_mutable_instance().register_layer(layer_smart_ptr(new untile_layer(std::vector<std::vector<unsigned int> >(1, std::vector<unsigned int>(1, 2)))));
 	}
 }

@@ -71,11 +71,13 @@ namespace nnforge
 			return std::vector<unsigned int>();
 		}
 
-		void layer_tester_cuda::update_buffer_configuration(buffer_cuda_size_configuration& buffer_configuration) const
+		void layer_tester_cuda::update_buffer_configuration(
+			buffer_cuda_size_configuration& buffer_configuration,
+			unsigned int tiling_factor) const
 		{
 			std::vector<size_t> sizes = get_sizes_of_additional_buffers_per_entry();
 			for(std::vector<size_t>::const_iterator it = sizes.begin(); it != sizes.end(); ++it)
-				buffer_configuration.add_per_entry_buffer(*it);
+				buffer_configuration.add_per_entry_buffer(*it * tiling_factor);
 
 			std::vector<size_t> fixed_sized = get_sizes_of_additional_buffers_fixed();
 			for(std::vector<size_t>::const_iterator it = fixed_sized.begin(); it != fixed_sized.end(); ++it)
@@ -83,7 +85,7 @@ namespace nnforge
 
 			std::vector<unsigned int> tex_per_entry = get_linear_addressing_through_texture_per_entry();
 			for(std::vector<unsigned int>::const_iterator it = tex_per_entry.begin(); it != tex_per_entry.end(); ++it)
-				buffer_configuration.add_per_entry_linear_addressing_through_texture(*it);
+				buffer_configuration.add_per_entry_linear_addressing_through_texture(*it * tiling_factor);
 		}
 
 		std::vector<cuda_linear_buffer_device_smart_ptr> layer_tester_cuda::allocate_additional_buffers(unsigned int max_entry_count) const

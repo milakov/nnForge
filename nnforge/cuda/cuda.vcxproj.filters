@@ -434,6 +434,18 @@
     <ClInclude Include="average_subsampling_layer_updater_cuda.cuh">
       <Filter>Source Files\layer_updaters</Filter>
     </ClInclude>
+    <ClInclude Include="max_subsampling_tiling_layer_tester_cuda.cuh">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="int_fastdiv.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="untile_layer_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="untile_layer_testing_schema.h">
+      <Filter>Header Files\testing_schemas</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -634,6 +646,9 @@
     <ClCompile Include="average_subsampling_layer_cudnn_updater_cuda.cpp">
       <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
+    <ClCompile Include="untile_layer_testing_schema.cpp">
+      <Filter>Source Files\testing_schemas</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="network_tester_cuda.cu">
@@ -743,6 +758,9 @@
     </CudaCompile>
     <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu">
       <Filter>Source Files\updater_schemas</Filter>
+    </CudaCompile>
+    <CudaCompile Include="untile_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

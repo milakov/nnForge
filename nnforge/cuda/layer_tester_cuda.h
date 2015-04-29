@@ -44,7 +44,9 @@ namespace nnforge
 
 			std::vector<cuda_linear_buffer_device_smart_ptr> allocate_additional_buffers(unsigned int max_entry_count) const;
 
-			void update_buffer_configuration(buffer_cuda_size_configuration& buffer_configuration) const;
+			void update_buffer_configuration(
+				buffer_cuda_size_configuration& buffer_configuration,
+				unsigned int tiling_factor) const;
 
 			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
 				cuda_linear_buffer_device_smart_ptr input_buffer,

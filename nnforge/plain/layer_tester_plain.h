@@ -44,7 +44,8 @@ namespace nnforge
 				const_layer_smart_ptr layer_schema,
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
-				plain_running_configuration_const_smart_ptr plain_config) const;
+				plain_running_configuration_const_smart_ptr plain_config,
+				unsigned int tiling_factor) const;
 
 			additional_buffer_set allocate_additional_buffers(
 				unsigned int max_entry_count,

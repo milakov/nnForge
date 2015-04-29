@@ -24,6 +24,13 @@ namespace nnforge
 	network_analyzer::network_analyzer(network_schema_smart_ptr schema)
 		: schema(schema)
 	{
+		const const_layer_list& layers = *schema;
+		for(unsigned int i = 0; i < layers.size(); ++i)
+		{
+			tiling_factor new_tf = layers[i]->get_tiling_factor();
+			if (new_tf != 1)
+				throw neural_network_exception((boost::format("network_analyzer cannot run layer %1% with non-unit tiling factor") % i).str());
+		}
 	}
 
 	network_analyzer::~network_analyzer()

@@ -167,4 +167,9 @@ namespace nnforge
 	{
 		return std::set<unsigned int>();
 	}
+
+	tiling_factor layer::get_tiling_factor() const
+	{
+		return 1;
+	}
 }

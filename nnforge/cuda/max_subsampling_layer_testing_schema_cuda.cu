@@ -20,6 +20,7 @@
 #include "../max_subsampling_layer.h"
 #include "max_subsampling_layer_tester_cuda.cuh"
 #include "max_subsampling_layer_cudnn_tester_cuda.h"
+#include "max_subsampling_tiling_layer_tester_cuda.cuh"
 
 #include <boost/format.hpp>
 
@@ -51,23 +52,48 @@ namespace nnforge
 		{
 			layer_tester_cuda_smart_ptr res;
 
-			switch (output_configuration_specific.dimension_sizes.size())
+			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+			if (layer_derived->tiling)
 			{
-				case 1: 
-					res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_tester_cuda<1>());
-					break;
-				case 2:
-					res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_tester_cuda<2>());
-//					res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_cudnn_tester());
-					break;
-				case 3:
-					res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_tester_cuda<3>());
-					break;
-				case 4:
-					res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_tester_cuda<4>());
-					break;
-				default:
-					throw neural_network_exception((boost::format("No CUDA tester for the max subsampling of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
+				switch (output_configuration_specific.dimension_sizes.size())
+				{
+					case 1: 
+						res = layer_tester_cuda_smart_ptr(new max_subsampling_tiling_layer_tester_cuda<1>());
+						break;
+					case 2:
+						res = layer_tester_cuda_smart_ptr(new max_subsampling_tiling_layer_tester_cuda<2>());
+						break;
+					case 3:
+						res = layer_tester_cuda_smart_ptr(new max_subsampling_tiling_layer_tester_cuda<3>());
+						break;
+					case 4:
+						res = layer_tester_cuda_smart_ptr(new max_subsampling_tiling_layer_tester_cuda<4>());
+						break;
+					default:
+						throw neural_network_exception((boost::format("No CUDA tester for tiling max subsampling layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
+				}
+			}
+			else
+			{
+				switch (output_configuration_specific.dimension_sizes.size())
+				{
+					case 1: 
+						res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_tester_cuda<1>());
+						break;
+					case 2:
+						res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_tester_cuda<2>());
+//						res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_cudnn_tester());
+						break;
+					case 3:
+						res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_tester_cuda<3>());
+						break;
+					case 4:
+						res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_tester_cuda<4>());
+						break;
+					default:
+						throw neural_network_exception((boost::format("No CUDA tester for non-tiling max subsampling layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
+				}
 			}
 
 			return res;

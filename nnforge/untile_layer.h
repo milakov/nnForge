@@ -22,13 +22,10 @@
 
 namespace nnforge
 {
-	// subsampling_sizes cannot be empty
-	class max_subsampling_layer : public layer
+	class untile_layer : public layer
 	{
 	public:
-		max_subsampling_layer(
-			const std::vector<unsigned int>& subsampling_sizes,
-			bool tiling = false);
+		untile_layer(const std::vector<std::vector<unsigned int> >& upsampling_sizes_list);
 
 		virtual layer_smart_ptr clone() const;
 
@@ -60,15 +57,14 @@ namespace nnforge
 
 		virtual tiling_factor get_tiling_factor() const;
 
-		static const boost::uuids::uuid layer_guid;
-
 		static const std::string layer_type_name;
+
+		static const boost::uuids::uuid layer_guid;
 
 	private:
 		void check();
 
 	public:
-		std::vector<unsigned int> subsampling_sizes;
-		bool tiling;
+		std::vector<std::vector<unsigned int> > upsampling_sizes_list;
 	};
 }

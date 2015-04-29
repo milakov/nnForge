@@ -32,6 +32,7 @@
 #include "sigmoid_layer.h"
 #include "dropout_layer.h"
 #include "parametric_rectified_linear_layer.h"
+#include "untile_layer.h"
 
 #include "neural_network_toolset.h"
 #include "supervised_data_stream_reader.h"

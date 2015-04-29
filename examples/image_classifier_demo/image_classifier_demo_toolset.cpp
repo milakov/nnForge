@@ -367,15 +367,9 @@ void image_classifier_demo_toolset::init_input_config()
 {
 	nnforge::network_schema_smart_ptr schema = load_schema();
 	const nnforge::const_layer_list& layer_list = *schema;
-	std::vector<std::pair<unsigned int, unsigned int> > output_rectangle_borders;
-	for(int i = 0; i < 2; ++i)
-		output_rectangle_borders.push_back(std::make_pair(0, 1));
-	std::vector<std::pair<unsigned int, unsigned int> > input_rectangle_borders = schema->get_input_rectangle_borders(output_rectangle_borders, static_cast<unsigned int>(layer_list.size() - 1));
-	std::vector<unsigned int> input_dimensions;
-	for(int i = 0; i < 2; ++i)
-		input_dimensions.push_back(input_rectangle_borders[i].second);
 
-	input_config = nnforge::layer_configuration_specific(3, input_dimensions);
+	nnforge::layer_configuration_specific output_config(static_cast<unsigned int>(class_id_to_class_name_map.size()), std::vector<unsigned int>(2, 1));
+	input_config = schema->get_layer_configuration_specific_list_reverse(output_config).front();
 }
 
 void image_classifier_demo_toolset::set_input_data(cv::Mat original_image, bool truncate_image)

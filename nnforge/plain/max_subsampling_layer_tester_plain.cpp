@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,13 +51,152 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
+			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+			if (layer_derived->tiling)
+				test_tiling(
+					input_buffer,
+					additional_buffers,
+					plain_config,
+					layer_schema,
+					data,
+					data_custom,
+					input_configuration_specific,
+					output_configuration_specific,
+					entry_count);
+			else
+				test_non_tiling(
+					input_buffer,
+					additional_buffers,
+					plain_config,
+					layer_schema,
+					data,
+					data_custom,
+					input_configuration_specific,
+					output_configuration_specific,
+					entry_count);
+		}
+
+		void max_subsampling_layer_tester_plain::test_tiling(
+			additional_buffer_smart_ptr input_buffer,
+			additional_buffer_set& additional_buffers,
+			plain_running_configuration_const_smart_ptr plain_config,
+			const_layer_smart_ptr layer_schema,
+			const_layer_data_smart_ptr data,
+			const_layer_data_custom_smart_ptr data_custom,
+			const layer_configuration_specific& input_configuration_specific,
+			const layer_configuration_specific& output_configuration_specific,
+			unsigned int entry_count) const
+		{
+			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
 			const std::vector<float>::const_iterator in_it_global = input_buffer->begin();
 			const std::vector<float>::iterator out_it_global = additional_buffers[0]->begin();
 			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
+			const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
+			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->subsampling_sizes.size());
+			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
+			input_slices[0] = 1;
+			for(unsigned int i = 0; i < dimension_count - 1; ++i)
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
+			unsigned int subsampling_elem_count = 1;
+			for(unsigned int i = 0; i < dimension_count; ++i)
+				subsampling_elem_count *= subsampling_sizes[i];
+			const unsigned int const_subsampling_elem_count = subsampling_elem_count;
+			const unsigned int feature_map_count = output_configuration_specific.feature_map_count;
+
+			std::vector<unsigned int> current_local_input_position(dimension_count, 0);
+			std::vector<unsigned int> offset_list(subsampling_elem_count);
+			for(unsigned int i = 1; i < subsampling_elem_count; ++i)
+			{
+				int offset = 0;
+				for(unsigned int j = 0; j < dimension_count; ++j)
+				{
+					offset += static_cast<int>(input_slices[j]);
+					if ((++current_local_input_position[j]) < subsampling_sizes[j])
+					{
+						offset_list[i] = offset_list[i-1] + offset;
+						break;
+					}
+					current_local_input_position[j] = 0;
+					offset -= static_cast<int>(subsampling_sizes[j] * input_slices[j]);
+				}
+			}
+
+			const int total_workload = entry_count * output_configuration_specific.feature_map_count;
+			const std::vector<unsigned int>::const_iterator dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
+			const std::vector<unsigned int>::const_iterator subsampling_sizes_it = subsampling_sizes.begin();
+			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
+			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
+
+			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
+			{
+				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+
+				#pragma omp for schedule(guided)
+				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
+				{
+					int input_entry_id = workload_id / feature_map_count;
+					int feature_map_id = workload_id - (input_entry_id * feature_map_count);
+					int base_output_entry_id = input_entry_id * const_subsampling_elem_count;
+
+					std::vector<float>::const_iterator in_it_base = in_it_global + (input_entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
+					std::vector<float>::iterator out_it_base = out_it_global + (base_output_entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
+
+					std::fill_n(current_output_position.begin(), dimension_count, 0);
+					for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
+					{
+						// Define the starting position of the first input elem
+						std::vector<float>::const_iterator in_it = in_it_base;
+						for(unsigned int i = 0; i < dimension_count; ++i)
+							in_it += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
+
+						for(unsigned int j = 0; j < const_subsampling_elem_count; ++j)
+						{
+							float current_max = -1.0e38F;
+							std::vector<float>::const_iterator in_it2 = in_it + *(offset_list_it + j);
+							for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
+							{
+								float new_val = *(in_it2 + (*(offset_list_it + i)));
+								current_max = std::max<float>(current_max, new_val);
+							}
+							*(out_it + j * output_neuron_count) = current_max;
+						}
+
+						// Go to the next output element
+						for(unsigned int i = 0; i < dimension_count; ++i)
+						{
+							if ((++current_output_position[i]) < *( dimension_sizes_it + i))
+								break;
+							current_output_position[i] = 0;
+						}
+					}
+				}
+			}
+		}
+
+		void max_subsampling_layer_tester_plain::test_non_tiling(
+			additional_buffer_smart_ptr input_buffer,
+			additional_buffer_set& additional_buffers,
+			plain_running_configuration_const_smart_ptr plain_config,
+			const_layer_smart_ptr layer_schema,
+			const_layer_data_smart_ptr data,
+			const_layer_data_custom_smart_ptr data_custom,
+			const layer_configuration_specific& input_configuration_specific,
+			const layer_configuration_specific& output_configuration_specific,
+			unsigned int entry_count) const
+		{
 			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+			const std::vector<float>::const_iterator in_it_global = input_buffer->begin();
+			const std::vector<float>::iterator out_it_global = additional_buffers[0]->begin();
+			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
+			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
+			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
+			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
 			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->subsampling_sizes.size());
 			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
@@ -150,7 +289,18 @@ namespace nnforge
 		{
 			std::vector<std::pair<unsigned int, bool> > res;
 
-			res.push_back(std::make_pair<unsigned int, bool>(output_configuration_specific.get_neuron_count(), true));
+			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+			if (layer_derived->tiling)
+			{
+				const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
+				unsigned int subsampling_elem_count = 1;
+				for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
+					subsampling_elem_count *= subsampling_sizes[i];
+				res.push_back(std::make_pair<unsigned int, bool>(output_configuration_specific.get_neuron_count() * subsampling_elem_count, true));
+			}
+			else
+				res.push_back(std::make_pair<unsigned int, bool>(output_configuration_specific.get_neuron_count(), true));
 
 			return res;
 		}

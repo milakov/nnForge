@@ -25,6 +25,9 @@ namespace nnforge
 	network_tester::network_tester(network_schema_smart_ptr schema)
 		: schema(schema)
 	{
+		cumulative_tiling_factor_list = schema->get_cumulative_tiling_factor_list(1);
+		if (cumulative_tiling_factor_list.back() != 1)
+			throw neural_network_exception((boost::format("Output cumulative tiling factor is %1% for network_tester") % cumulative_tiling_factor_list.back()).str());
 	}
 
 	network_tester::~network_tester()
@@ -159,7 +162,7 @@ namespace nnforge
 		const const_layer_list& layer_list = *schema;
 		for(unsigned int i = 0; i < layer_list.size(); i++)
 		{
-			flops += layer_list[i]->get_forward_flops(layer_config_list[i]);
+			flops += layer_list[i]->get_forward_flops(layer_config_list[i]) * cumulative_tiling_factor_list[i];
 		}
 	}
 

@@ -38,6 +38,8 @@
     <ClInclude Include="dropout_layer_testing_schema.h" />
     <ClInclude Include="dropout_layer_updater_cuda.h" />
     <ClInclude Include="dropout_layer_updater_schema.h" />
+    <ClInclude Include="int_fastdiv.h" />
+    <ClInclude Include="max_subsampling_tiling_layer_tester_cuda.cuh" />
     <ClInclude Include="parametric_rectified_linear_layer_tester_cuda.h" />
     <ClInclude Include="max_subsampling_layer_cudnn_tester_cuda.h" />
     <ClInclude Include="max_subsampling_layer_cudnn_updater_cuda.h" />
@@ -103,6 +105,8 @@
     <ClInclude Include="squared_hinge_loss_error_function_updater_cuda.h" />
     <ClInclude Include="supervised_data_reader_async_helper.h" />
     <ClInclude Include="unsupervised_data_reader_async_helper.h" />
+    <ClInclude Include="untile_layer_tester_cuda.h" />
+    <ClInclude Include="untile_layer_testing_schema.h" />
     <ClInclude Include="util_cuda.h" />
     <ClInclude Include="factory_generator_cuda.h" />
     <ClInclude Include="fully_connected_layer_tester_cuda.h" />
@@ -192,6 +196,7 @@
     <ClCompile Include="softmax_layer_updater_schema.cpp" />
     <ClCompile Include="sparse_convolution_layer_testing_schema.cpp" />
     <ClCompile Include="sparse_convolution_layer_updater_schema.cpp" />
+    <ClCompile Include="untile_layer_testing_schema.cpp" />
     <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
     <CudaCompile Include="dropout_layer_updater_cuda.cu" />
@@ -237,6 +242,7 @@
     <CudaCompile Include="sparse_fully_connected_1x1_layer_tester_cuda.cu" />
     <CudaCompile Include="sparse_fully_connected_1x1_layer_updater_cuda.cu" />
     <CudaCompile Include="squared_hinge_loss_error_function_updater_cuda.cu" />
+    <CudaCompile Include="untile_layer_tester_cuda.cu" />
     <CudaCompile Include="util_cuda.cu" />
     <CudaCompile Include="hyperbolic_tangent_layer_tester_cuda.cu" />
     <CudaCompile Include="hyperbolic_tangent_layer_updater_cuda.cu" />

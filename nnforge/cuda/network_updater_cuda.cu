@@ -951,7 +951,7 @@ namespace nnforge
 					buffer_configuration.add_constant_buffer((*it2)->get_size());
 
 			for(std::vector<layer_tester_cuda_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it)
-				(*it)->update_buffer_configuration(buffer_configuration);
+				(*it)->update_buffer_configuration(buffer_configuration, 1);
 
 			for(std::vector<std::vector<const_cuda_linear_buffer_device_smart_ptr> >::const_iterator it = updater_schema_data.begin(); it != updater_schema_data.end(); ++it)
 				for(std::vector<const_cuda_linear_buffer_device_smart_ptr>::const_iterator it2 = it->begin(); it2 != it->end(); ++it2)

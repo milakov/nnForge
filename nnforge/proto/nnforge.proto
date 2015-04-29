@@ -19,6 +19,7 @@ message Layer {
 	optional PReLUParam prelu_param = 10;
 	optional RGBToYUVConvertParam rgb_to_yuv_convert_param = 11;
 	optional TanHParam tanh_param = 12;
+	optional UnTileParam untile_param = 13;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -45,6 +46,7 @@ message MaxSubsamplingParam {
 		required uint32 subsampling_size = 1;
 	}
 	repeated MaxSubsamplingDimensionParam dimension_param = 1;
+	optional bool tiling = 2 [default = false];
 }
 
 message SparseConvolutionalParam {
@@ -93,6 +95,16 @@ message RGBToYUVConvertParam {
 message TanHParam {
 	optional float scale = 1 [default = 1.0];
 	optional float steepness = 2 [default = 1.0];
+}
+
+message UnTileParam {
+	message UnTileUpsamplingDimensionParam {
+		required uint32 upsampling_size = 1;
+	}
+	message UnTileLevelParam {
+		repeated UnTileUpsamplingDimensionParam dimension_param = 1;
+	}
+	repeated UnTileLevelParam level_param = 1;
 }
 
 message CustomParam {

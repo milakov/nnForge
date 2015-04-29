@@ -609,7 +609,8 @@ namespace nnforge
 					*layer_it,
 					*input_config_it,
 					*(input_config_it + 1),
-					plain_config);
+					plain_config,
+					1);
 			}
 			for(const_layer_updater_plain_list::const_iterator it = updater_list.begin(); it != updater_list.end(); ++it, ++layer_it, ++input_config_it)
 			{

@@ -52,6 +52,11 @@ namespace nnforge
 		{
 			layer_updater_cuda_smart_ptr res;
 
+			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+			if (layer_derived->tiling)
+				throw neural_network_exception("There is no CUDA updater for max subsampling layer with tiling");
+
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
 				case 1:
@@ -68,7 +73,7 @@ namespace nnforge
 					res = layer_updater_cuda_smart_ptr(new max_subsampling_layer_updater_cuda<4>());
 					break;
 				default:
-					throw neural_network_exception((boost::format("No CUDA updater for the max subsampling of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
+					throw neural_network_exception((boost::format("No CUDA updater for the max subsampling layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
 			}
 
 			return res;

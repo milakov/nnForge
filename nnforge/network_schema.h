@@ -66,6 +66,8 @@ namespace nnforge
 
 		std::vector<layer_data_configuration_list> get_layer_data_configuration_list_list() const;
 
+		std::vector<unsigned int> get_cumulative_tiling_factor_list(tiling_factor input_tiling_factor) const;
+
 		operator const const_layer_list&() const;
 
 	public:

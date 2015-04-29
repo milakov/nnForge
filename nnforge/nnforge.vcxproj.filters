@@ -470,6 +470,12 @@
     <ClInclude Include="layer_data_custom_list.h">
       <Filter>Header Files\network_data</Filter>
     </ClInclude>
+    <ClInclude Include="tiling_factor.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="untile_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -810,6 +816,12 @@
     </ClCompile>
     <ClCompile Include="layer_data_custom_list.cpp">
       <Filter>Source Files\network_data</Filter>
+    </ClCompile>
+    <ClCompile Include="tiling_factor.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="untile_layer.cpp">
+      <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -52,6 +52,7 @@
     <ClInclude Include="softmax_layer_updater_plain.h" />
     <ClInclude Include="sparse_convolution_layer_tester_plain.h" />
     <ClInclude Include="sparse_convolution_layer_updater_plain.h" />
+    <ClInclude Include="untile_layer_tester_plain.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="absolute_layer_tester_plain.cpp" />
@@ -95,6 +96,7 @@
     <ClCompile Include="softmax_layer_updater_plain.cpp" />
     <ClCompile Include="sparse_convolution_layer_tester_plain.cpp" />
     <ClCompile Include="sparse_convolution_layer_updater_plain.cpp" />
+    <ClCompile Include="untile_layer_tester_plain.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1E4C82DC-0C7F-43C1-8C1F-1F1B5FD54487}</ProjectGuid>

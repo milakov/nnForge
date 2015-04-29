@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -55,6 +55,11 @@ namespace nnforge
 			unsigned int offset_input_entry_id,
 			bool force_deterministic) const
 		{
+			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+			if (layer_derived->tiling)
+				throw neural_network_exception("max_subsampling_layer_updater_plain is not able to run for max subsampling layer with tiling");
+
 			if (offset_input_entry_id > 0)
 				throw neural_network_exception("max_subsampling_layer_updater_plain is not able to run using offset");
 
@@ -65,7 +70,6 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 			const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
 			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->subsampling_sizes.size());
 			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());

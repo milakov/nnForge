@@ -74,10 +74,11 @@ namespace nnforge
 				const const_layer_list& layer_list = *schema;
 				const_layer_list::const_iterator layer_it = layer_list.begin();
 				layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
-				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it)
+				std::vector<unsigned int>::const_iterator tiling_factor_it = cumulative_tiling_factor_list.begin();
+				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++tiling_factor_it)
 				{
 					additional_buffer_set additional_buffers = (*it)->allocate_additional_buffers(
-						max_entry_count,
+						max_entry_count * *tiling_factor_it,
 						*layer_it,
 						*input_config_it,
 						*(input_config_it + 1),
@@ -135,8 +136,9 @@ namespace nnforge
 					std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> >::iterator buffers_it = input_buffer_and_additional_buffers_pack.begin();
 					layer_data_list::const_iterator data_it = net_data->data_list.begin();
 					layer_data_custom_list::const_iterator data_custom_it = net_data->data_custom_list.begin();
+					std::vector<unsigned int>::const_iterator tiling_factor_it = cumulative_tiling_factor_list.begin();
 					unsigned int layer_id = 0;
-					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it, ++layer_id)
+					for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it, ++tiling_factor_it, ++layer_id)
 					{
 						/*
 						{
@@ -159,7 +161,7 @@ namespace nnforge
 							*data_custom_it,
 							*input_config_it,
 							*(input_config_it + 1),
-							entries_available_for_processing_count);
+							entries_available_for_processing_count * *tiling_factor_it);
 					}
 
 					/*
@@ -222,10 +224,11 @@ namespace nnforge
 				const const_layer_list& layer_list = *schema;
 				const_layer_list::const_iterator layer_it = layer_list.begin();
 				layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
-				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it)
+				std::vector<unsigned int>::const_iterator tiling_factor_it = cumulative_tiling_factor_list.begin();
+				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++tiling_factor_it)
 				{
 					additional_buffer_set additional_buffers = (*it)->allocate_additional_buffers(
-						1,
+						*tiling_factor_it,
 						*layer_it,
 						*input_config_it,
 						*(input_config_it + 1),
@@ -281,7 +284,8 @@ namespace nnforge
 				layer_data_list::const_iterator data_it = net_data->data_list.begin();
 				layer_data_custom_list::const_iterator data_custom_it = net_data->data_custom_list.begin();
 				std::vector<additional_buffer_smart_ptr>::iterator output_it = output_buffer_list.begin();
-				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++output_it, ++data_it, ++data_custom_it)
+				std::vector<unsigned int>::const_iterator tiling_factor_it = cumulative_tiling_factor_list.begin();
+				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++output_it, ++data_it, ++data_custom_it, ++tiling_factor_it)
 				{
 					(*it)->test(
 						buffers_it->first,
@@ -292,7 +296,7 @@ namespace nnforge
 						*data_custom_it,
 						*input_config_it,
 						*(input_config_it + 1),
-						1);
+						*tiling_factor_it);
 
 					layer_configuration_specific_snapshot_smart_ptr new_elem(new layer_configuration_specific_snapshot(*(input_config_it + 1)));
 					res.push_back(new_elem);
@@ -322,10 +326,11 @@ namespace nnforge
 				const const_layer_list& layer_list = *schema;
 				const_layer_list::const_iterator layer_it = layer_list.begin();
 				layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
-				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it)
+				std::vector<unsigned int>::const_iterator tiling_factor_it = cumulative_tiling_factor_list.begin();
+				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++tiling_factor_it)
 				{
 					additional_buffer_set additional_buffers = (*it)->allocate_additional_buffers(
-						1,
+						*tiling_factor_it,
 						*layer_it,
 						*input_config_it,
 						*(input_config_it + 1),
@@ -367,7 +372,8 @@ namespace nnforge
 				std::vector<std::pair<additional_buffer_smart_ptr, additional_buffer_set> >::iterator buffers_it = input_buffer_and_additional_buffers_pack.begin();
 				layer_data_list::const_iterator data_it = net_data->data_list.begin();
 				layer_data_custom_list::const_iterator data_custom_it = net_data->data_custom_list.begin();
-				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it)
+				std::vector<unsigned int>::const_iterator tiling_factor_it = cumulative_tiling_factor_list.begin();
+				for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++buffers_it, ++data_it, ++data_custom_it, ++tiling_factor_it)
 				{
 					(*it)->test(
 						buffers_it->first,
@@ -378,7 +384,7 @@ namespace nnforge
 						*data_custom_it,
 						*input_config_it,
 						*(input_config_it + 1),
-						1);
+						*tiling_factor_it);
 				}
 			}
 
@@ -403,14 +409,16 @@ namespace nnforge
 			const const_layer_list& layer_list = *schema;
 			const_layer_list::const_iterator layer_it = layer_list.begin();
 			layer_configuration_specific_list::const_iterator input_config_it = layer_config_list.begin();
-			for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it)
+			std::vector<unsigned int>::const_iterator tiling_factor_it = cumulative_tiling_factor_list.begin();
+			for(std::vector<const_layer_tester_plain_smart_ptr>::const_iterator it = tester_list.begin(); it != tester_list.end(); ++it, ++layer_it, ++input_config_it, ++tiling_factor_it)
 			{
 				(*it)->update_buffer_configuration(
 					buffer_configuration,
 					*layer_it,
 					*input_config_it,
 					*(input_config_it + 1),
-					plain_config);
+					plain_config,
+					*tiling_factor_it);
 			}
 		}
 	}

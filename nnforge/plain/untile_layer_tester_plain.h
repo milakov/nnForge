@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace plain
 	{
-		class max_subsampling_layer_tester_plain : public layer_tester_plain
+		class untile_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			max_subsampling_layer_tester_plain();
+			untile_layer_tester_plain();
 
-			virtual ~max_subsampling_layer_tester_plain();
+			virtual ~untile_layer_tester_plain();
 
 			virtual const boost::uuids::uuid& get_uuid() const;
 
@@ -52,32 +52,6 @@ namespace nnforge
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific,
 				plain_running_configuration_const_smart_ptr plain_config) const;
-
-		private:
-			void test_non_tiling(
-				additional_buffer_smart_ptr input_buffer,
-				additional_buffer_set& additional_buffers,
-				plain_running_configuration_const_smart_ptr plain_config,
-				const_layer_smart_ptr layer_schema,
-				const_layer_data_smart_ptr data,
-				const_layer_data_custom_smart_ptr data_custom,
-				const layer_configuration_specific& input_configuration_specific,
-				const layer_configuration_specific& output_configuration_specific,
-				unsigned int entry_count) const;
-
-			void test_tiling(
-				additional_buffer_smart_ptr input_buffer,
-				additional_buffer_set& additional_buffers,
-				plain_running_configuration_const_smart_ptr plain_config,
-				const_layer_smart_ptr layer_schema,
-				const_layer_data_smart_ptr data,
-				const_layer_data_custom_smart_ptr data_custom,
-				const layer_configuration_specific& input_configuration_specific,
-				const layer_configuration_specific& output_configuration_specific,
-				unsigned int entry_count) const;
-
-		private:
-			static const int max_dimension_count;
 		};
 	}
 }

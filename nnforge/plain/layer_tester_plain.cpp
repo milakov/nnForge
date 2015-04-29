@@ -33,7 +33,8 @@ namespace nnforge
 			const_layer_smart_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config) const
+			plain_running_configuration_const_smart_ptr plain_config,
+			unsigned int tiling_factor) const
 		{
 			std::vector<std::pair<unsigned int, bool> > buffer_sizes_per_entry_aligned = get_elem_count_and_per_entry_flag_additional_buffers(
 				layer_schema,
@@ -44,7 +45,7 @@ namespace nnforge
 			{
 				size_t s = static_cast<size_t>(it->first) * sizeof(float);
 				if (it->second)
-					buffer_configuration.add_per_entry_buffer(s);
+					buffer_configuration.add_per_entry_buffer(s * tiling_factor);
 				else
 					buffer_configuration.add_constant_buffer(s);
 			}
