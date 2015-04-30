@@ -42,7 +42,15 @@ namespace nnforge
 		bool b_multiply;
 
 		friend tiling_factor operator *(const tiling_factor& t1, const tiling_factor& t2);
+		friend bool operator ==(const tiling_factor& t1, const tiling_factor& t2);
+		friend bool operator <(const tiling_factor& t1, const tiling_factor& t2);
 	};
 
 	tiling_factor operator *(const tiling_factor& t1, const tiling_factor& t2);
+	bool operator ==(const tiling_factor& t1, const tiling_factor& t2);
+	bool operator <(const tiling_factor& t1, const tiling_factor& t2);
+	bool operator <=(const tiling_factor& t1, const tiling_factor& t2);
+	bool operator !=(const tiling_factor& t1, const tiling_factor& t2);
+	bool operator >=(const tiling_factor& t1, const tiling_factor& t2);
+	bool operator >(const tiling_factor& t1, const tiling_factor& t2);
 }

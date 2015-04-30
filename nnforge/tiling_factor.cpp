@@ -93,4 +93,47 @@ namespace nnforge
 	{
 		return tiling_factor(f, !b_multiply);
 	}
+
+	bool operator ==(const tiling_factor& t1, const tiling_factor& t2)
+	{
+		return (t1.b_multiply == t2.b_multiply) && (t1.f == t2.f);
+	}
+
+	bool operator <(const tiling_factor& t1, const tiling_factor& t2)
+	{
+		if (t1.b_multiply)
+		{
+			if (t2.b_multiply)
+				return t1.f < t2.f;
+			else
+				return false;
+		}
+		else
+		{
+			if (t2.b_multiply)
+				return true;
+			else
+				return t1.f > t2.f;
+		}
+	}
+
+	bool operator <=(const tiling_factor& t1, const tiling_factor& t2)
+	{
+		return (t1 < t2) || (t1 == t2);
+	}
+
+	bool operator !=(const tiling_factor& t1, const tiling_factor& t2)
+	{
+		return !(t1 == t2);
+	}
+
+	bool operator >=(const tiling_factor& t1, const tiling_factor& t2)
+	{
+		return !(t1 < t2);
+	}
+
+	bool operator >(const tiling_factor& t1, const tiling_factor& t2)
+	{
+		return !(t1 <= t2);
+	}
 }

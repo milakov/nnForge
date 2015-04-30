@@ -55,7 +55,7 @@ namespace nnforge
 
 		virtual void read_proto(const void * layer_proto);
 
-		virtual tiling_factor get_tiling_factor() const;
+		virtual std::vector<tiling_factor> get_tiling_factor_list() const;
 
 		static const std::string layer_type_name;
 

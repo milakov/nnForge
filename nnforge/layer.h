@@ -108,7 +108,9 @@ namespace nnforge
 
 		bool is_empty_data_custom() const;
 
-		virtual tiling_factor get_tiling_factor() const;
+		virtual std::vector<tiling_factor> get_tiling_factor_list() const;
+
+		tiling_factor get_tiling_factor() const;
 
 	public:
 		std::string instance_name;

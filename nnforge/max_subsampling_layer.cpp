@@ -213,13 +213,16 @@ namespace nnforge
 		return static_cast<float>(0);
 	}
 
-	tiling_factor max_subsampling_layer::get_tiling_factor() const
+	std::vector<tiling_factor> max_subsampling_layer::get_tiling_factor_list() const
 	{
-		unsigned int tf = 1;
+		std::vector<tiling_factor> res;
 
 		if (tiling)
-			std::for_each(subsampling_sizes.begin(), subsampling_sizes.end(), tf *= boost::lambda::_1);
+		{
+			for(std::vector<unsigned int>::const_iterator it = subsampling_sizes.begin(); it != subsampling_sizes.end(); ++it)
+				res.push_back(*it);
+		}
 
-		return tf;
+		return res;
 	}
 }

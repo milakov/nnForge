@@ -34,7 +34,7 @@ namespace nnforge
 		for(unsigned int i = 0; i < layers.size(); ++i)
 		{
 			tiling_factor new_tf = layers[i]->get_tiling_factor();
-			if (new_tf != 1)
+			if (new_tf != tiling_factor(1))
 				throw neural_network_exception((boost::format("network_updater cannot run layer %1% with non-unit tiling factor") % i).str());
 		}
 	}

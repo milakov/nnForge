@@ -219,5 +219,42 @@ namespace nnforge
 
 		return res;
 	}
+
+	std::vector<unsigned int> network_schema::get_output_strides() const
+	{
+		std::vector<tiling_factor> min_factors;
+		std::vector<tiling_factor> current_factors;
+		for(int i = static_cast<int>(layers.size() - 1); i >= 0; --i)
+		{
+			std::vector<tiling_factor> tf_list = layers[i]->get_tiling_factor_list();
+
+			for(int j = 0; j < tf_list.size(); ++j)
+			{
+				if (j < current_factors.size())
+					current_factors[j] *= tf_list[j];
+				else
+					current_factors.push_back(tf_list[j]) ;
+			}
+
+			for(int j = 0; j < current_factors.size(); ++j)
+			{
+				if (j < min_factors.size())
+					min_factors[j] = std::min(min_factors[j], current_factors[j]);
+				else
+					min_factors.push_back(current_factors[j]);
+			}
+		}
+
+		std::vector<unsigned int> res;
+		for(int i = 0; i < min_factors.size(); ++i)
+		{
+			if (min_factors[i] > tiling_factor(1))
+				throw neural_network_exception((boost::format("network_schema::get_output_strides - invalid minimum stride %1% encountered at dimension %2%") % min_factors[i].str() % i).str());
+
+			res.push_back(min_factors[i].get_inverse());
+		}
+
+		return res;
+	}
 }
 

@@ -196,7 +196,7 @@ namespace nnforge
 			{
 				std::vector<size_t> res;
 
-				res.push_back(output_elem_count_per_entry * spatial_config_count * sizeof(float));
+				res.push_back(output_elem_count_per_entry * tiling_config_count * sizeof(float));
 
 				return res;
 			}

@@ -194,8 +194,8 @@ namespace nnforge
 							for(unsigned int i = 0; i < local_tiling_count; ++i)
 							{
 								std::vector<unsigned int> new_untiled_positions(current_positions);
-								for(unsigned int i = 0; i < static_cast<unsigned int>(upsampling_sizes.size()); ++i)
-									new_untiled_positions[i] += local_pos[i] * total_upsampling_sizes[i];
+								for(unsigned int j = 0; j < static_cast<unsigned int>(upsampling_sizes.size()); ++j)
+									new_untiled_positions[j] += local_pos[j] * total_upsampling_sizes[j];
 
 								new_positions_list.push_back(new_untiled_positions);
 

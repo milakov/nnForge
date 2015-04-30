@@ -68,6 +68,8 @@ namespace nnforge
 
 		std::vector<unsigned int> get_cumulative_tiling_factor_list(tiling_factor input_tiling_factor) const;
 
+		std::vector<unsigned int> get_output_strides() const;
+
 		operator const const_layer_list&() const;
 
 	public:
