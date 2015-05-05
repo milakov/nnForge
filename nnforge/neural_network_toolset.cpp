@@ -237,6 +237,7 @@ namespace nnforge
 			("momentum_type", boost::program_options::value<std::string>(&momentum_type_str)->default_value("vanilla"), "Type of the momentum to use (none, vanilla, nesterov).")
 			("momentum,M", boost::program_options::value<float>(&momentum_val)->default_value(0.0F), "Momentum in training.")
 			("shuffle_block_size", boost::program_options::value<int>(&shuffle_block_size)->default_value(-1), "The size of contiguous blocks when shuffling training data, -1 indicates no shuffling.")
+			("threshold_for_binary_classifier", boost::program_options::value<float>(&threshold_for_binary_classifier)->default_value(0.5F), "The threshold used for binary classifier.")
 			;
 
 		{
@@ -406,6 +407,7 @@ namespace nnforge
 			std::cout << "momentum_type" << "=" << momentum_type_str << std::endl;
 			std::cout << "momentum" << "=" << momentum_val << std::endl;
 			std::cout << "shuffle_block_size" << "=" << shuffle_block_size << std::endl;
+			std::cout << "threshold_for_binary_classifier" << "=" << threshold_for_binary_classifier << std::endl;
 		}
 		{
 			std::vector<string_option> additional_string_options = get_string_options();
@@ -1378,7 +1380,7 @@ namespace nnforge
 
 	float neural_network_toolset::get_threshold_for_binary_classifier() const
 	{
-		return 0.5F;
+		return threshold_for_binary_classifier;
 	}
 
 	void neural_network_toolset::snapshot_invalid()

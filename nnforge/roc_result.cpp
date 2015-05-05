@@ -89,9 +89,9 @@ namespace nnforge
 		unsigned int starting_segment_id = static_cast<unsigned int>(std::max(std::min((threshold - min_val) / (max_val - min_val), 1.0F), 0.0F) * static_cast<float>(segment_count));
 
 		unsigned int true_positive = std::accumulate(values_for_positive_elems.begin() + starting_segment_id, values_for_positive_elems.end(), 0);
-		unsigned int false_positive = std::accumulate(values_for_positive_elems.begin(), values_for_positive_elems.begin() + starting_segment_id, 0);
-		//unsigned int true_negative = std::accumulate(values_for_negative_elems.begin(), values_for_negative_elems.begin() + starting_segment_id, 0);
-		unsigned int false_negative = std::accumulate(values_for_negative_elems.begin() + starting_segment_id, values_for_negative_elems.end(), 0);
+		unsigned int false_positive = std::accumulate(values_for_negative_elems.begin() + starting_segment_id, values_for_negative_elems.end(), 0);
+		// unsigned int true_negative = std::accumulate(values_for_negative_elems.begin(), values_for_negative_elems.begin() + starting_segment_id, 0);
+		unsigned int false_negative = std::accumulate(values_for_positive_elems.begin(), values_for_positive_elems.begin() + starting_segment_id, 0);
 
 		return (1.0F + beta * beta) * static_cast<float>(true_positive) /
 			((1.0F + beta * beta) * static_cast<float>(true_positive) + (beta * beta) * static_cast<float>(false_negative) + static_cast<float>(false_positive));
@@ -102,7 +102,7 @@ namespace nnforge
 		unsigned int starting_segment_id = static_cast<unsigned int>(std::max(std::min((threshold - min_val) / (max_val - min_val), 1.0F), 0.0F) * static_cast<float>(segment_count));
 
 		unsigned int true_positive = std::accumulate(values_for_positive_elems.begin() + starting_segment_id, values_for_positive_elems.end(), 0);
-		unsigned int false_positive = std::accumulate(values_for_positive_elems.begin(), values_for_positive_elems.begin() + starting_segment_id, 0);
+		unsigned int false_positive = std::accumulate(values_for_negative_elems.begin() + starting_segment_id, values_for_negative_elems.end(), 0);
 
 		return static_cast<float>(true_positive) / (static_cast<float>(true_positive) + static_cast<float>(false_positive));
 	}
@@ -112,7 +112,7 @@ namespace nnforge
 		unsigned int starting_segment_id = static_cast<unsigned int>(std::max(std::min((threshold - min_val) / (max_val - min_val), 1.0F), 0.0F) * static_cast<float>(segment_count));
 
 		unsigned int true_positive = std::accumulate(values_for_positive_elems.begin() + starting_segment_id, values_for_positive_elems.end(), 0);
-		unsigned int false_negative = std::accumulate(values_for_negative_elems.begin() + starting_segment_id, values_for_negative_elems.end(), 0);
+		unsigned int false_negative = std::accumulate(values_for_positive_elems.begin(), values_for_positive_elems.begin() + starting_segment_id, 0);
 
 		return static_cast<float>(true_positive) / (static_cast<float>(true_positive) + static_cast<float>(false_negative));
 	}

@@ -142,7 +142,7 @@ namespace nnforge
 
 		virtual network_schema_smart_ptr load_schema() const;
 
-		virtual float get_threshold_for_binary_classifier() const;
+		float get_threshold_for_binary_classifier() const;
 
 	protected:
 		static const char * training_data_filename;
@@ -205,6 +205,7 @@ namespace nnforge
 		float check_gradient_base_step;
 		int shuffle_block_size;
 		std::string schema_filename;
+		float threshold_for_binary_classifier;
 
 	protected:
 		std::vector<output_neuron_value_set_smart_ptr> run_batch(
