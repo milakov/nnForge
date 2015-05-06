@@ -12,6 +12,9 @@
     <Filter Include="Config Files">
       <UniqueIdentifier>{d9a0ce7b-3d1d-4d60-a007-a78c5502e287}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Working Data">
+      <UniqueIdentifier>{8bd93957-fb75-460c-af96-91784de89e4a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="imagenet.cpp">
@@ -30,5 +33,10 @@
     <None Include="config.cfg">
       <Filter>Config Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="working_data\schema.txt">
+      <Filter>Working Data</Filter>
+    </Text>
   </ItemGroup>
 </Project>

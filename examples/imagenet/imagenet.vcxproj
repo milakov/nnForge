@@ -107,6 +107,9 @@
   <ItemGroup>
     <None Include="config.cfg" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="working_data\schema.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.0.targets" />
