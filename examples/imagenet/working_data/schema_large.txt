@@ -1,0 +1,410 @@
+name: "Similar to VGG-E with 19 weight layers, with maxout"
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 3
+    output_feature_map_count: 96
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 48
+    output_feature_map_count: 96
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "MaxSubsampling"
+  max_subsampling_param {
+    dimension_param { subsampling_size: 2 }
+    dimension_param { subsampling_size: 2 }
+  }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 48
+    output_feature_map_count: 192
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 96
+    output_feature_map_count: 192
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "MaxSubsampling"
+  max_subsampling_param {
+    dimension_param { subsampling_size: 2 }
+    dimension_param { subsampling_size: 2 }
+  }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 96
+    output_feature_map_count: 384
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 192
+    output_feature_map_count: 384
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 192
+    output_feature_map_count: 384
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 192
+    output_feature_map_count: 384
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "MaxSubsampling"
+  max_subsampling_param {
+    dimension_param { subsampling_size: 2 }
+    dimension_param { subsampling_size: 2 }
+  }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 192
+    output_feature_map_count: 768
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 384
+    output_feature_map_count: 768
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 384
+    output_feature_map_count: 768
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 384
+    output_feature_map_count: 768
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "MaxSubsampling"
+  max_subsampling_param {
+    dimension_param { subsampling_size: 2 }
+    dimension_param { subsampling_size: 2 }
+  }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 384
+    output_feature_map_count: 768
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 384
+    output_feature_map_count: 768
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 384
+    output_feature_map_count: 768
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 384
+    output_feature_map_count: 768
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+    dimension_param {
+      kernel_size: 3
+      left_padding: 1
+      right_padding: 1
+    }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer {
+  type: "MaxSubsampling"
+  max_subsampling_param {
+    dimension_param { subsampling_size: 2 }
+    dimension_param { subsampling_size: 2 }
+  }
+}
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 384
+    output_feature_map_count: 6144
+    dimension_param { kernel_size: 7 }
+    dimension_param { kernel_size: 7 }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer { type: "Dropout" }
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 3072
+    output_feature_map_count: 6144
+    dimension_param { kernel_size: 1 }
+    dimension_param { kernel_size: 1 }
+  }
+}
+layer {
+  type: "Maxout"
+  maxout_param { feature_map_subsampling_size: 2 }
+}
+layer { type: "Dropout" }
+layer {
+  type: "Convolution"
+  convolution_param {
+    input_feature_map_count: 3072
+    output_feature_map_count: 1000
+    dimension_param { kernel_size: 1 }
+    dimension_param { kernel_size: 1 }
+  }
+}
+layer { type: "Softmax" }

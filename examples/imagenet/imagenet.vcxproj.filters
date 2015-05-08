@@ -38,5 +38,8 @@
     <Text Include="working_data\schema.txt">
       <Filter>Working Data</Filter>
     </Text>
+    <Text Include="working_data\schema_large.txt">
+      <Filter>Working Data</Filter>
+    </Text>
   </ItemGroup>
 </Project>
