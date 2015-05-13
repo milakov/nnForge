@@ -31,6 +31,8 @@ namespace nnforge
 
 			virtual const boost::uuids::uuid& get_uuid() const;
 
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_schema_buffers() const;
+
 		protected:
 			virtual layer_testing_schema_smart_ptr create_specific() const;
 

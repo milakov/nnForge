@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ namespace nnforge
 			virtual ~sigmoid_layer_updater_schema();
 
 			virtual const boost::uuids::uuid& get_uuid() const;
+
+			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_schema_buffers() const;
 
 		protected:
 			virtual layer_updater_schema_smart_ptr create_specific() const;

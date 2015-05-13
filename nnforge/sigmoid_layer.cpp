@@ -15,7 +15,8 @@
  */
 
 #include "sigmoid_layer.h"
-#include "layer_factory.h"
+
+#include "proto/nnforge.pb.h"
 
 namespace nnforge
 {
@@ -29,7 +30,8 @@ namespace nnforge
 
 	const std::string sigmoid_layer::layer_type_name = "Sigmoid";
 
-	sigmoid_layer::sigmoid_layer()
+	sigmoid_layer::sigmoid_layer(const std::vector<unsigned int>& affected_feature_map_id_list)
+		: affected_feature_map_id_list(affected_feature_map_id_list)
 	{
 	}
 
@@ -50,11 +52,40 @@ namespace nnforge
 
 	float sigmoid_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count() * 4);
+		if (affected_feature_map_id_list.empty())
+			return static_cast<float>(input_configuration_specific.get_neuron_count() * 4);
+		else
+			return static_cast<float>(input_configuration_specific.get_neuron_count_per_feature_map() * affected_feature_map_id_list.size() * 4);
 	}
 
 	float sigmoid_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count() * 2);
+		if (affected_feature_map_id_list.empty())
+			return static_cast<float>(input_configuration_specific.get_neuron_count() * 2);
+		else
+			return static_cast<float>(input_configuration_specific.get_neuron_count_per_feature_map() * affected_feature_map_id_list.size() * 2);
+	}
+
+	void sigmoid_layer::write_proto(void * layer_proto) const
+	{
+		if (!affected_feature_map_id_list.empty())
+		{
+			protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+			protobuf::SigmoidParam * param = layer_proto_typed->mutable_sigmoid_param();
+
+			for(std::vector<unsigned int>::const_iterator it = affected_feature_map_id_list.begin(); it != affected_feature_map_id_list.end(); ++it)
+				param->add_feature_map_affected(*it);
+		}
+	}
+
+	void sigmoid_layer::read_proto(const void * layer_proto)
+	{
+		affected_feature_map_id_list.clear();
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
+		if (layer_proto_typed->has_sigmoid_param())
+		{
+			for(int i = 0; i < layer_proto_typed->sigmoid_param().feature_map_affected_size(); ++i)
+				affected_feature_map_id_list.push_back(layer_proto_typed->sigmoid_param().feature_map_affected(i));
+		}
 	}
 }

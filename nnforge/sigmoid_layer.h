@@ -26,7 +26,7 @@ namespace nnforge
 	class sigmoid_layer : public layer
 	{
 	public:
-		sigmoid_layer();
+		sigmoid_layer(const std::vector<unsigned int>& affected_feature_map_id_list = std::vector<unsigned int>());
 
 		virtual layer_smart_ptr clone() const;
 
@@ -38,8 +38,15 @@ namespace nnforge
 
 		virtual const std::string& get_type_name() const;
 
+		virtual void write_proto(void * layer_proto) const;
+
+		virtual void read_proto(const void * layer_proto);
+
 		static const boost::uuids::uuid layer_guid;
 
 		static const std::string layer_type_name;
+
+	public:
+		std::vector<unsigned int> affected_feature_map_id_list;
 	};
 }

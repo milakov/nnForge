@@ -20,6 +20,8 @@
 #include "../neural_network_exception.h"
 #include "../nn_types.h"
 
+#include <set>
+
 namespace nnforge
 {
 	namespace plain
@@ -54,16 +56,50 @@ namespace nnforge
 			if (offset_input_entry_id > 0)
 				throw neural_network_exception("sigmoid_layer_updater_plain is not able to run using offset");
 
-			const int elem_count = static_cast<int>(updater_count * input_configuration_specific.get_neuron_count());
 			const std::vector<float>::const_iterator in_it = input_buffer->begin();
 			const std::vector<float>::iterator out_it = output_buffer->begin();
 
-			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-			for(int i = 0; i < elem_count; ++i)
+			nnforge_shared_ptr<const sigmoid_layer> layer_derived = nnforge_dynamic_pointer_cast<const sigmoid_layer>(layer_schema);
+			if (layer_derived->affected_feature_map_id_list.empty())
 			{
-				float inp = *(in_it + i);
-				float res = 1.0F / (expf(-inp) + 1.0F);
-				*(out_it + i) = res;
+				const int elem_count = static_cast<int>(updater_count * input_configuration_specific.get_neuron_count());
+
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int i = 0; i < elem_count; ++i)
+				{
+					float inp = *(in_it + i);
+					float res = 1.0F / (expf(-inp) + 1.0F);
+					*(out_it + i) = res;
+				}
+			}
+			else
+			{
+				memcpy(&(*out_it), &(*in_it), updater_count * input_configuration_specific.get_neuron_count());
+
+				const int affected_feature_map_count = static_cast<int>(layer_derived->affected_feature_map_id_list.size());
+				const int elem_count = static_cast<int>(updater_count * affected_feature_map_count);
+				const int neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
+				const int feature_map_count = input_configuration_specific.feature_map_count;
+				const std::vector<unsigned int>::const_iterator affected_feature_map_id_it = layer_derived->affected_feature_map_id_list.begin();
+
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int elem_id = 0; elem_id < elem_count; ++elem_id)
+				{
+					unsigned int entry_id = elem_id / affected_feature_map_count;
+					unsigned int feature_map_config_id = elem_id - affected_feature_map_count * entry_id;
+					unsigned int feature_map_id = *(affected_feature_map_id_it + feature_map_config_id);
+
+					unsigned int offset = (entry_id * feature_map_count + feature_map_id) * neuron_count_per_feature_map;
+					const std::vector<float>::const_iterator in_it2 = in_it + offset;
+					const std::vector<float>::iterator out_it2 = out_it + offset;
+
+					for(int i = 0; i < neuron_count_per_feature_map; ++i)
+					{
+						float inp = *(in_it2 + i);
+						float res = 1.0F / (expf(-inp) + 1.0F);
+						*(out_it2 + i) = res;
+					}
+				}
 			}
 		}
 
@@ -82,16 +118,48 @@ namespace nnforge
 			unsigned int updater_count,
 			bool force_deterministic) const
 		{
-			const int elem_count = static_cast<int>(updater_count * input_configuration_specific.get_neuron_count());
 			const std::vector<float>::iterator in_err_it = input_errors->begin();
 			const std::vector<float>::const_iterator out_it = output_neurons->begin();
 
-			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-			for(int i = 0; i < elem_count; ++i)
+			nnforge_shared_ptr<const sigmoid_layer> layer_derived = nnforge_dynamic_pointer_cast<const sigmoid_layer>(layer_schema);
+			if (layer_derived->affected_feature_map_id_list.empty())
 			{
-				float out_neuron = *(out_it + i);
-				float der1st = out_neuron * (1.0F - out_neuron);
-				*(in_err_it + i) *= der1st;
+				const int elem_count = static_cast<int>(updater_count * input_configuration_specific.get_neuron_count());
+
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int i = 0; i < elem_count; ++i)
+				{
+					float out_neuron = *(out_it + i);
+					float der1st = out_neuron * (1.0F - out_neuron);
+					*(in_err_it + i) *= der1st;
+				}
+			}
+			else
+			{
+				const int affected_feature_map_count = static_cast<int>(layer_derived->affected_feature_map_id_list.size());
+				const int elem_count = static_cast<int>(updater_count * affected_feature_map_count);
+				const int neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
+				const int feature_map_count = input_configuration_specific.feature_map_count;
+				const std::vector<unsigned int>::const_iterator affected_feature_map_id_it = layer_derived->affected_feature_map_id_list.begin();
+
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int elem_id = 0; elem_id < elem_count; ++elem_id)
+				{
+					unsigned int entry_id = elem_id / affected_feature_map_count;
+					unsigned int feature_map_config_id = elem_id - affected_feature_map_count * entry_id;
+					unsigned int feature_map_id = *(affected_feature_map_id_it + feature_map_config_id);
+
+					unsigned int offset = (entry_id * feature_map_count + feature_map_id) * neuron_count_per_feature_map;
+					const std::vector<float>::const_iterator out_it2 = out_it + offset;
+					const std::vector<float>::iterator in_err_it2 = in_err_it + offset;
+
+					for(int i = 0; i < neuron_count_per_feature_map; ++i)
+					{
+						float out_neuron = *(out_it2 + i);
+						float der1st = out_neuron * (1.0F - out_neuron);
+						*(in_err_it2 + i) *= der1st;
+					}
+				}
 			}
 		}
 

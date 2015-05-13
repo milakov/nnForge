@@ -446,6 +446,12 @@
     <ClInclude Include="untile_layer_testing_schema.h">
       <Filter>Header Files\testing_schemas</Filter>
     </ClInclude>
+    <ClInclude Include="sigmoid_partial_layer_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="sigmoid_partial_layer_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -761,6 +767,12 @@
     </CudaCompile>
     <CudaCompile Include="untile_layer_tester_cuda.cu">
       <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="sigmoid_partial_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="sigmoid_partial_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

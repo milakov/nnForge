@@ -20,6 +20,7 @@ message Layer {
 	optional RGBToYUVConvertParam rgb_to_yuv_convert_param = 11;
 	optional TanHParam tanh_param = 12;
 	optional UnTileParam untile_param = 13;
+	optional SigmoidParam sigmoid_param = 15;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -115,4 +116,8 @@ message CustomParam {
 	repeated sint32 int_param = 1;
 	repeated float float_param = 2;
 	repeated CustomDimensionParam dimension_param = 3;
+}
+
+message SigmoidParam {
+	repeated uint32 feature_map_affected = 1;
 }
