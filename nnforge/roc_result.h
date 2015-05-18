@@ -20,6 +20,7 @@
 #include "output_neuron_value_set.h"
 
 #include <vector>
+#include <set>
 
 namespace nnforge
 {
@@ -31,6 +32,7 @@ namespace nnforge
 			const output_neuron_value_set& actual_value_set,
 			float threshold = 0.5F,
 			float beta = 1.0F,
+			const std::set<unsigned int>& neuron_id_valid_for_roc_set = std::set<unsigned int>(),
 			unsigned int segment_count = 1000,
 			float min_val = -2.0F,
 			float max_val = 2.0F);

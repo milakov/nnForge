@@ -24,9 +24,11 @@ namespace nnforge
 {
 	testing_complete_result_set_roc_visualizer::testing_complete_result_set_roc_visualizer(
 		float threshold,
-		float beta)
+		float beta,
+		const std::set<unsigned int>& neuron_id_valid_for_roc_set)
 		: threshold(threshold)
 		, beta(beta)
+		, neuron_id_valid_for_roc_set(neuron_id_valid_for_roc_set)
 	{
 	}
 
@@ -40,7 +42,7 @@ namespace nnforge
 	{
 		testing_complete_result_set_visualizer::dump(out, val);
 
-		roc_result rr(*val.predicted_output_neuron_value_set, *val.actual_output_neuron_value_set, threshold, beta);
+		roc_result rr(*val.predicted_output_neuron_value_set, *val.actual_output_neuron_value_set, threshold, beta, neuron_id_valid_for_roc_set);
 		out << ", " << rr;
 	}
 }

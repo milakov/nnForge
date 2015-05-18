@@ -2075,10 +2075,15 @@ namespace nnforge
 		case network_output_type::type_classifier:
 			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_classifier_visualizer(get_classifier_visualizer_top_n()));
 		case network_output_type::type_roc:
-			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_roc_visualizer(get_threshold_for_binary_classifier()));
+			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_roc_visualizer(get_threshold_for_binary_classifier(), 1.0F, get_neuron_id_valid_for_roc_set()));
 		default:
 			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_visualizer());
 		}
+	}
+
+	std::set<unsigned int> neural_network_toolset::get_neuron_id_valid_for_roc_set() const
+	{
+		return std::set<unsigned int>();
 	}
 
 	bool neural_network_toolset::is_training_with_validation() const

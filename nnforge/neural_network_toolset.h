@@ -144,6 +144,8 @@ namespace nnforge
 
 		float get_threshold_for_binary_classifier() const;
 
+		virtual std::set<unsigned int> get_neuron_id_valid_for_roc_set() const;
+
 	protected:
 		static const char * training_data_filename;
 		static const char * training_randomized_data_filename;

@@ -27,6 +27,7 @@ namespace nnforge
 		const output_neuron_value_set& actual_value_set,
 		float threshold,
 		float beta,
+		const std::set<unsigned int>& neuron_id_valid_for_roc_set,
 		unsigned int segment_count,
 		float min_val,
 		float max_val)
@@ -50,11 +51,15 @@ namespace nnforge
 			const std::vector<float>& actual_value_list = *actual_it;
 			const std::vector<float>& predicted_value_list = *predicted_it;
 
+			unsigned int neuron_id = 0;
 			std::vector<float>::const_iterator predicted_value_it = predicted_value_list.begin();
 			for(std::vector<float>::const_iterator actual_value_it = actual_value_list.begin();
 				actual_value_it != actual_value_list.end();
-				actual_value_it++, predicted_value_it++)
+				actual_value_it++, predicted_value_it++, ++neuron_id)
 			{
+				if (!neuron_id_valid_for_roc_set.empty() && (neuron_id_valid_for_roc_set.find(neuron_id) == neuron_id_valid_for_roc_set.end()))
+					continue;
+
 				float actual_value = *actual_value_it;
 				float predicted_value = *predicted_value_it;
 

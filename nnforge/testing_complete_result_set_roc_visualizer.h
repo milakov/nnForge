@@ -18,6 +18,8 @@
 
 #include "testing_complete_result_set_visualizer.h"
 
+#include <set>
+
 namespace nnforge
 {
 	class testing_complete_result_set_roc_visualizer : public testing_complete_result_set_visualizer
@@ -25,7 +27,8 @@ namespace nnforge
 	public:
 		testing_complete_result_set_roc_visualizer(
 			float threshold = 0.5F, // Used for accuracy and [optionally] for F-score
-			float beta = 1.0F); // Used for F-score
+			float beta = 1.0F,
+			const std::set<unsigned int>& neuron_id_valid_for_roc_set = std::set<unsigned int>()); // Used for F-score
 
 		~testing_complete_result_set_roc_visualizer();
 
@@ -36,6 +39,7 @@ namespace nnforge
 	public:
 		float threshold;
 		float beta;
+		std::set<unsigned int> neuron_id_valid_for_roc_set;
 	};
 }
 
