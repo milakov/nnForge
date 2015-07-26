@@ -37,40 +37,39 @@ namespace nnforge
 		class layer_testing_schema
 		{
 		public:
+			typedef nnforge_shared_ptr<layer_testing_schema> ptr;
+			typedef nnforge_shared_ptr<const layer_testing_schema> const_ptr;
+
 			virtual ~layer_testing_schema();
 
 			nnforge_shared_ptr<layer_testing_schema> create(
-				const_layer_smart_ptr layer_schema,
-				cuda_running_configuration_const_smart_ptr cuda_config) const;
+				layer::const_ptr layer_schema,
+				cuda_running_configuration::const_ptr cuda_config) const;
 
-			layer_tester_cuda_smart_ptr create_tester(
-				const layer_configuration_specific& input_configuration_specific,
+			layer_tester_cuda::ptr create_tester(
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific) const;
 
-			virtual const boost::uuids::uuid& get_uuid() const = 0;
+			virtual std::string get_type_name() const = 0;
 
 			// returns the list of buffers defining the schema
-			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_schema_buffers() const;
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_schema_buffers() const;
 
 		protected:
 			virtual nnforge_shared_ptr<layer_testing_schema> create_specific() const = 0;
 
-			virtual layer_tester_cuda_smart_ptr create_tester_specific(
-				const layer_configuration_specific& input_configuration_specific,
+			virtual layer_tester_cuda::ptr create_tester_specific(
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific) const = 0;
 
 			layer_testing_schema();
 
-			const_layer_smart_ptr layer_schema;
-			cuda_running_configuration_const_smart_ptr cuda_config;
+			layer::const_ptr layer_schema;
+			cuda_running_configuration::const_ptr cuda_config;
 
 		private:
 			layer_testing_schema(const layer_testing_schema&);
 			layer_testing_schema& operator =(const layer_testing_schema&);
 		};
-
-		typedef nnforge_shared_ptr<layer_testing_schema> layer_testing_schema_smart_ptr;
-		typedef nnforge_shared_ptr<const layer_testing_schema> const_layer_testing_schema_smart_ptr;
-		typedef std::vector<const_layer_testing_schema_smart_ptr> const_layer_testing_schema_list;
 	}
 }

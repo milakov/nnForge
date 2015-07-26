@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="absolute_layer.h" />
+    <ClInclude Include="accuracy_layer.h" />
     <ClInclude Include="average_subsampling_layer.h" />
     <ClInclude Include="classifier_result.h" />
     <ClInclude Include="complex_network_data_pusher.h" />
@@ -20,13 +21,24 @@
     <ClInclude Include="convert_to_polar_data_transformer.h" />
     <ClInclude Include="convolution_layer.h" />
     <ClInclude Include="cross_entropy_error_function.h" />
+    <ClInclude Include="data_layer.h" />
+    <ClInclude Include="debug_state.h" />
     <ClInclude Include="debug_util.h" />
     <ClInclude Include="dropout_layer.h" />
     <ClInclude Include="elastic_deformation_2d_data_transformer.h" />
     <ClInclude Include="embed_data_transformer.h" />
+    <ClInclude Include="forward_propagation.h" />
+    <ClInclude Include="forward_propagation_factory.h" />
     <ClInclude Include="layer_data_custom_list.h" />
+    <ClInclude Include="legacy_supervised_data_bunch_reader.h" />
+    <ClInclude Include="mse_layer.h" />
+    <ClInclude Include="neuron_value_set_data_bunch_writer.h" />
     <ClInclude Include="raw_data_reader.h" />
+    <ClInclude Include="structured_data_bunch_reader.h" />
+    <ClInclude Include="structured_data_bunch_writer.h" />
+    <ClInclude Include="threadpool_job_runner.h" />
     <ClInclude Include="tiling_factor.h" />
+    <ClInclude Include="toolset.h" />
     <ClInclude Include="training_momentum.h" />
     <ClInclude Include="negate_data_transformer.h" />
     <ClInclude Include="parametric_rectified_linear_layer.h" />
@@ -90,7 +102,7 @@
     <ClInclude Include="noise_data_transformer.h" />
     <ClInclude Include="normalize_data_transformer.h" />
     <ClInclude Include="output_neuron_class_set.h" />
-    <ClInclude Include="output_neuron_value_set.h" />
+    <ClInclude Include="neuron_value_set.h" />
     <ClInclude Include="rectified_linear_layer.h" />
     <ClInclude Include="report_progress_network_data_pusher.h" />
     <ClInclude Include="rgb_to_yuv_convert_layer.h" />
@@ -122,7 +134,7 @@
     <ClInclude Include="testing_complete_result_set_visualizer.h" />
     <ClInclude Include="testing_result.h" />
     <ClInclude Include="training_task_state.h" />
-    <ClInclude Include="unsupervised_data_reader.h" />
+    <ClInclude Include="structured_data_reader.h" />
     <ClInclude Include="unsupervised_data_stream_reader.h" />
     <ClInclude Include="unsupervised_data_stream_schema.h" />
     <ClInclude Include="unsupervised_data_stream_writer.h" />
@@ -132,41 +144,119 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="absolute_layer.cpp" />
+    <ClCompile Include="accuracy_layer.cpp" />
     <ClCompile Include="average_subsampling_layer.cpp" />
-    <ClCompile Include="classifier_result.cpp" />
-    <ClCompile Include="complex_network_data_pusher.cpp" />
-    <ClCompile Include="convert_data_type_transformer.cpp" />
-    <ClCompile Include="convert_to_polar_data_transformer.cpp" />
+    <ClCompile Include="classifier_result.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="complex_network_data_pusher.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="convert_data_type_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="convert_to_polar_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="convolution_layer.cpp" />
-    <ClCompile Include="cross_entropy_error_function.cpp" />
+    <ClCompile Include="cross_entropy_error_function.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="data_layer.cpp" />
+    <ClCompile Include="debug_state.cpp" />
     <ClCompile Include="debug_util.cpp" />
     <ClCompile Include="dropout_layer.cpp" />
-    <ClCompile Include="elastic_deformation_2d_data_transformer.cpp" />
-    <ClCompile Include="embed_data_transformer.cpp" />
+    <ClCompile Include="elastic_deformation_2d_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="embed_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="forward_propagation.cpp" />
+    <ClCompile Include="forward_propagation_factory.cpp" />
     <ClCompile Include="layer_data_custom_list.cpp" />
-    <ClCompile Include="raw_data_reader.cpp" />
+    <ClCompile Include="legacy_supervised_data_bunch_reader.cpp" />
+    <ClCompile Include="mse_layer.cpp" />
+    <ClCompile Include="neuron_value_set_data_bunch_writer.cpp" />
+    <ClCompile Include="raw_data_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="structured_data_bunch_reader.cpp" />
+    <ClCompile Include="structured_data_bunch_writer.cpp" />
+    <ClCompile Include="threadpool_job_runner.cpp" />
     <ClCompile Include="tiling_factor.cpp" />
-    <ClCompile Include="training_momentum.cpp" />
-    <ClCompile Include="negate_data_transformer.cpp" />
+    <ClCompile Include="toolset.cpp" />
+    <ClCompile Include="training_momentum.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="negate_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="parametric_rectified_linear_layer.cpp" />
     <ClCompile Include="proto\data_normalizer.pb.cc" />
     <ClCompile Include="proto\nnforge.pb.cc" />
-    <ClCompile Include="reshape_data_transformer.cpp" />
-    <ClCompile Include="supervised_image_data_sampler_stream_reader.cpp" />
+    <ClCompile Include="reshape_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_image_data_sampler_stream_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="layer_data_custom.cpp" />
     <ClCompile Include="layer_data_list.cpp" />
-    <ClCompile Include="negative_log_likelihood_error_function.cpp" />
-    <ClCompile Include="data_transformer.cpp" />
-    <ClCompile Include="data_transformer_util.cpp" />
-    <ClCompile Include="distort_2d_data_sampler_transformer.cpp" />
-    <ClCompile Include="distort_2d_data_transformer.cpp" />
-    <ClCompile Include="error_function.cpp" />
-    <ClCompile Include="extract_data_transformer.cpp" />
+    <ClCompile Include="negative_log_likelihood_error_function.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="data_transformer_util.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="distort_2d_data_sampler_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="distort_2d_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="error_function.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="extract_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="factory_generator.cpp" />
-    <ClCompile Include="feature_map_data_stat.cpp" />
-    <ClCompile Include="flip_2d_data_sampler_transformer.cpp" />
+    <ClCompile Include="feature_map_data_stat.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="flip_2d_data_sampler_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="hyperbolic_tangent_layer.cpp" />
-    <ClCompile Include="intensity_2d_data_transformer.cpp" />
+    <ClCompile Include="intensity_2d_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="layer.cpp" />
     <ClCompile Include="layer_configuration.cpp" />
     <ClCompile Include="layer_configuration_specific.cpp" />
@@ -178,74 +268,230 @@
     <ClCompile Include="local_contrast_subtractive_layer.cpp" />
     <ClCompile Include="maxout_layer.cpp" />
     <ClCompile Include="max_subsampling_layer.cpp" />
-    <ClCompile Include="mse_error_function.cpp" />
-    <ClCompile Include="network_trainer_sgd.cpp" />
-    <ClCompile Include="save_resume_network_data_pusher.cpp" />
+    <ClCompile Include="mse_error_function.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_trainer_sgd.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="save_resume_network_data_pusher.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sigmoid_layer.cpp" />
     <ClCompile Include="sparse_convolution_layer.cpp" />
     <ClCompile Include="stream_duplicator.cpp" />
-    <ClCompile Include="supervised_image_stream_reader.cpp" />
-    <ClCompile Include="supervised_limited_entry_count_data_reader.cpp" />
-    <ClCompile Include="supervised_multiple_epoch_data_reader.cpp" />
-    <ClCompile Include="network_analyzer.cpp" />
-    <ClCompile Include="network_analyzer_factory.cpp" />
+    <ClCompile Include="supervised_image_stream_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_limited_entry_count_data_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_multiple_epoch_data_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_analyzer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_analyzer_factory.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="network_data.cpp" />
-    <ClCompile Include="network_data_peeker.cpp" />
-    <ClCompile Include="network_data_peeker_random.cpp" />
-    <ClCompile Include="network_data_peeker_single.cpp" />
-    <ClCompile Include="network_data_pusher.cpp" />
+    <ClCompile Include="network_data_peeker.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_data_peeker_random.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_data_peeker_single.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_data_pusher.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="network_schema.cpp" />
-    <ClCompile Include="network_tester.cpp" />
-    <ClCompile Include="network_tester_factory.cpp" />
-    <ClCompile Include="network_trainer.cpp" />
-    <ClCompile Include="network_updater.cpp" />
-    <ClCompile Include="network_updater_factory.cpp" />
+    <ClCompile Include="network_tester.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_tester_factory.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_trainer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_updater.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_updater_factory.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="neural_network_exception.cpp" />
-    <ClCompile Include="neural_network_toolset.cpp" />
+    <ClCompile Include="neural_network_toolset.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="neuron_data_type.cpp" />
     <ClCompile Include="nnforge.cpp" />
-    <ClCompile Include="noise_data_transformer.cpp" />
-    <ClCompile Include="normalize_data_transformer.cpp" />
-    <ClCompile Include="output_neuron_class_set.cpp" />
-    <ClCompile Include="output_neuron_value_set.cpp" />
+    <ClCompile Include="noise_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="normalize_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="output_neuron_class_set.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="neuron_value_set.cpp" />
     <ClCompile Include="rectified_linear_layer.cpp" />
-    <ClCompile Include="report_progress_network_data_pusher.cpp" />
+    <ClCompile Include="report_progress_network_data_pusher.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="rgb_to_yuv_convert_layer.cpp" />
     <ClCompile Include="rnd.cpp" />
-    <ClCompile Include="roc_result.cpp" />
-    <ClCompile Include="rotate_band_data_transformer.cpp" />
-    <ClCompile Include="snapshot_visualizer.cpp" />
+    <ClCompile Include="roc_result.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="rotate_band_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="snapshot_visualizer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="softmax_layer.cpp" />
-    <ClCompile Include="squared_hinge_loss_error_function.cpp" />
-    <ClCompile Include="summarize_network_data_pusher.cpp" />
-    <ClCompile Include="supervised_data_mem_reader.cpp" />
-    <ClCompile Include="supervised_data_reader.cpp" />
-    <ClCompile Include="supervised_data_stream_reader.cpp" />
+    <ClCompile Include="squared_hinge_loss_error_function.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="summarize_network_data_pusher.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_data_mem_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_data_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_data_stream_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="supervised_data_stream_schema.cpp" />
-    <ClCompile Include="supervised_data_stream_writer.cpp" />
-    <ClCompile Include="supervised_random_image_data_stream_reader.cpp" />
-    <ClCompile Include="supervised_shuffle_entries_data_reader.cpp" />
-    <ClCompile Include="supervised_transformed_input_data_reader.cpp" />
-    <ClCompile Include="supervised_transformed_output_data_reader.cpp" />
-    <ClCompile Include="training_stat.cpp" />
-    <ClCompile Include="uniform_intensity_data_transformer.cpp" />
+    <ClCompile Include="supervised_data_stream_writer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_random_image_data_stream_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_shuffle_entries_data_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_transformed_input_data_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="supervised_transformed_output_data_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="training_stat.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="uniform_intensity_data_transformer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="untile_layer.cpp" />
-    <ClCompile Include="varying_data_stream_reader.cpp" />
-    <ClCompile Include="varying_data_stream_schema.cpp" />
-    <ClCompile Include="varying_data_stream_writer.cpp" />
-    <ClCompile Include="testing_complete_result_set.cpp" />
-    <ClCompile Include="testing_complete_result_set_classifier_visualizer.cpp" />
-    <ClCompile Include="testing_complete_result_set_roc_visualizer.cpp" />
-    <ClCompile Include="testing_complete_result_set_visualizer.cpp" />
-    <ClCompile Include="testing_result.cpp" />
-    <ClCompile Include="training_task_state.cpp" />
-    <ClCompile Include="unsupervised_data_reader.cpp" />
-    <ClCompile Include="unsupervised_data_stream_reader.cpp" />
-    <ClCompile Include="unsupervised_data_stream_schema.cpp" />
-    <ClCompile Include="unsupervised_data_stream_writer.cpp" />
-    <ClCompile Include="data_writer.cpp" />
-    <ClCompile Include="unsupervised_transformed_input_data_reader.cpp" />
-    <ClCompile Include="validate_progress_network_data_pusher.cpp" />
+    <ClCompile Include="varying_data_stream_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="varying_data_stream_schema.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="varying_data_stream_writer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="testing_complete_result_set.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="testing_complete_result_set_classifier_visualizer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="testing_complete_result_set_roc_visualizer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="testing_complete_result_set_visualizer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="testing_result.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="training_task_state.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="structured_data_reader.cpp" />
+    <ClCompile Include="unsupervised_data_stream_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="unsupervised_data_stream_schema.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="unsupervised_data_stream_writer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="data_writer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="unsupervised_transformed_input_data_reader.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="validate_progress_network_data_pusher.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="proto\nnforge.proto">
@@ -309,7 +555,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -323,7 +569,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

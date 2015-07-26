@@ -19,13 +19,15 @@
 #include <vector>
 #include <ostream>
 #include <istream>
+#include <string>
+#include <map>
 #include <boost/uuid/uuid.hpp>
 
 #include "nn_types.h"
 
 namespace nnforge
 {
-	class output_neuron_value_set
+	class neuron_value_set
 	{
 	public:
 		enum merge_type_enum
@@ -34,18 +36,23 @@ namespace nnforge
 			merge_median
 		};
 
-		output_neuron_value_set();
+		typedef nnforge_shared_ptr<neuron_value_set> ptr;
+		typedef nnforge_shared_ptr<const neuron_value_set> const_ptr;
 
-		output_neuron_value_set(
-			unsigned int entry_count,
-			unsigned int neuron_count);
+		neuron_value_set(unsigned int neuron_count);
 
-		output_neuron_value_set(
-			const std::vector<nnforge_shared_ptr<output_neuron_value_set> >& source_output_neuron_value_set_list,
+		neuron_value_set(
+			unsigned int neuron_count,
+			unsigned int entry_count);
+
+		neuron_value_set(
+			const std::vector<neuron_value_set::const_ptr>& source_neuron_value_set_list,
 			merge_type_enum merge_type);
 
-		output_neuron_value_set(
-			const std::vector<std::pair<nnforge_shared_ptr<output_neuron_value_set>, float> >& source_output_neuron_value_set_list);
+		neuron_value_set(
+			const std::vector<std::pair<neuron_value_set::const_ptr, float> >& source_neuron_value_set_list);
+
+		void add_entry(const float * new_data);
 
 		// The stream should be created with std::ios_base::binary flag
 		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure
@@ -55,20 +62,15 @@ namespace nnforge
 		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
 		void read(std::istream& binary_stream_to_read_from);
 
-		void clamp(
-			float min_val,
-			float max_val);
-
-		void compact(unsigned int sample_count);
+		nnforge_shared_ptr<std::vector<float> > get_average() const;
 
 		const boost::uuids::uuid& get_uuid() const;
 
 	public:
-		std::vector<std::vector<float> > neuron_value_list;
+		unsigned int neuron_count;
+		std::vector<nnforge_shared_ptr<std::vector<float> > > neuron_value_list;
 
 	private:
-		static const boost::uuids::uuid output_neuron_value_set_guid;
+		static const boost::uuids::uuid neuron_value_set_guid;
 	};
-
-	typedef nnforge_shared_ptr<output_neuron_value_set> output_neuron_value_set_smart_ptr;
 }

@@ -27,14 +27,6 @@
 
 namespace nnforge
 {
-	// {47946234-017A-401A-9663-3D0F3887E48A}
-	const boost::uuids::uuid local_contrast_subtractive_layer::layer_guid =
-		{ 0x47, 0x94, 0x62, 0x34
-		, 0x01, 0x7a
-		, 0x40, 0x1a
-		, 0x96, 0x63
-		, 0x3d, 0xf, 0x38, 0x87, 0xe4, 0x8a };
-
 	const std::string local_contrast_subtractive_layer::layer_type_name = "LCS";
 
 	const float local_contrast_subtractive_layer::c = 2.0F;
@@ -77,66 +69,48 @@ namespace nnforge
 		setup_window_weights_list();
 	}
 
-	const boost::uuids::uuid& local_contrast_subtractive_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& local_contrast_subtractive_layer::get_type_name() const
+	std::string local_contrast_subtractive_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr local_contrast_subtractive_layer::clone() const
+	layer::ptr local_contrast_subtractive_layer::clone() const
 	{
-		return layer_smart_ptr(new local_contrast_subtractive_layer(*this));
+		return layer::ptr(new local_contrast_subtractive_layer(*this));
 	}
 
-	layer_configuration local_contrast_subtractive_layer::get_layer_configuration(const layer_configuration& input_configuration) const
+	layer_configuration local_contrast_subtractive_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
 	{
-		if ((input_configuration.dimension_count >= 0) && (input_configuration.dimension_count != static_cast<int>(window_sizes.size())))
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % window_sizes.size() % input_configuration.dimension_count).str());
+		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(window_sizes.size())))
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % window_sizes.size() % input_configuration_list[0].dimension_count).str());
 
-		if ((input_configuration.feature_map_count >= 0) && (input_configuration.feature_map_count != static_cast<int>(feature_map_count)))
-			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % feature_map_count % input_configuration.feature_map_count).str());
+		if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count != static_cast<int>(feature_map_count)))
+			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % feature_map_count % input_configuration_list[0].feature_map_count).str());
 
-		return layer_configuration(input_configuration.feature_map_count, static_cast<int>(window_sizes.size()));
+		return layer_configuration(input_configuration_list[0].feature_map_count, static_cast<int>(window_sizes.size()));
 	}
 
-	layer_configuration_specific local_contrast_subtractive_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific local_contrast_subtractive_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		if (input_configuration_specific.feature_map_count != feature_map_count)
-			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % feature_map_count % input_configuration_specific.feature_map_count).str());
+		if (input_configuration_specific_list[0].feature_map_count != feature_map_count)
+			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % feature_map_count % input_configuration_specific_list[0].feature_map_count).str());
 
-		if (input_configuration_specific.get_dimension_count() != window_sizes.size())
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % window_sizes.size() % input_configuration_specific.get_dimension_count()).str());
+		if (input_configuration_specific_list[0].get_dimension_count() != window_sizes.size())
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % window_sizes.size() % input_configuration_specific_list[0].get_dimension_count()).str());
 
 		for(unsigned int i = 0; i < window_sizes.size(); i++)
 		{
-			if (input_configuration_specific.dimension_sizes[i] < window_sizes[i])
-				throw neural_network_exception((boost::format("Input configuration dimension size (%1%) for local contrast subtractive layer is smaller than window size (%2%") % input_configuration_specific.dimension_sizes[i] % window_sizes[i]).str());
+			if (input_configuration_specific_list[0].dimension_sizes[i] < window_sizes[i])
+				throw neural_network_exception((boost::format("Input configuration dimension size (%1%) for local contrast subtractive layer is smaller than window size (%2%") % input_configuration_specific_list[0].dimension_sizes[i] % window_sizes[i]).str());
 		}
 
 		for(std::vector<unsigned int>::const_iterator it = feature_maps_affected.begin(); it != feature_maps_affected.end(); ++it)
 		{
-			if (*it >= input_configuration_specific.feature_map_count)
-				throw neural_network_exception((boost::format("ID of feature map layer (%1%) is greater or equal than feature map count of input configuration (%2%)") % *it % input_configuration_specific.feature_map_count).str());
+			if (*it >= input_configuration_specific_list[0].feature_map_count)
+				throw neural_network_exception((boost::format("ID of feature map layer (%1%) is greater or equal than feature map count of input configuration (%2%)") % *it % input_configuration_specific_list[0].feature_map_count).str());
 		}
 
-		return layer_configuration_specific(input_configuration_specific);
-	}
-
-	void local_contrast_subtractive_layer::write(std::ostream& binary_stream_to_write_to) const
-	{
-		unsigned int dimension_count = static_cast<unsigned int>(window_sizes.size());
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&dimension_count), sizeof(dimension_count));
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
-
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&feature_map_count), sizeof(feature_map_count));
-
-		unsigned int feature_maps_affected_count = static_cast<unsigned int>(feature_maps_affected.size());
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&feature_maps_affected_count), sizeof(feature_maps_affected_count));
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*feature_maps_affected.begin())), sizeof(unsigned int) * feature_maps_affected_count);
+		return input_configuration_specific_list[0];
 	}
 
 	void local_contrast_subtractive_layer::write_proto(void * layer_proto) const
@@ -154,34 +128,6 @@ namespace nnforge
 			protobuf::LCSParam_LCSDimensionParam * dim_param = param->add_dimension_param();
 			dim_param->set_kernel_size(window_sizes[i]);
 		}
-	}
-
-	void local_contrast_subtractive_layer::read(
-		std::istream& binary_stream_to_read_from,
-		const boost::uuids::uuid& layer_read_guid)
-	{
-		unsigned int dimension_count;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));
-		window_sizes.resize(dimension_count);
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
-
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&feature_map_count), sizeof(feature_map_count));
-
-		unsigned int feature_maps_affected_count;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&feature_maps_affected_count), sizeof(feature_maps_affected_count));
-		feature_maps_affected.resize(feature_maps_affected_count);
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*feature_maps_affected.begin())), sizeof(unsigned int) * feature_maps_affected_count);
-
-		std::sort(feature_maps_affected.begin(), feature_maps_affected.end());
-		for(unsigned int i = 0; i < feature_map_count; i++)
-		{
-			if (!std::binary_search(feature_maps_affected.begin(), feature_maps_affected.end(), i))
-			{
-				feature_maps_unaffected.push_back(i);
-			}
-		}
-
-		setup_window_weights_list();
 	}
 
 	void local_contrast_subtractive_layer::read_proto(const void * layer_proto)
@@ -260,18 +206,20 @@ namespace nnforge
 		}
 	}
 
-	float local_contrast_subtractive_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float local_contrast_subtractive_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		unsigned int neuron_count = static_cast<unsigned int>(input_configuration_specific.get_neuron_count_per_feature_map() * feature_maps_affected.size());
+		unsigned int neuron_count = static_cast<unsigned int>(input_configuration_specific_list[0].get_neuron_count_per_feature_map() * feature_maps_affected.size());
 		unsigned int per_item_flops = 1;
 		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops += ((boost::lambda::_1 >> 1) * 3 + 1) );
 
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 	}
 
-	float local_contrast_subtractive_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float local_contrast_subtractive_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
-		unsigned int neuron_count = static_cast<unsigned int>(input_configuration_specific.get_neuron_count_per_feature_map() * feature_maps_affected.size());
+		unsigned int neuron_count = static_cast<unsigned int>(input_configuration_specific_list[0].get_neuron_count_per_feature_map() * feature_maps_affected.size());
 		unsigned int per_item_flops = 1;
 		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops += ((boost::lambda::_1 >> 1) * 3 + 1) );
 

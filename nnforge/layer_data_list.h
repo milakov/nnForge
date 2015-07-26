@@ -20,19 +20,31 @@
 #include "layer.h"
 #include "rnd.h"
 
-#include <vector>
+#include <map>
 #include <string>
+#include <ostream>
+#include <istream>
 
 namespace nnforge
 {
-	class layer_data_list : public std::vector<layer_data_smart_ptr>
+	class layer_data_list
 	{
 	public:
+		typedef nnforge_shared_ptr<layer_data_list> ptr;
+		typedef nnforge_shared_ptr<const layer_data_list> const_ptr;
+
 		layer_data_list();
 
-		layer_data_list(const const_layer_list& layer_list, float val = 0.0F);
+		layer_data_list(
+			const std::vector<layer::const_ptr>& layer_list,
+			float val = 0.0F);
 
-		void check_consistency(const const_layer_list& layer_list) const;
+		// Narrow other data to the layers from layer_list
+		layer_data_list(
+			const std::vector<layer::const_ptr>& layer_list,
+			const layer_data_list& other);
+
+		void check_consistency(const std::vector<layer::const_ptr>& layer_list) const;
 
 		std::string get_stat() const;
 
@@ -42,8 +54,21 @@ namespace nnforge
 			float min,
 			float max,
 			random_generator& gen);
-	};
 
-	typedef nnforge_shared_ptr<layer_data_list> layer_data_list_smart_ptr;
-	typedef nnforge_shared_ptr<const layer_data_list> const_layer_data_list_smart_ptr;
+		// Returns empty smart pointer in case no data is associated with instance_name
+		layer_data::ptr find(const std::string& instance_name) const;
+
+		layer_data::ptr get(const std::string& instance_name) const;
+
+		void add(
+			const std::string& instance_name,
+			layer_data::ptr data);
+
+		void write(std::ostream& binary_stream_to_write_to) const;
+
+		void read(std::istream& binary_stream_to_read_from);
+
+	private:
+		std::map<std::string, layer_data::ptr> instance_name_to_data_map;
+	};
 }

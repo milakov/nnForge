@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include <map>
 #include <boost/filesystem.hpp>
 
-#include <nnforge/neural_network_toolset.h>
+#include <nnforge/toolset.h>
 
 template<unsigned int index_id> class vector_element_extractor
 {
@@ -36,14 +36,17 @@ public:
 	}
 };
 
-class gtsrb_toolset : public nnforge::neural_network_toolset
+class gtsrb_toolset : public nnforge::toolset
 {
 public:
-	gtsrb_toolset(nnforge::factory_generator_smart_ptr factory);
+	gtsrb_toolset(nnforge::factory_generator::ptr factory);
 
 	virtual ~gtsrb_toolset();
 
+	virtual nnforge::structured_data_bunch_reader::ptr get_reader(const std::string& dataset_name) const;
+
 protected:
+	/*
 	virtual void prepare_training_data();
 
 	void write_single_entry(
@@ -77,4 +80,5 @@ protected:
 	static const float max_contrast_factor;
 	static const float max_brightness_shift;
 	static const unsigned int random_sample_count;
+	*/
 };

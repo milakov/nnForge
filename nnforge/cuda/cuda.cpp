@@ -34,7 +34,9 @@
 #include "dropout_layer_testing_schema.h"
 #include "parametric_rectified_linear_layer_testing_schema.h"
 #include "untile_layer_testing_schema.h"
-
+#include "mse_layer_testing_schema.h"
+#include "accuracy_layer_testing_schema.h"
+/*
 #include "layer_updater_schema_factory.h"
 #include "local_contrast_subtractive_layer_updater_schema.h"
 #include "absolute_layer_updater_schema.h"
@@ -56,6 +58,7 @@
 #include "squared_hinge_loss_error_function_updater_cuda.h"
 #include "negative_log_likelihood_error_function_updater_cuda.h"
 #include "cross_entropy_error_function_updater_cuda.h"
+*/
 
 namespace nnforge
 {
@@ -65,22 +68,24 @@ namespace nnforge
 		{
 			nnforge::init();
 
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new local_contrast_subtractive_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new absolute_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new hyperbolic_tangent_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new average_subsampling_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new convolution_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new sparse_convolution_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new max_subsampling_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new rectified_linear_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new softmax_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new rgb_to_yuv_convert_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new maxout_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new sigmoid_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new dropout_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new parametric_rectified_linear_layer_testing_schema()));
-			single_layer_testing_schema_factory::get_mutable_instance().register_layer_testing_schema(layer_testing_schema_smart_ptr(new untile_layer_testing_schema()));
-
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new local_contrast_subtractive_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new absolute_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new hyperbolic_tangent_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new average_subsampling_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new convolution_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new sparse_convolution_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new max_subsampling_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new rectified_linear_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new softmax_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new rgb_to_yuv_convert_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new maxout_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new sigmoid_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new dropout_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new parametric_rectified_linear_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new untile_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new mse_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new accuracy_layer_testing_schema()));
+			/*
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new local_contrast_subtractive_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new absolute_layer_updater_schema()));
 			single_layer_updater_schema_factory::get_mutable_instance().register_layer_updater_schema(layer_updater_schema_smart_ptr(new hyperbolic_tangent_layer_updater_schema()));
@@ -100,6 +105,7 @@ namespace nnforge
 			single_error_function_updater_cuda_factory::get_mutable_instance().register_error_function_updater_cuda(error_function_updater_cuda_smart_ptr(new squared_hinge_loss_error_function_updater_cuda()));
 			single_error_function_updater_cuda_factory::get_mutable_instance().register_error_function_updater_cuda(error_function_updater_cuda_smart_ptr(new negative_log_likelihood_error_function_updater_cuda()));
 			single_error_function_updater_cuda_factory::get_mutable_instance().register_error_function_updater_cuda(error_function_updater_cuda_smart_ptr(new cross_entropy_error_function_updater_cuda()));
+			*/
 		}
 	}
 }

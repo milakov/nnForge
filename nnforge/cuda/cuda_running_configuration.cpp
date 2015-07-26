@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 #include <limits>
 #include <iostream>
+#include <boost/thread/thread.hpp>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -37,9 +38,11 @@ namespace nnforge
 	{
 		cuda_running_configuration::cuda_running_configuration(
 			int device_id,
-			float max_global_memory_usage_ratio)
+			float max_global_memory_usage_ratio,
+			unsigned int reserved_thread_count)
 			: device_id(device_id)
 			, max_global_memory_usage_ratio(max_global_memory_usage_ratio)
+			, reserved_thread_count(reserved_thread_count)
 			, cublas_handle(0)
 			, cusparse_handle(0)
 			, cudnn_handle(0)
@@ -116,6 +119,9 @@ namespace nnforge
 
 			curand_safe_call(curandCreateGenerator(&curand_gen, CURAND_RNG_PSEUDO_DEFAULT));
 			curand_safe_call(curandSetPseudoRandomGeneratorSeed(curand_gen, rnd::get_time_dependent_seed()));
+
+			unsigned int core_count = boost::thread::hardware_concurrency();
+			job_runner = threadpool_job_runner::ptr(new threadpool_job_runner(core_count > reserved_thread_count ? core_count - reserved_thread_count : 1));
 		}
 
 		void cuda_running_configuration::set_device() const
@@ -181,6 +187,7 @@ namespace nnforge
 
 			out << "Free memory = " << free_memory / (1024 * 1024) << " MB" << std::endl;
 			out << "Total memory = " << total_memory / (1024 * 1024) << " MB" << std::endl;
+			out << "Job runner thread count = " << running_configuration.get_job_runner()->thread_count << std::endl;
 
 			return out;
 		}
@@ -220,6 +227,11 @@ namespace nnforge
 		curandGenerator_t cuda_running_configuration::get_curand_generator() const
 		{
 			return curand_gen;
+		}
+
+		threadpool_job_runner::ptr cuda_running_configuration::get_job_runner() const
+		{
+			return job_runner;
 		}
 	}
 }

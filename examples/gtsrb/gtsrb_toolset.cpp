@@ -16,15 +16,16 @@
 
 #include "gtsrb_toolset.h"
 
-#include <random>
+#include <nnforge/legacy_supervised_data_bunch_reader.h>
 
+#include <random>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <boost/algorithm/string.hpp>
 #include <algorithm>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/format.hpp>
-
+/*
 const unsigned int gtsrb_toolset::image_width = 32;
 const unsigned int gtsrb_toolset::image_height = 32;
 const unsigned int gtsrb_toolset::class_count = 43;
@@ -35,9 +36,9 @@ const float gtsrb_toolset::max_shift = 2.0F;
 const float gtsrb_toolset::max_contrast_factor = 1.5F;
 const float gtsrb_toolset::max_brightness_shift = 50.0F;
 const unsigned int gtsrb_toolset::random_sample_count = 5;
-
-gtsrb_toolset::gtsrb_toolset(nnforge::factory_generator_smart_ptr factory)
-	: nnforge::neural_network_toolset(factory)
+*/
+gtsrb_toolset::gtsrb_toolset(nnforge::factory_generator::ptr factory)
+	: nnforge::toolset(factory)
 {
 }
 
@@ -45,6 +46,18 @@ gtsrb_toolset::~gtsrb_toolset()
 {
 }
 
+nnforge::structured_data_bunch_reader::ptr gtsrb_toolset::get_reader(const std::string& dataset_name) const
+{
+	boost::filesystem::path filepath = get_working_data_folder() / (dataset_name + ".sdt");
+
+	nnforge_shared_ptr<std::istream> in_stream(new boost::filesystem::ifstream(filepath, std::ios_base::in | std::ios_base::binary));
+	return nnforge::structured_data_bunch_reader::ptr(new nnforge::legacy_supervised_data_bunch_reader(
+		in_stream,
+		"images",
+		"labels"));
+}
+
+/*
 void gtsrb_toolset::prepare_training_data()
 {
 	{
@@ -255,3 +268,4 @@ void gtsrb_toolset::write_single_entry(
 
 	writer.write(&(*inp.begin()), &(*output.begin()));
 }
+*/

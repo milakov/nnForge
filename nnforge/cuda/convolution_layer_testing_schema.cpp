@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 #include "convolution_1x1_layer_tester_cuda.h"
 #include "convolution_layer_tester_cuda.h"
 #include "convolution_layer_testing_schema_helper_cuda_kepler.h"
-#include "convolution_layer_testing_schema_helper_cuda_fermi.h"
 
 #include <boost/format.hpp>
 
@@ -38,21 +37,21 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& convolution_layer_testing_schema::get_uuid() const
+		std::string convolution_layer_testing_schema::get_type_name() const
 		{
-			return convolution_layer::layer_guid;
+			return convolution_layer::layer_type_name;
 		}
 
-		layer_testing_schema_smart_ptr convolution_layer_testing_schema::create_specific() const
+		layer_testing_schema::ptr convolution_layer_testing_schema::create_specific() const
 		{
-			return layer_testing_schema_smart_ptr(new convolution_layer_testing_schema());
+			return layer_testing_schema::ptr(new convolution_layer_testing_schema());
 		}
 
-		layer_tester_cuda_smart_ptr convolution_layer_testing_schema::create_tester_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_tester_cuda::ptr convolution_layer_testing_schema::create_tester_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			layer_tester_cuda_smart_ptr res;
+			layer_tester_cuda::ptr res;
 
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
@@ -61,19 +60,19 @@ namespace nnforge
 
 			if (zero_padding && (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count))
 			{
-				res = layer_tester_cuda_smart_ptr(new fully_connected_layer_tester_cuda());
+				res = layer_tester_cuda::ptr(new fully_connected_layer_tester_cuda());
 			}
-			else if (zero_padding && (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes))
+			else if (zero_padding && (input_configuration_specific_list[0].dimension_sizes == output_configuration_specific.dimension_sizes))
 			{
-				res = layer_tester_cuda_smart_ptr(new convolution_1x1_layer_tester_cuda());
+				res = layer_tester_cuda::ptr(new convolution_1x1_layer_tester_cuda());
 			}
-			else if (input_configuration_specific.dimension_sizes.size() <= 2)
+			else if (input_configuration_specific_list[0].dimension_sizes.size() <= 2)
 			{
-				res = layer_tester_cuda_smart_ptr(new convolution_layer_tester_cuda());
+				res = layer_tester_cuda::ptr(new convolution_layer_tester_cuda());
 			}
 			else
 			{
-				res = convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(input_configuration_specific, output_configuration_specific);
+				res = convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(input_configuration_specific_list[0], output_configuration_specific);
 			}
 
 			return res;

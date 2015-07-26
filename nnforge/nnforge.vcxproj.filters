@@ -120,6 +120,12 @@
     <Filter Include="Proto Files">
       <UniqueIdentifier>{04441ca2-091a-4182-b23d-05f99b276a4a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\forward_propagation">
+      <UniqueIdentifier>{0823767e-6ce3-4f8a-957d-323edc162704}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\forward_propagation">
+      <UniqueIdentifier>{3a7d9f59-8c25-41d9-a4d9-42eb006c6bb4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rnd.h">
@@ -129,9 +135,6 @@
       <Filter>Header Files\result</Filter>
     </ClInclude>
     <ClInclude Include="output_neuron_class_set.h">
-      <Filter>Header Files\result</Filter>
-    </ClInclude>
-    <ClInclude Include="output_neuron_value_set.h">
       <Filter>Header Files\result</Filter>
     </ClInclude>
     <ClInclude Include="testing_complete_result_set.h">
@@ -255,9 +258,6 @@
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="supervised_data_stream_writer.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_reader.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="unsupervised_data_stream_reader.h">
@@ -476,6 +476,48 @@
     <ClInclude Include="untile_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="data_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="forward_propagation.h">
+      <Filter>Header Files\forward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="forward_propagation_factory.h">
+      <Filter>Header Files\forward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_bunch_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="neuron_value_set.h">
+      <Filter>Header Files\result</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_bunch_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="threadpool_job_runner.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="toolset.h">
+      <Filter>Header Files\toolset</Filter>
+    </ClInclude>
+    <ClInclude Include="mse_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="neuron_value_set_data_bunch_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="legacy_supervised_data_bunch_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="accuracy_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_state.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -485,9 +527,6 @@
       <Filter>Source Files\result</Filter>
     </ClCompile>
     <ClCompile Include="output_neuron_class_set.cpp">
-      <Filter>Source Files\result</Filter>
-    </ClCompile>
-    <ClCompile Include="output_neuron_value_set.cpp">
       <Filter>Source Files\result</Filter>
     </ClCompile>
     <ClCompile Include="testing_complete_result_set.cpp">
@@ -626,9 +665,6 @@
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="supervised_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_reader.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="neuron_data_type.cpp">
@@ -822,6 +858,48 @@
     </ClCompile>
     <ClCompile Include="untile_layer.cpp">
       <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="data_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="forward_propagation.cpp">
+      <Filter>Source Files\forward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="forward_propagation_factory.cpp">
+      <Filter>Source Files\forward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_bunch_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="neuron_value_set.cpp">
+      <Filter>Source Files\result</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_bunch_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="threadpool_job_runner.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="toolset.cpp">
+      <Filter>Source Files\toolset</Filter>
+    </ClCompile>
+    <ClCompile Include="mse_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="neuron_value_set_data_bunch_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="legacy_supervised_data_bunch_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="accuracy_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="debug_state.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

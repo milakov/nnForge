@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,21 +36,21 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& sparse_convolution_layer_testing_schema::get_uuid() const
+		std::string sparse_convolution_layer_testing_schema::get_type_name() const
 		{
-			return sparse_convolution_layer::layer_guid;
+			return sparse_convolution_layer::layer_type_name;
 		}
 
-		layer_testing_schema_smart_ptr sparse_convolution_layer_testing_schema::create_specific() const
+		layer_testing_schema::ptr sparse_convolution_layer_testing_schema::create_specific() const
 		{
-			return layer_testing_schema_smart_ptr(new sparse_convolution_layer_testing_schema());
+			return layer_testing_schema::ptr(new sparse_convolution_layer_testing_schema());
 		}
 
-		layer_tester_cuda_smart_ptr sparse_convolution_layer_testing_schema::create_tester_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_tester_cuda::ptr sparse_convolution_layer_testing_schema::create_tester_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			layer_tester_cuda_smart_ptr res;
+			layer_tester_cuda::ptr res;
 
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
@@ -59,18 +59,18 @@ namespace nnforge
 
 			if (zero_padding && (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count))
 			{
-				if (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes)
+				if (input_configuration_specific_list[0].dimension_sizes == output_configuration_specific.dimension_sizes)
 				{
-					res = layer_tester_cuda_smart_ptr(new sparse_fully_connected_1x1_layer_tester_cuda());
+					res = layer_tester_cuda::ptr(new sparse_fully_connected_1x1_layer_tester_cuda());
 				}
 				else
 				{
-					res = layer_tester_cuda_smart_ptr(new sparse_fully_connected_layer_tester_cuda());
+					res = layer_tester_cuda::ptr(new sparse_fully_connected_layer_tester_cuda());
 				}
 			}
 			else
 			{
-				res = sparse_convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(input_configuration_specific, output_configuration_specific);
+				res = sparse_convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(input_configuration_specific_list[0], output_configuration_specific);
 			}
 
 			return res;

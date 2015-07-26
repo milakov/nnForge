@@ -25,17 +25,15 @@ namespace nnforge
 	public:
 		softmax_layer();
 
-		virtual layer_smart_ptr clone() const;
+		virtual layer::ptr clone() const;
 
-		virtual float get_forward_flops(const layer_configuration_specific& input_configuration_specific) const;
+		virtual float get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const;
 
-		virtual float get_backward_flops(const layer_configuration_specific& input_configuration_specific) const;
+		virtual float get_backward_flops(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			unsigned int input_layer_id) const;
 
-		virtual const boost::uuids::uuid& get_uuid() const;
-
-		virtual const std::string& get_type_name() const;
-
-		static const boost::uuids::uuid layer_guid;
+		virtual std::string get_type_name() const;
 
 		static const std::string layer_type_name;
 	};

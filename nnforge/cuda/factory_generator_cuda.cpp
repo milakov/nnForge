@@ -16,9 +16,7 @@
 
 #include "factory_generator_cuda.h"
 
-#include "network_tester_cuda_factory.h"
-#include "network_updater_cuda_factory.h"
-#include "network_analyzer_cuda_factory.h"
+#include "forward_propagation_cuda_factory.h"
 
 #include <iostream>
 
@@ -26,6 +24,16 @@ namespace nnforge
 {
 	namespace cuda
 	{
+		factory_generator_cuda::factory_generator_cuda(
+			int cuda_device_id,
+			float cuda_max_global_memory_usage_ratio,
+			unsigned int cuda_reserved_thread_count)
+			: cuda_device_id(cuda_device_id)
+			, cuda_max_global_memory_usage_ratio(cuda_max_global_memory_usage_ratio)
+			, cuda_reserved_thread_count(cuda_reserved_thread_count)
+		{
+		}
+
 		factory_generator_cuda::factory_generator_cuda()
 		{
 		}
@@ -36,22 +44,15 @@ namespace nnforge
 
 		void factory_generator_cuda::initialize()
 		{
-			cuda_config = cuda_running_configuration_const_smart_ptr(new cuda_running_configuration(cuda_device_id, cuda_max_global_memory_usage_ratio));
+			cuda_config = cuda_running_configuration::const_ptr(new cuda_running_configuration(
+				cuda_device_id,
+				cuda_max_global_memory_usage_ratio,
+				cuda_reserved_thread_count));
 		}
 
-		network_tester_factory_smart_ptr factory_generator_cuda::create_tester_factory() const
+		forward_propagation_factory::ptr factory_generator_cuda::create_forward_propagation_factory() const
 		{
-			return network_tester_factory_smart_ptr(new network_tester_cuda_factory(cuda_config));
-		}
-
-		network_updater_factory_smart_ptr factory_generator_cuda::create_updater_factory() const
-		{
-			return network_updater_factory_smart_ptr(new network_updater_cuda_factory(cuda_config));
-		}
-
-		network_analyzer_factory_smart_ptr factory_generator_cuda::create_analyzer_factory() const
-		{
-			return network_analyzer_factory_smart_ptr(new network_analyzer_cuda_factory(cuda_config));
+			return forward_propagation_factory::ptr(new forward_propagation_cuda_factory(cuda_config));
 		}
 
 		std::vector<float_option> factory_generator_cuda::get_float_options()
@@ -68,6 +69,7 @@ namespace nnforge
 			std::vector<int_option> res;
 
 			res.push_back(int_option("cuda_device_id,D", &cuda_device_id, 0, "CUDA device ID."));
+			res.push_back(int_option("cuda_reserved_thread_count", &cuda_reserved_thread_count, 1, "The number of hw threads not used for input data processing."));
 
 			return res;
 		}

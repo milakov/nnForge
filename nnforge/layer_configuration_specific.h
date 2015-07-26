@@ -19,6 +19,8 @@
 #include <vector>
 #include <ostream>
 #include <istream>
+#include <map>
+#include <string>
 
 namespace nnforge
 {
@@ -60,6 +62,4 @@ namespace nnforge
 		unsigned int feature_map_count;
 		std::vector<unsigned int> dimension_sizes;
 	};
-
-	typedef std::vector<layer_configuration_specific> layer_configuration_specific_list;
 }

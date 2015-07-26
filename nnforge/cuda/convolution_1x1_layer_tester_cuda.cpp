@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,22 +40,28 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void convolution_1x1_layer_tester_cuda::enqueue_test(
+		void convolution_1x1_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
 			{
+				float * temporary_working_buffer1 = *temporary_working_per_entry_buffer;
+				float * temporary_working_buffer2 = temporary_working_buffer1 + entry_count * input_elem_count_per_entry_list[0];
+
 				cuda_util::transpose(
 					*cuda_config,
-					*input_buffer,
-					*additional_buffers[1],
-					input_elem_count_per_feature_map,
-					input_configuration_specific.feature_map_count,
+					*input_buffers[0],
+					temporary_working_buffer1,
+					input_elem_count_per_feature_map_list[0],
+					input_configuration_specific_list[0].feature_map_count,
 					entry_count,
 					stream_id);
 
@@ -67,21 +73,21 @@ namespace nnforge
 					CUBLAS_OP_T,
 					CUBLAS_OP_N,
 					output_configuration_specific.feature_map_count,
-					entry_count * input_elem_count_per_feature_map,
-					input_configuration_specific.feature_map_count,
+					entry_count * input_elem_count_per_feature_map_list[0],
+					input_configuration_specific_list[0].feature_map_count,
 					&alpha,
 					*data[0],
-					input_configuration_specific.feature_map_count,
-					*additional_buffers[1],
-					input_configuration_specific.feature_map_count,
+					input_configuration_specific_list[0].feature_map_count,
+					temporary_working_buffer1,
+					input_configuration_specific_list[0].feature_map_count,
 					&beta,
-					*additional_buffers[2],
+					temporary_working_buffer2,
 					output_configuration_specific.feature_map_count));
 
 				cuda_util::transpose(
 					*cuda_config,
-					*additional_buffers[2],
-					*additional_buffers[0],
+					temporary_working_buffer2,
+					*output_buffer,
 					output_configuration_specific.feature_map_count,
 					output_elem_count_per_feature_map,
 					entry_count,
@@ -110,7 +116,7 @@ namespace nnforge
 					*data[1],
 					&beta,
 					output_data_desc,
-					*additional_buffers[0]));
+					*output_buffer));
 			}
 		}
 
@@ -128,22 +134,9 @@ namespace nnforge
 				1));
 		}
 
-		std::vector<size_t> convolution_1x1_layer_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
+		size_t convolution_1x1_layer_tester_cuda::get_temporary_working_per_entry_buffer_size() const
 		{
-			std::vector<size_t> res;
-
-			res.push_back(output_elem_count_per_entry * sizeof(float));
-			res.push_back(input_elem_count_per_entry * sizeof(float));
-			res.push_back(output_elem_count_per_entry * sizeof(float));
-
-			return res;
-		}
-
-		cuda_linear_buffer_device_smart_ptr convolution_1x1_layer_tester_cuda::get_output_buffer(
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
-		{
-			return additional_buffers[0];
+			return (input_elem_count_per_entry_list[0] + output_elem_count_per_entry) * sizeof(float);
 		}
 	}
 }

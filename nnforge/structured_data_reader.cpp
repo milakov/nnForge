@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "unsupervised_data_reader.h"
+#include "structured_data_reader.h"
 #include "neural_network_exception.h"
 
 #include <boost/format.hpp>
@@ -24,36 +24,26 @@
 
 namespace nnforge
 {
-	unsupervised_data_reader::unsupervised_data_reader()
+	structured_data_reader::structured_data_reader()
 	{
 	}
 
-	unsupervised_data_reader::~unsupervised_data_reader()
+	structured_data_reader::~structured_data_reader()
 	{
 	}
 
-	size_t unsupervised_data_reader::get_input_neuron_elem_size() const
-	{
-		return neuron_data_type::get_input_size(get_input_type());
-	}
-
-	std::vector<feature_map_data_stat> unsupervised_data_reader::get_feature_map_input_data_stat_list()
+	std::vector<feature_map_data_stat> structured_data_reader::get_feature_map_data_stat_list()
 	{
 		std::vector<feature_map_data_stat> res;
 
-		neuron_data_type::input_type type_code = get_input_type();
-
-		if (type_code != neuron_data_type::type_float)
-			throw neural_network_exception(((boost::format("Unable to stat data reader with input data type %1%") % type_code).str()));
-
-		reset();
-
-		unsigned int entry_count = get_entry_count();
+		int entry_count = get_entry_count();
 		if (entry_count == 0)
 			throw neural_network_exception("Unable to stat data reader with no entries");
+		else if (entry_count == -1)
+			throw neural_network_exception("Unable to stat data reader with unknown entry count");
 
-		layer_configuration_specific input_configuration = get_input_configuration();
-		res.resize(input_configuration.feature_map_count);
+		layer_configuration_specific config = get_configuration();
+		res.resize(config.feature_map_count);
 
 		for(std::vector<feature_map_data_stat>::iterator it = res.begin(); it != res.end(); ++it)
 		{
@@ -63,15 +53,17 @@ namespace nnforge
 			it->std_dev = 0.0F;
 		}
 
-		std::vector<float> input_data(input_configuration.get_neuron_count());
-		unsigned int neuron_count_per_feature_map = input_configuration.get_neuron_count_per_feature_map();
+		std::vector<float> input_data(config.get_neuron_count());
+		unsigned int neuron_count_per_feature_map = config.get_neuron_count_per_feature_map();
 
 		double mult = 1.0 / ((double)entry_count * (double)neuron_count_per_feature_map);
 
-		std::vector<double> sum(input_configuration.feature_map_count, 0.0);
-		std::vector<double> sum_squared(input_configuration.feature_map_count, 0.0);
-		while(read(&(*input_data.begin())))
+		std::vector<double> sum(config.feature_map_count, 0.0);
+		std::vector<double> sum_squared(config.feature_map_count, 0.0);
+		for(unsigned int entry_id = 0; entry_id < static_cast<unsigned int>(entry_count); ++entry_id)
 		{
+			read(entry_id, &(input_data.front()));
+
 			std::vector<float>::const_iterator data_it = input_data.begin();
 			std::vector<double>::iterator sum_it = sum.begin();
 			std::vector<double>::iterator sum_squared_it = sum_squared.begin();
@@ -106,13 +98,7 @@ namespace nnforge
 		return res;
 	}
 
-	void unsupervised_data_reader::next_epoch()
+	void structured_data_reader::next_epoch()
 	{
-		reset();
-	}
-
-	unsigned int unsupervised_data_reader::get_sample_count() const
-	{
-		return 1;
 	}
 }

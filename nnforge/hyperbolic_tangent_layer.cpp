@@ -20,14 +20,6 @@
 
 namespace nnforge
 {
-	// {1EF8AEEA-0E72-40A9-BA37-E82B1870EFF3}
-	const boost::uuids::uuid hyperbolic_tangent_layer::layer_guid =
-		{ 0x1e, 0xf8, 0xae, 0xea
-		, 0x0e, 0x72
-		, 0x40, 0xa9
-		, 0xba, 0x37
-		, 0xe8, 0x2b, 0x18, 0x70, 0xef, 0xf3 };
-
 	const std::string hyperbolic_tangent_layer::layer_type_name = "TanH";
 
 	hyperbolic_tangent_layer::hyperbolic_tangent_layer(
@@ -38,29 +30,26 @@ namespace nnforge
 	{
 	}
 
-	const boost::uuids::uuid& hyperbolic_tangent_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& hyperbolic_tangent_layer::get_type_name() const
+	std::string hyperbolic_tangent_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr hyperbolic_tangent_layer::clone() const
+	layer::ptr hyperbolic_tangent_layer::clone() const
 	{
-		return layer_smart_ptr(new hyperbolic_tangent_layer(*this));
+		return layer::ptr(new hyperbolic_tangent_layer(*this));
 	}
 
-	float hyperbolic_tangent_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float hyperbolic_tangent_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count() * 6);
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 6);
 	}
 
-	float hyperbolic_tangent_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float hyperbolic_tangent_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count() * 5);
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 5);
 	}
 
 	void hyperbolic_tangent_layer::write_proto(void * layer_proto) const
@@ -75,14 +64,6 @@ namespace nnforge
 			if (steepness != 1.0F)
 				param->set_steepness(steepness);
 		}
-	}
-
-	void hyperbolic_tangent_layer::read(
-		std::istream& binary_stream_to_read_from,
-		const boost::uuids::uuid& layer_read_guid)
-	{
-		scale = 1.7159F;
-		steepness = 0.666666F;
 	}
 
 	void hyperbolic_tangent_layer::read_proto(const void * layer_proto)

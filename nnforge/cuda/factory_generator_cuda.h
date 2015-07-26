@@ -26,17 +26,18 @@ namespace nnforge
 		class factory_generator_cuda : public factory_generator
 		{
 		public:
+			factory_generator_cuda(
+				int cuda_device_id,
+				float cuda_max_global_memory_usage_ratio,
+				unsigned int cuda_reserved_thread_count);
+
 			factory_generator_cuda();
 
 			~factory_generator_cuda();
 
 			virtual void initialize();
 
-			virtual network_tester_factory_smart_ptr create_tester_factory() const;
-
-			virtual network_updater_factory_smart_ptr create_updater_factory() const;
-
-			virtual network_analyzer_factory_smart_ptr create_analyzer_factory() const;
+			virtual forward_propagation_factory::ptr create_forward_propagation_factory() const;
 
 			virtual void info() const;
 
@@ -47,8 +48,9 @@ namespace nnforge
 		protected:
 			int cuda_device_id;
 			float cuda_max_global_memory_usage_ratio;
+			int cuda_reserved_thread_count;
 
-			cuda_running_configuration_const_smart_ptr cuda_config;
+			cuda_running_configuration::const_ptr cuda_config;
 		};
 	}
 }

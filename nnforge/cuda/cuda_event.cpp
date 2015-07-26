@@ -23,20 +23,20 @@ namespace nnforge
 	namespace cuda
 	{
 		cuda_event::cuda_event()
-			: evnt(0)
+			: event(0)
 		{
-			cuda_safe_call(cudaEventCreateWithFlags(&evnt, cudaEventDisableTiming));
+			cuda_safe_call(cudaEventCreateWithFlags(&event, cudaEventDisableTiming));
 		}
 
 		cuda_event::~cuda_event()
 		{
-			if (evnt)
-				cudaEventDestroy(evnt);
+			if (event)
+				cudaEventDestroy(event);
 		}
 
 		cuda_event::operator cudaEvent_t ()
 		{
-			return evnt;
+			return event;
 		}
 	}
 }

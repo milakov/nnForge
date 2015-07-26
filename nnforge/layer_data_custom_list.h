@@ -19,20 +19,42 @@
 #include "layer_data_custom.h"
 #include "layer.h"
 
-#include <vector>
+#include <map>
+#include <string>
 
 namespace nnforge
 {
-	class layer_data_custom_list : public std::vector<layer_data_custom_smart_ptr>
+	class layer_data_custom_list
 	{
 	public:
+		typedef nnforge_shared_ptr<layer_data_custom_list> ptr;
+		typedef nnforge_shared_ptr<const layer_data_custom_list> const_ptr;
+
 		layer_data_custom_list();
 
-		layer_data_custom_list(const const_layer_list& layer_list);
+		layer_data_custom_list(const std::vector<layer::const_ptr>& layer_list);
 
-		void check_consistency(const const_layer_list& layer_list) const;
+		// Narrow other data to the layers from layer_list
+		layer_data_custom_list(
+			const std::vector<layer::const_ptr>& layer_list,
+			const layer_data_custom_list& other);
+
+		void check_consistency(const std::vector<layer::const_ptr>& layer_list) const;
+
+		// Returns empty smart pointer in case no custom data is associated with instance_name
+		layer_data_custom::ptr find(const std::string& instance_name) const;
+
+		layer_data_custom::ptr get(const std::string& instance_name) const;
+
+		void add(
+			const std::string& instance_name,
+			layer_data_custom::ptr data_custom);
+
+		void write(std::ostream& binary_stream_to_write_to) const;
+
+		void read(std::istream& binary_stream_to_read_from);
+
+	private:
+		std::map<std::string, layer_data_custom::ptr> instance_name_to_data_custom_map;
 	};
-
-	typedef nnforge_shared_ptr<layer_data_custom_list> layer_data_custom_list_smart_ptr;
-	typedef nnforge_shared_ptr<const layer_data_custom_list> const_layer_data_custom_list_smart_ptr;
 }

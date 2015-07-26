@@ -26,6 +26,9 @@ namespace nnforge
 		class cuda_linear_buffer_device : public cuda_linear_buffer
 		{
 		public:
+			typedef nnforge_shared_ptr<cuda_linear_buffer_device> ptr;
+			typedef nnforge_shared_ptr<const cuda_linear_buffer_device> const_ptr;
+
 			cuda_linear_buffer_device(size_t size);
 
 			cuda_linear_buffer_device(
@@ -46,8 +49,5 @@ namespace nnforge
 			void * buf;
 			size_t size;
 		};
-
-		typedef nnforge_shared_ptr<cuda_linear_buffer_device> cuda_linear_buffer_device_smart_ptr;
-		typedef nnforge_shared_ptr<const cuda_linear_buffer_device> const_cuda_linear_buffer_device_smart_ptr;
 	}
 }

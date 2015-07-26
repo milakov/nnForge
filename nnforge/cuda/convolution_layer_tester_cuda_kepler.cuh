@@ -304,10 +304,10 @@ namespace nnforge
 		}
 
 #define launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, block_size_const) \
-	convolution_tex_exact_blocked_kernel_kepler<dimension_count_const,window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*additional_buffers[0], input_tex, weights_tex, *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, packed_config_count);
+	convolution_tex_exact_blocked_kernel_kepler<dimension_count_const,window_width_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, input_tex, weights_tex, *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, packed_config_count);
 
 #define launch_generic_kernel_const_const(dimension_count_const, block_size_const) \
-	convolution_tex_generic_blocked_kernel_kepler<dimension_count_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*additional_buffers[0], input_tex, weights_tex, *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, packed_config_count);
+	convolution_tex_generic_blocked_kernel_kepler<dimension_count_const,block_size_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, input_tex, weights_tex, *data[1], packed_config_list, output_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_striped.feature_map_count, output_configuration_specific.feature_map_count, entry_count, packed_config_count);
 
 #define launch_kernel_const_const(dimension_count_const, window_width, block_size_const) \
 	switch (window_width) \
@@ -379,28 +379,31 @@ namespace nnforge
 			{
 			}
 
-			virtual void enqueue_test(
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count)
 			{
 				cuda_util::copy_to_striped(
 					*cuda_config,
-					*input_buffer,
-					*additional_buffers[1],
-					input_elem_count_per_feature_map,
-					input_configuration_specific.feature_map_count,
+					*input_buffers[0],
+					*temporary_working_per_entry_buffer,
+					input_elem_count_per_feature_map_list[0],
+					input_configuration_specific_list[0].feature_map_count,
 					entry_count,
 					stream_id);
 
 				cuda_texture weights_tex(data[0], 2);
-				cuda_texture input_tex(additional_buffers[1], 2);
+				cuda_texture input_tex(temporary_working_per_entry_buffer, 2);
 
-				const packed_config<dimension_count> * packed_config_list = static_cast<const packed_config<dimension_count> *>((const void *)*additional_buffers[2]);
+				const packed_config<dimension_count> * packed_config_list = static_cast<const packed_config<dimension_count> *>((const void *)*persistent_working_data[0]);
 
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
@@ -411,16 +414,9 @@ namespace nnforge
 				launch_kernel(dimension_count, window_sizes[0], forward_x_block_size);
 			}
 
-			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_data(layer_data::const_ptr host_data) const
 			{
-				return additional_buffers[0];
-			}
-
-			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const
-			{
-				std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
+				std::vector<cuda_linear_buffer_device::const_ptr> res;
 
 				if (host_data->size() != 2)
 					return res;
@@ -428,7 +424,7 @@ namespace nnforge
 				unsigned int window_total_size = 1;
 				for(int i = 0; i < dimension_count; ++i)
 					window_total_size *= window_sizes[i];
-				unsigned int weight_count = output_configuration_specific.feature_map_count * input_configuration_specific.feature_map_count * window_total_size;
+				unsigned int weight_count = output_configuration_specific.feature_map_count * input_configuration_specific_list[0].feature_map_count * window_total_size;
 				if (host_data->at(0).size() != weight_count)
 					return res;
 
@@ -446,8 +442,8 @@ namespace nnforge
 				{
 					for(unsigned int input_feature_map_id_striped = 0; input_feature_map_id_striped < input_feature_map_count_striped; ++input_feature_map_id_striped, dst_offset += window_total_size * 2)
 					{
-						bool second_feature_map_present = (input_feature_map_id_striped * 2 + 1 < input_configuration_specific.feature_map_count);
-						for(int dst_elem_id = 0; dst_elem_id < window_total_size; ++dst_elem_id)
+						bool second_feature_map_present = (input_feature_map_id_striped * 2 + 1 < input_configuration_specific_list[0].feature_map_count);
+						for(int dst_elem_id = 0; dst_elem_id < static_cast<int>(window_total_size); ++dst_elem_id)
 						{
 							weights_striped[dst_offset + dst_elem_id * 2] = src[src_offset + dst_elem_id];
 							if (second_feature_map_present)
@@ -459,14 +455,14 @@ namespace nnforge
 				}
 				{
 					size_t buffer_size = weights_striped.size() * sizeof(float);
-					cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
+					cuda_linear_buffer_device::ptr new_buf(new cuda_linear_buffer_device(buffer_size));
 					cuda_safe_call(cudaMemcpy(*new_buf, &(*weights_striped.begin()), buffer_size, cudaMemcpyHostToDevice));
 					res.push_back(new_buf);
 				}
 
 				{
 					size_t buffer_size = host_data->at(1).size() * sizeof(float);
-					cuda_linear_buffer_device_smart_ptr new_buf(new cuda_linear_buffer_device(buffer_size));
+					cuda_linear_buffer_device::ptr new_buf(new cuda_linear_buffer_device(buffer_size));
 					cuda_safe_call(cudaMemcpy(*new_buf, &(*host_data->at(1).begin()), buffer_size, cudaMemcpyHostToDevice));
 					res.push_back(new_buf);
 				}
@@ -479,12 +475,12 @@ namespace nnforge
 			{
 				nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
-				input_configuration_specific_striped = cuda_util::get_layer_configuration_specific_striped(input_configuration_specific);
+				input_configuration_specific_striped = cuda_util::get_layer_configuration_specific_striped(input_configuration_specific_list[0]);
 
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					window_sizes[i] = layer_derived->window_sizes[i];
-					input_sizes[i] = input_configuration_specific.dimension_sizes[i];
+					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 					left_zero_padding[i] = layer_derived->left_zero_padding[i];
 				}
@@ -498,19 +494,9 @@ namespace nnforge
 					packed_config_count *= output_sizes[i];
 			}
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const
+			virtual size_t get_temporary_working_per_entry_buffer_size() const
 			{
-				std::vector<size_t> res;
-				res.push_back(output_elem_count_per_entry * sizeof(float));
-				res.push_back(input_configuration_specific_striped.get_neuron_count() * sizeof(float2));
-				return res;
-			}
-
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const
-			{
-				std::vector<size_t> res;
-				res.push_back(sizeof(packed_config<dimension_count>) * packed_config_count);
-				return res;
+				return input_configuration_specific_striped.get_neuron_count() * sizeof(float2);
 			}
 
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const
@@ -520,39 +506,46 @@ namespace nnforge
 				return res;
 			}
 
-			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const
+			std::vector<cuda_linear_buffer_device::const_ptr> get_persistent_working_data() const
 			{
-				std::vector<packed_config<dimension_count> > task_list;
-				if (dimension_count > 1)
+				std::vector<cuda_linear_buffer_device::const_ptr> res;
+
 				{
-					nnforge_array<int, dimension_count - 1> size_list;
-					for(int i = 0; i < dimension_count - 1; ++i)
-						size_list[i] = output_sizes[i + 1];
-					std::vector<nnforge_array<int, dimension_count - 1> > ordered_list;
-					sequential_curve<dimension_count - 1>::fill_pattern(size_list, ordered_list);
-					packed_config<dimension_count> new_elem;
-					for(int output_feature_map_block_id = 0; output_feature_map_block_id < forward_output_feature_map_block_count; ++output_feature_map_block_id)
+					std::vector<packed_config<dimension_count> > task_list;
+					if (dimension_count > 1)
 					{
-						new_elem.set_val(dimension_count - 1, output_feature_map_block_id * FEATURE_MAP_BLOCK_SIZE);
-						for(int j = 0; j < ordered_list.size(); ++j)
+						nnforge_array<int, dimension_count - 1> size_list;
+						for(int i = 0; i < dimension_count - 1; ++i)
+							size_list[i] = output_sizes[i + 1];
+						std::vector<nnforge_array<int, dimension_count - 1> > ordered_list;
+						sequential_curve<dimension_count - 1>::fill_pattern(size_list, ordered_list);
+						packed_config<dimension_count> new_elem;
+						for(int output_feature_map_block_id = 0; output_feature_map_block_id < forward_output_feature_map_block_count; ++output_feature_map_block_id)
 						{
-							const nnforge_array<int, dimension_count - 1>& spatial_dimensions = ordered_list[j];
-							for(int i = 0; i < dimension_count - 1; ++i)
-								new_elem.set_val(i, spatial_dimensions[i]);
+							new_elem.set_val(dimension_count - 1, output_feature_map_block_id * FEATURE_MAP_BLOCK_SIZE);
+							for(int j = 0; j < ordered_list.size(); ++j)
+							{
+								const nnforge_array<int, dimension_count - 1>& spatial_dimensions = ordered_list[j];
+								for(int i = 0; i < dimension_count - 1; ++i)
+									new_elem.set_val(i, spatial_dimensions[i]);
+								task_list.push_back(new_elem);
+							}
+						}
+					}
+					else
+					{
+						packed_config<dimension_count> new_elem;
+						for(int output_feature_map_block_id = 0; output_feature_map_block_id < forward_output_feature_map_block_count; ++output_feature_map_block_id)
+						{
+							new_elem.set_val(dimension_count - 1, output_feature_map_block_id * FEATURE_MAP_BLOCK_SIZE);
 							task_list.push_back(new_elem);
 						}
 					}
+
+					res.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(&task_list[0], sizeof(packed_config<dimension_count>) * task_list.size())));
 				}
-				else
-				{
-					packed_config<dimension_count> new_elem;
-					for(int output_feature_map_block_id = 0; output_feature_map_block_id < forward_output_feature_map_block_count; ++output_feature_map_block_id)
-					{
-						new_elem.set_val(dimension_count - 1, output_feature_map_block_id * FEATURE_MAP_BLOCK_SIZE);
-						task_list.push_back(new_elem);
-					}
-				}
-				cuda_safe_call(cudaMemcpy(*additional_buffers[2], &(*task_list.begin()), sizeof(packed_config<dimension_count>) * task_list.size(), cudaMemcpyHostToDevice));
+
+				return res;
 			}
 
 		private:

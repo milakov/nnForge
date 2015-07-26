@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,26 +14,21 @@
  *  limitations under the License.
  */
 
-#include "network_tester_cuda_factory.h"
-
-#include "network_tester_cuda.h"
+#include "threadpool_job_runner.h"
 
 namespace nnforge
 {
-	namespace cuda
+	threadpool_job_runner::threadpool_job_runner(unsigned int thread_count)
+		: thread_count(thread_count)
+		, work(service)
 	{
-		network_tester_cuda_factory::network_tester_cuda_factory(cuda_running_configuration_const_smart_ptr cuda_config)
-			: cuda_config(cuda_config)
-		{
-		}
+		for(unsigned int i = 0; i < thread_count; ++i)
+			threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &service));
+	}
 
-		network_tester_cuda_factory::~network_tester_cuda_factory()
-		{
-		}
-
-		network_tester_smart_ptr network_tester_cuda_factory::create(network_schema_smart_ptr schema) const
-		{
-			return network_tester_smart_ptr(new network_tester_cuda(schema, cuda_config));
-		}
+	threadpool_job_runner::~threadpool_job_runner()
+	{
+		service.stop();
+		threadpool.join_all();
 	}
 }

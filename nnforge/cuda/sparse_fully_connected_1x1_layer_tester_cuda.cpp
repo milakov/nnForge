@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,13 +42,16 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void sparse_fully_connected_1x1_layer_tester_cuda::enqueue_test(
+		void sparse_fully_connected_1x1_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
 			{
@@ -62,17 +65,17 @@ namespace nnforge
 					CUSPARSE_OPERATION_NON_TRANSPOSE,
 					output_elem_count_per_entry,
 					entry_count,
-					input_elem_count_per_entry,
+					input_elem_count_per_entry_list[0],
 					feature_map_connection_count,
 					&alpha,
 					mat_descr,
 					*data[0],
 					*data_custom[1],
 					*data_custom[0],
-					*input_buffer,
-					input_elem_count_per_entry,
+					*input_buffers[0],
+					input_elem_count_per_entry_list[0],
 					&beta,
-					*additional_buffers[0],
+					*output_buffer,
 					output_elem_count_per_entry));
 			}
 
@@ -97,24 +100,8 @@ namespace nnforge
 					*data[1],
 					&beta,
 					output_data_desc,
-					*additional_buffers[0]));
+					*output_buffer));
 			}
-		}
-
-		std::vector<size_t> sparse_fully_connected_1x1_layer_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
-		{
-			std::vector<size_t> res;
-
-			res.push_back(output_elem_count_per_entry * sizeof(float));
-
-			return res;
-		}
-
-		cuda_linear_buffer_device_smart_ptr sparse_fully_connected_1x1_layer_tester_cuda::get_output_buffer(
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
-		{
-			return additional_buffers[0];
 		}
 
 		void sparse_fully_connected_1x1_layer_tester_cuda::tester_configured()

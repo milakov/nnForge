@@ -27,7 +27,7 @@ namespace nnforge
 	namespace cuda
 	{
 		cuda_texture::cuda_texture(
-			const_cuda_linear_buffer_device_smart_ptr dev_smart_ptr,
+			cuda_linear_buffer_device::const_ptr dev_smart_ptr,
 			int vector_size)
 			: tex(0)
 			, dev_smart_ptr(dev_smart_ptr)

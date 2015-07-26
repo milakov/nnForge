@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,24 +16,27 @@
 
 #pragma once
 
-#include "../network_tester_factory.h"
-#include "cuda_running_configuration.h"
+#include "layer_testing_schema.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		class network_tester_cuda_factory : public network_tester_factory
+		class mse_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			network_tester_cuda_factory(cuda_running_configuration_const_smart_ptr opencl_config);
+			mse_layer_testing_schema();
 
-			virtual ~network_tester_cuda_factory();
+			virtual ~mse_layer_testing_schema();
 
-			virtual network_tester_smart_ptr create(network_schema_smart_ptr schema) const;
+			virtual std::string get_type_name() const;
 
 		protected:
-			cuda_running_configuration_const_smart_ptr cuda_config;
+			virtual layer_testing_schema::ptr create_specific() const;
+
+			virtual layer_tester_cuda::ptr create_tester_specific(
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
 		};
 	}
 }

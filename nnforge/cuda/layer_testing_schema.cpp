@@ -30,11 +30,11 @@ namespace nnforge
 		{
 		}
 
-		layer_testing_schema_smart_ptr layer_testing_schema::create(
-			const_layer_smart_ptr layer_schema,
-			cuda_running_configuration_const_smart_ptr cuda_config) const
+		layer_testing_schema::ptr layer_testing_schema::create(
+			layer::const_ptr layer_schema,
+			cuda_running_configuration::const_ptr cuda_config) const
 		{
-			layer_testing_schema_smart_ptr res = create_specific();
+			layer_testing_schema::ptr res = create_specific();
 
 			res->layer_schema = layer_schema;
 			res->cuda_config = cuda_config;
@@ -42,16 +42,16 @@ namespace nnforge
 			return res;
 		}
 
-		layer_tester_cuda_smart_ptr layer_testing_schema::create_tester(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_tester_cuda::ptr layer_testing_schema::create_tester(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			layer_tester_cuda_smart_ptr res = create_tester_specific(
-				input_configuration_specific,
+			layer_tester_cuda::ptr res = create_tester_specific(
+				input_configuration_specific_list,
 				output_configuration_specific);
 
 			res->configure(
-				input_configuration_specific,
+				input_configuration_specific_list,
 				output_configuration_specific,
 				layer_schema,
 				cuda_config);
@@ -59,9 +59,9 @@ namespace nnforge
 			return res;
 		}
 
-		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_testing_schema::get_schema_buffers() const
+		std::vector<cuda_linear_buffer_device::const_ptr> layer_testing_schema::get_schema_buffers() const
 		{
-			return std::vector<const_cuda_linear_buffer_device_smart_ptr>();
+			return std::vector<cuda_linear_buffer_device::const_ptr>();
 		}
 	}
 }

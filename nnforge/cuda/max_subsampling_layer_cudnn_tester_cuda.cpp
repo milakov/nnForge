@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,13 +41,16 @@ namespace nnforge
 			cudnnDestroyPoolingDescriptor(subsampling_desc);
 		}
 
-		void max_subsampling_layer_cudnn_tester_cuda::enqueue_test(
+		void max_subsampling_layer_cudnn_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
@@ -57,9 +60,9 @@ namespace nnforge
 				CUDNN_TENSOR_NCHW,
 				CUDNN_DATA_FLOAT,
 				entry_count,
-				input_configuration_specific.feature_map_count,
-				(input_configuration_specific.dimension_sizes.size() > 1) ? input_configuration_specific.dimension_sizes[1] : 1,
-				input_configuration_specific.dimension_sizes[0]));
+				input_configuration_specific_list[0].feature_map_count,
+				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
+				input_configuration_specific_list[0].dimension_sizes[0]));
 			cudnn_safe_call(cudnnSetTensor4dDescriptor(
 				output_data_desc,
 				CUDNN_TENSOR_NCHW,
@@ -76,17 +79,10 @@ namespace nnforge
 				subsampling_desc,
 				&alpha,
 				input_data_desc,
-				*input_buffer,
+				*input_buffers[0],
 				&beta,
 				output_data_desc,
-				*additional_buffers[0]));
-		}
-
-		cuda_linear_buffer_device_smart_ptr max_subsampling_layer_cudnn_tester_cuda::get_output_buffer(
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
-		{
-			return additional_buffers[0];
+				*output_buffer));
 		}
 
 		void max_subsampling_layer_cudnn_tester_cuda::tester_configured()
@@ -102,15 +98,6 @@ namespace nnforge
 				0,
 				(layer_derived->subsampling_sizes.size() > 1) ? layer_derived->subsampling_sizes[1] : 1,
 				layer_derived->subsampling_sizes[0]));
-		}
-
-		std::vector<size_t> max_subsampling_layer_cudnn_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
-		{
-			std::vector<size_t> res;
-
-			res.push_back(output_elem_count_per_entry * sizeof(float));
-
-			return res;
 		}
 	}
 }

@@ -28,21 +28,15 @@ namespace nnforge
 	class layer_factory
 	{
 	public:
-		bool register_layer(layer_smart_ptr sample_layer);
+		bool register_layer(layer::const_ptr sample_layer);
 
-		bool register_layer(const boost::uuids::uuid& layer_guid, layer_smart_ptr sample_layer);
+		bool unregister_layer(const std::string& layer_type_name);
 
-		bool unregister_layer(const boost::uuids::uuid& layer_guid);
-
-		layer_smart_ptr create_layer(const boost::uuids::uuid& layer_guid) const;
-
-		layer_smart_ptr create_layer(const std::string& layer_type_name) const;
+		layer::ptr create_layer(const std::string& layer_type_name) const;
 
 	private:
-		typedef std::map<boost::uuids::uuid, layer_smart_ptr> sample_uuid_map;
-		typedef std::map<std::string, layer_smart_ptr> sample_name_map;
+		typedef std::map<std::string, layer::const_ptr> sample_name_map;
 
-		sample_uuid_map sample_uuid_layer_map;
 		sample_name_map sample_name_layer_map;
 	};
 

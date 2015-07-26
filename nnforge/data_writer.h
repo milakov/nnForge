@@ -23,10 +23,12 @@ namespace nnforge
 	class data_writer
 	{
 	public:
+		typedef nnforge_shared_ptr<data_writer> ptr;
+
 		virtual ~data_writer();
 
 		virtual void raw_write(
-			const void * all_entry_data,
+			const void * all_elems,
 			size_t data_length) = 0;
 
 		void write_randomized(raw_data_reader& reader);
@@ -34,6 +36,4 @@ namespace nnforge
 	protected:
 		data_writer();
 	};
-
-	typedef nnforge_shared_ptr<data_writer> data_writer_smart_ptr;
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,22 +31,19 @@ namespace nnforge
 
 			virtual ~sparse_fully_connected_1x1_layer_tester_cuda();
 
-			virtual void enqueue_test(
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count);
 
-			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers);
-
 		protected:
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
-
 			virtual void tester_configured();
 
 		private:

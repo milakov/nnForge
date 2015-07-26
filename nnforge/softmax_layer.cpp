@@ -19,42 +19,31 @@
 
 namespace nnforge
 {
-	// {DB854721-6DD6-4B0F-B74E-DA63D0756EB5}
-	const boost::uuids::uuid softmax_layer::layer_guid =
-		{ 0xdb, 0x85, 0x47, 0x21
-		, 0x6d, 0xd6
-		, 0x4b, 0x0f
-		, 0xb7, 0x4e
-		, 0xda, 0x63, 0xd0, 0x75, 0x6e, 0xb5 };
-
 	const std::string softmax_layer::layer_type_name = "Softmax";
 
 	softmax_layer::softmax_layer()
 	{
 	}
 
-	const boost::uuids::uuid& softmax_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& softmax_layer::get_type_name() const
+	std::string softmax_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr softmax_layer::clone() const
+	layer::ptr softmax_layer::clone() const
 	{
-		return layer_smart_ptr(new softmax_layer(*this));
+		return layer::ptr(new softmax_layer(*this));
 	}
 
-	float softmax_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float softmax_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count_per_feature_map() * (input_configuration_specific.feature_map_count * 3 - 1));
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count_per_feature_map() * (input_configuration_specific_list[0].feature_map_count * 3 - 1));
 	}
 
-	float softmax_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float softmax_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count_per_feature_map() * (input_configuration_specific.feature_map_count * 4 - 1));
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count_per_feature_map() * (input_configuration_specific_list[0].feature_map_count * 4 - 1));
 	}
 }

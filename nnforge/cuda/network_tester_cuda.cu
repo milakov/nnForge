@@ -141,7 +141,6 @@ namespace nnforge
 			update_data();
 
 			cached_buffers_initialized = false;
-
 		}
 
 		void network_tester_cuda::update_buffers_configuration_testing(buffer_cuda_size_configuration& buffer_configuration) const

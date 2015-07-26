@@ -24,8 +24,16 @@
 
 namespace nnforge
 {
-	// {A8B18171-A294-4D99-B3B2-3A181374F226}
+	// {4FF032B3-EA2B-481D-A278-FDA9AFEBE76D}
 	const boost::uuids::uuid network_data::data_guid =
+		{ 0x4f, 0xf0, 0x32, 0xb3
+		, 0xea, 0x2b
+		, 0x48, 0x1d
+		, 0xa2, 0x78
+		, 0xfd, 0xa9, 0xaf, 0xeb, 0xe7, 0x6d };
+
+	// {A8B18171-A294-4D99-B3B2-3A181374F226}
+	const boost::uuids::uuid network_data::data_guid_v2 =
 		{ 0xa8, 0xb1, 0x81, 0x71
 		, 0xa2, 0x94
 		, 0x4d, 0x99
@@ -44,53 +52,23 @@ namespace nnforge
 	{
 	}
 
-	network_data::network_data(const const_layer_list& layer_list, float val)
+	network_data::network_data(
+		const std::vector<layer::const_ptr>& layer_list,
+		float val)
 		: data_list(layer_list, val)
 		, data_custom_list(layer_list)
 	{
 	}
 
-	network_data::network_data(const const_layer_list& layer_list, const network_data& other)
+	network_data::network_data(
+		const std::vector<layer::const_ptr>& layer_list,
+		const network_data& other)
+		: data_list(layer_list, other.data_list)
+		, data_custom_list(layer_list, other.data_custom_list)
 	{
-		layer_data_list::const_iterator data_it = other.data_list.begin();
-		layer_data_custom_list::const_iterator data_custom_it = other.data_custom_list.begin();
-		for(const_layer_list::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
-		{
-			bool empty_data = (*it)->is_empty_data() && (*it)->is_empty_data_custom();
-			if (empty_data)
-			{
-				data_list.push_back(layer_data_smart_ptr(new layer_data()));
-				data_custom_list.push_back(layer_data_custom_smart_ptr(new layer_data_custom()));
-			}
-			else
-			{
-				if (data_it == other.data_list.end())
-					throw neural_network_exception("data has less non-empty layers than schema does");
-				if (data_custom_it == other.data_custom_list.end())
-					throw neural_network_exception("custom data has less non-empty layers than schema does");
-
-				while ((*data_it)->empty() && (*data_custom_it)->empty())
-				{
-					if (data_it != other.data_list.end())
-						++data_it;
-					else
-						throw neural_network_exception("data has less non-empty layers than schema does");
-					if (data_custom_it != other.data_custom_list.end())
-						++data_custom_it;
-					else
-						throw neural_network_exception("custom data has less non-empty layers than schema does");
-				}
-
-				data_list.push_back(*data_it);
-				data_custom_list.push_back(*data_custom_it);
-
-				++data_it;
-				++data_custom_it;
-			}
-		}
 	}
 
-	void network_data::check_network_data_consistency(const const_layer_list& layer_list) const
+	void network_data::check_network_data_consistency(const std::vector<layer::const_ptr>& layer_list) const
 	{
 		data_list.check_consistency(layer_list);
 		data_custom_list.check_consistency(layer_list);
@@ -108,14 +86,8 @@ namespace nnforge
 		const boost::uuids::uuid& guid = get_uuid();
 		binary_stream_to_write_to.write(reinterpret_cast<const char*>(guid.data), sizeof(guid.data));
 
-		unsigned int data_count = (unsigned int)data_list.size();
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&data_count), sizeof(data_count));
-
-		for(unsigned int i = 0; i < data_count; ++i)
-		{
-			data_list[i]->write(binary_stream_to_write_to);
-			data_custom_list[i]->write(binary_stream_to_write_to);
-		}
+		data_list.write(binary_stream_to_write_to);
+		data_custom_list.write(binary_stream_to_write_to);
 
 		binary_stream_to_write_to.flush();
 	}
@@ -126,38 +98,62 @@ namespace nnforge
 
 		boost::uuids::uuid data_guid_read;
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(data_guid_read.data), sizeof(data_guid_read.data));
+
 		bool read_data_custom = true;
 		if (data_guid_read == data_guid_v1)
 			read_data_custom = false;
+
+		if ((data_guid_read == data_guid_v1) || (data_guid_read == data_guid_v2))
+		{
+			read_legacy(binary_stream_to_read_from, read_data_custom);
+			return;
+		}
 		else if (data_guid_read != get_uuid())
 			throw neural_network_exception((boost::format("Unknown data GUID encountered in input stream: %1%") % data_guid_read).str());
 
+		data_list.read(binary_stream_to_read_from);
+		data_custom_list.read(binary_stream_to_read_from);
+	}
+
+	void network_data::read_legacy(
+		std::istream& binary_stream_to_read_from,
+		bool read_data_custom)
+	{
 		unsigned int data_count;
 		binary_stream_to_read_from.read(reinterpret_cast<char*>(&data_count), sizeof(data_count));
 
-		data_list.resize(data_count);
-		data_custom_list.resize(data_count);
-
+		unsigned int layer_with_weights_layer_count = 0;
 		for(unsigned int i = 0; i < data_count; ++i)
 		{
-			data_list[i] = layer_data_smart_ptr(new layer_data());
-			data_list[i]->read(binary_stream_to_read_from);
-
-			data_custom_list[i] = layer_data_custom_smart_ptr(new layer_data_custom());
+			layer_data::ptr data(new layer_data());
+			data->read(binary_stream_to_read_from);
+			layer_data_custom::ptr data_custom(new layer_data_custom());
 			if (read_data_custom)
-				data_custom_list[i]->read(binary_stream_to_read_from);
+				data_custom->read(binary_stream_to_read_from);
+
+			if (data->empty() && data_custom->empty())
+				continue;
+
+			std::string instance_name = (boost::format("parameters_%1%") % layer_with_weights_layer_count).str();
+
+			data_list.add(instance_name, data);
+			data_custom_list.add(instance_name, data_custom);
+
+			++layer_with_weights_layer_count;
 		}
 	}
 
 	void network_data::randomize(
-		const const_layer_list& layer_list,
+		const std::vector<layer::const_ptr>& layer_list,
 		random_generator& gen)
 	{
-		for(unsigned int i = 0; i < layer_list.size(); ++i)
+		for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
 		{
-			layer_list[i]->randomize_data(
-				*data_list[i],
-				*data_custom_list[i],
+			layer_data::ptr data = data_list.find((*it)->instance_name);
+			layer_data_custom::ptr data_custom = data_custom_list.find((*it)->instance_name);
+			(*it)->randomize_data(
+				*data,
+				*data_custom,
 				gen);
 		}
 	}

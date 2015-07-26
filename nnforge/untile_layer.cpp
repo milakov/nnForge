@@ -26,14 +26,6 @@
 
 namespace nnforge
 {
-	// {385C07DA-B164-4724-A646-27763E71792F}
-	const boost::uuids::uuid untile_layer::layer_guid =
-	{ 0x38, 0x5c, 0x07, 0xda
-		, 0xb1, 0x64
-		, 0x47, 0x24
-		, 0xa6, 0x46
-		, 0x27, 0x76, 0x3e, 0x71, 0x79, 0x2f };
-
 	const std::string untile_layer::layer_type_name = "UnTile";
 
 	untile_layer::untile_layer(const std::vector<std::vector<unsigned int> >& upsampling_sizes_list)
@@ -58,35 +50,30 @@ namespace nnforge
 		}
 	}
 
-	const boost::uuids::uuid& untile_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& untile_layer::get_type_name() const
+	std::string untile_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr untile_layer::clone() const
+	layer::ptr untile_layer::clone() const
 	{
-		return layer_smart_ptr(new untile_layer(*this));
+		return layer::ptr(new untile_layer(*this));
 	}
 
-	layer_configuration untile_layer::get_layer_configuration(const layer_configuration& input_configuration) const
+	layer_configuration untile_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
 	{
-		if ((input_configuration.dimension_count >= 0) && (input_configuration.dimension_count != static_cast<int>(upsampling_sizes_list.front().size())))
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % upsampling_sizes_list.front().size() % input_configuration.dimension_count).str());
+		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(upsampling_sizes_list.front().size())))
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % upsampling_sizes_list.front().size() % input_configuration_list[0].dimension_count).str());
 
-		return layer_configuration(input_configuration.feature_map_count, static_cast<int>(upsampling_sizes_list.front().size()));
+		return layer_configuration(input_configuration_list[0].feature_map_count, static_cast<int>(upsampling_sizes_list.front().size()));
 	}
 
-	layer_configuration_specific untile_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific untile_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		if (input_configuration_specific.get_dimension_count() != upsampling_sizes_list.front().size())
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % upsampling_sizes_list.front().size() % input_configuration_specific.get_dimension_count()).str());
+		if (input_configuration_specific_list[0].get_dimension_count() != upsampling_sizes_list.front().size())
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % upsampling_sizes_list.front().size() % input_configuration_specific_list[0].get_dimension_count()).str());
 
-		layer_configuration_specific res(input_configuration_specific);
+		layer_configuration_specific res(input_configuration_specific_list[0]);
 
 		for(unsigned int i = 0; i < upsampling_sizes_list.size(); ++i)
 		{
@@ -98,7 +85,9 @@ namespace nnforge
 		return res;
 	}
 
-	layer_configuration_specific untile_layer::get_input_layer_configuration_specific(const layer_configuration_specific& output_configuration_specific) const
+	layer_configuration_specific untile_layer::get_input_layer_configuration_specific(
+		const layer_configuration_specific& output_configuration_specific,
+		unsigned int input_layer_id) const
 	{
 		if (output_configuration_specific.get_dimension_count() != upsampling_sizes_list.front().size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output configuration (%2%) don't match") % upsampling_sizes_list.front().size() % output_configuration_specific.get_dimension_count()).str());
@@ -120,7 +109,9 @@ namespace nnforge
 		return res;
 	}
 
-	std::vector<std::pair<unsigned int, unsigned int> > untile_layer::get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const
+	std::vector<std::pair<unsigned int, unsigned int> > untile_layer::get_input_rectangle_borders(
+		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
+		unsigned int input_layer_id) const
 	{
 		if (output_rectangle_borders.size() != upsampling_sizes_list.front().size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output borders (%2%) don't match") % upsampling_sizes_list.front().size() % output_rectangle_borders.size()).str());
@@ -140,11 +131,6 @@ namespace nnforge
 		return res;
 	}
 
-	void untile_layer::write(std::ostream& binary_stream_to_write_to) const
-	{
-		throw neural_network_exception("write() is not available for untile_layer");
-	}
-
 	void untile_layer::write_proto(void * layer_proto) const
 	{
 		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
@@ -160,13 +146,6 @@ namespace nnforge
 				dim_param->set_upsampling_size(upsampling_sizes[j]);
 			}
 		}
-	}
-
-	void untile_layer::read(
-		std::istream& binary_stream_to_read_from,
-		const boost::uuids::uuid& layer_read_guid)
-	{
-		throw neural_network_exception("read() is not available for untile_layer");
 	}
 
 	void untile_layer::read_proto(const void * layer_proto)
@@ -188,12 +167,14 @@ namespace nnforge
 		check();
 	}
 
-	float untile_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float untile_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		return static_cast<float>(0);
 	}
 
-	float untile_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float untile_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
 		return static_cast<float>(0);
 	}

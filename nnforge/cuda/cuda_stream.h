@@ -27,6 +27,8 @@ namespace nnforge
 		class cuda_stream
 		{
 		public:
+			typedef nnforge_shared_ptr<cuda_stream> ptr;
+
 			cuda_stream();
 
 			virtual ~cuda_stream();
@@ -40,7 +42,5 @@ namespace nnforge
 			cuda_stream(const cuda_stream&);
 			cuda_stream& operator =(const cuda_stream&);
 		};
-
-		typedef nnforge_shared_ptr<cuda_stream> cuda_stream_smart_ptr;
 	}
 }

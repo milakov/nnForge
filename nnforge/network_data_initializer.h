@@ -33,7 +33,7 @@ namespace nnforge
 	public:
 		void initialize(
 			layer_data_list& data_list,
-			const const_layer_list& layer_list,
+			const std::vector<layer::const_ptr>& layer_list,
 			network_output_type::output_type type);
 	};
 }

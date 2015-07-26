@@ -52,8 +52,7 @@ namespace nnforge
 			unsigned int index = dist(rnd);
 			unsigned int entry_id = entry_to_write_list[index];
 
-			reader.rewind(entry_id);
-			reader.raw_read(entry_data);
+			reader.raw_read(entry_id, entry_data);
 			raw_write(&(*entry_data.begin()), entry_data.size());
 
 			unsigned int leftover_entry_id = entry_to_write_list[entry_to_write_count - 1];

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,20 +14,15 @@
  *  limitations under the License.
  */
 
-#pragma once
-
-#include "layer_tester_cuda.h"
+#include "structured_data_bunch_writer.h"
 
 namespace nnforge
 {
-	namespace cuda
+	structured_data_bunch_writer::structured_data_bunch_writer()
 	{
-		class convolution_layer_testing_schema_helper_cuda_fermi
-		{
-		public:
-			static layer_tester_cuda_smart_ptr create_tester_specific(
-				const layer_configuration_specific& input_configuration_specific,
-				const layer_configuration_specific& output_configuration_specific);
-		};
+	}
+
+	structured_data_bunch_writer::~structured_data_bunch_writer()
+	{
 	}
 }

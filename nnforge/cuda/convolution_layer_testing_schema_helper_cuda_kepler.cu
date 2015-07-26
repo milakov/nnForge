@@ -25,19 +25,19 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		layer_tester_cuda_smart_ptr convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(
+		layer_tester_cuda::ptr convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific)
 		{
-			layer_tester_cuda_smart_ptr res; 
+			layer_tester_cuda::ptr res; 
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
 				case 3:
-					res = layer_tester_cuda_smart_ptr(new convolution_layer_tester_cuda_kepler<3>());
+					res = layer_tester_cuda::ptr(new convolution_layer_tester_cuda_kepler<3>());
 					break;
 				case 4:
-					res = layer_tester_cuda_smart_ptr(new convolution_layer_tester_cuda_kepler<4>());
+					res = layer_tester_cuda::ptr(new convolution_layer_tester_cuda_kepler<4>());
 					break;
 				default:
 					throw neural_network_exception((boost::format("No CUDA tester for the convolutional layer of %1% dimensions for Kepler and above architectures") % output_configuration_specific.dimension_sizes.size()).str());

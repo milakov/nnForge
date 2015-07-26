@@ -26,16 +26,17 @@ namespace nnforge
 	class raw_data_reader
 	{
 	public:
+		typedef nnforge_shared_ptr<raw_data_reader> ptr;
+
 		virtual ~raw_data_reader();
 
-		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
-		virtual bool raw_read(std::vector<unsigned char>& all_elems) = 0;
+		// The method returns false in case the entry cannot be read
+		virtual bool raw_read(
+			unsigned int entry_id,
+			std::vector<unsigned char>& all_elems) = 0;
 
-		virtual void rewind(unsigned int entry_id) = 0;
-
-		virtual void reset() = 0;
-
-		virtual unsigned int get_entry_count() const = 0;
+		// The method should return -1 if entry count is unknown
+		virtual int get_entry_count() const = 0;
 
 	protected:
 		raw_data_reader();
@@ -44,6 +45,4 @@ namespace nnforge
 		raw_data_reader(const raw_data_reader&);
 		raw_data_reader& operator =(const raw_data_reader&);
 	};
-
-	typedef nnforge_shared_ptr<raw_data_reader> raw_data_reader_smart_ptr;
 }

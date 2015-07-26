@@ -25,7 +25,7 @@ namespace nnforge
 		class convolution_layer_testing_schema_helper_cuda_kepler
 		{
 		public:
-			static layer_tester_cuda_smart_ptr create_tester_specific(
+			static layer_tester_cuda::ptr create_tester_specific(
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific);
 		};

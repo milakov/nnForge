@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,13 +34,16 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(input_data_desc);
 		}
 
-		void activation_layer_cudnn_tester_cuda::enqueue_test(
+		void activation_layer_cudnn_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
@@ -50,9 +53,9 @@ namespace nnforge
 				CUDNN_TENSOR_NCHW,
 				CUDNN_DATA_FLOAT,
 				entry_count,
-				input_configuration_specific.feature_map_count,
-				(input_configuration_specific.dimension_sizes.size() > 1) ? input_configuration_specific.dimension_sizes[1] : 1,
-				input_configuration_specific.dimension_sizes[0]));
+				output_configuration_specific.feature_map_count,
+				(output_configuration_specific.dimension_sizes.size() > 1) ? output_configuration_specific.dimension_sizes[1] : 1,
+				output_configuration_specific.dimension_sizes[0]));
 
 			float alpha = 1.0F;
 			float beta = 0.0F;
@@ -61,10 +64,15 @@ namespace nnforge
 				af,
 				&alpha,
 				input_data_desc,
-				*input_buffer,
+				*input_buffers[0],
 				&beta,
 				input_data_desc,
-				*input_buffer));
+				*output_buffer));
+		}
+
+		int activation_layer_cudnn_tester_cuda::get_input_index_layer_can_write() const
+		{
+			return 0;
 		}
 	}
 }

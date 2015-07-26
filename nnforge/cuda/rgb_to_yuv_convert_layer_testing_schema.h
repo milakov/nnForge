@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,15 +29,15 @@ namespace nnforge
 
 			virtual ~rgb_to_yuv_convert_layer_testing_schema();
 
-			virtual const boost::uuids::uuid& get_uuid() const;
+			virtual std::string get_type_name() const;
 
-			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_schema_buffers() const;
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_schema_buffers() const;
 
 		protected:
-			virtual layer_testing_schema_smart_ptr create_specific() const;
+			virtual layer_testing_schema::ptr create_specific() const;
 
-			virtual layer_tester_cuda_smart_ptr create_tester_specific(
-				const layer_configuration_specific& input_configuration_specific,
+			virtual layer_tester_cuda::ptr create_tester_specific(
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific) const;
 		};
 	}

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,21 +31,21 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& rectified_linear_layer_testing_schema::get_uuid() const
+		std::string rectified_linear_layer_testing_schema::get_type_name() const
 		{
-			return rectified_linear_layer::layer_guid;
+			return rectified_linear_layer::layer_type_name;
 		}
 
-		layer_testing_schema_smart_ptr rectified_linear_layer_testing_schema::create_specific() const
+		layer_testing_schema::ptr rectified_linear_layer_testing_schema::create_specific() const
 		{
-			return layer_testing_schema_smart_ptr(new rectified_linear_layer_testing_schema());
+			return layer_testing_schema::ptr(new rectified_linear_layer_testing_schema());
 		}
 
-		layer_tester_cuda_smart_ptr rectified_linear_layer_testing_schema::create_tester_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_tester_cuda::ptr rectified_linear_layer_testing_schema::create_tester_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_tester_cuda_smart_ptr(new activation_layer_cudnn_tester_cuda(CUDNN_ACTIVATION_RELU));
+			return layer_tester_cuda::ptr(new activation_layer_cudnn_tester_cuda(CUDNN_ACTIVATION_RELU));
 		}
 	}
 }

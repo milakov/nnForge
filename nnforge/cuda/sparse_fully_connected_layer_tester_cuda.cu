@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -135,18 +135,21 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void sparse_fully_connected_layer_tester_cuda::enqueue_test(
+		void sparse_fully_connected_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
 			cuda_util::set_with_value(
 				*cuda_config,
-				*additional_buffers[0],
+				*output_buffer,
 				0.0F,
 				output_elem_count_per_entry * entry_count,
 				stream_id);
@@ -161,13 +164,13 @@ namespace nnforge
 			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
 			int smem_size = threadblock_size * sizeof(float);
 			sparse_fully_connected_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-				*additional_buffers[0],
-				*input_buffer,
+				*output_buffer,
+				*input_buffers[0],
 				*data[0],
 				*data_custom[0],
 				*data_custom[1],
 				output_elem_count_per_entry,
-				input_elem_count_per_entry,
+				input_elem_count_per_entry_list[0],
 				entry_count,
 				input_feature_map_block_size_and_count.first,
 				window_size);
@@ -193,24 +196,8 @@ namespace nnforge
 					*data[1],
 					&beta,
 					output_data_desc,
-					*additional_buffers[0]));
+					*output_buffer));
 			}
-		}
-
-		std::vector<size_t> sparse_fully_connected_layer_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
-		{
-			std::vector<size_t> res;
-
-			res.push_back(output_elem_count_per_entry * sizeof(float));
-
-			return res;
-		}
-
-		cuda_linear_buffer_device_smart_ptr sparse_fully_connected_layer_tester_cuda::get_output_buffer(
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
-		{
-			return additional_buffers[0];
 		}
 
 		void sparse_fully_connected_layer_tester_cuda::tester_configured()
@@ -233,7 +220,7 @@ namespace nnforge
 				1));
 		}
 
-		void sparse_fully_connected_layer_tester_cuda::notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom)
+		void sparse_fully_connected_layer_tester_cuda::notify_data_custom(layer_data_custom::const_ptr host_data_custom)
 		{
 			max_column_index_count_per_row = 0;
 			const std::vector<int>& row_indices = host_data_custom->at(1);

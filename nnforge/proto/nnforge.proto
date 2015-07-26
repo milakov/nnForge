@@ -7,7 +7,8 @@ message NetworkSchema {
 
 message Layer {
 	required string type = 1;
-	optional string name = 2;
+	required string name = 2;
+	repeated string input_layer_name = 14;
 
 	optional ConvolutionalParam convolution_param = 3;
 	optional AverageSubsamplingParam average_subsampling_param = 4;
@@ -20,6 +21,8 @@ message Layer {
 	optional RGBToYUVConvertParam rgb_to_yuv_convert_param = 11;
 	optional TanHParam tanh_param = 12;
 	optional UnTileParam untile_param = 13;
+	optional MSEParam mse_param = 15;
+	optional AccuracyParam accuracy_param = 16;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -105,6 +108,14 @@ message UnTileParam {
 		repeated UnTileUpsamplingDimensionParam dimension_param = 1;
 	}
 	repeated UnTileLevelParam level_param = 1;
+}
+
+message MSEParam {
+	optional float scale = 1 [default = 1.0];
+}
+
+message AccuracyParam {
+	optional uint32 top_n = 1 [default = 1];
 }
 
 message CustomParam {

@@ -25,6 +25,7 @@
 
 #include "buffer_cuda_size_configuration.h"
 #include "../nn_types.h"
+#include "../threadpool_job_runner.h"
 
 namespace nnforge
 {
@@ -33,9 +34,13 @@ namespace nnforge
 		class cuda_running_configuration
 		{
 		public:
+			typedef nnforge_shared_ptr<cuda_running_configuration> ptr;
+			typedef nnforge_shared_ptr<const cuda_running_configuration> const_ptr;
+
 			cuda_running_configuration(
 				int device_id,
-				float max_global_memory_usage_ratio);
+				float max_global_memory_usage_ratio,
+				unsigned int reserved_thread_count);
 
 			~cuda_running_configuration();
 
@@ -60,13 +65,16 @@ namespace nnforge
 
 			void set_device() const;
 
+			threadpool_job_runner::ptr get_job_runner() const;
+
 		public:
+			int device_id;
 			float max_global_memory_usage_ratio;
+			unsigned int reserved_thread_count;
 
 			int driver_version;
 			int runtime_version;
 
-			int device_id;
 			std::string device_name;
 			int compute_capability_major;
 			int compute_capability_minor;
@@ -102,9 +110,9 @@ namespace nnforge
 			cusparseHandle_t cusparse_handle;
 			cudnnHandle_t cudnn_handle;
 			curandGenerator_t curand_gen;
-		};
 
-		typedef nnforge_shared_ptr<const cuda_running_configuration> cuda_running_configuration_const_smart_ptr;
+			threadpool_job_runner::ptr job_runner;
+		};
 
 		std::ostream& operator<< (std::ostream& out, const cuda_running_configuration& running_configuration);
 	}

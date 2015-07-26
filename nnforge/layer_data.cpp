@@ -55,17 +55,6 @@ namespace nnforge
 		}
 	}
 
-	bool layer_data::is_empty() const
-	{
-		for(std::vector<std::vector<float> >::const_iterator it = begin(); it != end(); it++)
-		{
-			if (it->size() > 0)
-				return false;
-		}
-
-		return true;
-	}
-
 	void layer_data::fill(float val)
 	{
 		for(std::vector<std::vector<float> >::iterator it = begin(); it != end(); ++it)

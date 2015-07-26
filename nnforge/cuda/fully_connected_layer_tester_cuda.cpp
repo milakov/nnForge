@@ -38,13 +38,16 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void fully_connected_layer_tester_cuda::enqueue_test(
+		void fully_connected_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
 			{
@@ -59,14 +62,14 @@ namespace nnforge
 						CUBLAS_OP_N,
 						output_elem_count_per_entry,
 						entry_count,
-						input_elem_count_per_entry,
+						input_elem_count_per_entry_list[0],
 						&alpha,
 						*data[0],
-						input_elem_count_per_entry,
-						*input_buffer,
-						input_elem_count_per_entry,
+						input_elem_count_per_entry_list[0],
+						*input_buffers[0],
+						input_elem_count_per_entry_list[0],
 						&beta,
-						*additional_buffers[0],
+						*output_buffer,
 						output_elem_count_per_entry));
 				}
 				else
@@ -74,15 +77,15 @@ namespace nnforge
 					cublasSgemv(
 						cuda_config->get_cublas_handle(),
 						CUBLAS_OP_T,
-						input_elem_count_per_entry,
+						input_elem_count_per_entry_list[0],
 						output_elem_count_per_entry,
 						&alpha,
 						*data[0],
-						input_elem_count_per_entry,
-						*input_buffer,
+						input_elem_count_per_entry_list[0],
+						*input_buffers[0],
 						1,
 						&beta,
-						*additional_buffers[0],
+						*output_buffer,
 						1);
 				}
 			}
@@ -108,7 +111,7 @@ namespace nnforge
 					*data[1],
 					&beta,
 					output_data_desc,
-					*additional_buffers[0]));
+					*output_buffer));
 			}
 		}
 
@@ -122,22 +125,6 @@ namespace nnforge
 				output_configuration_specific.feature_map_count,
 				1,
 				1));
-		}
-
-		std::vector<size_t> fully_connected_layer_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
-		{
-			std::vector<size_t> res;
-
-			res.push_back(output_elem_count_per_entry * sizeof(float));
-
-			return res;
-		}
-
-		cuda_linear_buffer_device_smart_ptr fully_connected_layer_tester_cuda::get_output_buffer(
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
-		{
-			return additional_buffers[0];
 		}
 	}
 }
