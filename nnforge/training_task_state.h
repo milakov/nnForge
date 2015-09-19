@@ -17,8 +17,8 @@
 #pragma once
 
 #include "testing_result.h"
-#include "training_stat.h"
 #include "network_data.h"
+#include "backward_propagation.h"
 
 #include <boost/chrono.hpp>
 
@@ -30,9 +30,9 @@ namespace nnforge
 		training_task_state();
 
 		unsigned int index_peeked;
-		network_data_smart_ptr data;
-		network_data_smart_ptr momentum_data;
-		std::vector<std::pair<testing_result_smart_ptr, training_stat_smart_ptr> > history;
+		network_data::ptr data;
+		network_data::ptr momentum_data;
+		std::vector<std::pair<backward_propagation::stat, std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<float> > > > > > history;
 		std::vector<std::string> comments;
 		unsigned int initial_epoch;
 

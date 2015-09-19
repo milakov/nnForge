@@ -33,12 +33,6 @@
     <Filter Include="Source Files\layer_updaters">
       <UniqueIdentifier>{80e01077-bf3c-44e6-a10d-aa9114828303}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\network_updater">
-      <UniqueIdentifier>{b472ddeb-26c6-48bd-a4fd-37f9c316e7db}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\network_updater">
-      <UniqueIdentifier>{b060b77a-abbf-40c4-8095-87afd159fd6c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\updater_schemas">
       <UniqueIdentifier>{d05ea558-877f-4a28-9888-c68ef4254539}</UniqueIdentifier>
     </Filter>
@@ -77,6 +71,12 @@
     </Filter>
     <Filter Include="Source Files\forward_propagation">
       <UniqueIdentifier>{7e91a253-3183-4427-af8e-6f51edbd0c34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\backward_propagation">
+      <UniqueIdentifier>{b472ddeb-26c6-48bd-a4fd-37f9c316e7db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\backward_propagation">
+      <UniqueIdentifier>{b060b77a-abbf-40c4-8095-87afd159fd6c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -122,9 +122,6 @@
     <ClInclude Include="layer_testing_schema_factory.h">
       <Filter>Header Files\forward_propagation</Filter>
     </ClInclude>
-    <ClInclude Include="network_tester_cuda.h">
-      <Filter>Header Files\forward_propagation</Filter>
-    </ClInclude>
     <ClInclude Include="absolute_layer_tester_cuda.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
@@ -165,19 +162,13 @@
       <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
     <ClInclude Include="layer_updater_cuda.h">
-      <Filter>Header Files\network_updater</Filter>
+      <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="layer_updater_schema.h">
-      <Filter>Header Files\network_updater</Filter>
+      <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="layer_updater_schema_factory.h">
-      <Filter>Header Files\network_updater</Filter>
-    </ClInclude>
-    <ClInclude Include="network_updater_cuda.h">
-      <Filter>Header Files\network_updater</Filter>
-    </ClInclude>
-    <ClInclude Include="network_updater_cuda_factory.h">
-      <Filter>Header Files\network_updater</Filter>
+      <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="absolute_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
@@ -257,12 +248,6 @@
     <ClInclude Include="split_policy_z_order.h">
       <Filter>Header Files\space_filling_curves</Filter>
     </ClInclude>
-    <ClInclude Include="supervised_data_reader_async_helper.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_reader_async_helper.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="network_analyzer_cuda.h">
       <Filter>Header Files\network_analyzer</Filter>
     </ClInclude>
@@ -287,23 +272,8 @@
     <ClInclude Include="squared_hinge_loss_error_function_updater_cuda.h">
       <Filter>Header Files\error_function_updaters</Filter>
     </ClInclude>
-    <ClInclude Include="convolution_layer_testing_schema_helper_cuda_kepler.h">
-      <Filter>Header Files\testing_schemas</Filter>
-    </ClInclude>
-    <ClInclude Include="convolution_layer_tester_cuda_kepler.cuh">
-      <Filter>Source Files\layer_testers</Filter>
-    </ClInclude>
     <ClInclude Include="sequential_curve.h">
       <Filter>Header Files\space_filling_curves</Filter>
-    </ClInclude>
-    <ClInclude Include="convolution_layer_updater_schema_helper_cuda_kepler.h">
-      <Filter>Header Files\updater_schemas</Filter>
-    </ClInclude>
-    <ClInclude Include="convolution_layer_updater_cuda_kepler.cuh">
-      <Filter>Source Files\layer_updaters</Filter>
-    </ClInclude>
-    <ClInclude Include="convolution_layer_updater_schema_helper_cuda_fermi.h">
-      <Filter>Header Files\updater_schemas</Filter>
     </ClInclude>
     <ClInclude Include="negative_log_likelihood_error_function_updater_cuda.h">
       <Filter>Header Files\error_function_updaters</Filter>
@@ -325,9 +295,6 @@
     </ClInclude>
     <ClInclude Include="max_subsampling_layer_tester_cuda.cuh">
       <Filter>Source Files\layer_testers</Filter>
-    </ClInclude>
-    <ClInclude Include="convolution_1x1_layer_updater_cuda.h">
-      <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
     <ClInclude Include="convolution_1x1_layer_tester_cuda.h">
       <Filter>Header Files\layer_testers</Filter>
@@ -458,6 +425,24 @@
     <ClInclude Include="accuracy_layer_tester_cuda.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
+    <ClInclude Include="backward_propagation_cuda.h">
+      <Filter>Header Files\backward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="backward_propagation_cuda_factory.h">
+      <Filter>Header Files\backward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="mse_layer_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="mse_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="accuracy_layer_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="accuracy_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -515,13 +500,10 @@
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="layer_updater_schema.cpp">
-      <Filter>Source Files\network_updater</Filter>
+      <Filter>Source Files\backward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="layer_updater_schema_factory.cpp">
-      <Filter>Source Files\network_updater</Filter>
-    </ClCompile>
-    <ClCompile Include="network_updater_cuda_factory.cpp">
-      <Filter>Source Files\network_updater</Filter>
+      <Filter>Source Files\backward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="absolute_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
@@ -564,12 +546,6 @@
     </ClCompile>
     <ClCompile Include="local_contrast_subtractive_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_data_reader_async_helper.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_reader_async_helper.cpp">
-      <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="network_analyzer_cuda_factory.cpp">
       <Filter>Source Files\network_analyzer</Filter>
@@ -673,11 +649,23 @@
     <ClCompile Include="accuracy_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
     </ClCompile>
+    <ClCompile Include="backward_propagation_cuda.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="backward_propagation_cuda_factory.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="layer_updater_cuda.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="mse_layer_updater_schema.cpp">
+      <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="accuracy_layer_updater_schema.cpp">
+      <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="network_tester_cuda.cu">
-      <Filter>Source Files\forward_propagation</Filter>
-    </CudaCompile>
     <CudaCompile Include="absolute_layer_tester_cuda.cu">
       <Filter>Source Files\layer_testers</Filter>
     </CudaCompile>
@@ -692,15 +680,6 @@
     </CudaCompile>
     <CudaCompile Include="hyperbolic_tangent_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
-    </CudaCompile>
-    <CudaCompile Include="layer_updater_cuda.cu">
-      <Filter>Source Files\network_updater</Filter>
-    </CudaCompile>
-    <CudaCompile Include="network_updater_cuda.cu">
-      <Filter>Source Files\network_updater</Filter>
-    </CudaCompile>
-    <CudaCompile Include="util_cuda.cu">
-      <Filter>Source Files\util</Filter>
     </CudaCompile>
     <CudaCompile Include="rgb_to_yuv_convert_layer_tester_cuda.cu">
       <Filter>Source Files\layer_testers</Filter>
@@ -729,12 +708,6 @@
     <CudaCompile Include="squared_hinge_loss_error_function_updater_cuda.cu">
       <Filter>Source Files\error_function_updaters</Filter>
     </CudaCompile>
-    <CudaCompile Include="convolution_layer_testing_schema_helper_cuda_kepler.cu">
-      <Filter>Source Files\testing_schemas</Filter>
-    </CudaCompile>
-    <CudaCompile Include="convolution_layer_updater_schema_helper_cuda_kepler.cu">
-      <Filter>Source Files\updater_schemas</Filter>
-    </CudaCompile>
     <CudaCompile Include="negative_log_likelihood_error_function_updater_cuda.cu">
       <Filter>Source Files\error_function_updaters</Filter>
     </CudaCompile>
@@ -746,9 +719,6 @@
     </CudaCompile>
     <CudaCompile Include="max_subsampling_layer_testing_schema_cuda.cu">
       <Filter>Source Files\testing_schemas</Filter>
-    </CudaCompile>
-    <CudaCompile Include="convolution_1x1_layer_updater_cuda.cu">
-      <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
     <CudaCompile Include="sparse_fully_connected_1x1_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
@@ -788,6 +758,15 @@
     </CudaCompile>
     <CudaCompile Include="accuracy_layer_tester_cuda.cu">
       <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="util_cuda.cu">
+      <Filter>Source Files\util</Filter>
+    </CudaCompile>
+    <CudaCompile Include="mse_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="accuracy_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

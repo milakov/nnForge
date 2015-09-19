@@ -180,4 +180,14 @@ namespace nnforge
 		if (!instance_name_to_data_map.insert(std::make_pair(instance_name, data)).second)
 			throw neural_network_exception((boost::format("Data with duplicate layer name %1%") % instance_name).str());
 	}
+
+	std::vector<std::string> layer_data_list::get_data_layer_name_list() const
+	{
+		std::vector<std::string> res;
+
+		for(std::map<std::string, layer_data::ptr>::const_iterator it = instance_name_to_data_map.begin(); it != instance_name_to_data_map.end(); ++it)
+			res.push_back(it->first);
+
+		return res;
+	}
 }

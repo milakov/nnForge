@@ -39,6 +39,8 @@ namespace nnforge
 
 			virtual forward_propagation_factory::ptr create_forward_propagation_factory() const;
 
+			virtual backward_propagation_factory::ptr create_backward_propagation_factory() const;
+
 			virtual void info() const;
 
 			virtual std::vector<float_option> get_float_options();

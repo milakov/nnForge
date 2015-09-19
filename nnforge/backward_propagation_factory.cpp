@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,25 +14,15 @@
  *  limitations under the License.
  */
 
-#pragma once
-
-#include "nn_types.h"
-
-#include <vector>
-#include <ostream>
+#include "backward_propagation_factory.h"
 
 namespace nnforge
 {
-	class training_stat
+	backward_propagation_factory::backward_propagation_factory()
 	{
-	public:
-		training_stat();
+	}
 
-	public:
-		std::vector<std::vector<float> > absolute_updates;
-	};
-
-	std::ostream& operator<< (std::ostream& out, const training_stat& val);
-
-	typedef nnforge_shared_ptr<training_stat> training_stat_smart_ptr;
+	backward_propagation_factory::~backward_propagation_factory()
+	{
+	}
 }

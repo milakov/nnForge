@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,11 +26,13 @@ namespace nnforge
 	{
 	}
 
-	void complex_network_data_pusher::push(const training_task_state& task_state)
+	void complex_network_data_pusher::push(
+		const training_task_state& task_state,
+		const network_schema& schema)
 	{
 		for(complex_network_data_pusher::iterator it = begin(); it != end(); it++)
 		{
-			(*it)->push(task_state);
+			(*it)->push(task_state, schema);
 		}
 	}
 }

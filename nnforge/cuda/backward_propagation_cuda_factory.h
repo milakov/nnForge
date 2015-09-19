@@ -16,26 +16,29 @@
 
 #pragma once
 
-#include "../network_updater_factory.h"
+#include "../backward_propagation_factory.h"
 #include "cuda_running_configuration.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		class network_updater_cuda_factory : public network_updater_factory
+		class backward_propagation_cuda_factory : public backward_propagation_factory
 		{
 		public:
-			network_updater_cuda_factory(cuda_running_configuration_const_smart_ptr cuda_config);
+			backward_propagation_cuda_factory(cuda_running_configuration::const_ptr cuda_config);
 
-			virtual ~network_updater_cuda_factory();
+			virtual ~backward_propagation_cuda_factory();
 
-			virtual network_updater_smart_ptr create(
-				network_schema_smart_ptr schema,
-				const_error_function_smart_ptr ef) const;
+			virtual backward_propagation::ptr create(
+				const network_schema& schema,
+				const std::vector<std::string>& output_layer_names,
+				const std::vector<std::string>& error_source_layer_names,
+				const std::vector<std::string>& exclude_data_update_layer_names,
+				debug_state::ptr debug) const;
 
 		protected:
-			cuda_running_configuration_const_smart_ptr cuda_config;
+			cuda_running_configuration::const_ptr cuda_config;
 		};
 	}
 }

@@ -17,29 +17,22 @@
     <ClInclude Include="absolute_layer_updater_schema.h" />
     <ClInclude Include="accuracy_layer_tester_cuda.h" />
     <ClInclude Include="accuracy_layer_testing_schema.h" />
+    <ClInclude Include="accuracy_layer_updater_cuda.h" />
+    <ClInclude Include="accuracy_layer_updater_schema.h" />
     <ClInclude Include="activation_layer_cudnn_updater_cuda.h" />
     <ClInclude Include="average_subsampling_layer_tester_cuda.cuh" />
     <ClInclude Include="average_subsampling_layer_cudnn_tester_cuda.h" />
     <ClInclude Include="average_subsampling_layer_testing_schema.h" />
     <ClInclude Include="average_subsampling_layer_cudnn_updater_cuda.h" />
-    <ClInclude Include="average_subsampling_layer_updater_cuda.cuh">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="average_subsampling_layer_updater_cuda.cuh" />
     <ClInclude Include="average_subsampling_layer_updater_schema.h" />
+    <ClInclude Include="backward_propagation_cuda.h" />
     <ClInclude Include="buffer_cuda_size_configuration.h" />
     <ClInclude Include="convolution_1x1_layer_tester_cuda.h" />
-    <ClInclude Include="convolution_1x1_layer_updater_cuda.h" />
     <ClInclude Include="convolution_layer_tester_cuda.h" />
     <ClInclude Include="convolution_layer_testing_schema.h" />
     <ClInclude Include="convolution_layer_updater_cuda.h" />
-    <ClInclude Include="convolution_layer_updater_cuda_kepler.cuh">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="convolution_layer_updater_schema.h" />
-    <ClInclude Include="convolution_layer_updater_schema_helper_cuda_fermi.h" />
-    <ClInclude Include="convolution_layer_updater_schema_helper_cuda_kepler.h" />
     <ClInclude Include="cross_entropy_error_function_updater_cuda.h" />
     <ClInclude Include="dropout_layer_tester_cuda.h" />
     <ClInclude Include="dropout_layer_testing_schema.h" />
@@ -50,6 +43,8 @@
     <ClInclude Include="max_subsampling_tiling_layer_tester_cuda.cuh" />
     <ClInclude Include="mse_layer_tester_cuda.h" />
     <ClInclude Include="mse_layer_testing_schema.h" />
+    <ClInclude Include="mse_layer_updater_cuda.h" />
+    <ClInclude Include="mse_layer_updater_schema.h" />
     <ClInclude Include="parametric_rectified_linear_layer_tester_cuda.h" />
     <ClInclude Include="max_subsampling_layer_cudnn_tester_cuda.h" />
     <ClInclude Include="max_subsampling_layer_cudnn_updater_cuda.h" />
@@ -61,17 +56,11 @@
     <ClInclude Include="parametric_rectified_linear_layer_updater_schema.h" />
     <ClInclude Include="sparse_convolution_layer_tester_cuda_kepler.cuh" />
     <ClInclude Include="sparse_convolution_layer_testing_schema_helper_cuda_kepler.h" />
-    <ClInclude Include="sparse_convolution_layer_updater_cuda_kepler.cuh">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="sparse_convolution_layer_updater_cuda_kepler.cuh" />
     <ClInclude Include="sparse_convolution_layer_updater_schema_helper_cuda_kepler.h" />
     <ClInclude Include="sparse_fully_connected_layer_tester_cuda.h" />
     <ClInclude Include="max_subsampling_layer_tester_cuda.cuh" />
-    <ClInclude Include="max_subsampling_layer_updater_cuda.cuh">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="max_subsampling_layer_updater_cuda.cuh" />
     <ClInclude Include="negative_log_likelihood_error_function_updater_cuda.h" />
     <ClInclude Include="cuda_array.h" />
     <ClInclude Include="cuda_event.h" />
@@ -119,8 +108,6 @@
     <ClInclude Include="sparse_fully_connected_layer_updater_cuda.h" />
     <ClInclude Include="split_policy_z_order.h" />
     <ClInclude Include="squared_hinge_loss_error_function_updater_cuda.h" />
-    <ClInclude Include="supervised_data_reader_async_helper.h" />
-    <ClInclude Include="unsupervised_data_reader_async_helper.h" />
     <ClInclude Include="untile_layer_tester_cuda.h" />
     <ClInclude Include="untile_layer_testing_schema.h" />
     <ClInclude Include="util_cuda.h" />
@@ -139,42 +126,27 @@
     <ClInclude Include="layer_updater_schema_factory.h" />
     <ClInclude Include="local_contrast_subtractive_2d_layer_tester_cuda.h" />
     <ClInclude Include="local_contrast_subtractive_layer_testing_schema.h" />
-    <ClInclude Include="network_tester_cuda.h" />
     <ClInclude Include="forward_propagation_cuda_factory.h" />
-    <ClInclude Include="network_updater_cuda.h" />
-    <ClInclude Include="network_updater_cuda_factory.h" />
+    <ClInclude Include="backward_propagation_cuda_factory.h" />
     <ClInclude Include="neural_network_cublas_exception.h" />
     <ClInclude Include="neural_network_cuda_exception.h" />
     <ClInclude Include="cuda.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="absolute_layer_testing_schema.cpp" />
-    <ClCompile Include="absolute_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="absolute_layer_updater_schema.cpp" />
     <ClCompile Include="accuracy_layer_testing_schema.cpp" />
-    <ClCompile Include="activation_layer_cudnn_updater_cuda.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="accuracy_layer_updater_schema.cpp" />
+    <ClCompile Include="activation_layer_cudnn_updater_cuda.cpp" />
     <ClCompile Include="average_subsampling_layer_cudnn_tester_cuda.cpp" />
-    <ClCompile Include="average_subsampling_layer_cudnn_updater_cuda.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="average_subsampling_layer_cudnn_updater_cuda.cpp" />
+    <ClCompile Include="backward_propagation_cuda.cpp" />
     <ClCompile Include="buffer_cuda_size_configuration.cpp" />
     <ClCompile Include="convolution_1x1_layer_tester_cuda.cpp" />
     <ClCompile Include="convolution_layer_tester_cuda.cpp" />
     <ClCompile Include="convolution_layer_testing_schema.cpp" />
-    <ClCompile Include="convolution_layer_updater_cuda.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="convolution_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="convolution_layer_updater_cuda.cpp" />
+    <ClCompile Include="convolution_layer_updater_schema.cpp" />
     <ClCompile Include="cuda_array.cpp" />
     <ClCompile Include="cuda_event.cpp" />
     <ClCompile Include="cuda_linear_buffer.cpp" />
@@ -186,10 +158,7 @@
     <ClCompile Include="cuda_texture.cpp" />
     <ClCompile Include="dropout_layer_tester_cuda.cpp" />
     <ClCompile Include="dropout_layer_testing_schema.cpp" />
-    <ClCompile Include="dropout_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="dropout_layer_updater_schema.cpp" />
     <ClCompile Include="error_function_updater_cuda_factory.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -197,51 +166,29 @@
     <ClCompile Include="factory_generator_cuda.cpp" />
     <ClCompile Include="forward_propagation_cuda.cpp" />
     <ClCompile Include="fully_connected_layer_tester_cuda.cpp" />
-    <ClCompile Include="fully_connected_layer_updater_cuda.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="fully_connected_layer_updater_cuda.cpp" />
     <ClCompile Include="hyperbolic_tangent_layer_testing_schema.cpp" />
-    <ClCompile Include="hyperbolic_tangent_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="hyperbolic_tangent_layer_updater_schema.cpp" />
     <ClCompile Include="layer_tester_cuda.cpp" />
     <ClCompile Include="layer_testing_schema.cpp" />
     <ClCompile Include="layer_testing_schema_factory.cpp" />
-    <ClCompile Include="layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="layer_updater_schema_factory.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="layer_updater_cuda.cpp" />
+    <ClCompile Include="layer_updater_schema.cpp" />
+    <ClCompile Include="layer_updater_schema_factory.cpp" />
     <ClCompile Include="local_contrast_subtractive_layer_testing_schema.cpp" />
-    <ClCompile Include="local_contrast_subtractive_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="local_contrast_subtractive_layer_updater_schema.cpp" />
     <ClCompile Include="maxout_layer_testing_schema.cpp" />
-    <ClCompile Include="maxout_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="maxout_layer_updater_schema.cpp" />
     <ClCompile Include="max_subsampling_layer_cudnn_tester_cuda.cpp" />
-    <ClCompile Include="max_subsampling_layer_cudnn_updater_cuda.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="max_subsampling_layer_cudnn_updater_cuda.cpp" />
     <ClCompile Include="mse_layer_testing_schema.cpp" />
+    <ClCompile Include="mse_layer_updater_schema.cpp" />
     <ClCompile Include="network_analyzer_cuda_factory.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="forward_propagation_cuda_factory.cpp" />
-    <ClCompile Include="network_updater_cuda_factory.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="backward_propagation_cuda_factory.cpp" />
     <ClCompile Include="neural_network_cublas_exception.cpp" />
     <ClCompile Include="neural_network_cuda_exception.cpp" />
     <ClCompile Include="cuda.cpp" />
@@ -250,110 +197,53 @@
     <ClCompile Include="neural_network_cusparse_exception.cpp" />
     <ClCompile Include="activation_layer_cudnn_tester_cuda.cpp" />
     <ClCompile Include="parametric_rectified_linear_layer_testing_schema.cpp" />
-    <ClCompile Include="parametric_rectified_linear_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="parametric_rectified_linear_layer_updater_schema.cpp" />
     <ClCompile Include="rectified_linear_layer_testing_schema.cpp" />
-    <ClCompile Include="rectified_linear_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="rectified_linear_layer_updater_schema.cpp" />
     <ClCompile Include="rgb_to_yuv_convert_layer_testing_schema.cpp" />
-    <ClCompile Include="rgb_to_yuv_convert_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="rgb_to_yuv_convert_layer_updater_schema.cpp" />
     <ClCompile Include="sigmoid_layer_testing_schema.cpp" />
-    <ClCompile Include="sigmoid_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="sigmoid_layer_updater_schema.cpp" />
     <ClCompile Include="softmax_layer_tester_cuda.cpp" />
     <ClCompile Include="softmax_layer_testing_schema.cpp" />
-    <ClCompile Include="softmax_layer_updater_cuda.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="softmax_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="softmax_layer_updater_cuda.cpp" />
+    <ClCompile Include="softmax_layer_updater_schema.cpp" />
     <ClCompile Include="sparse_convolution_layer_testing_schema.cpp" />
-    <ClCompile Include="sparse_convolution_layer_updater_schema.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="sparse_convolution_layer_updater_schema.cpp" />
     <ClCompile Include="sparse_fully_connected_1x1_layer_tester_cuda.cpp" />
     <ClCompile Include="untile_layer_testing_schema.cpp" />
     <CudaCompile Include="accuracy_layer_tester_cuda.cu" />
+    <CudaCompile Include="accuracy_layer_updater_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
-    <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
-    <CudaCompile Include="dropout_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
+    <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
+    <CudaCompile Include="dropout_layer_updater_cuda.cu" />
     <CudaCompile Include="mse_layer_tester_cuda.cu" />
+    <CudaCompile Include="mse_layer_updater_cuda.cu" />
     <CudaCompile Include="parametric_rectified_linear_layer_tester_cuda.cu" />
-    <CudaCompile Include="parametric_rectified_linear_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
+    <CudaCompile Include="parametric_rectified_linear_layer_updater_cuda.cu" />
     <CudaCompile Include="sparse_convolution_layer_testing_schema_helper_cuda_kepler.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_30,sm_30;compute_35,sm_35</CodeGeneration>
     </CudaCompile>
     <CudaCompile Include="sparse_convolution_layer_updater_schema_helper_cuda_kepler.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_30,sm_30;compute_35,sm_35</CodeGeneration>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CudaCompile>
     <CudaCompile Include="sparse_fully_connected_layer_tester_cuda.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
     <CudaCompile Include="sparse_fully_connected_layer_updater_cuda.cu">
       <FileType>CppCode</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CudaCompile>
-    <ClCompile Include="supervised_data_reader_async_helper.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_reader_async_helper.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <CudaCompile Include="util_cuda.cu" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="absolute_layer_tester_cuda.cu" />
-    <CudaCompile Include="absolute_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
-    <CudaCompile Include="convolution_1x1_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
-    <CudaCompile Include="convolution_layer_testing_schema_helper_cuda_kepler.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_30,sm_30;compute_35,sm_35</CodeGeneration>
-    </CudaCompile>
-    <CudaCompile Include="convolution_layer_updater_schema_helper_cuda_kepler.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_30,sm_30;compute_35,sm_35</CodeGeneration>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
+    <CudaCompile Include="absolute_layer_updater_cuda.cu" />
     <CudaCompile Include="cross_entropy_error_function_updater_cuda.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CudaCompile>
     <CudaCompile Include="max_subsampling_layer_testing_schema_cuda.cu" />
-    <CudaCompile Include="max_subsampling_layer_updater_schema_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
+    <CudaCompile Include="max_subsampling_layer_updater_schema_cuda.cu" />
     <CudaCompile Include="negative_log_likelihood_error_function_updater_cuda.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -362,15 +252,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="local_contrast_subtractive_2d_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
+    <CudaCompile Include="local_contrast_subtractive_2d_layer_updater_cuda.cu" />
     <CudaCompile Include="maxout_layer_tester_cuda.cu" />
-    <CudaCompile Include="maxout_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
+    <CudaCompile Include="maxout_layer_updater_cuda.cu" />
     <CudaCompile Include="mse_error_function_updater_cuda.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -380,48 +264,18 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CudaCompile>
     <CudaCompile Include="rgb_to_yuv_convert_layer_tester_cuda.cu" />
-    <CudaCompile Include="rgb_to_yuv_convert_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
-    <CudaCompile Include="sparse_fully_connected_1x1_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
+    <CudaCompile Include="rgb_to_yuv_convert_layer_updater_cuda.cu" />
+    <CudaCompile Include="sparse_fully_connected_1x1_layer_updater_cuda.cu" />
     <CudaCompile Include="squared_hinge_loss_error_function_updater_cuda.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CudaCompile>
     <CudaCompile Include="untile_layer_tester_cuda.cu" />
-    <CudaCompile Include="util_cuda.cu" />
     <CudaCompile Include="hyperbolic_tangent_layer_tester_cuda.cu" />
-    <CudaCompile Include="hyperbolic_tangent_layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
-    <CudaCompile Include="layer_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
+    <CudaCompile Include="hyperbolic_tangent_layer_updater_cuda.cu" />
     <CudaCompile Include="local_contrast_subtractive_2d_layer_tester_cuda.cu" />
-    <CudaCompile Include="network_tester_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
-    <CudaCompile Include="network_updater_cuda.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="convolution_layer_testing_schema_helper_cuda_kepler.h">
-      <FileType>Document</FileType>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="convolution_layer_tester_cuda_kepler.cuh">
-      <FileType>Document</FileType>
-    </ClInclude>
     <ClInclude Include="sequential_curve.h">
       <FileType>Document</FileType>
     </ClInclude>
@@ -452,7 +306,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.0.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -508,6 +362,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.0.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />
   </ImportGroup>
 </Project>

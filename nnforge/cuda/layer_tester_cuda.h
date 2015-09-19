@@ -76,12 +76,6 @@ namespace nnforge
 			// The method is called when configuration is finished
 			virtual void tester_configured();
 
-//			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
-
-//			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const;
-
-//			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device::ptr>& additional_buffers) const;
-
 			virtual void notify_data_custom(layer_data_custom::const_ptr host_data_custom);
 
 			layer::const_ptr layer_schema;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,21 +31,21 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr hyperbolic_tangent_layer_updater_schema::create_specific() const
+		layer_updater_schema::ptr hyperbolic_tangent_layer_updater_schema::create_specific() const
 		{
-			return layer_updater_schema_smart_ptr(new hyperbolic_tangent_layer_updater_schema());
+			return layer_updater_schema::ptr(new hyperbolic_tangent_layer_updater_schema());
 		}
 
-		const boost::uuids::uuid& hyperbolic_tangent_layer_updater_schema::get_uuid() const
+		std::string hyperbolic_tangent_layer_updater_schema::get_type_name() const
 		{
-			return hyperbolic_tangent_layer::layer_guid;
+			return hyperbolic_tangent_layer::layer_type_name;
 		}
 
-		layer_updater_cuda_smart_ptr hyperbolic_tangent_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr hyperbolic_tangent_layer_updater_schema::create_updater_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_updater_cuda_smart_ptr(new hyperbolic_tangent_layer_updater_cuda());
+			return layer_updater_cuda::ptr(new hyperbolic_tangent_layer_updater_cuda());
 		}
 	}
 }

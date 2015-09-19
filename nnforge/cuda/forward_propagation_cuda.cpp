@@ -44,19 +44,17 @@ namespace nnforge
 		{
 			cuda_config->set_device();
 
-			layers_in_forward_propagation_order = this->schema->get_layers_in_forward_propagation_order();
-
-			std::vector<layer::const_ptr> layer_list = this->schema->get_layers();
-			for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
-				if ((*it)->get_type_name() != data_layer::layer_type_name)
-					testing_schemas.insert(
-						std::make_pair(
-							(*it)->instance_name,
-							layer_testing_schema_factory::singleton::get_const_instance().create_testing_schema_layer(*it, cuda_config)));
+			actions_in_execution_order = action_schema->get_actions_in_execution_order();
 
 			setup_network_cuda();
 
 			setup_streams_and_events();
+
+			for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
+				testing_schemas.insert(
+					std::make_pair(
+						it->get_name(),
+						layer_testing_schema_factory::singleton::get_const_instance().create_testing_schema_layer(this->schema->get_layer(it->get_name()), cuda_config)));
 
 			for(std::map<std::string, layer_testing_schema::const_ptr>::const_iterator it = testing_schemas.begin(); it != testing_schemas.end(); ++it)
 				schema_data.insert(std::make_pair(it->first, it->second->get_schema_buffers()));
@@ -317,10 +315,6 @@ namespace nnforge
 				for(std::vector<size_t>::const_iterator it = temporary_working_fixed_set_size_list.begin(); it != temporary_working_fixed_set_size_list.end(); ++it)
 					temporary_working_fixed_buffers.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(*it)));
 
-				std::vector<cuda_linear_buffer_device::ptr> temporary_working_per_entry_buffers;
-				for(std::vector<size_t>::const_iterator it = temporary_working_per_entry_set_size_list.begin(); it != temporary_working_per_entry_set_size_list.end(); ++it)
-					temporary_working_per_entry_buffers.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(*it * params.current_max_entry_count)));
-
 				std::vector<cuda_linear_buffer_device::ptr> layer_buffers;
 				for(std::vector<size_t>::const_iterator it = layer_buffer_set_per_entry_size_list.begin(); it != layer_buffer_set_per_entry_size_list.end(); ++it)
 					layer_buffers.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(*it * params.current_max_entry_count)));
@@ -338,20 +332,19 @@ namespace nnforge
 					if (run_kernels_thread_entry_to_process_count == 0)
 						break;
 
-					for(std::vector<layer::const_ptr>::const_iterator layer_it = layers_in_forward_propagation_order.begin(); layer_it != layers_in_forward_propagation_order.end(); ++layer_it)
+					for(std::vector<layer_name_with_action>::const_iterator action_it = actions_in_execution_order.begin(); action_it  != actions_in_execution_order.end(); ++action_it)
 					{
-						layer::const_ptr current_layer = *layer_it;
-						const std::string& layer_name = current_layer->instance_name;
+						const layer_name_with_action& current_layer_name_with_action = *action_it;
+						std::string layer_name = current_layer_name_with_action.get_name();;
+						layer_action action = current_layer_name_with_action.get_action();
+						layer::const_ptr current_layer = schema->find_layer(layer_name);
 
-						if (data_layer_names.find(layer_name) != data_layer_names.end())
-							continue;
-
-						cuda_stream::ptr current_stream = command_streams[layer_to_stream_set_map[layer_name]];
+						cuda_stream::ptr current_stream = command_streams[action_to_stream_set_map[current_layer_name_with_action]];
 
 						// Enqueue waits for previous events
 						{
-							std::map<std::string, std::vector<cuda_event::ptr> >::const_iterator previous_events_it = layer_previous_events.find(layer_name);
-							if (previous_events_it != layer_previous_events.end())
+							std::map<layer_name_with_action, std::vector<cuda_event::ptr> >::const_iterator previous_events_it = action_previous_events.find(current_layer_name_with_action);
+							if (previous_events_it != action_previous_events.end())
 							{
 								const std::vector<cuda_event::ptr>& previous_events = previous_events_it->second;
 								for(std::vector<cuda_event::ptr>::const_iterator event_it = previous_events.begin(); event_it != previous_events.end(); ++event_it)
@@ -363,8 +356,8 @@ namespace nnforge
 						{
 							cuda_linear_buffer_device::ptr output_buffer;
 							{
-								std::map<std::string, unsigned int>::const_iterator it = layer_buffer_name_to_set_map.find(layer_name);
-								if (it != layer_buffer_name_to_set_map.end())
+								std::map<layer_name_with_action, unsigned int>::const_iterator it = layer_buffer_action_to_set_map.find(current_layer_name_with_action);
+								if (it != layer_buffer_action_to_set_map.end())
 									output_buffer = layer_buffers[it->second];
 								else
 									output_buffer = params.dedicated_buffers.find(layer_name)->second[run_kernels_thread_io_set];
@@ -373,8 +366,8 @@ namespace nnforge
 							std::vector<cuda_linear_buffer_device::const_ptr> input_buffers;
 							for(std::vector<std::string>::const_iterator input_layer_name_it = current_layer->input_layer_instance_names.begin(); input_layer_name_it != current_layer->input_layer_instance_names.end(); ++input_layer_name_it)
 							{
-								std::map<std::string, unsigned int>::const_iterator it = layer_buffer_name_to_set_map.find(*input_layer_name_it);
-								if (it != layer_buffer_name_to_set_map.end())
+								std::map<layer_name_with_action, unsigned int>::const_iterator it = layer_buffer_action_to_set_map.find(layer_name_with_action(*input_layer_name_it, layer_action::forward));
+								if (it != layer_buffer_action_to_set_map.end())
 									input_buffers.push_back(layer_buffers[it->second]);
 								else
 									input_buffers.push_back(params.dedicated_buffers.find(*input_layer_name_it)->second[run_kernels_thread_io_set]);
@@ -382,16 +375,16 @@ namespace nnforge
 
 							cuda_linear_buffer_device::ptr temporary_working_fixed_buffer;
 							{
-								std::map<std::string, unsigned int>::const_iterator it = temporary_working_fixed_data_name_to_set_map.find(layer_name);
-								if (it != temporary_working_fixed_data_name_to_set_map.end())
+								std::map<layer_name_with_action, unsigned int>::const_iterator it = temporary_working_fixed_data_action_to_set_map.find(current_layer_name_with_action);
+								if (it != temporary_working_fixed_data_action_to_set_map.end())
 									temporary_working_fixed_buffer = temporary_working_fixed_buffers[it->second];
 							}
 
 							cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer;
 							{
-								std::map<std::string, unsigned int>::const_iterator it = temporary_working_per_entry_data_name_to_set_map.find(layer_name);
-								if (it != temporary_working_per_entry_data_name_to_set_map.end())
-									temporary_working_per_entry_buffer = temporary_working_per_entry_buffers[it->second];
+								std::map<layer_name_with_action, unsigned int>::const_iterator it = temporary_working_per_entry_data_action_to_set_map.find(current_layer_name_with_action);
+								if (it != temporary_working_per_entry_data_action_to_set_map.end())
+									temporary_working_per_entry_buffer = layer_buffers[it->second];
 							}
 
 							std::vector<cuda_linear_buffer_device::const_ptr> data_list;
@@ -423,8 +416,8 @@ namespace nnforge
 
 						// Enqeue event
 						{
-							std::map<std::string, cuda_event::ptr>::const_iterator current_event_it = layer_output_data_ready_events.find(layer_name);
-							if (current_event_it != layer_output_data_ready_events.end())
+							std::map<layer_name_with_action, cuda_event::ptr>::const_iterator current_event_it = action_output_data_ready_events.find(current_layer_name_with_action);
+							if (current_event_it != action_output_data_ready_events.end())
 								cudaEventRecord(*current_event_it->second, *current_stream);
 						}
 
@@ -477,55 +470,51 @@ namespace nnforge
 		void forward_propagation_cuda::setup_streams_and_events()
 		{
 			command_streams.clear();
-			layer_to_stream_set_map.clear();
-			layer_output_data_ready_events.clear();
-			layer_previous_events.clear();
+			action_to_stream_set_map.clear();
+			action_output_data_ready_events.clear();
+			action_previous_events.clear();
 			output_data_ready_additional_events.clear();
 
-			std::vector<std::vector<layer::const_ptr> > layer_stream_set = schema->get_layer_stream_set_for_forward_propagation();
+			std::vector<std::vector<layer_name_with_action> > layer_stream_set = action_schema->get_action_stream_set();
 			command_streams.resize(layer_stream_set.size());
 			for(unsigned int stream_set_id = 0; stream_set_id < static_cast<unsigned int>(layer_stream_set.size()); ++stream_set_id)
 			{
 				command_streams[stream_set_id] = cuda_stream::ptr(new cuda_stream());
-				for(std::vector<layer::const_ptr>::const_iterator it = layer_stream_set[stream_set_id].begin(); it != layer_stream_set[stream_set_id].end(); ++it)
-					layer_to_stream_set_map.insert(std::make_pair((*it)->instance_name, stream_set_id));
+				for(std::vector<layer_name_with_action>::const_iterator it = layer_stream_set[stream_set_id].begin(); it != layer_stream_set[stream_set_id].end(); ++it)
+					action_to_stream_set_map.insert(std::make_pair(*it, stream_set_id));
 			}
 			if (debug->is_debug())
 			{
+				debug->output_message((boost::format("forward prop cuda streams: %1%") % layer_stream_set.size()).str().c_str());
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_streams", "dot"), std::ios_base::out | std::ios_base::trunc);
-				schema->write_dot(out, layer_to_stream_set_map);
+				action_schema->write_dot(out, action_to_stream_set_map);
 			}
 
-			for(std::vector<layer::const_ptr>::const_reverse_iterator it = layers_in_forward_propagation_order.rbegin(); it != layers_in_forward_propagation_order.rend(); ++it)
+			for(std::vector<layer_name_with_action>::const_reverse_iterator it = actions_in_execution_order.rbegin(); it != actions_in_execution_order.rend(); ++it)
 			{
-				layer::const_ptr current_layer = *it;
-
-				if (data_layer_names.find(current_layer->instance_name) != data_layer_names.end())
-					continue;
-
-				unsigned int current_stream_set_id = layer_to_stream_set_map.find(current_layer->instance_name)->second;
+				unsigned int current_stream_set_id = action_to_stream_set_map.find(*it)->second;
 
 				std::vector<cuda_event::ptr> previous_events;
-				for(std::vector<std::string>::const_iterator it2 = current_layer->input_layer_instance_names.begin(); it2 != current_layer->input_layer_instance_names.end(); ++it2)
+				std::vector<layer_name_with_action> previous_actions = action_schema->get_dependencies(*it);
+				for(std::vector<layer_name_with_action>::const_iterator it2 = previous_actions.begin(); it2 != previous_actions.end(); ++it2)
 				{
-					const std::string& previous_layer_name = *it2;
-					if (data_layer_names.find(previous_layer_name) != data_layer_names.end()) 
-						continue;
-					unsigned int previous_stream_set_id = layer_to_stream_set_map.find(previous_layer_name)->second;
+					const layer_name_with_action& previous_layer_action = *it2;
+
+					unsigned int previous_stream_set_id = action_to_stream_set_map.find(previous_layer_action)->second;
 					if (previous_stream_set_id == current_stream_set_id)
 						continue;
 
 					cuda_event::ptr previous_event;
-					std::map<std::string, cuda_event::ptr>::const_iterator it3 = layer_output_data_ready_events.find(previous_layer_name);
-					if (it3 != layer_output_data_ready_events.end())
+					std::map<layer_name_with_action, cuda_event::ptr>::const_iterator it3 = action_output_data_ready_events.find(previous_layer_action);
+					if (it3 != action_output_data_ready_events.end())
 						previous_event = it3->second;
 					else
-						previous_event = layer_output_data_ready_events.insert(std::make_pair(previous_layer_name, cuda_event::ptr(new cuda_event()))).first->second;
+						previous_event = action_output_data_ready_events.insert(std::make_pair(previous_layer_action, cuda_event::ptr(new cuda_event()))).first->second;
 					previous_events.push_back(previous_event);
 				}
 
 				if (!previous_events.empty())
-					layer_previous_events.insert(std::make_pair(current_layer->instance_name, previous_events));
+					action_previous_events.insert(std::make_pair(*it, previous_events));
 			}
 
 			bool output_data_ready_stream_set_id_defined = false;
@@ -533,22 +522,22 @@ namespace nnforge
 			{
 				if (!output_data_ready_stream_set_id_defined)
 				{
-					output_data_ready_stream_set_id = layer_to_stream_set_map[*it];
+					output_data_ready_stream_set_id = action_to_stream_set_map[layer_name_with_action(*it, layer_action::forward)];
 					output_data_ready_stream_set_id_defined = true;
 					continue;
 				}
 				else
 				{
-					if (layer_to_stream_set_map.find(*it)->second == output_data_ready_stream_set_id)
+					if (action_to_stream_set_map.find(layer_name_with_action(*it, layer_action::forward))->second == output_data_ready_stream_set_id)
 						continue;
 				}
 
 				cuda_event::ptr previous_event;
-				std::map<std::string, cuda_event::ptr>::const_iterator it3 = layer_output_data_ready_events.find(*it);
-				if (it3 != layer_output_data_ready_events.end())
+				std::map<layer_name_with_action, cuda_event::ptr>::const_iterator it3 = action_output_data_ready_events.find(layer_name_with_action(*it, layer_action::forward));
+				if (it3 != action_output_data_ready_events.end())
 					previous_event = it3->second;
 				else
-					previous_event = layer_output_data_ready_events.insert(std::make_pair(*it, cuda_event::ptr(new cuda_event()))).first->second;
+					previous_event = action_output_data_ready_events.insert(std::make_pair(layer_name_with_action(*it, layer_action::forward), cuda_event::ptr(new cuda_event()))).first->second;
 				output_data_ready_additional_events.push_back(previous_event);
 			}
 		}
@@ -581,26 +570,19 @@ namespace nnforge
 
 			setup_dedicated_buffer_sizes();
 
-			std::vector<layer::const_ptr> layer_list = schema->get_layers();
-			for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
+			for(std::map<std::string, layer_testing_schema::const_ptr>::const_iterator it = testing_schemas.begin(); it != testing_schemas.end(); ++it)
 			{
-				layer::const_ptr l = *it;
-
-				if (data_layer_names.find(l->instance_name) != data_layer_names.end())
-					continue;
-
+				const std::string& layer_name = it->first;
+				layer_configuration_specific output_layer_configuration_specific = layer_config_map[layer_name];
+				layer::const_ptr l = schema->get_layer(layer_name);
 				std::vector<layer_configuration_specific> input_layer_configuration_specific_list;
 				for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
-					input_layer_configuration_specific_list.push_back(layer_config_map.find(*it2)->second);
-
-				layer_configuration_specific output_layer_configuration_specific = layer_config_map.find(l->instance_name)->second;
-
-				layer_testing_schema::const_ptr sch = testing_schemas.find(l->instance_name)->second;
+					input_layer_configuration_specific_list.push_back(layer_config_map[*it2]);
 
 				testers.insert(
 					std::make_pair(
 						l->instance_name,
-						sch->create_tester(
+						it->second->create_tester(
 							input_layer_configuration_specific_list,
 							output_layer_configuration_specific)));
 			}
@@ -609,8 +591,6 @@ namespace nnforge
 
 			setup_temporary_working_fixed_buffer_sizes();
 
-			setup_temporary_working_per_entry_buffer_sizes();
-
 			update_data();
 
 			update_max_entry_count();
@@ -618,66 +598,126 @@ namespace nnforge
 
 		void forward_propagation_cuda::setup_layer_buffer_sizes()
 		{
-			std::vector<std::vector<layer::const_ptr> > layer_buffer_set_list;
+			std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > layer_buffer_set_list;
 			{
-				std::map<std::string, unsigned int> input_index_layer_can_write_output_map;
+				std::map<layer_name_with_action, unsigned int> input_index_layer_can_write_output_map;
 				for(std::map<std::string, layer_tester_cuda::ptr>::const_iterator it = testers.begin(); it != testers.end(); ++it)
 				{
 					int input_index_layer_can_write = it->second->get_input_index_layer_can_write();
 					if (input_index_layer_can_write >= 0)
-						input_index_layer_can_write_output_map.insert(std::make_pair(it->first, static_cast<unsigned int>(input_index_layer_can_write)));
+						input_index_layer_can_write_output_map.insert(std::make_pair(layer_name_with_action(it->first, layer_action::forward), static_cast<unsigned int>(input_index_layer_can_write)));
 				}
-				std::set<std::string> separate_buffers_layer_names(output_layer_names.begin(), output_layer_names.end());
-				separate_buffers_layer_names.insert(data_layer_names.begin(), data_layer_names.end());
-				layer_buffer_set_list = schema->get_layer_buffer_set_for_forward_propagation(input_index_layer_can_write_output_map, separate_buffers_layer_names);
+
+				std::map<layer_name_with_action, std::vector<buffer_lifetime> > buffers;
+				std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > > dependencies;
+				std::set<std::string> dedicated_output_buffers(output_layer_names.begin(), output_layer_names.end());
+				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
+				{
+					if (dedicated_output_buffers.find(it->get_name()) == dedicated_output_buffers.end())
+						buffers.insert(std::make_pair(*it, std::vector<buffer_lifetime>(1, buffer_lifetime(buffer_lifetime::action_output_buffer))));
+					layer::const_ptr l = schema->get_layer(it->get_name());
+					std::map<layer_name_with_action, std::vector<buffer_lifetime> > current_dependencies;
+					for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
+					{
+						const std::string& previous_layer_name = *it2;
+						if (data_layer_names.find(previous_layer_name) == data_layer_names.end())
+							current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<buffer_lifetime>(1, buffer_lifetime(buffer_lifetime::action_output_buffer))));
+					}
+					if (!current_dependencies.empty())
+						dependencies.insert(std::make_pair(*it, current_dependencies));
+				}
+
+				for(std::map<std::string, layer_tester_cuda::ptr>::const_iterator it = testers.begin(); it != testers.end(); ++it)
+				{
+					size_t temporary_working_per_entry_buffer_size = it->second->get_temporary_working_per_entry_buffer_size();
+					if (temporary_working_per_entry_buffer_size > 0)
+						buffers.insert(std::make_pair(layer_name_with_action(it->first, layer_action::forward), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::working_buffer));
+				}
+
+				layer_buffer_set_list = action_schema->get_buffer_set(
+					buffers,
+					dependencies,
+					input_index_layer_can_write_output_map,
+					std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >());
 			}
 
 			layer_buffer_set_per_entry_size_list.clear();
-			layer_buffer_name_to_set_map.clear();
+			layer_buffer_action_to_set_map.clear();
+			temporary_working_per_entry_data_action_to_set_map.clear();
 			for(unsigned int set_id = 0; set_id < layer_buffer_set_list.size(); ++set_id)
 			{
-				const std::vector<layer::const_ptr>& layer_list = layer_buffer_set_list[set_id];
+				const std::vector<std::pair<layer_name_with_action, buffer_lifetime> >& action_list = layer_buffer_set_list[set_id];
 				size_t max_buffer_size_per_entry = 0;
-				for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
+				for(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >::const_iterator it = action_list.begin(); it != action_list.end(); ++it)
 				{
-					const std::string& layer_name = (*it)->instance_name;
-					layer_buffer_name_to_set_map.insert(std::make_pair(layer_name, set_id));
-					size_t buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[layer_name] * sizeof(float);
+					std::string layer_name = it->first.get_name();
+					size_t buffer_size_per_entry;
+					if (it->second.get_buffer_lifetime_type() == buffer_lifetime::action_output_buffer)
+					{
+						layer_buffer_action_to_set_map.insert(std::make_pair(it->first, set_id));
+						buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[layer_name] * sizeof(float);
+					}
+					else if (it->second.get_buffer_lifetime_type() == buffer_lifetime::working_buffer)
+					{
+						temporary_working_per_entry_data_action_to_set_map.insert(std::make_pair(it->first, set_id));
+						buffer_size_per_entry = testers.find(layer_name)->second->get_temporary_working_per_entry_buffer_size() * cumulative_tiling_factor_map[layer_name];
+					}
+					else
+						throw neural_network_exception((boost::format("Unexpected buffer lifetime %1% encountered for layer %2% action %3%") % it->second.str() % it->first.get_name() % it->first.get_action().str()).str());
 					max_buffer_size_per_entry = std::max(max_buffer_size_per_entry, buffer_size_per_entry);
 				}
 				layer_buffer_set_per_entry_size_list.push_back(max_buffer_size_per_entry);
 			}
 			if (debug->is_debug())
 			{
-				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_layer_buffers", "dot"), std::ios_base::out | std::ios_base::trunc);
-				schema->write_dot(out, layer_buffer_name_to_set_map);
+				std::stringstream debug_str;
+				debug_str << "forward prop cuda per entry buffers: " << layer_buffer_set_per_entry_size_list.size();
+				if (!layer_buffer_set_per_entry_size_list.empty())
+				{
+					debug_str << " (";
+					for(std::vector<size_t>::const_iterator it = layer_buffer_set_per_entry_size_list.begin(); it != layer_buffer_set_per_entry_size_list.end(); ++it)
+					{
+						if (it != layer_buffer_set_per_entry_size_list.begin())
+							debug_str << ", ";
+						debug_str << ((*it + 1024 - 1) / 1024) << " KB";
+					}
+					debug_str << ")";
+				}
+				debug->output_message(debug_str.str().c_str());
+				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_per_entry_buffers", "dot"), std::ios_base::out | std::ios_base::trunc);
+				action_schema->write_dot(out, layer_buffer_action_to_set_map, std::map<layer_name_with_action, unsigned int>(), temporary_working_per_entry_data_action_to_set_map);
 			}
 		}
 
 		void forward_propagation_cuda::setup_temporary_working_fixed_buffer_sizes()
 		{
-			std::vector<std::vector<layer::const_ptr> > temporary_working_fixed_buffer_set_list;
+			std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > temporary_working_fixed_buffer_set_list;
 			{
-				std::set<std::string> temporary_working_fixed_layer_set;
+				std::map<layer_name_with_action, std::vector<buffer_lifetime> > buffers;
 				for(std::map<std::string, layer_tester_cuda::ptr>::const_iterator it = testers.begin(); it != testers.end(); ++it)
 				{
 					size_t temporary_working_fixed_buffer_size = it->second->get_temporary_working_fixed_buffer_size();
 					if (temporary_working_fixed_buffer_size > 0)
-						temporary_working_fixed_layer_set.insert(it->first);
+						buffers.insert(std::make_pair(layer_name_with_action(it->first, layer_action::forward), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::working_buffer));
 				}
-				temporary_working_fixed_buffer_set_list = schema->get_temporary_working_buffer_set_for_forward_propagation(temporary_working_fixed_layer_set);
+
+				temporary_working_fixed_buffer_set_list = action_schema->get_buffer_set(
+					buffers,
+					std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > >(),
+					std::map<layer_name_with_action, unsigned int>(),
+					std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >());
 			}
 
 			temporary_working_fixed_set_size_list.clear();
-			temporary_working_fixed_data_name_to_set_map.clear();
+			temporary_working_fixed_data_action_to_set_map.clear();
 			for(unsigned int set_id = 0; set_id < temporary_working_fixed_buffer_set_list.size(); ++set_id)
 			{
-				const std::vector<layer::const_ptr>& layer_list = temporary_working_fixed_buffer_set_list[set_id];
+				const std::vector<std::pair<layer_name_with_action, buffer_lifetime> >& action_list = temporary_working_fixed_buffer_set_list[set_id];
 				size_t max_buffer_size = 0;
-				for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
+				for(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >::const_iterator it = action_list.begin(); it != action_list.end(); ++it)
 				{
-					const std::string& layer_name = (*it)->instance_name;
-					temporary_working_fixed_data_name_to_set_map.insert(std::make_pair(layer_name, set_id));
+					std::string layer_name = it->first.get_name();
+					temporary_working_fixed_data_action_to_set_map.insert(std::make_pair(it->first, set_id));
 					size_t buffer_size = testers.find(layer_name)->second->get_temporary_working_fixed_buffer_size();
 					max_buffer_size = std::max(max_buffer_size, buffer_size);
 				}
@@ -685,44 +725,22 @@ namespace nnforge
 			}
 			if (debug->is_debug())
 			{
+				std::stringstream debug_str;
+				debug_str << "forward prop cuda working fixed buffers: " << temporary_working_fixed_set_size_list.size();
+				if (!temporary_working_fixed_set_size_list.empty())
+				{
+					debug_str << " (";
+					for(std::vector<size_t>::const_iterator it = temporary_working_fixed_set_size_list.begin(); it != temporary_working_fixed_set_size_list.end(); ++it)
+					{
+						if (it != temporary_working_fixed_set_size_list.begin())
+							debug_str << ", ";
+						debug_str << ((*it + 1024 - 1) / 1024) << " KB";
+					}
+					debug_str << ")";
+				}
+				debug->output_message(debug_str.str().c_str());
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_temporary_fixed_buffers", "dot"), std::ios_base::out | std::ios_base::trunc);
-				schema->write_dot(out, temporary_working_fixed_data_name_to_set_map);
-			}
-		}
-
-		void forward_propagation_cuda::setup_temporary_working_per_entry_buffer_sizes()
-		{
-			std::vector<std::vector<layer::const_ptr> > temporary_working_per_entry_buffer_set_list;
-			{
-				std::set<std::string> temporary_working_per_entry_layer_set;
-				for(std::map<std::string, layer_tester_cuda::ptr>::const_iterator it = testers.begin(); it != testers.end(); ++it)
-				{
-					size_t temporary_working_per_entry_buffer_size = it->second->get_temporary_working_per_entry_buffer_size();
-					if (temporary_working_per_entry_buffer_size > 0)
-						temporary_working_per_entry_layer_set.insert(it->first);
-				}
-				temporary_working_per_entry_buffer_set_list = schema->get_temporary_working_buffer_set_for_forward_propagation(temporary_working_per_entry_layer_set);
-			}
-
-			temporary_working_per_entry_set_size_list.clear();
-			temporary_working_per_entry_data_name_to_set_map.clear();
-			for(unsigned int set_id = 0; set_id < temporary_working_per_entry_buffer_set_list.size(); ++set_id)
-			{
-				const std::vector<layer::const_ptr>& layer_list = temporary_working_per_entry_buffer_set_list[set_id];
-				size_t max_buffer_size = 0;
-				for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
-				{
-					const std::string& layer_name = (*it)->instance_name;
-					temporary_working_per_entry_data_name_to_set_map.insert(std::make_pair(layer_name, set_id));
-					size_t buffer_size = testers.find(layer_name)->second->get_temporary_working_per_entry_buffer_size() * cumulative_tiling_factor_map[layer_name];
-					max_buffer_size = std::max(max_buffer_size, buffer_size);
-				}
-				temporary_working_per_entry_set_size_list.push_back(max_buffer_size);
-			}
-			if (debug->is_debug())
-			{
-				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_temporary_per_entry_buffers", "dot"), std::ios_base::out | std::ios_base::trunc);
-				schema->write_dot(out, temporary_working_per_entry_data_name_to_set_map);
+				action_schema->write_dot(out, temporary_working_fixed_data_action_to_set_map);
 			}
 		}
 
@@ -799,8 +817,6 @@ namespace nnforge
 			}
 			for(std::vector<size_t>::const_iterator it = temporary_working_fixed_set_size_list.begin(); it != temporary_working_fixed_set_size_list.end(); ++it)
 				buffer_configuration.add_constant_buffer(*it);
-			for(std::vector<size_t>::const_iterator it = temporary_working_per_entry_set_size_list.begin(); it != temporary_working_per_entry_set_size_list.end(); ++it)
-				buffer_configuration.add_per_entry_buffer(*it);
 
 			for(std::map<std::string, layer_tester_cuda::ptr>::const_iterator it = testers.begin(); it != testers.end(); ++it)
 			{
@@ -813,7 +829,13 @@ namespace nnforge
 			max_entry_count = cuda_config->get_max_entry_count(buffer_configuration);
 
 			if (debug->is_debug())
-				debug->output_message((boost::format("forward prop cuda max packet size %1%, will be capped by %2%") % max_entry_count % max_max_entry_count).str().c_str());
+			{
+				std::stringstream debug_str;
+				debug_str << "forward prop cuda max packet size: " << max_entry_count;
+				if (max_entry_count > max_max_entry_count)
+					debug_str << ", will be capped by " << max_max_entry_count;
+				debug->output_message(debug_str.str().c_str());
+			}
 		}
 	}
 }

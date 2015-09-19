@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,11 +29,13 @@ namespace nnforge
 
 		virtual ~save_resume_network_data_pusher();
 
-		virtual void push(const training_task_state& task_state);
+		virtual void push(
+			const training_task_state& task_state,
+			const network_schema& schema);
 
 	private:
 		void save_data_to_file(
-			network_data_smart_ptr data,
+			network_data::const_ptr data,
 			std::string filename) const;
 
 	private:

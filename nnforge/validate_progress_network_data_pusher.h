@@ -17,12 +17,8 @@
 #pragma once
 
 #include "network_data_pusher.h"
-
-#include "network_tester.h"
-#include "supervised_data_reader.h"
-#include "output_neuron_value_set.h"
-#include "testing_complete_result_set_visualizer.h"
-#include "error_function.h"
+#include "forward_propagation.h"
+#include "structured_data_bunch_reader.h"
 
 namespace nnforge
 {
@@ -30,24 +26,19 @@ namespace nnforge
 	{
 	public:
 		validate_progress_network_data_pusher(
-			network_tester_smart_ptr tester,
-			supervised_data_reader_smart_ptr reader,
-			testing_complete_result_set_visualizer_smart_ptr visualizer,
-			const_error_function_smart_ptr ef,
-			unsigned int sample_count,
+			forward_propagation::ptr forward_prop,
+			structured_data_bunch_reader::ptr reader,
 			unsigned int report_frequency = 1);
 
 		virtual ~validate_progress_network_data_pusher();
 
-		virtual void push(const training_task_state& task_state);
+		virtual void push(
+			const training_task_state& task_state,
+			const network_schema& schema);
 
 	protected:
-		network_tester_smart_ptr tester;
-		supervised_data_reader_smart_ptr reader;
-		output_neuron_value_set_smart_ptr actual_output_neuron_value_set;
-		testing_complete_result_set_visualizer_smart_ptr visualizer;
-		const_error_function_smart_ptr ef;
-		unsigned int sample_count;
+		forward_propagation::ptr forward_prop;
+		structured_data_bunch_reader::ptr reader;
 		unsigned int report_frequency;
 	};
 }

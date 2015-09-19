@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,19 +32,19 @@ namespace nnforge
 		class layer_updater_schema_factory
 		{
 		public:
-			bool register_layer_updater_schema(layer_updater_schema_smart_ptr sample_layer_updater_schema);
+			typedef boost::serialization::singleton<layer_updater_schema_factory> singleton;
 
-			bool unregister_layer_updater_schema(const boost::uuids::uuid& layer_guid);
+			bool register_layer_updater_schema(layer_updater_schema::const_ptr sample_layer_updater_schema);
 
-			layer_updater_schema_smart_ptr create_updater_schema_layer(
-				const_layer_smart_ptr layer,
-				cuda_running_configuration_const_smart_ptr cuda_config) const;
+			bool unregister_layer_updater_schema(const std::string& layer_type_name);
+
+			layer_updater_schema::ptr create_updater_schema_layer(
+				layer::const_ptr layer,
+				cuda_running_configuration::const_ptr cuda_config) const;
 
 		private:
-			typedef std::map<boost::uuids::uuid, layer_updater_schema_smart_ptr> sample_map;
+			typedef std::map<std::string, layer_updater_schema::const_ptr> sample_map;
 			sample_map sample_layer_updater_schema_map;
 		};
-
-		typedef boost::serialization::singleton<layer_updater_schema_factory> single_layer_updater_schema_factory;
 	}
 }

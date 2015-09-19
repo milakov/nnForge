@@ -20,6 +20,7 @@
 
 #include <boost/format.hpp>
 #include <boost/chrono.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 namespace nnforge
 {
@@ -34,7 +35,21 @@ namespace nnforge
 			throw neural_network_exception("No output layers specified for forward_propagation");
 
 		this->schema = network_schema::const_ptr(new network_schema(schema.get_required_layers(output_layer_names)));
+		if (debug->is_debug())
+		{
+			boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_schema_reduced", "dot"), std::ios_base::out | std::ios_base::trunc);
+			this->schema->write_dot(out);
+		}
+
+		action_schema = this->schema->get_actions_for_forward_propagation(output_layer_names);
+		if (debug->is_debug())
+		{
+			boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_action_schema", "dot"), std::ios_base::out | std::ios_base::trunc);
+			this->action_schema->write_dot(out);
+		}
+
 		cumulative_tiling_factor_map = this->schema->get_cumulative_tiling_factor_map();
+
 		std::vector<layer::const_ptr> data_layers = this->schema->get_data_layers();
 		for(std::vector<layer::const_ptr>::const_iterator it = data_layers.begin(); it != data_layers.end(); ++it)
 			data_layer_names.insert((*it)->instance_name);
@@ -86,15 +101,7 @@ namespace nnforge
 
 	void forward_propagation::update_flops()
 	{
-		flops = 0.0F;
-		std::vector<layer::const_ptr> layers = schema->get_layers();
-		for(unsigned int i = 0; i < layers.size(); i++)
-		{
-			std::vector<layer_configuration_specific> input_layer_configs;
-			for(std::vector<std::string>::const_iterator it = layers[i]->input_layer_instance_names.begin(); it != layers[i]->input_layer_instance_names.end(); ++it)
-				input_layer_configs.push_back(layer_config_map[*it]);
-			flops += layers[i]->get_forward_flops(input_layer_configs) * cumulative_tiling_factor_map[layers[i]->instance_name];
-		}
+		flops = action_schema->get_flops(layer_config_map, cumulative_tiling_factor_map);
 	}
 
 	forward_propagation::stat forward_propagation::run(

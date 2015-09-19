@@ -68,6 +68,8 @@ namespace nnforge
 
 		void read(std::istream& binary_stream_to_read_from);
 
+		std::vector<std::string> get_data_layer_name_list() const;
+
 	private:
 		std::map<std::string, layer_data::ptr> instance_name_to_data_map;
 	};

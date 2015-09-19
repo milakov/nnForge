@@ -17,6 +17,7 @@
 #include "factory_generator_cuda.h"
 
 #include "forward_propagation_cuda_factory.h"
+#include "backward_propagation_cuda_factory.h"
 
 #include <iostream>
 
@@ -53,6 +54,11 @@ namespace nnforge
 		forward_propagation_factory::ptr factory_generator_cuda::create_forward_propagation_factory() const
 		{
 			return forward_propagation_factory::ptr(new forward_propagation_cuda_factory(cuda_config));
+		}
+
+		backward_propagation_factory::ptr factory_generator_cuda::create_backward_propagation_factory() const
+		{
+			return backward_propagation_factory::ptr(new backward_propagation_cuda_factory(cuda_config));
 		}
 
 		std::vector<float_option> factory_generator_cuda::get_float_options()

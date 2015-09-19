@@ -29,6 +29,17 @@ namespace nnforge
 {
 	namespace cuda
 	{
+		__forceinline__ __device__ double atomicAdd(double* address, double val)
+		{
+				unsigned long long int* address_as_ull = (unsigned long long int*)address;
+				unsigned long long int old = *address_as_ull, assumed;
+				do {
+					assumed = old;
+					old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+				} while (assumed != old);
+				return __longlong_as_double(old);
+		}
+
 		__global__ void set_with_value_util_kernel(
 			float4 * __restrict buf,
 			float v,
@@ -296,6 +307,170 @@ namespace nnforge
 			}
 		}
 
+		extern __shared__ float arr_sh[];
+		__global__ void apply_gradient_kernel(
+			float * __restrict data,
+			float * __restrict gradient,
+			double * __restrict update_accum,
+			float learning_rate,
+			float normalizer,
+			float weight_decay,
+			int elem_count,
+			unsigned int update_accum_mask)
+		{
+			int block_id = blockIdx.y * gridDim.x + blockIdx.x;
+			int elem_id = blockDim.x * block_id + threadIdx.x;
+			float upd_acc = 0.0F;
+			if (elem_id < elem_count)
+			{
+				float current_weight = __load_nc(data + elem_id);
+				float gr = __load_nc(gradient + elem_id);
+				float upd = learning_rate * (gr * normalizer - current_weight * weight_decay);
+				float new_weight = current_weight + upd;
+				data[elem_id] = new_weight;
+				gradient[elem_id] = 0.0F;
+				upd_acc = fabs(upd);
+			}
+
+			int thread_id = threadIdx.x;
+			int lane_id = thread_id & 31;
+			#pragma unroll
+			for(int tx = 16; tx > 0; tx >>= 1)
+			{
+				upd_acc += __shfl_down(upd_acc, tx);
+			}
+
+			if (blockDim.x > 32)
+			{
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = upd_acc;
+				__syncthreads();
+			}
+
+			if (thread_id == 0)
+			{
+				for(int i = 1; i < (blockDim.x >> 5); ++i)
+					upd_acc += arr_sh[i];
+				double upd_acc_d = (double)upd_acc;
+
+				int accum_bucket_id = block_id & update_accum_mask;
+
+				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+			}
+		}
+
+		__global__ void apply_gradient_with_vanilla_momentum_kernel(
+			float * __restrict data,
+			float * __restrict gradient,
+			float * __restrict previous_upd,
+			double * __restrict update_accum,
+			float learning_rate,
+			float normalizer,
+			float weight_decay,
+			float momentum,
+			int elem_count,
+			unsigned int update_accum_mask)
+		{
+			int block_id = blockIdx.y * gridDim.x + blockIdx.x;
+			int elem_id = blockDim.x * block_id + threadIdx.x;
+			float upd_acc = 0.0F;
+			if (elem_id < elem_count)
+			{
+				float current_weight = __load_nc(data + elem_id);
+				float gr = __load_nc(gradient + elem_id);
+				float prev_upd = __load_nc(previous_upd + elem_id);
+				float upd = prev_upd * momentum + learning_rate * (gr * normalizer - current_weight * weight_decay);
+				float new_weight = current_weight + upd;
+				data[elem_id] = new_weight;
+				gradient[elem_id] = 0.0F;
+				previous_upd[elem_id] = upd;
+				upd_acc = fabs(upd);
+			}
+
+			int thread_id = threadIdx.x;
+			int lane_id = thread_id & 31;
+			#pragma unroll
+			for(int tx = 16; tx > 0; tx >>= 1)
+			{
+				upd_acc += __shfl_down(upd_acc, tx);
+			}
+
+			if (blockDim.x > 32)
+			{
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = upd_acc;
+				__syncthreads();
+			}
+
+			if (thread_id == 0)
+			{
+				for(int i = 1; i < (blockDim.x >> 5); ++i)
+					upd_acc += arr_sh[i];
+				double upd_acc_d = (double)upd_acc;
+
+				int accum_bucket_id = block_id & update_accum_mask;
+
+				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+			}
+		}
+
+		__global__ void apply_gradient_with_nesterov_momentum_kernel(
+			float * __restrict data,
+			float * __restrict gradient,
+			float * __restrict previous_upd,
+			double * __restrict update_accum,
+			float learning_rate,
+			float normalizer,
+			float weight_decay,
+			float momentum,
+			float momentum_plus1,
+			int elem_count,
+			unsigned int update_accum_mask)
+		{
+			int block_id = blockIdx.y * gridDim.x + blockIdx.x;
+			int elem_id = blockDim.x * block_id + threadIdx.x;
+			float upd_acc = 0.0F;
+			if (elem_id < elem_count)
+			{
+				float current_weight = __load_nc(data + elem_id);
+				float gr = __load_nc(gradient + elem_id);
+				float prev_upd = __load_nc(previous_upd + elem_id);
+				float new_upd = prev_upd * momentum + learning_rate * (gr * normalizer - current_weight * weight_decay);
+				float upd = momentum_plus1 * new_upd - momentum * prev_upd;
+				float new_weight = current_weight + upd;
+				data[elem_id] = new_weight;
+				gradient[elem_id] = 0.0F;
+				previous_upd[elem_id] = new_upd;
+				upd_acc = fabs(upd);
+			}
+
+			int thread_id = threadIdx.x;
+			int lane_id = thread_id & 31;
+			#pragma unroll
+			for(int tx = 16; tx > 0; tx >>= 1)
+			{
+				upd_acc += __shfl_down(upd_acc, tx);
+			}
+
+			if (blockDim.x > 32)
+			{
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = upd_acc;
+				__syncthreads();
+			}
+
+			if (thread_id == 0)
+			{
+				for(int i = 1; i < (blockDim.x >> 5); ++i)
+					upd_acc += arr_sh[i];
+				double upd_acc_d = (double)upd_acc;
+
+				int accum_bucket_id = block_id & update_accum_mask;
+
+				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+			}
+		}
+
 		const unsigned int cuda_util::preferred_width_2d_access = 16;
 		const unsigned int cuda_util::preferred_height_2d_access = 16;
 		const unsigned int cuda_util::preferred_threadblocksize_sequential_access = 256;
@@ -412,7 +587,7 @@ namespace nnforge
 			preferred_threadblock_size_remained /= threadblock_size_x_evenly_divisible;
 			if (preferred_threadblock_size_remained == 0)
 			{
-				if (threadblock_size_x_evenly_divisible <= cuda_config.max_threads_dim[0])
+				if (threadblock_size_x_evenly_divisible <= static_cast<unsigned int>(cuda_config.max_threads_dim[0]))
 					preferred_threadblock_size_remained = 1;
 				else
 					throw neural_network_exception((boost::format("Too large threadblock_size_x_evenly_divisible %1%, unable to compose threabblock") % threadblock_size_x_evenly_divisible).str());
@@ -455,7 +630,7 @@ namespace nnforge
 
 			threadblock_size.x = std::min<unsigned int>(preferred_threadblocksize_sequential_access, elem_count);
 			unsigned int threadblocks = (elem_count + threadblock_size.x - 1) / threadblock_size.x;
-			if (threadblocks <= cuda_config.max_grid_size[0])
+			if (threadblocks <= static_cast<unsigned int>(cuda_config.max_grid_size[0]))
 				grid_size.x = threadblocks;
 			else
 			{
@@ -741,6 +916,108 @@ namespace nnforge
 				dest_buf,
 				vector_elem_count,
 				dup_count);
+		}
+
+		void cuda_util::apply_gradient(
+			const cuda_running_configuration& cuda_config,
+			float * data,
+			float * gradient,
+			double * update_accum,
+			float learning_rate,
+			float normalizer,
+			float weight_decay,
+			int elem_count,
+			unsigned int update_accum_mask,
+			cudaStream_t cuda_stream)
+		{
+			std::pair<dim3, dim3> kernel_dims = get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				elem_count,
+				1,
+				1,
+				32);
+			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+			int smem_size = threadblock_size * sizeof(float);
+			apply_gradient_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
+				data,
+				gradient,
+				update_accum,
+				learning_rate,
+				normalizer,
+				weight_decay,
+				elem_count,
+				update_accum_mask);
+		}
+
+		void cuda_util::apply_gradient_with_vanilla_momentum(
+			const cuda_running_configuration& cuda_config,
+			float * data,
+			float * gradient,
+			float * prev_upd,
+			double * update_accum,
+			float learning_rate,
+			float normalizer,
+			float weight_decay,
+			float momentum,
+			int elem_count,
+			unsigned int update_accum_mask,
+			cudaStream_t cuda_stream)
+		{
+			std::pair<dim3, dim3> kernel_dims = get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				elem_count,
+				1,
+				1,
+				32);
+			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+			int smem_size = threadblock_size * sizeof(float);
+			apply_gradient_with_vanilla_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
+				data,
+				gradient,
+				prev_upd,
+				update_accum,
+				learning_rate,
+				normalizer,
+				weight_decay,
+				momentum,
+				elem_count,
+				update_accum_mask);
+		}
+
+		void cuda_util::apply_gradient_with_nesterov_momentum(
+			const cuda_running_configuration& cuda_config,
+			float * data,
+			float * gradient,
+			float * prev_upd,
+			double * update_accum,
+			float learning_rate,
+			float normalizer,
+			float weight_decay,
+			float momentum,
+			int elem_count,
+			unsigned int update_accum_mask,
+			cudaStream_t cuda_stream)
+		{
+			std::pair<dim3, dim3> kernel_dims = get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				elem_count,
+				1,
+				1,
+				32);
+			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+			int smem_size = threadblock_size * sizeof(float);
+			apply_gradient_with_nesterov_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
+				data,
+				gradient,
+				prev_upd,
+				update_accum,
+				learning_rate,
+				normalizer,
+				weight_decay,
+				momentum,
+				momentum + 1.0F,
+				elem_count,
+				update_accum_mask);
 		}
 	}
 }

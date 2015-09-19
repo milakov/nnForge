@@ -20,6 +20,7 @@
 #include "neural_network_exception.h"
 #include "proto/nnforge.pb.h"
 #include "data_layer.h"
+#include "color_palette.h"
 
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/format.hpp>
@@ -34,8 +35,6 @@
 
 namespace nnforge
 {
-	const char * network_schema::node_color_scheme = "set312";
-
 	network_schema::network_schema()
 	{
 	}
@@ -184,6 +183,295 @@ namespace nnforge
 		return res;
 	}
 
+	std::vector<layer::const_ptr> network_schema::get_required_layers(
+		const std::vector<std::string>& output_layer_names,
+		const std::vector<std::string>& error_source_layer_names,
+		const std::vector<std::string>& exclude_data_update_layer_names) const
+	{
+		std::set<schema_graph::vertex_descriptor> vertices_with_updatable_weights;
+		{
+			for(std::pair<schema_graph::vertex_iterator, schema_graph::vertex_iterator> vp = boost::vertices(layers); vp.first != vp.second; ++vp.first)
+				if (!layers[*vp.first].l->is_empty_data())
+					vertices_with_updatable_weights.insert(*vp.first);
+			for(std::vector<std::string>::const_iterator it = exclude_data_update_layer_names.begin(); it != exclude_data_update_layer_names.end(); ++it)
+			{
+				std::map<std::string, schema_graph::vertex_descriptor>::const_iterator it2 = layer_instance_name_to_vertex_decriptor_map.find(*it);
+				if (it2 == layer_instance_name_to_vertex_decriptor_map.end())
+					throw neural_network_exception((boost::format("Layer not found: %1%") % *it).str());
+				vertices_with_updatable_weights.erase(it2->second);
+			}
+		}
+
+		std::set<schema_graph::vertex_descriptor> visited_vertices;
+		{
+			record_all_edges<schema_graph::vertex_descriptor> vis(visited_vertices);
+			std::vector<boost::default_color_type> color_map(boost::num_vertices(layers));
+			for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
+			{
+				std::map<std::string, schema_graph::vertex_descriptor>::const_iterator it2 = layer_instance_name_to_vertex_decriptor_map.find(*it);
+				if (it2 == layer_instance_name_to_vertex_decriptor_map.end())
+					throw neural_network_exception((boost::format("Layer not found: %1%") % *it).str());
+
+				boost::depth_first_visit(
+					layers,
+					it2->second,
+					vis,
+					boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
+			}
+		}
+
+		for(std::vector<std::string>::const_iterator it = error_source_layer_names.begin(); it != error_source_layer_names.end(); ++it)
+		{
+			std::map<std::string, schema_graph::vertex_descriptor>::const_iterator it2 = layer_instance_name_to_vertex_decriptor_map.find(*it);
+			if (it2 == layer_instance_name_to_vertex_decriptor_map.end())
+				throw neural_network_exception((boost::format("Layer not found: %1%") % *it).str());
+
+			std::set<schema_graph::vertex_descriptor> visited_vertices2;
+			record_all_edges<schema_graph::vertex_descriptor> vis(visited_vertices2);
+			std::vector<boost::default_color_type> color_map(boost::num_vertices(layers));
+
+			boost::depth_first_visit(
+				layers,
+				it2->second,
+				vis,
+				boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
+
+			for(std::set<schema_graph::vertex_descriptor>::const_iterator it2 = visited_vertices2.begin(); it2 != visited_vertices2.end(); ++it2)
+			{
+				if (vertices_with_updatable_weights.find(*it2) != vertices_with_updatable_weights.end())
+				{
+					visited_vertices.insert(visited_vertices2.begin(), visited_vertices2.end());
+					break;
+				}
+			}
+		}
+
+		std::vector<layer::const_ptr> res;
+		for(std::set<schema_graph::vertex_descriptor>::const_iterator it = visited_vertices.begin(); it != visited_vertices.end(); ++it)
+			res.push_back(layers[*it].l);
+
+		return res;
+	}
+
+	network_action_schema::ptr network_schema::get_actions_for_forward_propagation(const std::vector<std::string>& output_layer_names) const
+	{
+		network_action_schema::ptr res(new network_action_schema());
+
+		std::vector<layer::const_ptr> layers = get_layers_in_forward_propagation_order();
+		for(std::vector<layer::const_ptr>::const_iterator it = layers.begin(); it != layers.end(); ++it)
+		{
+			layer::const_ptr l = *it;
+			if (l->get_type_name() == data_layer::layer_type_name)
+				continue;
+
+			std::vector<layer_name_with_action> dependencies;
+			for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
+			{
+				layer::const_ptr dest_layer = get_layer(*it2);
+				if (dest_layer->get_type_name() == data_layer::layer_type_name)
+					continue;
+				dependencies.push_back(layer_name_with_action(*it2, layer_action(layer_action::forward)));
+			}
+
+			res->add_action(
+				l,
+				layer_action(layer_action::forward),
+				dependencies);
+		}
+
+		return res;
+	}
+
+	network_action_schema::ptr network_schema::get_actions_for_backward_propagation(
+		const std::vector<std::string>& output_layer_names,
+		const std::vector<std::string>& error_source_layer_names,
+		const std::vector<std::string>& exclude_data_update_layer_names,
+		std::vector<std::vector<layer_name_with_action> >& same_output_action_sets) const
+	{
+		network_action_schema::ptr res(new network_action_schema());
+
+		same_output_action_sets.clear();
+
+		std::set<layer_name_with_action> target_action_set;
+		{
+			for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
+				target_action_set.insert(layer_name_with_action(*it, layer_action(layer_action::forward)));
+		}
+
+		// Add forward prop actions
+		{
+			std::vector<layer::const_ptr> layers = get_layers_in_forward_propagation_order();
+			for(std::vector<layer::const_ptr>::const_iterator it = layers.begin(); it != layers.end(); ++it)
+			{
+				layer::const_ptr l = *it;
+				if (l->get_type_name() == data_layer::layer_type_name)
+					continue;
+
+				std::vector<layer_name_with_action> dependencies;
+				for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
+				{
+					layer::const_ptr dest_layer = get_layer(*it2);
+					if (dest_layer->get_type_name() == data_layer::layer_type_name)
+						continue;
+					dependencies.push_back(layer_name_with_action(*it2, layer_action(layer_action::forward)));
+				}
+
+				res->add_action(
+					l,
+					layer_action(layer_action::forward),
+					dependencies);
+			}
+		}
+
+		std::set<std::string> layer_weights_to_update;
+
+		// Add backward actions
+		{
+			std::set<std::string> exclude_data_update_layer_name_set(exclude_data_update_layer_names.begin(), exclude_data_update_layer_names.end());
+			for(std::vector<std::string>::const_iterator it = error_source_layer_names.begin(); it != error_source_layer_names.end(); ++it)
+			{
+				std::map<std::string, schema_graph::vertex_descriptor>::const_iterator it2 = layer_instance_name_to_vertex_decriptor_map.find(*it);
+				if (it2 == layer_instance_name_to_vertex_decriptor_map.end())
+					continue; // error source might be dropped now due to it not contributing to weight updates
+
+				std::set<schema_graph::vertex_descriptor> visited_vertices;
+				record_all_edges<schema_graph::vertex_descriptor> vis(visited_vertices);
+				std::vector<boost::default_color_type> color_map(boost::num_vertices(layers));
+
+				boost::depth_first_visit(
+					layers,
+					it2->second,
+					vis,
+					boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
+
+				for(std::set<schema_graph::vertex_descriptor>::const_iterator it2 = visited_vertices.begin(); it2 != visited_vertices.end(); ++it2)
+				{
+					layer::const_ptr l = layers[*it2].l;
+					if (l->get_type_name() == data_layer::layer_type_name)
+						continue;
+
+					for(int backprop_index = 0; backprop_index < l->input_layer_instance_names.size(); ++backprop_index)
+					{
+						layer_action action(layer_action::backward_data, backprop_index);
+						if (!res->action_exists(layer_name_with_action(l->instance_name, action)))
+							res->add_action(l, action);
+					}
+
+					if ((!l->is_empty_data()) && (exclude_data_update_layer_name_set.find(l->instance_name) == exclude_data_update_layer_name_set.end()))
+					{
+						layer_action action(layer_action::backward_weights);
+						if (!res->action_exists(layer_name_with_action(l->instance_name, action)))
+							res->add_action(l, action);
+						target_action_set.insert(layer_name_with_action(l->instance_name, action));
+						layer_weights_to_update.insert(l->instance_name);
+					}
+				}
+			}
+		}
+
+		// Add dependencies 
+		{
+			std::set<std::string> error_source_layer_name_set(error_source_layer_names.begin(), error_source_layer_names.end());
+			for(std::pair<schema_graph::vertex_iterator, schema_graph::vertex_iterator> vp = boost::vertices(layers); vp.first != vp.second; ++vp.first)
+			{
+				layer::const_ptr l = layers[*vp.first].l;
+				if (l->get_type_name() == data_layer::layer_type_name)
+					continue;
+				const std::string& layer_name = l->instance_name;
+
+				std::vector<layer_name_with_action> src_action_list;
+				{
+					layer_name_with_action weight_update_action(layer_name, layer_action(layer_action::backward_weights));
+					if (res->action_exists(weight_update_action))
+						src_action_list.push_back(weight_update_action);
+					for(int backprop_index = 0; backprop_index < l->input_layer_instance_names.size(); ++backprop_index)
+					{
+						layer_name_with_action action(layer_name, layer_action(layer_action::backward_data, backprop_index));
+						if (res->action_exists(action))
+							src_action_list.push_back(action);
+					}
+				}
+				if (src_action_list.empty())
+					continue;
+
+				layer_name_with_action dst_action;
+				if (error_source_layer_name_set.find(layer_name) == error_source_layer_name_set.end())
+				{
+					std::vector<layer_name_with_action> dst_action_list;
+					for(std::pair<schema_graph::in_edge_iterator, schema_graph::in_edge_iterator> ep = boost::in_edges(*vp.first, layers); ep.first != ep.second; ep.first++)
+					{
+						schema_graph::vertex_descriptor previous_vertex = boost::source(*ep.first, layers);
+						layer::const_ptr pl = layers[previous_vertex].l;
+						int backprop_index = 0;
+						for(std::vector<std::string>::const_iterator it = pl->input_layer_instance_names.begin(); it != pl->input_layer_instance_names.end(); ++it, ++backprop_index)
+						{
+							if (*it == layer_name)
+							{
+								layer_name_with_action action(pl->instance_name, layer_action(layer_action::backward_data, backprop_index));
+								if (res->action_exists(action))
+									dst_action_list.push_back(action);
+								break;
+							}
+						}
+					}
+					if (dst_action_list.size() > 1)
+					{
+						for(int i = 0; i < dst_action_list.size() - 1; ++i)
+							res->add_dependency(dst_action_list[i], dst_action_list[i+1]);
+						same_output_action_sets.push_back(dst_action_list);
+						dst_action_list.resize(1);
+					}
+					if (dst_action_list.empty())
+						continue;
+					else
+						dst_action = dst_action_list.front();
+				}
+				else
+				{
+					dst_action = layer_name_with_action(layer_name, layer_action(layer_action::forward));
+					if (!res->action_exists(dst_action))
+						continue;
+				}
+
+				for(std::vector<layer_name_with_action>::const_iterator src_it = src_action_list.begin(); src_it != src_action_list.end(); ++src_it)
+					res->add_dependency(*src_it, dst_action);
+			}
+		}
+
+		res->drop_actions_not_required_to_do(target_action_set);
+
+		for(std::set<std::string>::const_iterator it = layer_weights_to_update.begin(); it != layer_weights_to_update.end(); ++it)
+		{
+			layer_action action(layer_action::update_weights);
+			std::vector<layer_name_with_action> dependencies;
+			dependencies.push_back(layer_name_with_action(*it, layer_action(layer_action::backward_weights)));
+			layer::const_ptr l = get_layer(*it);
+			for(unsigned int backprop_index = 0; backprop_index < static_cast<unsigned int>(l->input_layer_instance_names.size()); ++backprop_index)
+			{
+				layer_name_with_action backprop_action(*it, layer_action(layer_action::backward_data, backprop_index));
+				if (res->action_exists(backprop_action))
+					dependencies.push_back(backprop_action);
+			}
+			res->add_action(
+				l,
+				action,
+				dependencies);
+		}
+
+		for(int i = static_cast<int>(same_output_action_sets.size()) - 1; i >= 0; --i)
+		{
+			std::vector<layer_name_with_action>& tt = same_output_action_sets[i];
+			for(int j = static_cast<int>(tt.size()) - 1; j >= 0; --j)
+				if (!res->action_exists(tt[j]))
+					tt.erase(tt.begin() + j);
+
+			if (tt.empty())
+				same_output_action_sets.erase(same_output_action_sets.begin() + i);
+		}
+
+		return res;
+	}
+
 	std::vector<layer::const_ptr> network_schema::get_layers() const
 	{
 		std::vector<layer::const_ptr> res;
@@ -274,269 +562,11 @@ namespace nnforge
 		return res;
 	}
 
-	std::vector<std::vector<layer::const_ptr> > network_schema::get_layer_buffer_set_for_forward_propagation(
-		const std::map<std::string, unsigned int>& input_index_layer_can_write_output_map,
-		const std::set<std::string>& separate_buffers_layer_names) const
-	{
-		undirected_schema_graph incompatible_output_layers;
-		std::map<std::string, undirected_schema_graph::vertex_descriptor> incompatible_output_layer_instance_name_to_vertex_decriptor_map;
-		{
-			for(std::pair<schema_graph::vertex_iterator, schema_graph::vertex_iterator> vp = boost::vertices(layers); vp.first != vp.second; ++vp.first)
-			{
-				if (separate_buffers_layer_names.find(layers[*vp.first].l->instance_name) == separate_buffers_layer_names.end())
-				{
-					undirected_schema_graph::vertex_descriptor new_layer_descriptor = boost::add_vertex(incompatible_output_layers);
-					incompatible_output_layers[new_layer_descriptor].l = layers[*vp.first].l;
-				}
-			}
-			for(std::pair<undirected_schema_graph::vertex_iterator, undirected_schema_graph::vertex_iterator> vp = boost::vertices(incompatible_output_layers); vp.first != vp.second; ++vp.first)
-			{
-				undirected_schema_graph::vertex_descriptor layer_descriptor = *vp.first;
-				incompatible_output_layer_instance_name_to_vertex_decriptor_map.insert(std::make_pair(incompatible_output_layers[layer_descriptor].l->instance_name, layer_descriptor));
-			}
-		} // incompatible_output_layers_graph is filled with layers, no edges yet
-
-		std::map<schema_graph::vertex_descriptor, std::set<schema_graph::vertex_descriptor> > prior_vertices_map;
-		{
-			for(std::pair<schema_graph::vertex_iterator, schema_graph::vertex_iterator> vp = boost::vertices(layers); vp.first != vp.second; ++vp.first)
-			{
-				schema_graph::vertex_descriptor current_vertex = *vp.first;
-
-				if (separate_buffers_layer_names.find(layers[current_vertex].l->instance_name) != separate_buffers_layer_names.end())
-					continue;
-
-				std::set<schema_graph::vertex_descriptor>& prior_vertices = prior_vertices_map.insert(std::make_pair(current_vertex, std::set<schema_graph::vertex_descriptor>())).first->second;
-				record_all_edges<schema_graph::vertex_descriptor> vis(prior_vertices);
-				std::vector<boost::default_color_type> color_map(boost::num_vertices(layers));
-				boost::depth_first_visit(
-					layers,
-					*vp.first,
-					vis,
-					boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
-			}
-		} // prior_vertices_map is filled with all prior vertices for each vertex
-
-		for(std::pair<schema_graph::vertex_iterator, schema_graph::vertex_iterator> vp = boost::vertices(layers); vp.first != vp.second; ++vp.first)
-		{
-			schema_graph::vertex_descriptor vertex1 = *vp.first;
-			std::map<schema_graph::vertex_descriptor, std::set<schema_graph::vertex_descriptor> >::const_iterator it = prior_vertices_map.find(vertex1);
-			if (it != prior_vertices_map.end())
-			{
-				const std::set<schema_graph::vertex_descriptor>& prior_vertices1 = it->second;
-				for(schema_graph::vertex_iterator it2 = vp.first + 1; it2 != vp.second; ++it2)
-				{
-					schema_graph::vertex_descriptor vertex2 = *it2;
-					std::map<schema_graph::vertex_descriptor, std::set<schema_graph::vertex_descriptor> >::const_iterator it3 = prior_vertices_map.find(vertex2);
-					if (it3 != prior_vertices_map.end())
-					{
-						const std::set<schema_graph::vertex_descriptor>& prior_vertices2 = it3->second;
-						bool v1_follows_v2 = (prior_vertices1.find(vertex2) != prior_vertices1.end());
-						bool v2_follows_v1 = (prior_vertices2.find(vertex1) != prior_vertices2.end());
-						bool incompatible_output_detected = false;
-						if (v1_follows_v2 && v2_follows_v1)
-							throw neural_network_exception("Cyclic dependency encountered in get_buffer_layer_set_for_forward_propagation");
-						else if (!v1_follows_v2 && !v2_follows_v1)
-							incompatible_output_detected = true;
-						else
-						{
-							schema_graph::vertex_descriptor prior_vertex = v1_follows_v2 ? vertex2 : vertex1;
-							schema_graph::vertex_descriptor next_vertex = v1_follows_v2 ? vertex1 : vertex2;
-							const std::set<schema_graph::vertex_descriptor>& prior_vertices = v1_follows_v2 ? prior_vertices1 : prior_vertices2;
-
-							for(std::pair<schema_graph::in_edge_iterator, schema_graph::in_edge_iterator> ep = boost::in_edges(prior_vertex, layers); ep.first != ep.second; ep.first++)
-							{
-								schema_graph::vertex_descriptor immediate_next_for_prior_vertex = boost::source(*ep.first, layers);
-								if (prior_vertices.find(immediate_next_for_prior_vertex) == prior_vertices.end())
-								{
-									// prior vertex might be yet needed by the time we reach next_vertex
-									incompatible_output_detected = true;
-									break;
-								}
-
-								if (immediate_next_for_prior_vertex == next_vertex)
-								{
-									// Check, maybe next_vertex is able to write directly to its immediate input prior_vertex
-									int input_index_layer_can_write_output = -1;
-									std::map<std::string, unsigned int>::const_iterator it_input_index_layer_can_write_output = input_index_layer_can_write_output_map.find(layers[next_vertex].l->instance_name);
-									if (it_input_index_layer_can_write_output != input_index_layer_can_write_output_map.end())
-										input_index_layer_can_write_output = static_cast<unsigned int>(it_input_index_layer_can_write_output->second);
-									if (
-										(input_index_layer_can_write_output == -1) ||
-										(layers[next_vertex].l->input_layer_instance_names[input_index_layer_can_write_output] != layers[prior_vertex].l->instance_name))
-									{
-										incompatible_output_detected = true;
-										break;
-									}
-								}
-							}
-						}
-
-						if (incompatible_output_detected)
-						{
-							boost::add_edge(
-								incompatible_output_layer_instance_name_to_vertex_decriptor_map[layers[vertex1].l->instance_name],
-								incompatible_output_layer_instance_name_to_vertex_decriptor_map[layers[vertex2].l->instance_name],
-								incompatible_output_layers);
-						}
-					}
-				}
-			}
-		} // incompatible_output_layers is filled with edges
-
-		boost::vector_property_map<undirected_schema_graph::vertex_descriptor> color;
-		//std::vector<vertices_size_type> color_vec(boost::num_vertices(graph));
-		//boost::iterator_property_map<vertices_size_type*, vertex_index_map> color(&color_vec.front(), boost::get(boost::vertex_index, graph));
-		int color_count = get_graph_coloring(incompatible_output_layers, color);
-
-		std::vector<std::vector<layer::const_ptr> > res(color_count);
-		for(std::pair<undirected_schema_graph::vertex_iterator, undirected_schema_graph::vertex_iterator> vp = boost::vertices(incompatible_output_layers); vp.first != vp.second; ++vp.first)
-			res[color[*vp.first]].push_back(incompatible_output_layers[*vp.first].l);
-
-		return res;
-	}
-
-	std::vector<std::vector<layer::const_ptr> > network_schema::get_temporary_working_buffer_set_for_forward_propagation(
-		const std::set<std::string>& buffers_layer_names) const
-	{
-		undirected_schema_graph incompatible_output_layers;
-		std::map<std::string, undirected_schema_graph::vertex_descriptor> incompatible_output_layer_instance_name_to_vertex_decriptor_map;
-		{
-			for(std::set<std::string>::const_iterator it = buffers_layer_names.begin(); it != buffers_layer_names.end(); ++it)
-			{
-				undirected_schema_graph::vertex_descriptor new_layer_descriptor = boost::add_vertex(incompatible_output_layers);
-				incompatible_output_layers[new_layer_descriptor].l = layers[layer_instance_name_to_vertex_decriptor_map.find(*it)->second].l;
-			}
-			for(std::pair<undirected_schema_graph::vertex_iterator, undirected_schema_graph::vertex_iterator> vp = boost::vertices(incompatible_output_layers); vp.first != vp.second; ++vp.first)
-			{
-				undirected_schema_graph::vertex_descriptor layer_descriptor = *vp.first;
-				incompatible_output_layer_instance_name_to_vertex_decriptor_map.insert(std::make_pair(incompatible_output_layers[layer_descriptor].l->instance_name, layer_descriptor));
-			}
-		} // incompatible_output_layers_graph is filled with layers, no edges yet
-
-		std::map<schema_graph::vertex_descriptor, std::set<schema_graph::vertex_descriptor> > prior_vertices_map;
-		{
-			for(std::pair<schema_graph::vertex_iterator, schema_graph::vertex_iterator> vp = boost::vertices(layers); vp.first != vp.second; ++vp.first)
-			{
-				schema_graph::vertex_descriptor current_vertex = *vp.first;
-
-				if (buffers_layer_names.find(layers[current_vertex].l->instance_name) == buffers_layer_names.end())
-					continue;
-
-				std::set<schema_graph::vertex_descriptor>& prior_vertices = prior_vertices_map.insert(std::make_pair(current_vertex, std::set<schema_graph::vertex_descriptor>())).first->second;
-				record_all_edges<schema_graph::vertex_descriptor> vis(prior_vertices);
-				std::vector<boost::default_color_type> color_map(boost::num_vertices(layers));
-				boost::depth_first_visit(
-					layers,
-					*vp.first,
-					vis,
-					boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
-			}
-		} // prior_vertices_map is filled with all prior vertices for each vertex
-
-		for(std::pair<schema_graph::vertex_iterator, schema_graph::vertex_iterator> vp = boost::vertices(layers); vp.first != vp.second; ++vp.first)
-		{
-			schema_graph::vertex_descriptor vertex1 = *vp.first;
-			std::map<schema_graph::vertex_descriptor, std::set<schema_graph::vertex_descriptor> >::const_iterator it = prior_vertices_map.find(vertex1);
-			if (it != prior_vertices_map.end())
-			{
-				const std::set<schema_graph::vertex_descriptor>& prior_vertices1 = it->second;
-				for(schema_graph::vertex_iterator it2 = vp.first + 1; it2 != vp.second; ++it2)
-				{
-					schema_graph::vertex_descriptor vertex2 = *it2;
-					std::map<schema_graph::vertex_descriptor, std::set<schema_graph::vertex_descriptor> >::const_iterator it3 = prior_vertices_map.find(vertex2);
-					if (it3 != prior_vertices_map.end())
-					{
-						const std::set<schema_graph::vertex_descriptor>& prior_vertices2 = it3->second;
-						bool v1_follows_v2 = (prior_vertices1.find(vertex2) != prior_vertices1.end());
-						bool v2_follows_v1 = (prior_vertices2.find(vertex1) != prior_vertices2.end());
-						if (v1_follows_v2 && v2_follows_v1)
-							throw neural_network_exception("Cyclic dependency encountered in get_temporary_working_buffer_set_for_forward_propagation");
-						else if (!v1_follows_v2 && !v2_follows_v1)
-						{
-							boost::add_edge(
-								incompatible_output_layer_instance_name_to_vertex_decriptor_map.find(layers[vertex1].l->instance_name)->second,
-								incompatible_output_layer_instance_name_to_vertex_decriptor_map.find(layers[vertex2].l->instance_name)->second,
-								incompatible_output_layers);
-						}
-					}
-				}
-			}
-		} // incompatible_output_layers is filled with edges
-
-		boost::vector_property_map<undirected_schema_graph::vertex_descriptor> color;
-		//std::vector<vertices_size_type> color_vec(boost::num_vertices(graph));
-		//boost::iterator_property_map<vertices_size_type*, vertex_index_map> color(&color_vec.front(), boost::get(boost::vertex_index, graph));
-		int color_count = get_graph_coloring(incompatible_output_layers, color);
-
-		std::vector<std::vector<layer::const_ptr> > res(color_count);
-		for(std::pair<undirected_schema_graph::vertex_iterator, undirected_schema_graph::vertex_iterator> vp = boost::vertices(incompatible_output_layers); vp.first != vp.second; ++vp.first)
-			res[color[*vp.first]].push_back(incompatible_output_layers[*vp.first].l);
-
-		return res;
-	}
-
-	int network_schema::get_graph_coloring(
-		const undirected_schema_graph& graph,
-		boost::vector_property_map<undirected_schema_graph::vertex_descriptor>& color)
-	{
-		typedef boost::graph_traits<undirected_schema_graph>::vertices_size_type vertices_size_type;
-		typedef boost::property_map<undirected_schema_graph, boost::vertex_index_t>::const_type vertex_index_map;
-
-		boost::vector_property_map<undirected_schema_graph::vertex_descriptor> order;
-		boost::smallest_last_vertex_ordering(graph, order);
-
-		vertices_size_type num_colors = boost::sequential_vertex_coloring(graph, order, color);
-		return static_cast<int>(num_colors);
-	}
-
-	std::vector<std::vector<layer::const_ptr> > network_schema::get_layer_stream_set_for_forward_propagation() const
-	{
-		std::vector<layer::const_ptr> layers_in_forward_propagation_order = get_layers_in_forward_propagation_order();
-		std::vector<std::vector<layer::const_ptr> > res;
-
-		std::set<std::string> covered_layer_names;
-		for(std::vector<layer::const_ptr>::const_reverse_iterator it = layers_in_forward_propagation_order.rbegin(); it != layers_in_forward_propagation_order.rend(); ++it)
-		{
-			layer::const_ptr current_layer = *it;
-			if (current_layer->get_type_name() == data_layer::layer_type_name)
-				continue;
-			if (covered_layer_names.find(current_layer->instance_name) != covered_layer_names.end())
-				continue;
-
-			res.push_back(std::vector<layer::const_ptr>());
-			std::vector<layer::const_ptr>& layers_in_set = res.back();
-
-			while (current_layer)
-			{
-				layers_in_set.push_back(current_layer);
-				covered_layer_names.insert(current_layer->instance_name);
-
-				const std::vector<std::string>& input_layer_instance_names = current_layer->input_layer_instance_names;
-				current_layer.reset();
-				for(std::vector<std::string>::const_iterator it2 = input_layer_instance_names.begin(); it2 != input_layer_instance_names.end(); ++it2)
-				{
-					const std::string& new_layer_name = *it2;
-					if (covered_layer_names.find(new_layer_name) != covered_layer_names.end())
-						continue;
-					layer::const_ptr new_layer = layers[layer_instance_name_to_vertex_decriptor_map.find(new_layer_name)->second].l;
-					if (new_layer->get_type_name() == data_layer::layer_type_name)
-						continue;
-					current_layer = new_layer;
-					break;
-				}
-			}
-		}
-
-		return res;
-	}
-
 	layer::const_ptr network_schema::find_layer(const std::string& instance_name) const
 	{
-		layer::const_ptr res;
-
 		std::map<std::string, schema_graph::vertex_descriptor>::const_iterator it = layer_instance_name_to_vertex_decriptor_map.find(instance_name);
 		if (it == layer_instance_name_to_vertex_decriptor_map.end())
-			return res;
+			return layer::const_ptr();
 
 		return layers[it->second].l;
 	}
@@ -561,13 +591,13 @@ namespace nnforge
 
 	void network_schema::dot_vertex_writer::operator()(std::ostream& out, const network_schema::schema_graph::vertex_descriptor& v) const
 	{
-		out << "[";
+		out << " [";
 		out << " label=\"" << g[v].l->instance_name << "\"";
 		out << " shape=" << ((g[v].l->get_type_name() == data_layer::layer_type_name) ? "parallelogram" : "box") << "";
 		
 		std::map<std::string, unsigned int>::const_iterator color_it = layer_name_color_map.find(g[v].l->instance_name);
 		if (color_it != layer_name_color_map.end())
-			out << " style=filled fillcolor=" << (color_it->second + 1);
+			out << " style=filled fillcolor=\"" << single_color_palette::get_const_instance().get_color_name(color_it->second) << "\"";
 
 		out << " ]";
 	}
@@ -579,7 +609,6 @@ namespace nnforge
 
 	void network_schema::dot_graph_writer::operator()(std::ostream& out) const
 	{
-		out << "node [colorscheme=" << node_color_scheme << "]" << std::endl;
 	}
 
 	void network_schema::write_dot(

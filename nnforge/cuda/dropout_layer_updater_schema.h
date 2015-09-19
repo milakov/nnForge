@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@
 
 #include "layer_updater_schema.h"
 
-#include <memory>
-
 namespace nnforge
 {
 	namespace cuda
@@ -31,13 +29,13 @@ namespace nnforge
 
 			virtual ~dropout_layer_updater_schema();
 
-			virtual const boost::uuids::uuid& get_uuid() const;
+			virtual std::string get_type_name() const;
 
 		protected:
-			virtual layer_updater_schema_smart_ptr create_specific() const;
+			virtual layer_updater_schema::ptr create_specific() const;
 
-			virtual layer_updater_cuda_smart_ptr create_updater_specific(
-				const layer_configuration_specific& input_configuration_specific,
+			virtual layer_updater_cuda::ptr create_updater_specific(
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific) const;
 		};
 	}

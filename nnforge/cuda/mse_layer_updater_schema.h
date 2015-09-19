@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,18 +16,27 @@
 
 #pragma once
 
-#include "layer_updater_cuda.h"
+#include "layer_updater_schema.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		class convolution_layer_updater_schema_helper_cuda_fermi
+		class mse_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			static layer_updater_cuda_smart_ptr create_updater_specific(
-				const layer_configuration_specific& input_configuration_specific,
-				const layer_configuration_specific& output_configuration_specific);
+			mse_layer_updater_schema();
+
+			virtual ~mse_layer_updater_schema();
+
+			virtual std::string get_type_name() const;
+
+		protected:
+			virtual layer_updater_schema::ptr create_specific() const;
+
+			virtual layer_updater_cuda::ptr create_updater_specific(
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
 		};
 	}
 }

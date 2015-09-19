@@ -80,11 +80,13 @@ namespace nnforge
 		}
 
 		__global__ void rgb_to_yuv_convert_deriviative_upd_kernel(
-			float * __restrict errors,
+			float * __restrict input_errors,
+			const float * __restrict output_errors,
 			const int * __restrict color_feature_map_config_list,
 			int feature_map_count,
 			int elem_count_per_feature_map,
 			int color_feature_map_config_count,
+			bool add_update_to_destination,
 			int entry_count)
 		{
 			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -102,17 +104,26 @@ namespace nnforge
 				int green_and_u_offset = green_and_u_feature_map_id * elem_count_per_feature_map + base_offset;
 				int blue_and_v_offset = blue_and_v_feature_map_id * elem_count_per_feature_map + base_offset;
 
-				float y = errors[red_and_y_offset];
-				float u = errors[green_and_u_offset];
-				float v = errors[blue_and_v_offset];
+				float y = output_errors[red_and_y_offset];
+				float u = output_errors[green_and_u_offset];
+				float v = output_errors[blue_and_v_offset];
 
 				float red = y + reverse_r_v_mult * v;
 				float green = y + reverse_g_u_mult * u + reverse_g_v_mult * v;
 				float blue = y + reverse_b_u_mult * u;
 
-				errors[red_and_y_offset] = red;
-				errors[green_and_u_offset] = green;
-				errors[blue_and_v_offset] = blue;
+				if (add_update_to_destination)
+				{
+					input_errors[red_and_y_offset] += red;
+					input_errors[green_and_u_offset] += green;
+					input_errors[blue_and_v_offset] += blue;
+				}
+				else
+				{
+					input_errors[red_and_y_offset] = red;
+					input_errors[green_and_u_offset] = green;
+					input_errors[blue_and_v_offset] = blue;
+				}
 			}
 		}
 
@@ -124,75 +135,108 @@ namespace nnforge
 		{
 		}
 
-		void rgb_to_yuv_convert_layer_updater_cuda::enqueue_test(
-			unsigned int offset_input_entry_id,
+		void rgb_to_yuv_convert_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
+			unsigned int entry_count)
 		{
-			if (offset_input_entry_id > 0)
-				throw neural_network_exception("rgb_to_yuv_convert_layer_updater_cuda is not able to run using offset");
+			if ((color_feature_map_config_count != output_configuration_specific.feature_map_count * 3) && ((const float *)*output_buffer != (const float *)*input_buffers[1]))
+			{
+				cuda_util::copy_buffer(
+					*cuda_config,
+					*input_buffers[0],
+					*output_buffer,
+					output_elem_count_per_entry * entry_count,
+					stream_id);
+			}
 
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
-				input_elem_count_per_feature_map,
+				output_elem_count_per_feature_map,
 				color_feature_map_config_count,
 				entry_count);
 			rgb_to_yuv_convert_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-				*input_neurons_buffer,
-				*output_neurons_buffer,
+				*input_buffers[0],
+				*output_buffer,
 				*schema_data[0],
-				input_configuration_specific.feature_map_count,
-				input_elem_count_per_feature_map,
+				output_configuration_specific.feature_map_count,
+				output_elem_count_per_feature_map,
 				color_feature_map_config_count,
 				entry_count);
 		}
 
-		void rgb_to_yuv_convert_layer_updater_cuda::enqueue_backprop(
+		void rgb_to_yuv_convert_layer_updater_cuda::enqueue_backward_data_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			unsigned int input_index,
+			cuda_linear_buffer_device::ptr input_errors_buffer,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			bool add_update_to_destination,
+			unsigned int entry_count)
 		{
+			if (((const float *)*output_errors_buffer != (const float *)*input_errors_buffer)
+				&& ((color_feature_map_config_count != output_configuration_specific.feature_map_count * 3) || add_update_to_destination))
+			{
+				cuda_util::copy_buffer(
+					*cuda_config,
+					*output_errors_buffer,
+					*input_errors_buffer,
+					output_elem_count_per_entry * entry_count,
+					stream_id);
+			}
+
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
-				input_elem_count_per_feature_map,
+				output_elem_count_per_feature_map,
 				color_feature_map_config_count,
 				entry_count);
 			rgb_to_yuv_convert_deriviative_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+				*input_errors_buffer,
 				*output_errors_buffer,
 				*schema_data[0],
-				input_configuration_specific.feature_map_count,
-				input_elem_count_per_feature_map,
+				output_configuration_specific.feature_map_count,
+				output_elem_count_per_feature_map,
 				color_feature_map_config_count,
+				add_update_to_destination,
 				entry_count);
 		}
 
-		bool rgb_to_yuv_convert_layer_updater_cuda::is_in_place_backprop() const
+		int rgb_to_yuv_convert_layer_updater_cuda::get_input_index_layer_can_write(const layer_action& action) const
 		{
-			return true;
+			return 0;
+		}
+
+		bool rgb_to_yuv_convert_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
+		{
+			return false;
+		}
+
+		bool rgb_to_yuv_convert_layer_updater_cuda::is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
+		{
+			return false;
 		}
 
 		void rgb_to_yuv_convert_layer_updater_cuda::updater_configured()
 		{
 			nnforge_shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = nnforge_dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
 
-			color_feature_map_config_count = layer_derived->color_feature_map_config_list.size();
+			color_feature_map_config_count = static_cast<int>(layer_derived->color_feature_map_config_list.size());
 		}
 	}
 }

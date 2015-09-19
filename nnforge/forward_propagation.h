@@ -24,6 +24,7 @@
 #include "structured_data_bunch_writer.h"
 #include "neuron_value_set.h"
 #include "debug_state.h"
+#include "network_action_schema.h"
 
 #include <vector>
 #include <string>
@@ -60,9 +61,6 @@ namespace nnforge
 			structured_data_bunch_reader& reader,
 			structured_data_bunch_writer& writer);
 
-		// Flops might be updated when set_input_configuration_specific or run are called
-		float get_() const;
-
 	protected:
 		forward_propagation(
 			const network_schema& schema,
@@ -86,6 +84,7 @@ namespace nnforge
 
 	protected:
 		network_schema::const_ptr schema;
+		network_action_schema::const_ptr action_schema;
 		std::vector<std::string> output_layer_names;
 		debug_state::ptr debug;
 		std::map<std::string, layer_configuration_specific> layer_config_map;

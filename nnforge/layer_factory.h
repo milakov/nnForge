@@ -20,7 +20,6 @@
 
 #include <map>
 #include <string>
-#include <boost/uuid/uuid.hpp>
 #include <boost/serialization/singleton.hpp>
 
 namespace nnforge

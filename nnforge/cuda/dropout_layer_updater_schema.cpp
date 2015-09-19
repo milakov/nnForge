@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "dropout_layer_updater_schema.h"
 
 #include "../dropout_layer.h"
-
 #include "dropout_layer_updater_cuda.h"
 
 namespace nnforge
@@ -32,21 +31,21 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr dropout_layer_updater_schema::create_specific() const
+		layer_updater_schema::ptr dropout_layer_updater_schema::create_specific() const
 		{
-			return layer_updater_schema_smart_ptr(new dropout_layer_updater_schema());
+			return layer_updater_schema::ptr(new dropout_layer_updater_schema());
 		}
 
-		const boost::uuids::uuid& dropout_layer_updater_schema::get_uuid() const
+		std::string dropout_layer_updater_schema::get_type_name() const
 		{
-			return dropout_layer::layer_guid;
+			return dropout_layer::layer_type_name;
 		}
 
-		layer_updater_cuda_smart_ptr dropout_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr dropout_layer_updater_schema::create_updater_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_updater_cuda_smart_ptr(new dropout_layer_updater_cuda());
+			return layer_updater_cuda::ptr(new dropout_layer_updater_cuda());
 		}
 	}
 }

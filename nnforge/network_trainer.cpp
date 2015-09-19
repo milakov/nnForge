@@ -22,8 +22,15 @@
 
 namespace nnforge
 {
-	network_trainer::network_trainer(network_schema_smart_ptr schema)
+	network_trainer::network_trainer(
+		network_schema::ptr schema,
+		const std::vector<std::string>& output_layer_names,
+		const std::vector<std::string>& error_source_layer_names,
+		const std::vector<std::string>& exclude_data_update_layer_names)
 		: schema(schema)
+		, output_layer_names(output_layer_names)
+		, error_source_layer_names(error_source_layer_names)
+		, exclude_data_update_layer_names(exclude_data_update_layer_names)
 		, epoch_count(50)
 		, learning_rate_decay_tail_epoch_count(0)
 		, learning_rate_decay_rate(0.5F)
@@ -37,7 +44,7 @@ namespace nnforge
 	}
 
 	void network_trainer::train(
-		supervised_data_reader& reader,
+		structured_data_bunch_reader& reader,
 		network_data_peeker& peeker,
 		network_data_pusher& progress_pusher,
 		network_data_pusher& pusher)
@@ -59,14 +66,14 @@ namespace nnforge
 
 			bool empty_momentum = false;
 			if (momentum.type == training_momentum::no_momentum)
-				new_task.momentum_data = network_data_smart_ptr();
+				new_task.momentum_data = network_data::ptr();
 			else
 			{
 				if (entry_peeked.momentum_data)
 					new_task.momentum_data = entry_peeked.momentum_data;
 				else
 				{
-					new_task.momentum_data = network_data_smart_ptr(new network_data(*schema));
+					new_task.momentum_data = network_data::ptr(new network_data(schema->get_layers()));
 					if (new_task.initial_epoch > 0)
 						empty_momentum = true;
 				}
@@ -94,6 +101,8 @@ namespace nnforge
 
 			while(true)
 			{
+				std::cout << "---------- NN # " << new_task.index_peeked << ", Epoch " << new_task.get_current_epoch() + 1 << " ----------" << std::endl;
+
 				train_step(
 					reader,
 					new_task);
@@ -101,7 +110,7 @@ namespace nnforge
 				reader.next_epoch();
 				++reader_epoch_id;
 
-				progress_pusher.push(new_task);
+				progress_pusher.push(new_task, *schema);
 
 				if (is_broken(new_task))
 				{
@@ -111,7 +120,7 @@ namespace nnforge
 
 				if (is_last_epoch(new_task))
 				{
-					pusher.push(new_task);
+					pusher.push(new_task, *schema);
 					break;
 				}
 			}
@@ -125,9 +134,17 @@ namespace nnforge
 
 	bool network_trainer::is_broken(const training_task_state& state) const
 	{
-		float error = state.history.back().first->get_error();
-		bool sanity_check = (error < 1.0e+10F) && (-error > -1.0E+10F) && !(-error < -1.0E+10F);
-		return !sanity_check;
+		for(std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<float> > > >::const_iterator it = state.history.back().second.begin(); it != state.history.back().second.end(); ++it)
+		{
+			for(std::vector<float>::const_iterator it2 = it->second.second->begin(); it2 != it->second.second->end(); ++it2)
+			{
+				float error = *it2;
+				bool sanity_check = (error < 1.0e+10F) && (-error > -1.0E+10F) && !(-error < -1.0E+10F);
+				if (!sanity_check)
+					return true;
+			}
+		}
+		return false;
 	}
 
 	float network_trainer::get_global_learning_rate(unsigned int epoch) const

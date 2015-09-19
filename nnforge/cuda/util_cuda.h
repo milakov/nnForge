@@ -224,6 +224,46 @@ namespace nnforge
 				unsigned int dup_count,
 				cudaStream_t cuda_stream);
 
+			static void apply_gradient(
+				const cuda_running_configuration& cuda_config,
+				float * data,
+				float * gradient,
+				double * update_accum,
+				float learning_rate,
+				float normalizer,
+				float weight_decay,
+				int elem_count,
+				unsigned int update_accum_mask,
+				cudaStream_t cuda_stream);
+
+			static void apply_gradient_with_vanilla_momentum(
+				const cuda_running_configuration& cuda_config,
+				float * data,
+				float * gradient,
+				float * prev_upd,
+				double * update_accum,
+				float learning_rate,
+				float normalizer,
+				float weight_decay,
+				float momentum,
+				int elem_count,
+				unsigned int update_accum_mask,
+				cudaStream_t cuda_stream);
+
+			static void apply_gradient_with_nesterov_momentum(
+				const cuda_running_configuration& cuda_config,
+				float * data,
+				float * gradient,
+				float * prev_upd,
+				double * update_accum,
+				float learning_rate,
+				float normalizer,
+				float weight_decay,
+				float momentum,
+				int elem_count,
+				unsigned int update_accum_mask,
+				cudaStream_t cuda_stream);
+
 		private:
 			cuda_util();
 			cuda_util(const cuda_util&);

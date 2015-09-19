@@ -18,25 +18,28 @@
 
 #include "network_schema.h"
 #include "network_data.h"
+#include "nn_types.h"
 
 namespace nnforge
 {
 	struct network_data_peek_entry
 	{
 		unsigned int index;
-		network_data_smart_ptr data;
-		network_data_smart_ptr momentum_data;
+		network_data::ptr data;
+		network_data::ptr momentum_data;
 		unsigned int start_epoch;
 	};
 
 	class network_data_peeker
 	{
 	public:
+		typedef nnforge_shared_ptr<network_data_peeker> ptr;
+
 		virtual ~network_data_peeker();
 
 		// The method should return empty data smart pointer in case no more layer data are available
 		// The caller is free to modify the data returned
-		virtual network_data_peek_entry peek(network_schema_smart_ptr schema) = 0;
+		virtual network_data_peek_entry peek(network_schema::ptr schema) = 0;
 
 	protected:
 		network_data_peeker();

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #pragma once
 
 #include "forward_propagation_factory.h"
+#include "backward_propagation_factory.h"
 #include "config_options.h"
 #include "nn_types.h"
 
@@ -33,7 +34,7 @@ namespace nnforge
 
 		virtual forward_propagation_factory::ptr create_forward_propagation_factory() const = 0;
 
-//		virtual network_updater_factory_smart_ptr create_updater_factory() const = 0;
+		virtual backward_propagation_factory::ptr create_backward_propagation_factory() const = 0;
 
 //		virtual network_analyzer_factory_smart_ptr create_analyzer_factory() const = 0;
 

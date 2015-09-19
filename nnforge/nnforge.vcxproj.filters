@@ -84,9 +84,6 @@
     <Filter Include="Source Files\training\trainer">
       <UniqueIdentifier>{433b39ad-5f34-4eb1-9f6e-dbd11b7a5d90}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\visualize">
-      <UniqueIdentifier>{b746f866-9151-4d0a-abb5-5e38c9c02b36}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\toolset">
       <UniqueIdentifier>{bc27c2d5-5d17-4139-823f-7b5eb8d1529c}</UniqueIdentifier>
     </Filter>
@@ -125,6 +122,15 @@
     </Filter>
     <Filter Include="Source Files\forward_propagation">
       <UniqueIdentifier>{3a7d9f59-8c25-41d9-a4d9-42eb006c6bb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\backward_propagation">
+      <UniqueIdentifier>{63782343-24e2-458d-89bb-8116883bf58d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\backward_propagation">
+      <UniqueIdentifier>{8fd21c82-f5a5-496b-b9ff-99ba21b7232e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\visualize">
+      <UniqueIdentifier>{b746f866-9151-4d0a-abb5-5e38c9c02b36}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -404,9 +410,6 @@
     <ClInclude Include="convert_data_type_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
     </ClInclude>
-    <ClInclude Include="training_stat.h">
-      <Filter>Header Files\training\result</Filter>
-    </ClInclude>
     <ClInclude Include="network_data_peeker.h">
       <Filter>Header Files\training\peekers</Filter>
     </ClInclude>
@@ -516,6 +519,27 @@
       <Filter>Header Files\layers</Filter>
     </ClInclude>
     <ClInclude Include="debug_state.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="backward_propagation.h">
+      <Filter>Header Files\backward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="backward_propagation_factory.h">
+      <Filter>Header Files\backward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="network_action_schema.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
+    <ClInclude Include="layer_action.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
+    <ClInclude Include="layer_name_with_action.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
+    <ClInclude Include="buffer_lifetime.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
+    <ClInclude Include="color_palette.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
@@ -796,9 +820,6 @@
     <ClCompile Include="convert_data_type_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
     </ClCompile>
-    <ClCompile Include="training_stat.cpp">
-      <Filter>Source Files\training\result</Filter>
-    </ClCompile>
     <ClCompile Include="supervised_shuffle_entries_data_reader.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
@@ -899,6 +920,18 @@
       <Filter>Source Files\layers</Filter>
     </ClCompile>
     <ClCompile Include="debug_state.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="backward_propagation.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="backward_propagation_factory.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="network_action_schema.cpp">
+      <Filter>Source Files\network_schema</Filter>
+    </ClCompile>
+    <ClCompile Include="color_palette.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>

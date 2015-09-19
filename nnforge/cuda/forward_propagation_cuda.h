@@ -68,8 +68,6 @@ namespace nnforge
 
 			void setup_temporary_working_fixed_buffer_sizes();
 
-			void setup_temporary_working_per_entry_buffer_sizes();
-
 			void setup_streams_and_events();
 
 			void update_max_entry_count();
@@ -125,7 +123,7 @@ namespace nnforge
 		private:
 			cuda_running_configuration::const_ptr cuda_config;
 
-			std::vector<layer::const_ptr> layers_in_forward_propagation_order;
+			std::vector<layer_name_with_action> actions_in_execution_order;
 
 			network_data::const_ptr host_net_data;
 
@@ -135,9 +133,9 @@ namespace nnforge
 			cuda_stream::ptr copy_data_stream;
 
 			std::vector<cuda_stream::ptr> command_streams;
-			std::map<std::string, unsigned int> layer_to_stream_set_map;
-			std::map<std::string, cuda_event::ptr> layer_output_data_ready_events;
-			std::map<std::string, std::vector<cuda_event::ptr> > layer_previous_events;
+			std::map<layer_name_with_action, unsigned int> action_to_stream_set_map;
+			std::map<layer_name_with_action, cuda_event::ptr> action_output_data_ready_events;
+			std::map<layer_name_with_action, std::vector<cuda_event::ptr> > action_previous_events;
 			unsigned int output_data_ready_stream_set_id;
 			std::vector<cuda_event::ptr> output_data_ready_additional_events;
 
@@ -147,13 +145,11 @@ namespace nnforge
 			std::map<std::string, std::vector<cuda_linear_buffer_device::const_ptr> > persistent_working_data;
 
 			std::vector<size_t> temporary_working_fixed_set_size_list;
-			std::map<std::string, unsigned int> temporary_working_fixed_data_name_to_set_map;
-
-			std::vector<size_t> temporary_working_per_entry_set_size_list;
-			std::map<std::string, unsigned int> temporary_working_per_entry_data_name_to_set_map;
+			std::map<layer_name_with_action, unsigned int> temporary_working_fixed_data_action_to_set_map;
 
 			std::vector<size_t> layer_buffer_set_per_entry_size_list;
-			std::map<std::string, unsigned int> layer_buffer_name_to_set_map;
+			std::map<layer_name_with_action, unsigned int> temporary_working_per_entry_data_action_to_set_map;
+			std::map<layer_name_with_action, unsigned int> layer_buffer_action_to_set_map;
 
 			std::map<std::string, size_t> dedicated_per_entry_data_name_to_size_map;
 
@@ -162,8 +158,8 @@ namespace nnforge
 
 			unsigned int max_entry_count;
 
-			private:
-				static const unsigned int max_max_entry_count;
+		private:
+			static const unsigned int max_max_entry_count;
 		};
 	}
 }

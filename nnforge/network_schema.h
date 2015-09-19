@@ -21,6 +21,7 @@
 #include "layer_configuration_specific.h"
 #include "layer_data_configuration.h"
 #include "nn_types.h"
+#include "network_action_schema.h"
 
 #include <vector>
 #include <ostream>
@@ -51,31 +52,34 @@ namespace nnforge
 		// The function returns the list of layers required to populate data for the output layers specified
 		std::vector<layer::const_ptr> get_required_layers(const std::vector<std::string>& output_layer_names) const;
 
+		// The function returns the list of layers required to populate data for the output layers specified
+		// and to update as much weights as possible (excluding exclude_data_update_layer_names) given error sources specified
+		std::vector<layer::const_ptr> get_required_layers(
+			const std::vector<std::string>& output_layer_names,
+			const std::vector<std::string>& error_source_layer_names,
+			const std::vector<std::string>& exclude_data_update_layer_names) const;
+
+		// The function returns actions required to populate data for the output layers specified
+		network_action_schema::ptr get_actions_for_forward_propagation(const std::vector<std::string>& output_layer_names) const;
+
+		// The function returns actions required to populate data for the output layers specified
+		// and to update weights (except for exclude_data_update_layer_names) using error sources specified
+		// same_output_action_sets is initialized as well, each set is ordered in reverse execution order
+		network_action_schema::ptr get_actions_for_backward_propagation(
+			const std::vector<std::string>& output_layer_names,
+			const std::vector<std::string>& error_source_layer_names,
+			const std::vector<std::string>& exclude_data_update_layer_names,
+			std::vector<std::vector<layer_name_with_action> >& same_output_action_sets) const;
+
 		// The function returns all the layers
 		std::vector<layer::const_ptr> get_layers() const;
 
-		// The functiona returns data layers, that is layers dependent on external data
+		// The function returns data layers, that is layers dependent on external data
 		std::vector<layer::const_ptr> get_data_layers() const;
 
 		// The function returns all the layers with input layers always preceding corresponding output layers
 		// Data layers are included
 		std::vector<layer::const_ptr> get_layers_in_forward_propagation_order() const;
-
-		// The function returns sets of layers, each set corresponds to one stream
-		// Data layers are not included
-		std::vector<std::vector<layer::const_ptr> > get_layer_stream_set_for_forward_propagation() const;
-
-		// The function returns sets of layers, layers in the same set share the same output buffer
-		// input_index_layer_can_write_output_map contains info on whether the layer is able to write the output to one of its input
-		// separate_buffers_layer_names contains layers for which separate buffers will be allocated
-		std::vector<std::vector<layer::const_ptr> > get_layer_buffer_set_for_forward_propagation(
-			const std::map<std::string, unsigned int>& input_index_layer_can_write_output_map,
-			const std::set<std::string>& separate_buffers_layer_names) const;
-
-		// The function returns sets of layers, layers in the same set share the same working buffer
-		// buffers_layer_names defines what layers need working buffer
-		std::vector<std::vector<layer::const_ptr> > get_temporary_working_buffer_set_for_forward_propagation(
-			const std::set<std::string>& buffers_layer_names) const;
 
 		// The result includes input configurations
 		std::map<std::string, layer_configuration_specific> get_layer_configuration_specific_map(const std::map<std::string, layer_configuration_specific>& input_configuration_specific_map) const;
@@ -130,19 +134,8 @@ namespace nnforge
 			boost::bidirectionalS,
 			vertex_info> schema_graph;
 
-		typedef boost::adjacency_list<
-			boost::vecS,
-			boost::vecS,
-			boost::undirectedS,
-			vertex_info> undirected_schema_graph;
-
 		schema_graph layers;
 		std::map<std::string, schema_graph::vertex_descriptor> layer_instance_name_to_vertex_decriptor_map;
-
-	private:
-		static int get_graph_coloring(
-			const undirected_schema_graph& graph,
-			boost::vector_property_map<undirected_schema_graph::vertex_descriptor>& color);
 
 	private:
 		struct cycle_detector : public boost::default_dfs_visitor
@@ -202,8 +195,5 @@ namespace nnforge
 		protected:
 			const schema_graph& g;
 		};
-
-		private:
-			static const char * node_color_scheme;
 	};
 }

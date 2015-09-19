@@ -21,7 +21,6 @@
 #include "fully_connected_layer_tester_cuda.h"
 #include "convolution_1x1_layer_tester_cuda.h"
 #include "convolution_layer_tester_cuda.h"
-#include "convolution_layer_testing_schema_helper_cuda_kepler.h"
 
 #include <boost/format.hpp>
 
@@ -66,13 +65,13 @@ namespace nnforge
 			{
 				res = layer_tester_cuda::ptr(new convolution_1x1_layer_tester_cuda());
 			}
-			else if (input_configuration_specific_list[0].dimension_sizes.size() <= 2)
+			else if (output_configuration_specific.dimension_sizes.size() <= 2)
 			{
 				res = layer_tester_cuda::ptr(new convolution_layer_tester_cuda());
 			}
 			else
 			{
-				res = convolution_layer_testing_schema_helper_cuda_kepler::create_tester_specific(input_configuration_specific_list[0], output_configuration_specific);
+				throw neural_network_exception((boost::format("No CUDA tester for the convolutional layer of %1% dimensions for Kepler and above architectures") % output_configuration_specific.dimension_sizes.size()).str());
 			}
 
 			return res;

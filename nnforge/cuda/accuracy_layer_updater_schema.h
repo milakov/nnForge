@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,31 +14,29 @@
  *  limitations under the License.
  */
 
-#include "network_updater_cuda_factory.h"
+#pragma once
 
-#include "network_updater_cuda.h"
+#include "layer_updater_schema.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		network_updater_cuda_factory::network_updater_cuda_factory(cuda_running_configuration_const_smart_ptr cuda_config)
-			: cuda_config(cuda_config)
+		class accuracy_layer_updater_schema : public layer_updater_schema
 		{
-		}
+		public:
+			accuracy_layer_updater_schema();
 
-		network_updater_cuda_factory::~network_updater_cuda_factory()
-		{
-		}
+			virtual ~accuracy_layer_updater_schema();
 
-		network_updater_smart_ptr network_updater_cuda_factory::create(
-			network_schema_smart_ptr schema,
-			const_error_function_smart_ptr ef) const
-		{
-			return network_updater_smart_ptr(new network_updater_cuda(
-				schema,
-				ef,
-				cuda_config));
-		}
+			virtual std::string get_type_name() const;
+
+		protected:
+			virtual layer_updater_schema::ptr create_specific() const;
+
+			virtual layer_updater_cuda::ptr create_updater_specific(
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
+		};
 	}
 }

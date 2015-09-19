@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -263,22 +263,22 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void sparse_fully_connected_layer_updater_cuda::enqueue_test(
-			unsigned int offset_input_entry_id,
+		void sparse_fully_connected_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
+			unsigned int entry_count)
 		{
 			cuda_util::set_with_value(
 				*cuda_config,
-				*output_neurons_buffer,
+				*output_buffer,
 				0.0F,
 				output_elem_count_per_entry * entry_count,
 				stream_id);
@@ -293,13 +293,13 @@ namespace nnforge
 			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
 			int smem_size = threadblock_size * sizeof(float);
 			sparse_fully_connected_upd_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-				*output_neurons_buffer,
-				*input_neurons_buffer,
+				*output_buffer,
+				*input_buffers[0],
 				*data[0],
 				*data_custom[0],
 				*data_custom[1],
 				output_elem_count_per_entry,
-				input_elem_count_per_entry,
+				input_elem_count_per_entry_list[0],
 				entry_count,
 				input_feature_map_block_size_and_count.first,
 				window_size);
@@ -325,33 +325,36 @@ namespace nnforge
 					*data[1],
 					&beta,
 					output_data_desc,
-					*output_neurons_buffer));
+					*output_buffer));
 			}
 		}
 
-		void sparse_fully_connected_layer_updater_cuda::enqueue_backprop(
+		void sparse_fully_connected_layer_updater_cuda::enqueue_backward_data_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			unsigned int input_index,
+			cuda_linear_buffer_device::ptr input_errors_buffer,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			bool add_update_to_destination,
+			unsigned int entry_count)
 		{
-			if (!backprop_required)
-				throw neural_network_exception("sparse_fully_connected_layer_updater_cuda is not configured to do backprop but requested to");
-
-			cuda_util::set_with_value(
-				*cuda_config,
-				*input_errors_buffer,
-				0.0F,
-				input_elem_count_per_entry * entry_count,
-				stream_id);
+			if (!add_update_to_destination)
+			{
+				cuda_util::set_with_value(
+					*cuda_config,
+					*input_errors_buffer,
+					0.0F,
+					input_elem_count_per_entry_list[0] * entry_count,
+					stream_id);
+			}
 
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
@@ -368,23 +371,23 @@ namespace nnforge
 				*data_custom[0],
 				*data_custom[1],
 				output_elem_count_per_entry,
-				input_elem_count_per_entry,
+				input_elem_count_per_entry_list[0],
 				entry_count,
 				window_size);
 		}
 
-		void sparse_fully_connected_layer_updater_cuda::enqueue_update_weights(
-			unsigned int offset_input_entry_id,
+		void sparse_fully_connected_layer_updater_cuda::enqueue_update_weights_propagation(
 			cudaStream_t stream_id,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& gradient,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			unsigned int entry_count)
 		{
 			// Update weights
 			{
@@ -399,12 +402,12 @@ namespace nnforge
 				int smem_size = (threadblock_size / 32) * entry_block_size_and_count.first * sizeof(float);
 				sparse_fully_connected_update_weights_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 					*output_errors_buffer,
-					*input_neurons_buffer,
+					*input_neurons_buffers[0],
 					*gradient[0],
 					*data_custom[0],
 					*data_custom[1],
 					output_elem_count_per_entry,
-					input_elem_count_per_entry,
+					input_elem_count_per_entry_list[0],
 					entry_block_size_and_count.first,
 					entry_count,
 					window_size);
@@ -435,11 +438,6 @@ namespace nnforge
 			}
 		}
 
-		bool sparse_fully_connected_layer_updater_cuda::is_in_place_backprop() const
-		{
-			return false;
-		}
-
 		void sparse_fully_connected_layer_updater_cuda::updater_configured()
 		{
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
@@ -450,7 +448,7 @@ namespace nnforge
 			for(std::vector<unsigned int>::const_iterator it = layer_derived->window_sizes.begin(); it != layer_derived->window_sizes.end(); ++it)
 				window_size *= *it;
 
-			int input_data_single_backprop_entry_size = input_elem_count_per_entry * sizeof(float);
+			int input_data_single_backprop_entry_size = input_elem_count_per_entry_list[0] * sizeof(float);
 			max_update_entry_count_block_size = std::min(std::max(absolute_min_update_entry_count_block_size, cuda_config->l2_cache_size / 2 / input_data_single_backprop_entry_size), absolute_max_update_entry_count_block_size);
 
 			cudnn_safe_call(cudnnSetTensor4dDescriptor(
@@ -463,14 +461,7 @@ namespace nnforge
 				1));
 		}
 
-		std::vector<size_t> sparse_fully_connected_layer_updater_cuda::get_sizes_of_additional_buffers_per_entry() const
-		{
-			std::vector<size_t> res;
-
-			return res;
-		}
-
-		void sparse_fully_connected_layer_updater_cuda::notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom)
+		void sparse_fully_connected_layer_updater_cuda::notify_data_custom(layer_data_custom::const_ptr host_data_custom)
 		{
 			max_column_index_count_per_row = 0;
 			const std::vector<int>& row_indices = host_data_custom->at(1);
@@ -502,6 +493,21 @@ namespace nnforge
 			int candidate_block_size2 = (candidate_block_size + candidate_block_count2 - 1) / candidate_block_count2;
 
 			return std::make_pair(candidate_block_size2, candidate_block_count2);
+		}
+
+		bool sparse_fully_connected_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
+		{
+			return false;
+		}
+
+		bool sparse_fully_connected_layer_updater_cuda::is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
+		{
+			return false;
+		}
+
+		bool sparse_fully_connected_layer_updater_cuda::is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const
+		{
+			return true;
 		}
 	}
 }

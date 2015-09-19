@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,9 +27,13 @@ namespace nnforge
 	class network_data_pusher
 	{
 	public:
+		typedef nnforge_shared_ptr<network_data_pusher> ptr;
+
 		virtual ~network_data_pusher();
 
-		virtual void push(const training_task_state& task_state) = 0;
+		virtual void push(
+			const training_task_state& task_state,
+			const network_schema& schema) = 0;
 
 	protected:
 		network_data_pusher();
@@ -38,6 +42,4 @@ namespace nnforge
 		network_data_pusher(const network_data_pusher&);
 		network_data_pusher& operator =(const network_data_pusher&);
 	};
-
-	typedef nnforge_shared_ptr<network_data_pusher> network_data_pusher_smart_ptr;
 }

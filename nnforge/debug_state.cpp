@@ -39,6 +39,8 @@ namespace nnforge
 			}
 
 			boost::filesystem::create_directories(this->debug_folder);
+
+			output_message((boost::format("Debug files will be saved into %1%") % this->debug_folder.string()).str().c_str());
 		}
 	}
 
