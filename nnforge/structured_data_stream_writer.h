@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 
 #pragma once
 
-#include "data_writer.h"
-#include "unsupervised_data_stream_schema.h"
 #include "layer_configuration_specific.h"
-#include "neuron_data_type.h"
 #include "nn_types.h"
 
 #include <vector>
@@ -27,44 +24,30 @@
 
 namespace nnforge
 {
-	class unsupervised_data_stream_writer : public data_writer
+	class structured_data_stream_writer
 	{
 	public:
+		typedef nnforge_shared_ptr<structured_data_stream_writer> ptr;
+
 		// The constructor modifies output_stream to throw exceptions in case of failure
 		// The stream should be created with std::ios_base::binary flag
-		unsupervised_data_stream_writer(
+		structured_data_stream_writer(
 			nnforge_shared_ptr<std::ostream> output_stream,
-			const layer_configuration_specific& input_configuration);
+			const layer_configuration_specific& config);
 
-		virtual ~unsupervised_data_stream_writer();
+		virtual ~structured_data_stream_writer();
 
-		void write(
-			neuron_data_type::input_type type_code,
-			const void * input_neurons);
-
-		void write(const float * input_neurons);
-
-		void write(const unsigned char * input_neurons);
-
-		virtual void raw_write(
-			const void * all_entry_data,
-			size_t data_length);
+		void write(const float * neurons);
 
 	private:
 		nnforge_shared_ptr<std::ostream> out_stream;
-		unsigned int input_neuron_count;
 
-		std::ostream::pos_type type_code_pos;
-		neuron_data_type::input_type type_code;
-		size_t input_elem_size;
-
+		unsigned int neuron_count;
 		std::ostream::pos_type entry_count_pos;
 		unsigned int entry_count;
 
 	private:
-		unsupervised_data_stream_writer(const unsupervised_data_stream_writer&);
-		unsupervised_data_stream_writer& operator =(const unsupervised_data_stream_writer&);
+		structured_data_stream_writer(const structured_data_stream_writer&);
+		structured_data_stream_writer& operator =(const structured_data_stream_writer&);
 	};
-
-	typedef nnforge_shared_ptr<unsupervised_data_stream_writer> unsupervised_data_stream_writer_smart_ptr;
 }

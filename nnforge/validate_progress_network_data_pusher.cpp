@@ -53,7 +53,6 @@ namespace nnforge
 			unsigned int last_index = static_cast<unsigned int>(task_state.history.size()) - 1;
 
 			std::cout << "----- Validating -----" << std::endl;
-//			std::cout << "Validating NN # " << task_state.index_peeked << ", Epoch " << task_state.get_current_epoch() << std::endl;
 			std::cout << st << std::endl;
 
 			for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it = writer.layer_name_to_config_and_value_set_map.begin(); it != writer.layer_name_to_config_and_value_set_map.end(); ++it)

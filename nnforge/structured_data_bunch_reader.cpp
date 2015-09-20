@@ -26,7 +26,7 @@ namespace nnforge
 	{
 	}
 
-	int structured_data_bunch_reader::get_approximate_entry_count() const
+	int structured_data_bunch_reader::get_entry_count() const
 	{
 		return -1;
 	}

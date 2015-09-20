@@ -101,4 +101,12 @@ namespace nnforge
 	void structured_data_reader::next_epoch()
 	{
 	}
+
+	bool structured_data_reader::raw_read(
+		unsigned int entry_id,
+		std::vector<unsigned char>& all_elems)
+	{
+		all_elems.resize(get_configuration().get_neuron_count());
+		return read(entry_id, (float *)(&all_elems[0]));
+	}
 }

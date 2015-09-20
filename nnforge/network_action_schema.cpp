@@ -214,7 +214,7 @@ namespace nnforge
 		return res;
 	}
 
-	network_action_schema::dot_vertex_writer::dot_vertex_writer(
+	network_action_schema::gv_vertex_writer::gv_vertex_writer(
 		const reverse_action_schema_graph& g,
 		const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_color_map,
 		const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_border_color_map,
@@ -226,7 +226,7 @@ namespace nnforge
 	{
 	}
 
-	void network_action_schema::dot_vertex_writer::operator()(std::ostream& out, const network_action_schema::reverse_action_schema_graph::vertex_descriptor& v) const
+	void network_action_schema::gv_vertex_writer::operator()(std::ostream& out, const network_action_schema::reverse_action_schema_graph::vertex_descriptor& v) const
 	{
 		out << " [";
 		out << " label=<<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR><TD><B>" << g[v].l->instance_name << "</B></TD></TR><TR><TD";
@@ -249,7 +249,7 @@ namespace nnforge
 		out << " ]";
 	}
 
-	network_action_schema::dot_edge_writer::dot_edge_writer(
+	network_action_schema::gv_edge_writer::gv_edge_writer(
 		const reverse_action_schema_graph& g,
 		const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_output_edges_color_map)
 		: g(g)
@@ -257,7 +257,7 @@ namespace nnforge
 	{
 	}
 
-	void network_action_schema::dot_edge_writer::operator()(std::ostream& out, const network_action_schema::reverse_action_schema_graph::edge_descriptor& e) const
+	void network_action_schema::gv_edge_writer::operator()(std::ostream& out, const network_action_schema::reverse_action_schema_graph::edge_descriptor& e) const
 	{
 		out << " [";
 
@@ -269,16 +269,16 @@ namespace nnforge
 		out << " ]";
 	}
 
-	network_action_schema::dot_graph_writer::dot_graph_writer(const reverse_action_schema_graph& g)
+	network_action_schema::gv_graph_writer::gv_graph_writer(const reverse_action_schema_graph& g)
 		: g(g)
 	{
 	}
 
-	void network_action_schema::dot_graph_writer::operator()(std::ostream& out) const
+	void network_action_schema::gv_graph_writer::operator()(std::ostream& out) const
 	{
 	}
 
-	void network_action_schema::write_dot(
+	void network_action_schema::write_gv(
 		std::ostream& stream_to_write_to,
 		const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_color_map,
 		const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_border_color_map,
@@ -290,9 +290,9 @@ namespace nnforge
 		boost::write_graphviz(
 			stream_to_write_to,
 			boost::make_reverse_graph(actions),
-			dot_vertex_writer(actions, layer_name_with_action_color_map, layer_name_with_action_border_color_map, layer_name_with_action_bg_color_map),
-			dot_edge_writer(reverse_actions, layer_name_with_action_output_edges_color_map),
-			dot_graph_writer(actions));
+			gv_vertex_writer(actions, layer_name_with_action_color_map, layer_name_with_action_border_color_map, layer_name_with_action_bg_color_map),
+			gv_edge_writer(reverse_actions, layer_name_with_action_output_edges_color_map),
+			gv_graph_writer(actions));
 	}
 
 	template <class VertexListGraph, class ColorMap>

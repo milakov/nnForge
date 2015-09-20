@@ -39,9 +39,7 @@ namespace nnforge
 		unsigned int index = task_state.index_peeked;
 		network_data::const_ptr data = task_state.data;
 
-		std::string filename = (boost::format("ann_trained_%|1$03d|.data") % index).str();
-
-		boost::filesystem::ofstream file_with_data(folder_path / filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-		data->write(file_with_data);
+		std::string data_folder_name = (boost::format("ann_trained_%|1$03d|") % index).str();
+		data->write(folder_path / data_folder_name);
 	}
 }

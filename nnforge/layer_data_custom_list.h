@@ -21,6 +21,8 @@
 
 #include <map>
 #include <string>
+#include <boost/filesystem.hpp>
+#include <boost/uuid/uuid.hpp>
 
 namespace nnforge
 {
@@ -50,11 +52,14 @@ namespace nnforge
 			const std::string& instance_name,
 			layer_data_custom::ptr data_custom);
 
-		void write(std::ostream& binary_stream_to_write_to) const;
+		void write(const boost::filesystem::path& folder_path) const;
 
-		void read(std::istream& binary_stream_to_read_from);
+		void read(const boost::filesystem::path& folder_path);
 
 	private:
 		std::map<std::string, layer_data_custom::ptr> instance_name_to_data_custom_map;
+
+		static const boost::uuids::uuid data_custom_guid;
+		static const char * data_custom_extractor_pattern;
 	};
 }

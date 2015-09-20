@@ -40,7 +40,7 @@ namespace nnforge
 
 		network_action_schema();
 
-		void write_dot(
+		void write_gv(
 			std::ostream& stream_to_write_to,
 			const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_color_map = std::map<layer_name_with_action, unsigned int>(),
 			const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_border_color_map = std::map<layer_name_with_action, unsigned int>(),
@@ -140,9 +140,9 @@ namespace nnforge
 			std::set<vertex>& visited_vertices;
 		};
 
-		struct dot_vertex_writer
+		struct gv_vertex_writer
 		{
-			dot_vertex_writer(
+			gv_vertex_writer(
 				const reverse_action_schema_graph& g,
 				const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_color_map,
 				const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_border_color_map,
@@ -157,9 +157,9 @@ namespace nnforge
 			const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_bg_color_map;
 		};
 
-		struct dot_edge_writer
+		struct gv_edge_writer
 		{
-			dot_edge_writer(
+			gv_edge_writer(
 				const reverse_action_schema_graph& g,
 				const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_output_edges_color_map);
 
@@ -170,9 +170,9 @@ namespace nnforge
 			const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_output_edges_color_map;
 		};
 
-		struct dot_graph_writer
+		struct gv_graph_writer
 		{
-			dot_graph_writer(const reverse_action_schema_graph& g);
+			gv_graph_writer(const reverse_action_schema_graph& g);
 
 			void operator()(std::ostream& out) const;
 

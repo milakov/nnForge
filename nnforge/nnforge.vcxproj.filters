@@ -45,12 +45,6 @@
     <Filter Include="Source Files\network_schema">
       <UniqueIdentifier>{7c90a5cf-d21d-4c53-8a7b-11b2a08c0d1f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\network_tester">
-      <UniqueIdentifier>{27a3c21f-472e-49cc-9eb9-cfbb6e0af44c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\network_tester">
-      <UniqueIdentifier>{4afce1dc-acb7-469f-8064-436dbcf82fde}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\training">
       <UniqueIdentifier>{9b96bf50-d878-479f-9356-b539c00211f1}</UniqueIdentifier>
     </Filter>
@@ -203,12 +197,6 @@
     <ClInclude Include="network_schema.h">
       <Filter>Header Files\network_schema</Filter>
     </ClInclude>
-    <ClInclude Include="network_tester.h">
-      <Filter>Header Files\network_tester</Filter>
-    </ClInclude>
-    <ClInclude Include="network_tester_factory.h">
-      <Filter>Header Files\network_tester</Filter>
-    </ClInclude>
     <ClInclude Include="roc_result.h">
       <Filter>Header Files\result</Filter>
     </ClInclude>
@@ -264,15 +252,6 @@
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="supervised_data_stream_writer.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_stream_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_stream_schema.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_stream_writer.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="neuron_data_type.h">
@@ -344,17 +323,11 @@
     <ClInclude Include="error_function.h">
       <Filter>Header Files\error_functions</Filter>
     </ClInclude>
-    <ClInclude Include="mse_error_function.h">
-      <Filter>Header Files\error_functions</Filter>
-    </ClInclude>
     <ClInclude Include="squared_hinge_loss_error_function.h">
       <Filter>Header Files\error_functions</Filter>
     </ClInclude>
     <ClInclude Include="nn_types.h">
       <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="data_writer.h">
-      <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="varying_data_stream_writer.h">
       <Filter>Header Files\training_data</Filter>
@@ -370,9 +343,6 @@
     </ClInclude>
     <ClInclude Include="network_trainer_sgd.h">
       <Filter>Header Files\training\trainer</Filter>
-    </ClInclude>
-    <ClInclude Include="save_resume_network_data_pusher.h">
-      <Filter>Header Files\training\pushers</Filter>
     </ClInclude>
     <ClInclude Include="stream_duplicator.h">
       <Filter>Header Files\toolset</Filter>
@@ -512,9 +482,6 @@
     <ClInclude Include="neuron_value_set_data_bunch_writer.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
-    <ClInclude Include="legacy_supervised_data_bunch_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
     <ClInclude Include="accuracy_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
@@ -541,6 +508,21 @@
     </ClInclude>
     <ClInclude Include="color_palette.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_stream_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_stream_schema.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_stream_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_bunch_stream_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="save_snapshot_network_data_pusher.h">
+      <Filter>Header Files\training\pushers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -613,12 +595,6 @@
     <ClCompile Include="network_schema.cpp">
       <Filter>Source Files\network_schema</Filter>
     </ClCompile>
-    <ClCompile Include="network_tester.cpp">
-      <Filter>Source Files\network_tester</Filter>
-    </ClCompile>
-    <ClCompile Include="network_tester_factory.cpp">
-      <Filter>Source Files\network_tester</Filter>
-    </ClCompile>
     <ClCompile Include="roc_result.cpp">
       <Filter>Source Files\result</Filter>
     </ClCompile>
@@ -677,15 +653,6 @@
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="supervised_data_stream_writer.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_stream_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_stream_schema.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_stream_writer.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="supervised_data_reader.cpp">
@@ -757,14 +724,8 @@
     <ClCompile Include="error_function.cpp">
       <Filter>Source Files\error_functions</Filter>
     </ClCompile>
-    <ClCompile Include="mse_error_function.cpp">
-      <Filter>Source Files\error_functions</Filter>
-    </ClCompile>
     <ClCompile Include="squared_hinge_loss_error_function.cpp">
       <Filter>Source Files\error_functions</Filter>
-    </ClCompile>
-    <ClCompile Include="data_writer.cpp">
-      <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="varying_data_stream_writer.cpp">
       <Filter>Source Files\training_data</Filter>
@@ -780,9 +741,6 @@
     </ClCompile>
     <ClCompile Include="network_trainer_sgd.cpp">
       <Filter>Source Files\training\trainer</Filter>
-    </ClCompile>
-    <ClCompile Include="save_resume_network_data_pusher.cpp">
-      <Filter>Source Files\training\pushers</Filter>
     </ClCompile>
     <ClCompile Include="stream_duplicator.cpp">
       <Filter>Source Files\toolset</Filter>
@@ -913,9 +871,6 @@
     <ClCompile Include="neuron_value_set_data_bunch_writer.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
-    <ClCompile Include="legacy_supervised_data_bunch_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
     <ClCompile Include="accuracy_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
@@ -933,6 +888,21 @@
     </ClCompile>
     <ClCompile Include="color_palette.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_stream_schema.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_stream_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_stream_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_bunch_stream_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="save_snapshot_network_data_pusher.cpp">
+      <Filter>Source Files\training\pushers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

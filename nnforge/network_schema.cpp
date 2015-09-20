@@ -581,7 +581,7 @@ namespace nnforge
 		return res;
 	}
 
-	network_schema::dot_vertex_writer::dot_vertex_writer(
+	network_schema::gv_vertex_writer::gv_vertex_writer(
 		const schema_graph& g,
 		const std::map<std::string, unsigned int>& layer_name_color_map)
 		: g(g)
@@ -589,7 +589,7 @@ namespace nnforge
 	{
 	}
 
-	void network_schema::dot_vertex_writer::operator()(std::ostream& out, const network_schema::schema_graph::vertex_descriptor& v) const
+	void network_schema::gv_vertex_writer::operator()(std::ostream& out, const network_schema::schema_graph::vertex_descriptor& v) const
 	{
 		out << " [";
 		out << " label=\"" << g[v].l->instance_name << "\"";
@@ -602,24 +602,24 @@ namespace nnforge
 		out << " ]";
 	}
 
-	network_schema::dot_graph_writer::dot_graph_writer(const schema_graph& g)
+	network_schema::gv_graph_writer::gv_graph_writer(const schema_graph& g)
 		: g(g)
 	{
 	}
 
-	void network_schema::dot_graph_writer::operator()(std::ostream& out) const
+	void network_schema::gv_graph_writer::operator()(std::ostream& out) const
 	{
 	}
 
-	void network_schema::write_dot(
+	void network_schema::write_gv(
 		std::ostream& stream_to_write_to,
 		const std::map<std::string, unsigned int>& layer_name_color_map) const
 	{
 		boost::write_graphviz(
 			stream_to_write_to, boost::make_reverse_graph(layers),
-			dot_vertex_writer(layers, layer_name_color_map),
+			gv_vertex_writer(layers, layer_name_color_map),
 			boost::default_writer(),
-			dot_graph_writer(layers));
+			gv_graph_writer(layers));
 	}
 
 	

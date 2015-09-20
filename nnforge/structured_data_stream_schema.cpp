@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,20 +14,15 @@
  *  limitations under the License.
  */
 
-#pragma once
-
-#include <boost/uuid/uuid.hpp>
+#include "structured_data_stream_schema.h"
 
 namespace nnforge
 {
-	class unsupervised_data_stream_schema
-	{
-	public:
-		static const boost::uuids::uuid unsupervised_data_stream_guid;
-
-	private:
-		unsupervised_data_stream_schema();
-		unsupervised_data_stream_schema(const unsupervised_data_stream_schema&);
-		unsupervised_data_stream_schema& operator =(const unsupervised_data_stream_schema&);
-	};
+	// {2C62E05A-C621-43B2-A82C-85CD585815D9}
+	const boost::uuids::uuid structured_data_stream_schema::structured_data_stream_guid =
+	{ 0x2c, 0x62, 0xe0, 0x5a
+	, 0xc6, 0x21
+	, 0x43, 0xb2
+	, 0xa8, 0x2c
+	, 0x85, 0xcd, 0x58, 0x58, 0x15, 0xd9 };
 }

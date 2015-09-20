@@ -44,8 +44,8 @@ namespace nnforge
 			exclude_data_update_layer_names)));
 		if (debug->is_debug())
 		{
-			boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_schema_reduced", "dot"), std::ios_base::out | std::ios_base::trunc);
-			this->schema->write_dot(out);
+			boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_schema_reduced", "gv"), std::ios_base::out | std::ios_base::trunc);
+			this->schema->write_gv(out);
 		}
 
 		std::vector<layer::const_ptr> layers = this->schema->get_layers();
@@ -107,8 +107,8 @@ namespace nnforge
 				layer_name_with_action_color_map.insert(std::make_pair(*it, color_id));
 			}
 
-			boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_action_schema", "dot"), std::ios_base::out | std::ios_base::trunc);
-			this->action_schema->write_dot(out, layer_name_with_action_color_map);
+			boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_action_schema", "gv"), std::ios_base::out | std::ios_base::trunc);
+			this->action_schema->write_gv(out, layer_name_with_action_color_map);
 		}
 
 		std::vector<layer::const_ptr> data_layers = this->schema->get_data_layers();

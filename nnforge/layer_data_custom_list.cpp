@@ -19,9 +19,21 @@
 #include "neural_network_exception.h"
 
 #include <boost/format.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace nnforge
 {
+	// {049EB47D-AF04-4957-8E6A-7CBC4C4D1754}
+	const boost::uuids::uuid layer_data_custom_list::data_custom_guid =
+		{ 0x04, 0x9e, 0xb4, 0x7d
+		, 0xaf, 0x04
+		, 0x49, 0x57
+		, 0x8e, 0x6a
+		, 0x7c, 0xbc, 0x4c, 0x4d, 0x17, 0x54 };
+
+	const char * layer_data_custom_list::data_custom_extractor_pattern = "^(.+)\\.datac$";
+
 	layer_data_custom_list::layer_data_custom_list()
 	{
 	}
@@ -90,34 +102,51 @@ namespace nnforge
 		return res;
 	}
 
-	void layer_data_custom_list::write(std::ostream& binary_stream_to_write_to) const
+	void layer_data_custom_list::write(const boost::filesystem::path& folder_path) const
 	{
-		unsigned int elem_count = static_cast<unsigned int>(instance_name_to_data_custom_map.size());
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&elem_count), sizeof(elem_count));
+		boost::filesystem::create_directories(folder_path);
+
 		for(std::map<std::string, layer_data_custom::ptr>::const_iterator it = instance_name_to_data_custom_map.begin(); it != instance_name_to_data_custom_map.end(); ++it)
 		{
-			unsigned int name_length = static_cast<unsigned int>(it->first.length());
-			binary_stream_to_write_to.write(reinterpret_cast<const char*>(&name_length), sizeof(name_length));
-			binary_stream_to_write_to.write(it->first.data(), name_length);
-			it->second->write(binary_stream_to_write_to);
+			boost::filesystem::path file_path = folder_path / (it->first + ".datac");
+			boost::filesystem::ofstream out(file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+			out.exceptions(std::ostream::eofbit | std::ostream::failbit | std::ostream::badbit);
+			out.write(reinterpret_cast<const char*>(data_custom_guid.data), sizeof(data_custom_guid.data));
+			it->second->write(out);
 		}
 	}
 
-	void layer_data_custom_list::read(std::istream& binary_stream_to_read_from)
+	void layer_data_custom_list::read(const boost::filesystem::path& folder_path)
 	{
 		instance_name_to_data_custom_map.clear();
-		unsigned int elem_count;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&elem_count), sizeof(elem_count));
-		for(unsigned int i = 0; i < elem_count; ++i)
+
+		if (!boost::filesystem::exists(folder_path) || !boost::filesystem::is_directory(folder_path))
+			throw neural_network_exception((boost::format("Directory %1% doesn't exist") % folder_path).str());
+
+		nnforge_regex expression(data_custom_extractor_pattern);
+		nnforge_cmatch what;
+
+		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
-			unsigned int name_length;
-			binary_stream_to_read_from.read(reinterpret_cast<char*>(&name_length), sizeof(name_length));
-			std::string instance_name;
-			instance_name.resize(name_length);
-			binary_stream_to_read_from.read(&instance_name[0], name_length);
-			layer_data_custom::ptr d(new layer_data_custom());
-			d->read(binary_stream_to_read_from);
-			add(instance_name, d);
+			if (it->status().type() == boost::filesystem::regular_file)
+			{
+				boost::filesystem::path file_path = it->path();
+				std::string file_name = file_path.filename().string();
+
+				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				{
+					std::string data_name = std::string(what[1].first, what[1].second);
+					boost::filesystem::ifstream in(file_path, std::ios_base::in | std::ios_base::binary);
+					in.exceptions(std::istream::eofbit | std::istream::failbit | std::istream::badbit);
+					boost::uuids::uuid data_custom_guid_read;
+					in.read(reinterpret_cast<char*>(data_custom_guid_read.data), sizeof(data_custom_guid_read.data));
+					if (data_custom_guid_read != data_custom_guid)
+						throw neural_network_exception((boost::format("Unknown data GUID encountered in input stream: %1%") % data_custom_guid_read).str());
+					layer_data_custom::ptr d(new layer_data_custom());
+					d->read(in);
+					add(data_name, d);
+				}
+			}
 		}
 	}
 

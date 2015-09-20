@@ -39,6 +39,9 @@
 
 #include "rnd.h"
 
+#include "structured_data_stream_writer.h"
+#include "data_transformer_util.h"
+
 #include "nn_types.h"
 
 namespace nnforge

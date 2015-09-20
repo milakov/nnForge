@@ -104,7 +104,7 @@ namespace nnforge
 		// Throws exception in case layer is not found
 		layer::const_ptr get_layer(const std::string& instance_name) const;
 
-		void write_dot(
+		void write_gv(
 			std::ostream& stream_to_write_to,
 			const std::map<std::string, unsigned int>& layer_name_color_map = std::map<std::string, unsigned int>()) const;
 
@@ -173,9 +173,9 @@ namespace nnforge
 			std::set<vertex>& visited_vertices;
 		};
 
-		struct dot_vertex_writer
+		struct gv_vertex_writer
 		{
-			dot_vertex_writer(
+			gv_vertex_writer(
 				const schema_graph& g,
 				const std::map<std::string, unsigned int>& layer_name_color_map);
 
@@ -186,9 +186,9 @@ namespace nnforge
 			const std::map<std::string, unsigned int>& layer_name_color_map;
 		};
 
-		struct dot_graph_writer
+		struct gv_graph_writer
 		{
-			dot_graph_writer(const schema_graph& g);
+			gv_graph_writer(const schema_graph& g);
 
 			void operator()(std::ostream& out) const;
 

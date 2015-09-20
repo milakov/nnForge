@@ -17,24 +17,19 @@
 #pragma once
 
 #include "structured_data_bunch_reader.h"
-#include "neuron_data_type.h"
-
-#include <string>
-#include <boost/thread/thread.hpp>
+#include "structured_data_stream_reader.h"
+#include "nn_types.h"
 
 namespace nnforge
 {
-	class legacy_supervised_data_bunch_reader : public structured_data_bunch_reader
+	class structured_data_bunch_stream_reader : public structured_data_bunch_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<legacy_supervised_data_bunch_reader> ptr;
+		typedef nnforge_shared_ptr<structured_data_bunch_stream_reader> ptr;
 
-		legacy_supervised_data_bunch_reader(
-			nnforge_shared_ptr<std::istream> input_stream,
-			const char * input_data_layer_name,
-			const char * output_data_layer_name);
+		structured_data_bunch_stream_reader(const std::map<std::string, structured_data_reader::ptr>& data_reader_map);
 
-		virtual ~legacy_supervised_data_bunch_reader();
+		virtual ~structured_data_bunch_stream_reader();
 
 		virtual std::map<std::string, layer_configuration_specific> get_config_map() const;
 
@@ -45,20 +40,11 @@ namespace nnforge
 
 		virtual void next_epoch() const;
 
-		virtual int get_approximate_entry_count() const;
+		// Return -1 in case there is no info on entry count
+		virtual int get_entry_count() const;
 
 	protected:
-		nnforge_shared_ptr<std::istream> in_stream;
-		std::string input_data_layer_name;
-		std::string output_data_layer_name;
-
-		layer_configuration_specific input_configuration;
-		layer_configuration_specific output_configuration;
-		neuron_data_type::input_type type_code;
-		unsigned int entry_count;
-
-		std::istream::pos_type reset_pos;
-
-		boost::mutex read_data_mutex;
+		std::map<std::string, structured_data_reader::ptr> data_reader_map;
+		int entry_count;
 	};
 }

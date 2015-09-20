@@ -30,9 +30,13 @@ namespace nnforge
 
 		virtual ~structured_data_reader();
 
-		virtual void read(
+		virtual bool read(
 			unsigned int entry_id,
 			float * data) = 0;
+
+		virtual bool raw_read(
+			unsigned int entry_id,
+			std::vector<unsigned char>& all_elems);
 
 		virtual void next_epoch();
 

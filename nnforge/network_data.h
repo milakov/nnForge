@@ -25,10 +25,9 @@
 #include "layer_data_custom_list.h"
 
 #include <vector>
-#include <ostream>
-#include <istream>
 #include <string>
 #include <boost/uuid/uuid.hpp>
+#include <boost/filesystem.hpp>
 
 namespace nnforge
 {
@@ -51,13 +50,9 @@ namespace nnforge
 
 		const boost::uuids::uuid& get_uuid() const;
 
-		// The stream should be created with std::ios_base::binary flag
-		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure
-		void write(std::ostream& binary_stream_to_write_to) const;
+		void write(const boost::filesystem::path& folder_path) const;
 
-		// The stream should be created with std::ios_base::binary flag
-		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
-		void read(std::istream& binary_stream_to_read_from);
+		void read(const boost::filesystem::path& folder_path);
 
 		// The method throws exception in case the data is not suitable for the layers
 		void check_network_data_consistency(const std::vector<layer::const_ptr>& layer_list) const;
@@ -66,18 +61,11 @@ namespace nnforge
 			const std::vector<layer::const_ptr>& layer_list,
 			random_generator& gen);
 
-	private:
-		void read_legacy(
-			std::istream& binary_stream_to_read_from,
-			bool read_data_custom);
-
 	public:
 		layer_data_list data_list;
 		layer_data_custom_list data_custom_list;
 
 	private:
 		static const boost::uuids::uuid data_guid;
-		static const boost::uuids::uuid data_guid_v2;
-		static const boost::uuids::uuid data_guid_v1;
 	};
 }

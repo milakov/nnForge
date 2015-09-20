@@ -27,19 +27,22 @@
 #include "network_trainer_sgd.h"
 #include "network_data_peeker_random.h"
 #include "complex_network_data_pusher.h"
-#include "save_resume_network_data_pusher.h"
+#include "save_snapshot_network_data_pusher.h"
 #include "report_progress_network_data_pusher.h"
 #include "summarize_network_data_pusher.h"
 #include "validate_progress_network_data_pusher.h"
+#include "structured_data_stream_writer.h"
+#include "structured_data_bunch_stream_reader.h"
 
 namespace nnforge
 {
 	const char * toolset::logfile_name = "log.txt";
-	const char * toolset::ann_subfolder_name = "batch";
+	const char * toolset::ann_subfolder_name = "trained_data";
 	const char * toolset::debug_subfolder_name = "debug";
-	const char * toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
-	const char * toolset::resume_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)\\.data$";
-	const char * toolset::ann_resume_subfolder_name = "resume";
+	const char * toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)$";
+	const char * toolset::snapshot_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)$";
+	const char * toolset::ann_snapshot_subfolder_name = "snapshots";
+	const char * toolset::dataset_extractor_pattern = "^%1%_(.+)\\.dt$";
 
 	toolset::toolset(factory_generator::ptr master_factory)
 		: master_factory(master_factory)
@@ -60,13 +63,25 @@ namespace nnforge
 		{
 			run_inference();
 		}
-		else if (!action.compare("dump_schema_dot"))
+		else if (!action.compare("dump_schema_gv"))
 		{
-			dump_schema_dot();
+			dump_schema_gv();
 		}
 		else if (!action.compare("train"))
 		{
 			train();
+		}
+		else if (!action.compare("prepare_training_data"))
+		{
+			prepare_training_data();
+		}
+		else if (!action.compare("prepare_testing_data"))
+		{
+			prepare_testing_data();
+		}
+		else if (!action.compare("shuffle_data"))
+		{
+			shuffle_data();
 		}
 		else
 		{
@@ -258,10 +273,11 @@ namespace nnforge
 	{
 		std::vector<string_option> res;
 
-		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, run_inference, dump_schema_dot, train)"));
+		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, randomize_data, dump_schema_gv, run_inference, train)"));
 		res.push_back(string_option("schema", &schema_filename, "schema.txt", "Name of the file with schema of the network, in protobuf format"));
 		res.push_back(string_option("inference_dataset_name", &inference_dataset_name, "validating", "Name of the dataset to be used for inference"));
-		res.push_back(string_option("training_dataset_name", &training_dataset_name, "training_randomized", "Name of the dataset to be used for training"));
+		res.push_back(string_option("training_dataset_name", &training_dataset_name, "training", "Name of the dataset to be used for training"));
+		res.push_back(string_option("shuffle_dataset_name", &shuffle_dataset_name, "training", "Name of the dataset to be shuffled"));
 		res.push_back(string_option("training_algo", &training_algo, "", "Training algorithm (sgd)"));
 		res.push_back(string_option("momentum_type", &momentum_type_str, "vanilla", "Type of the momentum to use (none, vanilla, nesterov)"));
 
@@ -286,6 +302,7 @@ namespace nnforge
 
 		res.push_back(path_option("config", &config_file_path, default_config_path.c_str(), "Path to the configuration file"));
 		res.push_back(path_option("working_data_folder", &working_data_folder, "", "Path to the folder where data are processed"));
+		res.push_back(path_option("input_data_folder", &input_data_folder, "", "Path to the folder where input data are located"));
 
 		return res;
 	}
@@ -295,8 +312,8 @@ namespace nnforge
 		std::vector<bool_option> res;
 
 		res.push_back(bool_option("debug_mode", &debug_mode, false, "Debug mode"));
-		res.push_back(bool_option("load_resume,R", &load_resume, false, "Resume neural network training strating from saved state"));
-		res.push_back(bool_option("dump_resume,R", &dump_resume, true, "Dump neural network data after each epoch"));
+		res.push_back(bool_option("load_snapshot,R", &load_snapshot, false, "snapshot neural network training starting from saved snapshot"));
+		res.push_back(bool_option("dump_snapshot,R", &dump_snapshot, true, "Dump neural network data after each epoch"));
 
 		return res;
 	}
@@ -332,6 +349,11 @@ namespace nnforge
 	boost::filesystem::path toolset::get_working_data_folder() const
 	{
 		return working_data_folder;
+	}
+
+	boost::filesystem::path toolset::get_input_data_folder() const
+	{
+		return input_data_folder;
 	}
 
 	void toolset::dump_settings()
@@ -420,19 +442,16 @@ namespace nnforge
 		forward_propagation::ptr forward_prop = forward_propagation_factory->create(*schema, inference_output_layer_names, debug);
 		structured_data_bunch_reader::ptr reader = get_reader(inference_dataset_name);
 
-		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_filepath_list = get_ann_data_index_and_filepath_list();
-		for(std::vector<std::pair<unsigned int, boost::filesystem::path> >::const_iterator it = ann_data_name_and_filepath_list.begin(); it != ann_data_name_and_filepath_list.end(); ++it)
+		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
+		for(std::vector<std::pair<unsigned int, boost::filesystem::path> >::const_iterator it = ann_data_name_and_folderpath_list.begin(); it != ann_data_name_and_folderpath_list.end(); ++it)
 		{
 			network_data data;
-			{
-				boost::filesystem::ifstream in(it->second, std::ios_base::in | std::ios_base::binary);
-				data.read(in);
-			}
+			data.read(it->second);
 			forward_prop->set_data(data);
 
 			neuron_value_set_data_bunch_writer writer;
 			forward_propagation::stat st = forward_prop->run(*reader, writer);
-			std::cout << "Network # " << it->first << " - " << st << std::endl;
+			std::cout << "NN # " << it->first << " - " << st << std::endl;
 
 			for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it = writer.layer_name_to_config_and_value_set_map.begin(); it != writer.layer_name_to_config_and_value_set_map.end(); ++it)
 				std::cout << schema->get_layer(it->first)->get_string_for_average_data(it->second.first, *it->second.second->get_average()) << std::endl;
@@ -441,7 +460,18 @@ namespace nnforge
 
 	structured_data_bunch_reader::ptr toolset::get_reader(const std::string& dataset_name) const
 	{
-		throw neural_network_exception((boost::format("get_reader is not implemented for %1% dataset") % dataset_name).str());
+		std::map<std::string, boost::filesystem::path> data_filenames = get_data_filenames(dataset_name);
+
+		std::map<std::string, structured_data_reader::ptr> data_reader_map;
+		for(std::map<std::string, boost::filesystem::path>::const_iterator it = data_filenames.begin(); it != data_filenames.end(); ++it)
+		{
+			nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(it->second, std::ios_base::in | std::ios_base::binary));
+			structured_data_stream_reader::ptr dr(new structured_data_stream_reader(in));
+			data_reader_map.insert(std::make_pair(it->first, dr));
+		}
+
+		structured_data_bunch_reader::ptr res(new structured_data_bunch_stream_reader(data_reader_map));
+		return res;
 	}
 
 	boost::filesystem::path toolset::get_ann_subfolder_name() const
@@ -449,42 +479,42 @@ namespace nnforge
 		return ann_subfolder_name;
 	}
 
-	std::vector<std::pair<unsigned int, boost::filesystem::path> > toolset::get_ann_data_index_and_filepath_list() const
+	std::vector<std::pair<unsigned int, boost::filesystem::path> > toolset::get_ann_data_index_and_folderpath_list() const
 	{
 		std::vector<std::pair<unsigned int, boost::filesystem::path> > res;
 
-		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
+		boost::filesystem::path trained_data_folder = get_working_data_folder() / get_ann_subfolder_name();
 
 		nnforge_regex expression(trained_ann_index_extractor_pattern);
 		nnforge_cmatch what;
-		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(batch_folder); it != boost::filesystem::directory_iterator(); ++it)
+		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(trained_data_folder); it != boost::filesystem::directory_iterator(); ++it)
 		{
-			boost::filesystem::path file_path = it->path();
-			std::string file_name = file_path.filename().string();
+			boost::filesystem::path folder_path = it->path();
+			std::string folder_name = folder_path.filename().string();
 
-			if (nnforge_regex_search(file_name.c_str(), what, expression))
+			if (nnforge_regex_search(folder_name.c_str(), what, expression))
 			{
 				unsigned int ann_data_index = atol(std::string(what[1].first, what[1].second).c_str());
 				if ((inference_ann_data_index != -1) && (inference_ann_data_index != ann_data_index))
 					continue;
 
-				res.push_back(std::make_pair(ann_data_index, file_path));
+				res.push_back(std::make_pair(ann_data_index, folder_path));
 			}
 		}
 
 		return res;
 	}
 
-	void toolset::dump_schema_dot()
+	void toolset::dump_schema_gv()
 	{
 		network_schema::ptr schema = load_schema();
 
-		boost::filesystem::path dot_filename(schema_filename);
-		dot_filename.replace_extension("dot");
-		boost::filesystem::path filepath = get_working_data_folder() / dot_filename;
+		boost::filesystem::path gv_filename(schema_filename);
+		gv_filename.replace_extension("gv");
+		boost::filesystem::path filepath = get_working_data_folder() / gv_filename;
 
 		boost::filesystem::ofstream out(filepath, std::ios_base::out);
-		schema->write_dot(out);
+		schema->write_gv(out);
 	}
 
 	void toolset::train()
@@ -492,17 +522,15 @@ namespace nnforge
 		network_schema::ptr schema = load_schema();
 		network_trainer::ptr trainer = get_network_trainer();
 
-		structured_data_bunch_reader::ptr reader = get_reader(training_dataset_name);
-
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
-		boost::filesystem::path batch_resume_folder = batch_folder / ann_resume_subfolder_name;
-		boost::filesystem::create_directories(batch_resume_folder);
+		boost::filesystem::path batch_snapshot_folder = batch_folder / ann_snapshot_subfolder_name;
+		boost::filesystem::create_directories(batch_snapshot_folder);
 
 		std::vector<network_data_peek_entry> leading_tasks;
-		if (load_resume)
+		if (load_snapshot)
 		{
-			leading_tasks = get_resume_ann_list_entry_list();
+			leading_tasks = get_snapshot_ann_list_entry_list();
 		}
 		unsigned int starting_index = get_starting_index_for_batch_training();
 		for(std::vector<network_data_peek_entry>::const_iterator it = leading_tasks.begin(); it != leading_tasks.end(); ++it)
@@ -511,9 +539,9 @@ namespace nnforge
 
 		complex_network_data_pusher progress;
 
-		if (dump_resume)
+		if (dump_snapshot)
 		{
-			progress.push_back(network_data_pusher::ptr(new save_resume_network_data_pusher(batch_resume_folder)));
+			progress.push_back(network_data_pusher::ptr(new save_snapshot_network_data_pusher(batch_snapshot_folder)));
 		}
 
 		progress.push_back(network_data_pusher::ptr(new report_progress_network_data_pusher()));
@@ -523,8 +551,9 @@ namespace nnforge
 
 		summarize_network_data_pusher res(batch_folder);
 
+		structured_data_bunch_reader::ptr reader = get_reader(training_dataset_name);
 		trainer->train(
-			*get_reader(training_dataset_name),
+			*reader,
 			*peeker,
 			progress,
 			res);
@@ -558,10 +587,10 @@ namespace nnforge
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(batch_folder); it != boost::filesystem::directory_iterator(); it++)
 		{
-			boost::filesystem::path file_path = it->path();
-			std::string file_name = file_path.filename().string();
+			boost::filesystem::path folder_path = it->path();
+			std::string folder_name = folder_path.filename().string();
 
-			if (nnforge_regex_search(file_name.c_str(), what, expression))
+			if (nnforge_regex_search(folder_name.c_str(), what, expression))
 			{
 				int index = atol(std::string(what[1].first, what[1].second).c_str());
 				max_index = std::max<int>(max_index, index); 
@@ -571,43 +600,41 @@ namespace nnforge
 		return static_cast<unsigned int>(max_index + 1) + batch_offset;
 	}
 
-	std::vector<network_data_peek_entry> toolset::get_resume_ann_list_entry_list() const
+	std::vector<network_data_peek_entry> toolset::get_snapshot_ann_list_entry_list() const
 	{
 		std::vector<network_data_peek_entry> res;
 
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
-		boost::filesystem::path resume_ann_folder_path = batch_folder / ann_resume_subfolder_name;
-		boost::filesystem::create_directories(resume_ann_folder_path);
+		boost::filesystem::path snapshot_ann_folder_path = batch_folder / ann_snapshot_subfolder_name;
+		boost::filesystem::create_directories(snapshot_ann_folder_path);
 
 		std::set<unsigned int> trained_ann_list = get_trained_ann_list();
 
-		std::map<unsigned int, unsigned int> resume_ann_list = get_resume_ann_list(trained_ann_list);
+		std::map<unsigned int, unsigned int> snapshot_ann_list = get_snapshot_ann_list(trained_ann_list);
 
 		network_schema::ptr schema = load_schema();
 
-		for(std::map<unsigned int, unsigned int>::const_iterator it = resume_ann_list.begin(); it != resume_ann_list.end(); ++it)
+		for(std::map<unsigned int, unsigned int>::const_iterator it = snapshot_ann_list.begin(); it != snapshot_ann_list.end(); ++it)
 		{
 			network_data_peek_entry new_item;
 			new_item.index = it->first;
 			new_item.start_epoch = it->second;
 			
 			{
-				std::string filename = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|.data") % new_item.index % new_item.start_epoch).str();
-				boost::filesystem::path filepath = resume_ann_folder_path / filename;
+				std::string folder_name = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|") % new_item.index % new_item.start_epoch).str();
+				boost::filesystem::path folder_path = snapshot_ann_folder_path / folder_name;
 				new_item.data = network_data::ptr(new network_data());
-				boost::filesystem::ifstream in(filepath, std::ios_base::in | std::ios_base::binary);
-				new_item.data->read(in);
+				new_item.data->read(folder_path);
 			}
 
 			{
-				std::string momentum_filename = (boost::format("momentum_%|1$03d|.data") % new_item.index).str();
-				boost::filesystem::path momentum_filepath = resume_ann_folder_path / momentum_filename;
-				if (boost::filesystem::exists(momentum_filepath))
+				std::string momentum_folder_name = (boost::format("momentum_%|1$03d|") % new_item.index).str();
+				boost::filesystem::path momentum_folder_path = snapshot_ann_folder_path / momentum_folder_name;
+				if (boost::filesystem::exists(momentum_folder_path))
 				{
 					new_item.momentum_data = network_data::ptr(new network_data());
-					boost::filesystem::ifstream in(momentum_filepath, std::ios_base::in | std::ios_base::binary);
-					new_item.momentum_data->read(in);
+					new_item.momentum_data->read(momentum_folder_path);
 				}
 			}
 
@@ -624,25 +651,25 @@ namespace nnforge
 		return (i.index > j.index);
 	}
 
-	std::map<unsigned int, unsigned int> toolset::get_resume_ann_list(const std::set<unsigned int>& exclusion_ann_list) const
+	std::map<unsigned int, unsigned int> toolset::get_snapshot_ann_list(const std::set<unsigned int>& exclusion_ann_list) const
 	{
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
-		boost::filesystem::path resume_ann_folder_path = batch_folder / ann_resume_subfolder_name;
-		boost::filesystem::create_directories(resume_ann_folder_path);
+		boost::filesystem::path snapshot_ann_folder_path = batch_folder / ann_snapshot_subfolder_name;
+		boost::filesystem::create_directories(snapshot_ann_folder_path);
 
 		std::map<unsigned int, unsigned int> res;
-		nnforge_regex expression(resume_ann_index_extractor_pattern);
+		nnforge_regex expression(snapshot_ann_index_extractor_pattern);
 		nnforge_cmatch what;
 
-		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(resume_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
+		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(snapshot_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
-			if (it->status().type() == boost::filesystem::regular_file)
+			if (it->status().type() == boost::filesystem::directory_file)
 			{
-				boost::filesystem::path file_path = it->path();
-				std::string file_name = file_path.filename().string();
+				boost::filesystem::path folder_path = it->path();
+				std::string folder_name = folder_path.filename().string();
 
-				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				if (nnforge_regex_search(folder_name.c_str(), what, expression))
 				{
 					unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
 					if (exclusion_ann_list.find(index) == exclusion_ann_list.end())
@@ -672,12 +699,12 @@ namespace nnforge
 
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(trained_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
-			if (it->status().type() == boost::filesystem::regular_file)
+			if (it->status().type() == boost::filesystem::directory_file)
 			{
-				boost::filesystem::path file_path = it->path();
-				std::string file_name = file_path.filename().string();
+				boost::filesystem::path folder_path = it->path();
+				std::string folder_name = folder_path.filename().string();
 
-				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				if (nnforge_regex_search(folder_name.c_str(), what, expression))
 				{
 					unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
 					res.insert(index);
@@ -725,6 +752,105 @@ namespace nnforge
 		res->weight_decay = weight_decay;
 		res->batch_size = batch_size;
 		res->momentum = training_momentum(momentum_type_str, momentum_val);
+
+		return res;
+	}
+
+	void toolset::prepare_testing_data()
+	{
+		throw std::runtime_error("This toolset doesn't implement preparing testing data");
+	}
+	
+	void toolset::prepare_training_data()
+	{
+		throw std::runtime_error("This toolset doesn't implement preparing training data");
+	}
+
+	void toolset::shuffle_data()
+	{
+		std::map<std::string, boost::filesystem::path> data_filenames = get_data_filenames(shuffle_dataset_name);
+
+		int entry_count = -1;
+		for(std::map<std::string, boost::filesystem::path>::const_iterator it = data_filenames.begin(); it != data_filenames.end(); ++it)
+		{
+			nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(it->second, std::ios_base::in | std::ios_base::binary));
+			structured_data_stream_reader dr(in);
+			int new_entry_count = dr.get_entry_count();
+			if (new_entry_count < 0)
+				throw std::runtime_error((boost::format("Unknown entry count in %1%") % it->second.string()).str());
+			if (entry_count < 0)
+				entry_count = new_entry_count;
+			else if (entry_count != new_entry_count)
+				throw std::runtime_error((boost::format("Entry count mismatch: %1% and %2%") % entry_count % new_entry_count).str());
+		}
+		if (entry_count < 0)
+			throw std::runtime_error((boost::format("No data found for dataset %1%") % shuffle_dataset_name).str());
+		else if (entry_count == 0)
+		{
+			std::cout << (boost::format("No data found for dataset %1%") % shuffle_dataset_name).str() << std::endl;
+			return;
+		}
+
+		std::cout << "Shuffling " << entry_count << " entries in " << shuffle_dataset_name << " dataset" << std::endl;
+
+		std::vector<unsigned int> shuffled_indexes(entry_count);
+		{
+			for(unsigned int i = 0; i < static_cast<unsigned int>(entry_count); ++i)
+				shuffled_indexes[i] = i;
+			random_generator rnd = rnd::get_random_generator();
+			for(unsigned int i = static_cast<unsigned int>(entry_count) - 1; i > 0; --i)
+			{
+				nnforge_uniform_int_distribution<unsigned int> dist(0, i);
+				unsigned int index = dist(rnd);
+				std::swap(shuffled_indexes[i], shuffled_indexes[index]);
+			}
+		}
+
+		for(std::map<std::string, boost::filesystem::path>::const_iterator it = data_filenames.begin(); it != data_filenames.end(); ++it)
+		{
+			const boost::filesystem::path& file_path = it->second;
+			boost::filesystem::path temp_file_path = file_path;
+			temp_file_path += ".tmp";
+			{
+				std::cout << "Shuffling from " << file_path.string() << " to " << temp_file_path.string() << std::endl;
+				nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(file_path, std::ios_base::in | std::ios_base::binary));
+				structured_data_stream_reader dr(in);
+				nnforge_shared_ptr<std::ostream> out(new boost::filesystem::ofstream(temp_file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary));
+				structured_data_stream_writer dw(out, dr.get_configuration());
+				std::vector<float> entry_data(dr.get_configuration().get_neuron_count());
+				for(unsigned int i = 0; i < static_cast<unsigned int>(entry_count); ++i)
+				{
+					dr.read(shuffled_indexes[i], &entry_data[0]);
+					dw.write(&entry_data[0]);
+				}
+			}
+			std::cout << "Renaming " << temp_file_path.string() << " to " << file_path.string() << std::endl;
+			boost::filesystem::rename(temp_file_path, file_path);
+		}
+	}
+
+	std::map<std::string, boost::filesystem::path> toolset::get_data_filenames(const std::string& dataset_name) const
+	{
+		boost::filesystem::path folder_path = get_working_data_folder();
+
+		std::map<std::string, boost::filesystem::path> res;
+		nnforge_regex expression((boost::format(dataset_extractor_pattern) % dataset_name).str());
+		nnforge_cmatch what;
+
+		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(folder_path); it != boost::filesystem::directory_iterator(); ++it)
+		{
+			if (it->status().type() == boost::filesystem::regular_file)
+			{
+				boost::filesystem::path file_path = it->path();
+				std::string file_name = file_path.filename().string();
+
+				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				{
+					std::string data_name = std::string(what[1].first, what[1].second);
+					res.insert(std::make_pair(data_name, file_path));
+				}
+			}
+		}
 
 		return res;
 	}

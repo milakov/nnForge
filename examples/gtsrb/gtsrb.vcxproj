@@ -59,7 +59,7 @@
       <Optimization>Disabled</Optimization>
       <OpenMPSupport>true</OpenMPSupport>
       <DisableSpecificWarnings>4290</DisableSpecificWarnings>
-      <PreprocessorDefinitions>NNFORGE_CUDA_BACKEND_ENABLED</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;NNFORGE_CUDA_BACKEND_ENABLED;</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -76,7 +76,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <OpenMPSupport>true</OpenMPSupport>
       <DisableSpecificWarnings>4290</DisableSpecificWarnings>
-      <PreprocessorDefinitions>NNFORGE_CUDA_BACKEND_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;NNFORGE_CUDA_BACKEND_ENABLED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

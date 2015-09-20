@@ -23,19 +23,6 @@
 
 #include <nnforge/toolset.h>
 
-template<unsigned int index_id> class vector_element_extractor
-{
-public:
-	vector_element_extractor()
-	{
-	}
-
-	inline unsigned char operator()(cv::Vec3b x) const
-	{
-		return x[index_id];
-	}
-};
-
 class gtsrb_toolset : public nnforge::toolset
 {
 public:
@@ -43,14 +30,12 @@ public:
 
 	virtual ~gtsrb_toolset();
 
-	virtual nnforge::structured_data_bunch_reader::ptr get_reader(const std::string& dataset_name) const;
-
 protected:
-	/*
 	virtual void prepare_training_data();
 
 	void write_single_entry(
-		nnforge::supervised_data_stream_writer& writer,
+		nnforge::structured_data_stream_writer& image_writer,
+		nnforge::structured_data_stream_writer& label_writer,
 		const boost::filesystem::path& absolute_file_path,
 		unsigned int class_id,
 		unsigned int roi_top_left_x,
@@ -65,7 +50,8 @@ protected:
 		float brightness_shift = 0.0F);
 
 	void write_folder(
-		nnforge::supervised_data_stream_writer& writer,
+		nnforge::structured_data_stream_writer& image_writer,
+		nnforge::structured_data_stream_writer& label_writer,
 		const boost::filesystem::path& relative_subfolder_path,
 		const char * annotation_file_name,
 		bool jitter);
@@ -80,5 +66,4 @@ protected:
 	static const float max_contrast_factor;
 	static const float max_brightness_shift;
 	static const unsigned int random_sample_count;
-	*/
 };

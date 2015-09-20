@@ -37,15 +37,15 @@ namespace nnforge
 		this->schema = network_schema::const_ptr(new network_schema(schema.get_required_layers(output_layer_names)));
 		if (debug->is_debug())
 		{
-			boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_schema_reduced", "dot"), std::ios_base::out | std::ios_base::trunc);
-			this->schema->write_dot(out);
+			boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_schema_reduced", "gv"), std::ios_base::out | std::ios_base::trunc);
+			this->schema->write_gv(out);
 		}
 
 		action_schema = this->schema->get_actions_for_forward_propagation(output_layer_names);
 		if (debug->is_debug())
 		{
-			boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_action_schema", "dot"), std::ios_base::out | std::ios_base::trunc);
-			this->action_schema->write_dot(out);
+			boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_action_schema", "gv"), std::ios_base::out | std::ios_base::trunc);
+			this->action_schema->write_gv(out);
 		}
 
 		cumulative_tiling_factor_map = this->schema->get_cumulative_tiling_factor_map();

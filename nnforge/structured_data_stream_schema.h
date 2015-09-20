@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,21 +16,18 @@
 
 #pragma once
 
-#include "network_tester.h"
-#include "nn_types.h"
+#include <boost/uuid/uuid.hpp>
 
 namespace nnforge
 {
-	class network_tester_factory
+	class structured_data_stream_schema
 	{
 	public:
-		virtual ~network_tester_factory();
+		static const boost::uuids::uuid structured_data_stream_guid;
 
-		virtual network_tester_smart_ptr create(network_schema_smart_ptr schema) const = 0;
-
-	protected:
-		network_tester_factory();
+	private:
+		structured_data_stream_schema();
+		structured_data_stream_schema(const structured_data_stream_schema&);
+		structured_data_stream_schema& operator =(const structured_data_stream_schema&);
 	};
-
-	typedef nnforge_shared_ptr<network_tester_factory> network_tester_factory_smart_ptr;
 }

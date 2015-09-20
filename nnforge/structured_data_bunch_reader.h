@@ -39,7 +39,8 @@ namespace nnforge
 
 		virtual void next_epoch() const = 0;
 
-		virtual int get_approximate_entry_count() const;
+		// Return -1 in case there is no info on entry count
+		virtual int get_entry_count() const;
 
 	protected:
 		structured_data_bunch_reader();

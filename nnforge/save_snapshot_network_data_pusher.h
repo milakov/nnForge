@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,15 +14,31 @@
  *  limitations under the License.
  */
 
-#include "network_tester_factory.h"
+#pragma once
+
+#include "network_data_pusher.h"
+
+#include <boost/filesystem.hpp>
 
 namespace nnforge
 {
-	network_tester_factory::network_tester_factory()
+	class save_snapshot_network_data_pusher : public network_data_pusher
 	{
-	}
+	public:
+		save_snapshot_network_data_pusher(const boost::filesystem::path& folder_path);
 
-	network_tester_factory::~network_tester_factory()
-	{
-	}
+		virtual ~save_snapshot_network_data_pusher();
+
+		virtual void push(
+			const training_task_state& task_state,
+			const network_schema& schema);
+
+	private:
+		void save_data_to_file(
+			network_data::const_ptr data,
+			std::string folder_name) const;
+
+	private:
+		boost::filesystem::path folder_path;
+	};
 }

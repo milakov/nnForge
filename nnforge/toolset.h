@@ -19,6 +19,7 @@
 #include "factory_generator.h"
 #include "stream_duplicator.h"
 #include "network_trainer.h"
+#include "structured_data_stream_reader.h"
 
 #include <vector>
 #include <string>
@@ -58,11 +59,13 @@ namespace nnforge
 
 		virtual boost::filesystem::path get_working_data_folder() const;
 
+		virtual boost::filesystem::path get_input_data_folder() const;
+
 		virtual network_schema::ptr load_schema() const;
 
 		virtual void run_inference();
 
-		virtual void dump_schema_dot();
+		virtual void dump_schema_gv();
 
 		virtual void train();
 
@@ -76,20 +79,29 @@ namespace nnforge
 
 		virtual bool is_training_with_validation() const;
 
+		virtual void prepare_training_data();
+
+		virtual void prepare_testing_data();
+
+	protected:
+		void shuffle_data();
+
 	private:
 		void dump_settings();
 
-		std::vector<std::pair<unsigned int, boost::filesystem::path> > get_ann_data_index_and_filepath_list() const;
+		std::vector<std::pair<unsigned int, boost::filesystem::path> > get_ann_data_index_and_folderpath_list() const;
 
-		std::vector<network_data_peek_entry> get_resume_ann_list_entry_list() const;
+		std::vector<network_data_peek_entry> get_snapshot_ann_list_entry_list() const;
 
 		std::set<unsigned int> get_trained_ann_list() const;
 
-		std::map<unsigned int, unsigned int> get_resume_ann_list(const std::set<unsigned int>& exclusion_ann_list) const;
+		std::map<unsigned int, unsigned int> get_snapshot_ann_list(const std::set<unsigned int>& exclusion_ann_list) const;
 
 		unsigned int get_starting_index_for_batch_training() const;
 
 		static bool compare_entry(network_data_peek_entry i, network_data_peek_entry j);
+
+		std::map<std::string, boost::filesystem::path> get_data_filenames(const std::string& dataset_name) const;
 
 	protected:
 		factory_generator::ptr master_factory;
@@ -102,11 +114,13 @@ namespace nnforge
 	protected:
 		std::string action;
 		boost::filesystem::path config_file_path;
+		boost::filesystem::path input_data_folder;
 		boost::filesystem::path working_data_folder;
 		std::string schema_filename;
 		std::vector<std::string> inference_output_layer_names;
 		std::string inference_dataset_name;
 		std::string training_dataset_name;
+		std::string shuffle_dataset_name;
 		int inference_ann_data_index;
 		bool debug_mode;
 		std::vector<std::string> training_output_layer_names;
@@ -123,8 +137,8 @@ namespace nnforge
 		int batch_size;
 		std::string momentum_type_str;
 		float momentum_val;
-		bool load_resume;
-		bool dump_resume;
+		bool load_snapshot;
+		bool dump_snapshot;
 		int ann_count;
 		int batch_offset;
 
@@ -135,8 +149,9 @@ namespace nnforge
 		static const char * ann_subfolder_name;
 		static const char * debug_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
-		static const char * resume_ann_index_extractor_pattern;
-		static const char * ann_resume_subfolder_name;
+		static const char * snapshot_ann_index_extractor_pattern;
+		static const char * ann_snapshot_subfolder_name;
+		static const char * dataset_extractor_pattern;
 
 		std::string default_config_path;
 

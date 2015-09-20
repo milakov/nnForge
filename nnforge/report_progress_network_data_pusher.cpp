@@ -36,7 +36,6 @@ namespace nnforge
 		unsigned int last_index = static_cast<unsigned int>(task_state.history.size()) - 1;
 
 		std::cout << "----- Training -----" << std::endl;
-//		std::cout << "----- Training NN # " << task_state.index_peeked << ", Epoch " << task_state.get_current_epoch() << " -----" << std::endl;
 		std::cout << task_state.history[last_index].first << std::endl;
 		if (!task_state.comments[last_index].empty())
 			std::cout << task_state.comments[last_index] << std::endl;

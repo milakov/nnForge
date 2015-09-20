@@ -75,9 +75,9 @@ namespace nnforge
 			cuda_config->set_device();
 
 			unsigned int current_max_entry_count = max_entry_count;
-			int approximate_reader_entry_count = reader.get_approximate_entry_count();
-			if (approximate_reader_entry_count > 0)
-				current_max_entry_count = std::min(current_max_entry_count, static_cast<unsigned int>(approximate_reader_entry_count));
+			int reader_entry_count = reader.get_entry_count();
+			if (reader_entry_count > 0)
+				current_max_entry_count = std::min(current_max_entry_count, static_cast<unsigned int>(reader_entry_count));
 			current_max_entry_count = std::min(current_max_entry_count, max_max_entry_count);
 
 			std::map<std::string, nnforge_array<cuda_linear_buffer_device::ptr, 2> > dedicated_buffers;
@@ -486,8 +486,8 @@ namespace nnforge
 			if (debug->is_debug())
 			{
 				debug->output_message((boost::format("forward prop cuda streams: %1%") % layer_stream_set.size()).str().c_str());
-				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_streams", "dot"), std::ios_base::out | std::ios_base::trunc);
-				action_schema->write_dot(out, action_to_stream_set_map);
+				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_streams", "gv"), std::ios_base::out | std::ios_base::trunc);
+				action_schema->write_gv(out, action_to_stream_set_map);
 			}
 
 			for(std::vector<layer_name_with_action>::const_reverse_iterator it = actions_in_execution_order.rbegin(); it != actions_in_execution_order.rend(); ++it)
@@ -684,8 +684,8 @@ namespace nnforge
 					debug_str << ")";
 				}
 				debug->output_message(debug_str.str().c_str());
-				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_per_entry_buffers", "dot"), std::ios_base::out | std::ios_base::trunc);
-				action_schema->write_dot(out, layer_buffer_action_to_set_map, std::map<layer_name_with_action, unsigned int>(), temporary_working_per_entry_data_action_to_set_map);
+				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_per_entry_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
+				action_schema->write_gv(out, layer_buffer_action_to_set_map, std::map<layer_name_with_action, unsigned int>(), temporary_working_per_entry_data_action_to_set_map);
 			}
 		}
 
@@ -739,8 +739,8 @@ namespace nnforge
 					debug_str << ")";
 				}
 				debug->output_message(debug_str.str().c_str());
-				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_temporary_fixed_buffers", "dot"), std::ios_base::out | std::ios_base::trunc);
-				action_schema->write_dot(out, temporary_working_fixed_data_action_to_set_map);
+				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_temporary_fixed_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
+				action_schema->write_gv(out, temporary_working_fixed_data_action_to_set_map);
 			}
 		}
 
