@@ -36,8 +36,6 @@ namespace nnforge
 
 		virtual backward_propagation_factory::ptr create_backward_propagation_factory() const = 0;
 
-//		virtual network_analyzer_factory_smart_ptr create_analyzer_factory() const = 0;
-
 		virtual void info() const = 0;
 
 		virtual std::vector<string_option> get_string_options();

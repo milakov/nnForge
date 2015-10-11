@@ -177,11 +177,6 @@ namespace nnforge
 			scale = layer_derived->scale;
 		}
 
-		bool mse_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
-		{
-			return true;
-		}
-
 		bool mse_layer_updater_cuda::is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
 		{
 			return false;

@@ -61,6 +61,8 @@ namespace nnforge
 			structured_data_bunch_reader& reader,
 			structured_data_bunch_writer& writer);
 
+		bool is_schema_with_weights() const;
+
 	protected:
 		forward_propagation(
 			const network_schema& schema,

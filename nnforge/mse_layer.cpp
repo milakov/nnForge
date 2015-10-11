@@ -93,7 +93,7 @@ namespace nnforge
 	float mse_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
-		unsigned int per_item_flops = input_configuration_specific_list[0].feature_map_count * 2;
+		unsigned int per_item_flops = input_configuration_specific_list[0].feature_map_count * 3;
 
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 	}
@@ -102,8 +102,8 @@ namespace nnforge
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 		unsigned int input_layer_id) const
 	{
-		unsigned int neuron_count = input_configuration_specific_list[0].get_neuron_count();
-		unsigned int per_item_flops = 2;
+		unsigned int neuron_count = input_configuration_specific_list[input_layer_id].get_neuron_count();
+		unsigned int per_item_flops = input_configuration_specific_list[input_layer_id].feature_map_count * 2;
 
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 	}

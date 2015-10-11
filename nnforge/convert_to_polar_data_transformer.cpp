@@ -72,15 +72,11 @@ namespace nnforge
 	}
 
 	void convert_to_polar_data_transformer::transform(
-		const void * data,
-		void * data_transformed,
-		neuron_data_type::input_type type,
+		const float * data,
+		float * data_transformed,
 		const layer_configuration_specific& original_config,
 		unsigned int sample_id)
 	{
-		if (type != neuron_data_type::type_byte)
-			throw neural_network_exception("convert_to_polar_data_transformer is implemented for data stored as bytes only");
-
 		if (original_config.dimension_sizes.size() != 2)
 			throw neural_network_exception((boost::format("convert_to_polar_data_transformer is processing 2D data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
 
@@ -91,11 +87,11 @@ namespace nnforge
 		unsigned int transformed_neuron_count_per_feature_map = get_transformed_configuration(original_config).get_neuron_count_per_feature_map();
 		for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
 		{
-			cv::Mat1b original_image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), const_cast<unsigned char *>(static_cast<const unsigned char *>(data)) + (original_neuron_count_per_feature_map * feature_map_id));
-			cv::Mat1b dest_image(static_cast<int>(output_window_sizes[1]), static_cast<int>(output_window_sizes[0]), static_cast<unsigned char *>(data_transformed) + (transformed_neuron_count_per_feature_map * feature_map_id));
+			cv::Mat1f dest_image(static_cast<int>(output_window_sizes[1]), static_cast<int>(output_window_sizes[0]), data_transformed + (transformed_neuron_count_per_feature_map * feature_map_id));
+			cv::Mat1f image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), const_cast<float *>(data) + (original_neuron_count_per_feature_map * feature_map_id));
 
 			// Should try INTER_CUBIC and INTER_LANCZOS4 as well
-			cv::remap(original_image, dest_image, map_x, map_y, cv::INTER_LINEAR, cv::BORDER_CONSTANT, border_value);
+			cv::remap(image, dest_image, map_x, map_y, cv::INTER_LINEAR, cv::BORDER_CONSTANT, border_value);
 		}
 	}
 
@@ -105,15 +101,5 @@ namespace nnforge
 		res.dimension_sizes = output_window_sizes;
 
 		return res;
-	}
-
-	bool convert_to_polar_data_transformer::is_in_place() const
-	{
-		return false;
-	}
-
- 	bool convert_to_polar_data_transformer::is_deterministic() const
-	{
-		return true;
 	}
 }

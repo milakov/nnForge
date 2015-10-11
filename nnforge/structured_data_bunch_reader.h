@@ -37,7 +37,7 @@ namespace nnforge
 			unsigned int entry_id,
 			const std::map<std::string, float *>& data_map) = 0;
 
-		virtual void next_epoch() const = 0;
+		virtual void next_epoch() = 0;
 
 		// Return -1 in case there is no info on entry count
 		virtual int get_entry_count() const;

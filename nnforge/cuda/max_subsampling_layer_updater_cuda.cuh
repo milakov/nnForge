@@ -311,7 +311,7 @@ namespace nnforge
 				{
 					subsampling_sizes[i] = layer_derived->subsampling_sizes[i];
 					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
-					output_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
+					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 				}
 
 				forward_packed_config_count = subsampling_sizes[0];

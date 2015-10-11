@@ -153,6 +153,8 @@ namespace nnforge
 			class read_entry_info
 			{
 			public:
+				typedef nnforge_shared_ptr<read_entry_info> ptr;
+
 				read_entry_info();
 
 				unsigned int entry_id;
@@ -165,6 +167,10 @@ namespace nnforge
 				boost::mutex read_entry_finished_mutex;
 				boost::condition_variable read_entry_finished_condition;
 				std::string error_message;
+
+			private:
+				read_entry_info(const read_entry_info&);
+				read_entry_info& operator =(const read_entry_info&);
 			};
 
 			static void read_input_data_static(read_entry_info * params);
@@ -203,8 +209,6 @@ namespace nnforge
 			std::map<std::string, size_t> output_per_entry_host_data_name_to_size_map;
 
 			buffer_cuda_size_configuration buffer_config_without_data_and_momentum;
-
-			bool dont_share_buffers;
 
 		private:
 			static const unsigned int elem_count_update_accum_per_part;

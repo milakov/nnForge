@@ -39,10 +39,14 @@ namespace nnforge
 		cuda_running_configuration::cuda_running_configuration(
 			int device_id,
 			float max_global_memory_usage_ratio,
-			unsigned int reserved_thread_count)
+			unsigned int reserved_thread_count,
+			bool dont_share_buffers,
+			bool single_command_stream)
 			: device_id(device_id)
 			, max_global_memory_usage_ratio(max_global_memory_usage_ratio)
 			, reserved_thread_count(reserved_thread_count)
+			, dont_share_buffers(dont_share_buffers)
+			, single_command_stream(single_command_stream)
 			, cublas_handle(0)
 			, cusparse_handle(0)
 			, cudnn_handle(0)
@@ -178,6 +182,9 @@ namespace nnforge
 			out << "--- Settings ---" << std::endl;
 
 			out << "Max global memory usage ratio = " << running_configuration.max_global_memory_usage_ratio << std::endl;
+			out << "Threads reserved for CUDA sync (others will be used for on-the-fly data processing by job runner) = " << running_configuration.reserved_thread_count << std::endl;
+			out << "Don't share buffers = " << running_configuration.dont_share_buffers << std::endl;
+			out << "Use single command stream = " << running_configuration.single_command_stream << std::endl;
 
 			out << "--- Status ---" << std::endl;
 
@@ -185,8 +192,8 @@ namespace nnforge
 			size_t total_memory;
 			cuda_safe_call(cudaMemGetInfo(&free_memory, &total_memory));
 
-			out << "Free memory = " << free_memory / (1024 * 1024) << " MB" << std::endl;
-			out << "Total memory = " << total_memory / (1024 * 1024) << " MB" << std::endl;
+			out << "Free memory = " << free_memory / (1024 * 1024) << " MiB" << std::endl;
+			out << "Total memory = " << total_memory / (1024 * 1024) << " MiB" << std::endl;
 			out << "Job runner thread count = " << running_configuration.get_job_runner()->thread_count << std::endl;
 
 			return out;
@@ -232,6 +239,16 @@ namespace nnforge
 		threadpool_job_runner::ptr cuda_running_configuration::get_job_runner() const
 		{
 			return job_runner;
+		}
+
+		bool cuda_running_configuration::is_dont_share_buffers() const
+		{
+			return dont_share_buffers;
+		}
+
+		bool cuda_running_configuration::is_single_command_stream() const
+		{
+			return single_command_stream;
 		}
 	}
 }

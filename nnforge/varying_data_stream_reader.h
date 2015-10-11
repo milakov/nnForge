@@ -40,6 +40,8 @@ namespace nnforge
 
 		virtual int get_entry_count() const;
 
+		virtual raw_data_writer::ptr get_writer(nnforge_shared_ptr<std::ostream> out) const;
+
 	protected:
 		nnforge_shared_ptr<std::istream> in_stream;
 		std::vector<unsigned long long> entry_offsets;

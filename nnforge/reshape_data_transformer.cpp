@@ -32,14 +32,15 @@ namespace nnforge
 	}
 
 	void reshape_data_transformer::transform(
-		const void * data,
-		void * data_transformed,
-		neuron_data_type::input_type type,
+		const float * data,
+		float * data_transformed,
 		const layer_configuration_specific& original_config,
 		unsigned int sample_id)
 	{
 		if (original_config.get_neuron_count() != config.get_neuron_count())
 			throw neural_network_exception((boost::format("Neuron counts for reshape_data_transformer don't match: %1% and %2%") % original_config.get_neuron_count() % config.get_neuron_count()).str());
+
+		memcpy(data_transformed, data, original_config.get_neuron_count() * sizeof(float));
 	}
 
 	layer_configuration_specific reshape_data_transformer::get_transformed_configuration(const layer_configuration_specific& original_config) const
@@ -48,15 +49,5 @@ namespace nnforge
 			throw neural_network_exception((boost::format("Neuron counts for reshape_data_transformer don't match: %1% and %2%") % original_config.get_neuron_count() % config.get_neuron_count()).str());
 
 		return config;
-	}
-
-	bool reshape_data_transformer::is_in_place() const
-	{
-		return true;
-	}
-
-	bool reshape_data_transformer::is_deterministic() const
-	{
-		return true;
 	}
 }

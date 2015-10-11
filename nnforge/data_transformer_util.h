@@ -48,17 +48,24 @@ namespace nnforge
 			float stretch_angle_in_degrees,
 			float perspective_view_distance, // std::numeric_limits<float>::max() is neutral
 			float perspective_view_angle,
-			unsigned char border_value = 128);
+			float border_value = 0.5F);
 
 		// contrast: relative multiplication, about 1.0
 		// brightness: change in luminocity for the middle lightness
 		static void change_brightness_and_contrast(
-			cv::Mat image,
+			cv::Mat dest_image,
+			const cv::Mat image,
 			float contrast,
 			float brightness);
 
 		static void flip(
 			cv::Mat image,
+			bool flip_around_x_axis,
+			bool flip_around_y_axis);
+
+		static void flip(
+			cv::Mat dest_image,
+			const cv::Mat image,
 			bool flip_around_x_axis,
 			bool flip_around_y_axis);
 

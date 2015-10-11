@@ -115,14 +115,13 @@ namespace nnforge
 				unsigned int entry_to_process_count = 0;
 				unsigned int entry_to_write_count = 0;
 				unsigned int base_entry_to_read_id = 0;
-				std::vector<read_entry_info> read_entry_info_list(current_max_entry_count);
+				std::vector<read_entry_info::ptr> read_entry_info_list(current_max_entry_count);
 				for(unsigned int i = 0; i < current_max_entry_count; ++i)
 				{
+					read_entry_info_list[i] = read_entry_info::ptr(new read_entry_info());
+					read_entry_info_list[i]->reader = &reader;
 					for(std::map<std::string, size_t>::const_iterator it = input_per_entry_host_data_name_to_size_map.begin(); it != input_per_entry_host_data_name_to_size_map.end(); ++it)
-					{
-						read_entry_info_list[i].data_map.insert(std::make_pair(it->first, (float *)(*input_host_buffers[it->first]) + i * (it->second / sizeof(float))));
-						read_entry_info_list[i].reader = &reader;
-					}
+						read_entry_info_list[i]->data_map.insert(std::make_pair(it->first, (float *)(*input_host_buffers[it->first]) + i * (it->second / sizeof(float))));
 				}
 
 				while(true)
@@ -166,7 +165,7 @@ namespace nnforge
 						// Launch all read input data tasks
 						for(unsigned int i = 0; i < current_max_entry_count; ++i)
 						{
-							read_entry_info& current_info = read_entry_info_list[i];
+							read_entry_info& current_info = *read_entry_info_list[i];
 							current_info.read_entry_finished = false;
 							current_info.entry_id = base_entry_to_read_id + i;
 							cuda_config->get_job_runner()->service.post(boost::bind(read_input_data_static, &current_info));
@@ -175,7 +174,7 @@ namespace nnforge
 						// Wait for all input data to be read
 						for(unsigned int i = 0; i < current_max_entry_count; ++i)
 						{
-							read_entry_info& current_info = read_entry_info_list[i];
+							read_entry_info& current_info = *read_entry_info_list[i];
 
 							{
 								boost::unique_lock<boost::mutex> lock(current_info.read_entry_finished_mutex);
@@ -186,7 +185,7 @@ namespace nnforge
 							{
 								for(unsigned int j = i; j < current_max_entry_count; ++j)
 								{
-									read_entry_info& current_info = read_entry_info_list[j];
+									read_entry_info& current_info = *read_entry_info_list[j];
 									{
 										boost::unique_lock<boost::mutex> lock(current_info.read_entry_finished_mutex);
 										while (!current_info.read_entry_finished)
@@ -476,6 +475,21 @@ namespace nnforge
 			output_data_ready_additional_events.clear();
 
 			std::vector<std::vector<layer_name_with_action> > layer_stream_set = action_schema->get_action_stream_set();
+
+			if (cuda_config->is_single_command_stream())
+			{
+				std::vector<std::vector<layer_name_with_action> > layer_stream_set_orig = layer_stream_set;
+				layer_stream_set.clear();
+				layer_stream_set.push_back(std::vector<layer_name_with_action>());
+				std::vector<layer_name_with_action>& new_layer_list = layer_stream_set.front();
+				for(std::vector<std::vector<layer_name_with_action> >::const_iterator it = layer_stream_set_orig.begin(); it != layer_stream_set_orig.end(); ++it)
+				{
+					const std::vector<layer_name_with_action>& ll = *it;
+					for(std::vector<layer_name_with_action>::const_iterator it2 = ll.begin(); it2 != ll.end(); ++it2)
+						new_layer_list.push_back(*it2);
+				}
+			}
+
 			command_streams.resize(layer_stream_set.size());
 			for(unsigned int stream_set_id = 0; stream_set_id < static_cast<unsigned int>(layer_stream_set.size()); ++stream_set_id)
 			{
@@ -639,6 +653,18 @@ namespace nnforge
 					dependencies,
 					input_index_layer_can_write_output_map,
 					std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >());
+
+				if (cuda_config->is_dont_share_buffers())
+				{
+					std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > layer_buffer_set_list_orig = layer_buffer_set_list;
+					layer_buffer_set_list.clear();
+					for(unsigned int set_id = 0; set_id < layer_buffer_set_list_orig.size(); ++set_id)
+					{
+						const std::vector<std::pair<layer_name_with_action, buffer_lifetime> >& action_list = layer_buffer_set_list_orig[set_id];
+						for(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >::const_iterator it = action_list.begin(); it != action_list.end(); ++it)
+							layer_buffer_set_list.push_back(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >(1, *it));
+					}
+				}
 			}
 
 			layer_buffer_set_per_entry_size_list.clear();
@@ -706,6 +732,18 @@ namespace nnforge
 					std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > >(),
 					std::map<layer_name_with_action, unsigned int>(),
 					std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >());
+
+				if (cuda_config->is_dont_share_buffers())
+				{
+					std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > temporary_working_fixed_buffer_set_list_orig = temporary_working_fixed_buffer_set_list;
+					temporary_working_fixed_buffer_set_list.clear();
+					for(unsigned int set_id = 0; set_id < temporary_working_fixed_buffer_set_list_orig.size(); ++set_id)
+					{
+						const std::vector<std::pair<layer_name_with_action, buffer_lifetime> >& action_list = temporary_working_fixed_buffer_set_list_orig[set_id];
+						for(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >::const_iterator it = action_list.begin(); it != action_list.end(); ++it)
+							temporary_working_fixed_buffer_set_list.push_back(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >(1, *it));
+					}
+				}
 			}
 
 			temporary_working_fixed_set_size_list.clear();

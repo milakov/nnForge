@@ -36,11 +36,29 @@
 #include "data_layer.h"
 #include "mse_layer.h"
 #include "accuracy_layer.h"
+#include "negative_log_likelihood_layer.h"
 
 #include "rnd.h"
 
 #include "structured_data_stream_writer.h"
+#include "varying_data_stream_reader.h"
+#include "varying_data_stream_writer.h"
+#include "structured_from_raw_data_reader.h"
+
 #include "data_transformer_util.h"
+
+#include "convert_to_polar_data_transformer.h"
+#include "distort_2d_data_transformer.h"
+#include "distort_2d_data_sampler_transformer.h"
+#include "elastic_deformation_2d_data_transformer.h"
+#include "embed_data_transformer.h"
+#include "extract_data_transformer.h"
+#include "intensity_2d_data_transformer.h"
+#include "noise_data_transformer.h"
+#include "reshape_data_transformer.h"
+#include "rotate_band_data_transformer.h"
+#include "uniform_intensity_data_transformer.h"
+#include "normalize_data_transformer.h"
 
 #include "nn_types.h"
 

@@ -18,13 +18,14 @@
 
 #include "layer_configuration_specific.h"
 #include "nn_types.h"
+#include "structured_data_writer.h"
 
 #include <vector>
 #include <ostream>
 
 namespace nnforge
 {
-	class structured_data_stream_writer
+	class structured_data_stream_writer : public structured_data_writer
 	{
 	public:
 		typedef nnforge_shared_ptr<structured_data_stream_writer> ptr;
@@ -37,7 +38,7 @@ namespace nnforge
 
 		virtual ~structured_data_stream_writer();
 
-		void write(const float * neurons);
+		virtual void write(const float * neurons);
 
 	private:
 		nnforge_shared_ptr<std::ostream> out_stream;

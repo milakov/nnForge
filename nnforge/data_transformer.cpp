@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,22 +31,8 @@ namespace nnforge
 		return original_config;
 	}
 
-	bool data_transformer::is_in_place() const
-	{
-		return true;
-	}
-
-	void data_transformer::reset()
-	{
-	}
-
 	unsigned int data_transformer::get_sample_count() const
 	{
 		return 1;
-	}
-
-	neuron_data_type::input_type data_transformer::get_transformed_data_type(neuron_data_type::input_type original_data_type) const
-	{
-		return original_data_type;
 	}
 }

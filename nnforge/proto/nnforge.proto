@@ -23,6 +23,8 @@ message Layer {
 	optional UnTileParam untile_param = 13;
 	optional MSEParam mse_param = 15;
 	optional AccuracyParam accuracy_param = 16;
+	optional NegativeLogLikelihoodParam negative_log_likelihood_param = 17;
+	optional CrossEntropyParam cross_entropy_param = 18;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -116,6 +118,14 @@ message MSEParam {
 
 message AccuracyParam {
 	optional uint32 top_n = 1 [default = 1];
+}
+
+message NegativeLogLikelihoodParam {
+	optional float scale = 1 [default = 1.0];
+}
+
+message CrossEntropyParam {
+	optional float scale = 1 [default = 1.0];
 }
 
 message CustomParam {

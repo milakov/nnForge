@@ -25,14 +25,6 @@
 
 namespace nnforge
 {
-	// {B56F3DC8-E9CD-44A0-96AA-59C49CD60C72}
-	const boost::uuids::uuid neuron_value_set::neuron_value_set_guid =
-		{ 0xb5, 0x6f, 0x3d, 0xc8
-		, 0xe9, 0xcd
-		, 0x44, 0xa0
-		, 0x96, 0xaa
-		, 0x59, 0xc4, 0x9c, 0xd6, 0xc, 0x72 };
-
 	neuron_value_set::neuron_value_set(unsigned int neuron_count)
 		: neuron_count(neuron_count)
 	{
@@ -128,57 +120,6 @@ namespace nnforge
 		}
 	}
 
-	const boost::uuids::uuid& neuron_value_set::get_uuid() const
-	{
-		return neuron_value_set_guid;
-	}
-
-	void neuron_value_set::write(std::ostream& binary_stream_to_write_to) const
-	{
-		binary_stream_to_write_to.exceptions(std::ostream::eofbit | std::ostream::failbit | std::ostream::badbit);
-
-		const boost::uuids::uuid& guid = get_uuid();
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(guid.data), sizeof(guid.data));
-
-		unsigned int entry_count = static_cast<unsigned int>(neuron_value_list.size());
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&entry_count), sizeof(entry_count));
-
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&neuron_count), sizeof(neuron_count));
-
-		for(unsigned int i = 0; i < entry_count; ++i)
-		{
-			binary_stream_to_write_to.write(reinterpret_cast<const char*>(&neuron_value_list[i]->at(0)), sizeof(float) * neuron_count);
-		}
-
-		binary_stream_to_write_to.flush();
-	}
-
-	void neuron_value_set::read(std::istream& binary_stream_to_read_from)
-	{
-		binary_stream_to_read_from.exceptions(std::ostream::eofbit | std::ostream::failbit | std::ostream::badbit);
-
-		neuron_value_list.clear();
-
-		boost::uuids::uuid data_guid_read;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(data_guid_read.data), sizeof(data_guid_read.data));
-		if (data_guid_read != get_uuid())
-			throw neural_network_exception((boost::format("Unknown output_neuron_value_set GUID encountered in input stream: %1%") % data_guid_read).str());
-
-		unsigned int entry_count;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&entry_count), sizeof(entry_count));
-
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&neuron_count), sizeof(neuron_count));
-
-		neuron_value_list.resize(entry_count);
-		for(unsigned int i = 0; i < entry_count; ++i)
-			neuron_value_list[i] = nnforge_shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count));
-
-		for(unsigned int i = 0; i < entry_count; ++i)
-		{
-			binary_stream_to_read_from.read(reinterpret_cast<char*>(&neuron_value_list[i]->at(0)), sizeof(float) * neuron_count);
-		}
-	}
-
 	void neuron_value_set::add_entry(const float * new_data)
 	{
 		neuron_value_list.push_back(nnforge_shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count)));
@@ -201,5 +142,19 @@ namespace nnforge
 			res->at(i) = static_cast<float>(acc[i] * mult);
 
 		return res;
+	}
+
+	void neuron_value_set::add(
+		const neuron_value_set& other,
+		float alpha,
+		float beta)
+	{
+		for(unsigned int entry_id = 0; entry_id < neuron_value_list.size(); entry_id++)
+		{
+			const std::vector<float>& src = *other.neuron_value_list[entry_id];
+			std::vector<float>& dst = *neuron_value_list[entry_id];
+			for(unsigned int neuron_id = 0; neuron_id < neuron_count; ++neuron_id)
+				dst[neuron_id] = alpha * dst[neuron_id] + beta * src[neuron_id];
+		}
 	}
 }

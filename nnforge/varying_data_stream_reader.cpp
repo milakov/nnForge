@@ -21,6 +21,7 @@
 
 #include "varying_data_stream_schema.h"
 #include "neural_network_exception.h"
+#include "varying_data_stream_writer.h"
 
 namespace nnforge
 {
@@ -69,5 +70,10 @@ namespace nnforge
 	int varying_data_stream_reader::get_entry_count() const
 	{
 		return static_cast<int>(entry_offsets.size() - 1);
+	}
+
+	raw_data_writer::ptr varying_data_stream_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const
+	{
+		return raw_data_writer::ptr(new varying_data_stream_writer(out));
 	}
 }

@@ -33,12 +33,15 @@
 #include "validate_progress_network_data_pusher.h"
 #include "structured_data_stream_writer.h"
 #include "structured_data_bunch_stream_reader.h"
+#include "data_visualizer.h"
+#include "transformed_structured_data_reader.h"
 
 namespace nnforge
 {
 	const char * toolset::logfile_name = "log.txt";
 	const char * toolset::ann_subfolder_name = "trained_data";
 	const char * toolset::debug_subfolder_name = "debug";
+	const char * toolset::dump_data_subfolder_name = "dump_data";
 	const char * toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)$";
 	const char * toolset::snapshot_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)$";
 	const char * toolset::ann_snapshot_subfolder_name = "snapshots";
@@ -63,7 +66,7 @@ namespace nnforge
 		{
 			run_inference();
 		}
-		else if (!action.compare("dump_schema_gv"))
+		else if (!action.compare("dump_schema"))
 		{
 			dump_schema_gv();
 		}
@@ -82,6 +85,14 @@ namespace nnforge
 		else if (!action.compare("shuffle_data"))
 		{
 			shuffle_data();
+		}
+		else if (!action.compare("dump_data"))
+		{
+			dump_data();
+		}
+		else if (!action.compare("create_normalizer"))
+		{
+			create_normalizer();
 		}
 		else
 		{
@@ -253,8 +264,8 @@ namespace nnforge
 
 		master_factory->initialize();
 
-		forward_propagation_factory = master_factory->create_forward_propagation_factory();
-		backward_propagation_factory = master_factory->create_backward_propagation_factory();
+		forward_prop_factory = master_factory->create_forward_propagation_factory();
+		backward_prop_factory = master_factory->create_backward_propagation_factory();
 
 		return (action.size() > 0);
 	}
@@ -273,13 +284,21 @@ namespace nnforge
 	{
 		std::vector<string_option> res;
 
-		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, randomize_data, dump_schema_gv, run_inference, train)"));
+		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, shuffle_data, dump_data, dump_schema, create_normalizer, run_inference, train)"));
 		res.push_back(string_option("schema", &schema_filename, "schema.txt", "Name of the file with schema of the network, in protobuf format"));
 		res.push_back(string_option("inference_dataset_name", &inference_dataset_name, "validating", "Name of the dataset to be used for inference"));
 		res.push_back(string_option("training_dataset_name", &training_dataset_name, "training", "Name of the dataset to be used for training"));
 		res.push_back(string_option("shuffle_dataset_name", &shuffle_dataset_name, "training", "Name of the dataset to be shuffled"));
 		res.push_back(string_option("training_algo", &training_algo, "", "Training algorithm (sgd)"));
 		res.push_back(string_option("momentum_type", &momentum_type_str, "vanilla", "Type of the momentum to use (none, vanilla, nesterov)"));
+		res.push_back(string_option("inference_mode", &inference_mode, "report_average_per_entry", "What to do with inference_output_layer_name (report_average_per_nn, dump_average_per_position)"));
+		res.push_back(string_option("inference_output_dataset_name", &inference_output_dataset_name, "", "Name of the dataset dumped during inference, empty value means using inference_dataset_name"));
+		res.push_back(string_option("dump_dataset_name", &dump_dataset_name, "training", "Name of the dataset to dump data from"));
+		res.push_back(string_option("dump_layer_name", &dump_layer_name, "", "Name of the layer to dump data from"));
+		res.push_back(string_option("dump_extension_image", &dump_extension_image, "jpg", "Extension (type) of the files for dumping 2D data"));
+		res.push_back(string_option("dump_extension_video", &dump_extension_video, "avi", "Extension (type) of the files for dumping 3D data"));
+		res.push_back(string_option("normalizer_dataset_name", &normalizer_dataset_name, "training", "Name of the dataset to create normalizer from"));
+		res.push_back(string_option("normalizer_layer_name", &normalizer_layer_name, "", "Name of the layer to create normalizer for"));
 
 		return res;
 	}
@@ -312,8 +331,9 @@ namespace nnforge
 		std::vector<bool_option> res;
 
 		res.push_back(bool_option("debug_mode", &debug_mode, false, "Debug mode"));
-		res.push_back(bool_option("load_snapshot,R", &load_snapshot, false, "snapshot neural network training starting from saved snapshot"));
-		res.push_back(bool_option("dump_snapshot,R", &dump_snapshot, true, "Dump neural network data after each epoch"));
+		res.push_back(bool_option("resume_from_snapshot,R", &resume_from_snapshot, false, "Continue neural network training starting from saved snapshot"));
+		res.push_back(bool_option("dump_snapshot", &dump_snapshot, true, "Dump neural network data after each epoch"));
+		res.push_back(bool_option("dump_data_rgb", &dump_data_rgb, true, "Treat 3 feature map data layer as RGB"));
 
 		return res;
 	}
@@ -342,6 +362,10 @@ namespace nnforge
 		res.push_back(int_option("ann_count,N", &ann_count, 1, "Amount of networks to train"));
 		res.push_back(int_option("inference_ann_data_index", &inference_ann_data_index, -1, "Index of the dataset to be used for inference"));
 		res.push_back(int_option("batch_offset", &batch_offset, 0, "Shift initial ANN index when batch training"));
+		res.push_back(int_option("dump_data_sample_count", &dump_data_sample_count, 100, "Samples to dump"));
+		res.push_back(int_option("dump_data_scale", &dump_data_scale, 1, "Scale dumped data dimensions by this value"));
+		res.push_back(int_option("dump_data_video_fps", &dump_data_video_fps, 5, "Frames per second when dumping videos"));
+		res.push_back(int_option("epoch_count_in_training_dataset", &epoch_count_in_training_dataset, 1, "The whole training dataset should be split in this amount of epochs"));
 
 		return res;
 	}
@@ -439,26 +463,99 @@ namespace nnforge
 	void toolset::run_inference()
 	{
 		network_schema::ptr schema = load_schema();
-		forward_propagation::ptr forward_prop = forward_propagation_factory->create(*schema, inference_output_layer_names, debug);
-		structured_data_bunch_reader::ptr reader = get_reader(inference_dataset_name);
+		forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
+		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, 1);
 
 		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
-		for(std::vector<std::pair<unsigned int, boost::filesystem::path> >::const_iterator it = ann_data_name_and_folderpath_list.begin(); it != ann_data_name_and_folderpath_list.end(); ++it)
+		std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> > average_layer_name_to_config_and_value_set_map;
+		unsigned int accumulated_count = 0;
+
+		if (forward_prop->is_schema_with_weights())
+		{
+			for(std::vector<std::pair<unsigned int, boost::filesystem::path> >::const_iterator it = ann_data_name_and_folderpath_list.begin(); it != ann_data_name_and_folderpath_list.end(); ++it)
+			{
+				network_data data;
+				data.read(it->second);
+				forward_prop->set_data(data);
+
+				neuron_value_set_data_bunch_writer writer;
+				forward_propagation::stat st = forward_prop->run(*reader, writer);
+				std::cout << "NN # " << it->first << " - " << st << std::endl;
+
+				for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it2 = writer.layer_name_to_config_and_value_set_map.begin(); it2 != writer.layer_name_to_config_and_value_set_map.end(); ++it2)
+				{
+					if (inference_mode == "report_average_per_entry")
+						std::cout << schema->get_layer(it2->first)->get_string_for_average_data(it2->second.first, *it2->second.second->get_average()) << std::endl;
+					else if (inference_mode == "dump_average_per_position")
+					{
+						if (it == ann_data_name_and_folderpath_list.begin())
+							average_layer_name_to_config_and_value_set_map.insert(*it2);
+						else
+						{
+							float alpha = 1.0F / static_cast<float>(accumulated_count + 1);
+							float beta = 1.0F - alpha;
+							average_layer_name_to_config_and_value_set_map[it2->first].second->add(*it2->second.second, alpha, beta);
+						}
+					}
+					else
+						throw neural_network_exception((boost::format("Unknown inference_mode specified: %1%") % inference_mode).str());
+				}
+
+				if (inference_mode == "dump_average_per_position")
+					++accumulated_count;
+			}
+		}
+		else
 		{
 			network_data data;
-			data.read(it->second);
 			forward_prop->set_data(data);
 
 			neuron_value_set_data_bunch_writer writer;
 			forward_propagation::stat st = forward_prop->run(*reader, writer);
-			std::cout << "NN # " << it->first << " - " << st << std::endl;
+			std::cout << "NN <no weights uniform> - " << st << std::endl;
 
-			for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it = writer.layer_name_to_config_and_value_set_map.begin(); it != writer.layer_name_to_config_and_value_set_map.end(); ++it)
-				std::cout << schema->get_layer(it->first)->get_string_for_average_data(it->second.first, *it->second.second->get_average()) << std::endl;
+			for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it2 = writer.layer_name_to_config_and_value_set_map.begin(); it2 != writer.layer_name_to_config_and_value_set_map.end(); ++it2)
+			{
+				if (inference_mode == "report_average_per_entry")
+					std::cout << schema->get_layer(it2->first)->get_string_for_average_data(it2->second.first, *it2->second.second->get_average()) << std::endl;
+				else if (inference_mode == "dump_average_per_position")
+				{
+					average_layer_name_to_config_and_value_set_map.insert(*it2);
+				}
+				else
+					throw neural_network_exception((boost::format("Unknown inference_mode specified: %1%") % inference_mode).str());
+			}
+
+			if (inference_mode == "dump_average_per_position")
+				++accumulated_count;
+		}
+
+		if (inference_mode == "dump_average_per_position")
+		{
+			for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it = average_layer_name_to_config_and_value_set_map.begin(); it != average_layer_name_to_config_and_value_set_map.end(); ++it)
+			{
+				std::string dataset_name = inference_output_dataset_name.empty() ? inference_dataset_name : inference_output_dataset_name;
+				std::string file_name = (boost::format("%1%_%2%.dt") % dataset_name % it->first).str();
+				boost::filesystem::path file_path = get_working_data_folder() / file_name;
+				std::cout << "Writing " << file_path.string() << std::endl;
+				nnforge_shared_ptr<std::ostream> out(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary));
+				{
+					structured_data_stream_writer dw(out, it->second.first);
+					const std::vector<nnforge_shared_ptr<std::vector<float> > >& data = it->second.second->neuron_value_list;
+					for(std::vector<nnforge_shared_ptr<std::vector<float> > >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+					{
+						const std::vector<float>& dd = **data_it;
+						dw.write(&dd[0]);
+					}
+				}
+			}
 		}
 	}
 
-	structured_data_bunch_reader::ptr toolset::get_reader(const std::string& dataset_name) const
+	structured_data_bunch_reader::ptr toolset::get_structured_data_bunch_reader(
+		const std::string& dataset_name,
+		dataset_usage usage,
+		unsigned int multiple_epoch_count) const
 	{
 		std::map<std::string, boost::filesystem::path> data_filenames = get_data_filenames(dataset_name);
 
@@ -466,11 +563,11 @@ namespace nnforge
 		for(std::map<std::string, boost::filesystem::path>::const_iterator it = data_filenames.begin(); it != data_filenames.end(); ++it)
 		{
 			nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(it->second, std::ios_base::in | std::ios_base::binary));
-			structured_data_stream_reader::ptr dr(new structured_data_stream_reader(in));
+			structured_data_reader::ptr dr = apply_transformers(get_structured_reader(dataset_name, it->first, in), get_data_transformer_list(dataset_name, it->first, usage));
 			data_reader_map.insert(std::make_pair(it->first, dr));
 		}
 
-		structured_data_bunch_reader::ptr res(new structured_data_bunch_stream_reader(data_reader_map));
+		structured_data_bunch_reader::ptr res(new structured_data_bunch_stream_reader(data_reader_map, multiple_epoch_count));
 		return res;
 	}
 
@@ -528,7 +625,7 @@ namespace nnforge
 		boost::filesystem::create_directories(batch_snapshot_folder);
 
 		std::vector<network_data_peek_entry> leading_tasks;
-		if (load_snapshot)
+		if (resume_from_snapshot)
 		{
 			leading_tasks = get_snapshot_ann_list_entry_list();
 		}
@@ -551,7 +648,7 @@ namespace nnforge
 
 		summarize_network_data_pusher res(batch_folder);
 
-		structured_data_bunch_reader::ptr reader = get_reader(training_dataset_name);
+		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(training_dataset_name, dataset_usage_train, epoch_count_in_training_dataset);
 		trainer->train(
 			*reader,
 			*peeker,
@@ -566,8 +663,8 @@ namespace nnforge
 		if (is_training_with_validation())
 		{
 			res.push_back(network_data_pusher::ptr(new validate_progress_network_data_pusher(
-				forward_propagation_factory->create(*schema, inference_output_layer_names, debug),
-				get_reader(inference_dataset_name))));
+				forward_prop_factory->create(*schema, inference_output_layer_names, debug),
+				get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_validate_when_train, 1))));
 		}
 
 		return res;
@@ -721,7 +818,7 @@ namespace nnforge
 
 		network_schema::ptr schema = load_schema();
 
-		backward_propagation::ptr backprop = backward_propagation_factory->create(
+		backward_propagation::ptr backprop = backward_prop_factory->create(
 			*schema,
 			training_output_layer_names,
 			training_error_source_layer_names,
@@ -814,19 +911,37 @@ namespace nnforge
 			{
 				std::cout << "Shuffling from " << file_path.string() << " to " << temp_file_path.string() << std::endl;
 				nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(file_path, std::ios_base::in | std::ios_base::binary));
-				structured_data_stream_reader dr(in);
 				nnforge_shared_ptr<std::ostream> out(new boost::filesystem::ofstream(temp_file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary));
-				structured_data_stream_writer dw(out, dr.get_configuration());
-				std::vector<float> entry_data(dr.get_configuration().get_neuron_count());
-				for(unsigned int i = 0; i < static_cast<unsigned int>(entry_count); ++i)
 				{
-					dr.read(shuffled_indexes[i], &entry_data[0]);
-					dw.write(&entry_data[0]);
+					raw_data_reader::ptr dr = get_raw_reader(shuffle_dataset_name, it->first, in);
+					raw_data_writer::ptr dw = dr->get_writer(out);
+					std::vector<unsigned char> dt;
+					for(unsigned int i = 0; i < static_cast<unsigned int>(entry_count); ++i)
+					{
+						dr->raw_read(shuffled_indexes[i], dt);
+						dw->raw_write(&dt[0], dt.size());
+					}
 				}
 			}
 			std::cout << "Renaming " << temp_file_path.string() << " to " << file_path.string() << std::endl;
 			boost::filesystem::rename(temp_file_path, file_path);
 		}
+	}
+
+	raw_data_reader::ptr toolset::get_raw_reader(
+		const std::string& dataset_name,
+		const std::string& layer_name,
+		nnforge_shared_ptr<std::istream> in) const
+	{
+		return get_structured_reader(dataset_name, layer_name, in);
+	}
+
+	structured_data_reader::ptr toolset::get_structured_reader(
+		const std::string& dataset_name,
+		const std::string& layer_name,
+		nnforge_shared_ptr<std::istream> in) const
+	{
+		return structured_data_reader::ptr(new structured_data_stream_reader(in));
 	}
 
 	std::map<std::string, boost::filesystem::path> toolset::get_data_filenames(const std::string& dataset_name) const
@@ -851,6 +966,128 @@ namespace nnforge
 				}
 			}
 		}
+
+		return res;
+	}
+
+	void toolset::dump_data()
+	{
+		boost::filesystem::path dump_data_folder = get_working_data_folder() / dump_data_subfolder_name;
+		std::cout << "Dumping up to " << dump_data_sample_count << " samples to " << dump_data_folder.string() << std::endl;
+		boost::filesystem::create_directories(dump_data_folder);
+
+		std::string file_name = (boost::format("%1%_%2%.dt") % dump_dataset_name % dump_layer_name).str();
+		boost::filesystem::path file_path = get_working_data_folder() / file_name;
+		if (!boost::filesystem::exists(file_path))
+			throw neural_network_exception((boost::format("File %1% doesn't exist") % file_path.string()).str());
+		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(file_path, std::ios_base::in | std::ios_base::binary));
+		structured_data_reader::ptr dr = apply_transformers(get_structured_reader(dump_dataset_name, dump_layer_name, in), get_data_transformer_list(dump_dataset_name, dump_layer_name, dataset_usage_dump_data));
+
+		layer_configuration_specific config = dr->get_configuration();
+		std::vector<unsigned int> dump_data_dimension_list = get_dump_data_dimension_list(static_cast<unsigned int>(config.dimension_sizes.size()));
+		std::vector<float> dt(config.get_neuron_count());
+		for(int sample_id = 0; sample_id < dump_data_sample_count; ++sample_id)
+		{
+			if (!dr->read(sample_id, &dt[0]))
+				break;
+
+			if (config.dimension_sizes.size() == 2)
+			{
+				boost::filesystem::path dump_file_path = dump_data_folder / (boost::format("%1%_%2%_%|3$05d|.%4%") % dump_dataset_name % dump_layer_name % sample_id % dump_extension_image).str();
+
+				data_visualizer::save_2d(
+					config,
+					&dt[0],
+					dump_file_path.string().c_str(),
+					dump_data_rgb && (config.feature_map_count == 3),
+					dump_data_scale,
+					dump_data_dimension_list);
+			}
+			else if (config.dimension_sizes.size() == 3)
+			{
+				boost::filesystem::path dump_file_path = dump_data_folder / (boost::format("%1%_%2%_%|3$05d|.%4%") % dump_dataset_name % dump_layer_name % sample_id % dump_extension_video).str();
+
+				data_visualizer::save_3d(
+					config,
+					&dt[0],
+					dump_file_path.string().c_str(),
+					dump_data_rgb && (config.feature_map_count == 3),
+					dump_data_video_fps,
+					dump_data_scale,
+					dump_data_dimension_list);
+			}
+			else
+				throw neural_network_exception((boost::format("Saving snapshot for %1% dimensions is not implemented") % config.dimension_sizes.size()).str());
+		}
+	}
+
+	std::vector<unsigned int> toolset::get_dump_data_dimension_list(unsigned int original_dimension_count) const
+	{
+		std::vector<unsigned int> res;
+		
+		for(unsigned int i = 0; i < original_dimension_count; ++i)
+			res.push_back(i);
+
+		return res;
+	}
+
+	std::vector<data_transformer::ptr> toolset::get_data_transformer_list(
+		const std::string& dataset_name,
+		const std::string& layer_name,
+		dataset_usage usage) const
+	{
+		return std::vector<data_transformer::ptr>();
+	}
+
+	structured_data_reader::ptr toolset::apply_transformers(
+		structured_data_reader::ptr original_reader,
+		const std::vector<data_transformer::ptr>& data_transformer_list) const
+	{
+		structured_data_reader::ptr current_reader = original_reader;
+		for(std::vector<data_transformer::ptr>::const_iterator it = data_transformer_list.begin(); it != data_transformer_list.end(); ++it)
+		{
+			structured_data_reader::ptr new_reader(new transformed_structured_data_reader(current_reader, *it));
+			current_reader = new_reader;
+		}
+		return current_reader;
+	}
+
+	void toolset::create_normalizer()
+	{
+		std::string reader_file_name = (boost::format("%1%_%2%.dt") % normalizer_dataset_name % normalizer_layer_name).str();
+		boost::filesystem::path reader_file_path = get_working_data_folder() / reader_file_name;
+
+		std::string normalizer_file_name = (boost::format("normalizer_%1%.txt") % normalizer_layer_name).str();
+		boost::filesystem::path normalizer_file_path = get_working_data_folder() / normalizer_file_name;
+
+		std::cout << "Generating normalizer file " << normalizer_file_path.string() << " from " << reader_file_path.string() << std::endl;
+
+		if (!boost::filesystem::exists(reader_file_path))
+			throw neural_network_exception((boost::format("File %1% doesn't exist") % reader_file_path.string()).str());
+		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(reader_file_path, std::ios_base::in | std::ios_base::binary));
+		structured_data_reader::ptr reader = apply_transformers(get_structured_reader(normalizer_dataset_name, normalizer_layer_name, in), get_data_transformer_list(normalizer_dataset_name, normalizer_layer_name, dataset_usage_create_normalizer));
+
+		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader->get_feature_map_data_stat_list();
+		unsigned int feature_map_id = 0;
+		for(std::vector<nnforge::feature_map_data_stat>::const_iterator it = feature_map_data_stat_list.begin(); it != feature_map_data_stat_list.end(); ++it, ++feature_map_id)
+			std::cout << "Feature map # " << feature_map_id << ": " << *it << std::endl;
+
+		normalize_data_transformer normalizer(feature_map_data_stat_list);
+		boost::filesystem::ofstream file_with_schema(get_working_data_folder() / normalizer_file_name, std::ios_base::out | std::ios_base::trunc);
+		normalizer.write_proto(file_with_schema);
+	}
+
+	normalize_data_transformer::ptr toolset::get_normalize_data_transformer(const std::string& layer_name) const
+	{
+		std::string normalizer_file_name = (boost::format("normalizer_%1%.txt") % layer_name).str();
+		boost::filesystem::path normalizer_file_path = get_working_data_folder() / normalizer_file_name;
+
+		if (!boost::filesystem::exists(normalizer_file_path))
+			return normalize_data_transformer::ptr();
+
+		boost::filesystem::ifstream file_with_schema(get_working_data_folder() / normalizer_file_name, std::ios_base::in);
+		normalize_data_transformer::ptr res(new normalize_data_transformer());
+		res->read_proto(file_with_schema);
 
 		return res;
 	}

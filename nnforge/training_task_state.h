@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "testing_result.h"
 #include "network_data.h"
 #include "backward_propagation.h"
 

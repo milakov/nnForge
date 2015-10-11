@@ -54,18 +54,6 @@
     <Filter Include="Header Files\space_filling_curves">
       <UniqueIdentifier>{57d9a636-ca84-4b36-83ae-17e090e78bba}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\network_analyzer">
-      <UniqueIdentifier>{a07e94ff-5f4d-4cc7-a6aa-0f6f39d1c53e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\network_analyzer">
-      <UniqueIdentifier>{89587dff-9e19-46eb-a685-377e2bb3794f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\error_function_updaters">
-      <UniqueIdentifier>{7e3dddb8-81d6-4315-8298-d3c508984ff1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\error_function_updaters">
-      <UniqueIdentifier>{5b39a743-8d7c-4b21-9162-1dbdbc337ead}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\forward_propagation">
       <UniqueIdentifier>{fe66c454-30cf-4991-a52c-47e9ea6c88ea}</UniqueIdentifier>
     </Filter>
@@ -248,44 +236,20 @@
     <ClInclude Include="split_policy_z_order.h">
       <Filter>Header Files\space_filling_curves</Filter>
     </ClInclude>
-    <ClInclude Include="network_analyzer_cuda.h">
-      <Filter>Header Files\network_analyzer</Filter>
-    </ClInclude>
-    <ClInclude Include="network_analyzer_cuda_factory.h">
-      <Filter>Header Files\network_analyzer</Filter>
-    </ClInclude>
     <ClInclude Include="rgb_to_yuv_convert_layer_updater_cuda.h">
       <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
     <ClInclude Include="rgb_to_yuv_convert_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
     </ClInclude>
-    <ClInclude Include="error_function_updater_cuda.h">
-      <Filter>Header Files\error_function_updaters</Filter>
-    </ClInclude>
-    <ClInclude Include="error_function_updater_cuda_factory.h">
-      <Filter>Header Files\error_function_updaters</Filter>
-    </ClInclude>
-    <ClInclude Include="mse_error_function_updater_cuda.h">
-      <Filter>Header Files\error_function_updaters</Filter>
-    </ClInclude>
-    <ClInclude Include="squared_hinge_loss_error_function_updater_cuda.h">
-      <Filter>Header Files\error_function_updaters</Filter>
-    </ClInclude>
     <ClInclude Include="sequential_curve.h">
       <Filter>Header Files\space_filling_curves</Filter>
-    </ClInclude>
-    <ClInclude Include="negative_log_likelihood_error_function_updater_cuda.h">
-      <Filter>Header Files\error_function_updaters</Filter>
     </ClInclude>
     <ClInclude Include="sigmoid_layer_testing_schema.h">
       <Filter>Header Files\testing_schemas</Filter>
     </ClInclude>
     <ClInclude Include="sigmoid_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
-    </ClInclude>
-    <ClInclude Include="cross_entropy_error_function_updater_cuda.h">
-      <Filter>Header Files\error_function_updaters</Filter>
     </ClInclude>
     <ClInclude Include="max_subsampling_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
@@ -443,6 +407,30 @@
     <ClInclude Include="accuracy_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
     </ClInclude>
+    <ClInclude Include="negative_log_likelihood_layer_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="negative_log_likelihood_layer_testing_schema.h">
+      <Filter>Header Files\testing_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="negative_log_likelihood_layer_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="negative_log_likelihood_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="cross_entropy_layer_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="cross_entropy_layer_testing_schema.h">
+      <Filter>Header Files\testing_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="cross_entropy_layer_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="cross_entropy_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -547,14 +535,8 @@
     <ClCompile Include="local_contrast_subtractive_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
-    <ClCompile Include="network_analyzer_cuda_factory.cpp">
-      <Filter>Source Files\network_analyzer</Filter>
-    </ClCompile>
     <ClCompile Include="rgb_to_yuv_convert_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
-    </ClCompile>
-    <ClCompile Include="error_function_updater_cuda_factory.cpp">
-      <Filter>Source Files\error_function_updaters</Filter>
     </ClCompile>
     <ClCompile Include="sigmoid_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
@@ -664,6 +646,18 @@
     <ClCompile Include="accuracy_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
+    <ClCompile Include="negative_log_likelihood_layer_testing_schema.cpp">
+      <Filter>Source Files\testing_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="negative_log_likelihood_layer_updater_schema.cpp">
+      <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="cross_entropy_layer_testing_schema.cpp">
+      <Filter>Source Files\testing_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="cross_entropy_layer_updater_schema.cpp">
+      <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="absolute_layer_tester_cuda.cu">
@@ -693,26 +687,8 @@
     <CudaCompile Include="local_contrast_subtractive_2d_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
-    <CudaCompile Include="network_analyzer_cuda.cu">
-      <Filter>Source Files\network_analyzer</Filter>
-    </CudaCompile>
     <CudaCompile Include="rgb_to_yuv_convert_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
-    </CudaCompile>
-    <CudaCompile Include="error_function_updater_cuda.cu">
-      <Filter>Source Files\error_function_updaters</Filter>
-    </CudaCompile>
-    <CudaCompile Include="mse_error_function_updater_cuda.cu">
-      <Filter>Source Files\error_function_updaters</Filter>
-    </CudaCompile>
-    <CudaCompile Include="squared_hinge_loss_error_function_updater_cuda.cu">
-      <Filter>Source Files\error_function_updaters</Filter>
-    </CudaCompile>
-    <CudaCompile Include="negative_log_likelihood_error_function_updater_cuda.cu">
-      <Filter>Source Files\error_function_updaters</Filter>
-    </CudaCompile>
-    <CudaCompile Include="cross_entropy_error_function_updater_cuda.cu">
-      <Filter>Source Files\error_function_updaters</Filter>
     </CudaCompile>
     <CudaCompile Include="max_subsampling_layer_updater_schema_cuda.cu">
       <Filter>Source Files\updater_schemas</Filter>
@@ -766,6 +742,18 @@
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
     <CudaCompile Include="accuracy_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="negative_log_likelihood_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="negative_log_likelihood_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cross_entropy_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="cross_entropy_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
   </ItemGroup>

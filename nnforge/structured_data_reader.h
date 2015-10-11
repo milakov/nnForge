@@ -38,8 +38,6 @@ namespace nnforge
 			unsigned int entry_id,
 			std::vector<unsigned char>& all_elems);
 
-		virtual void next_epoch();
-
 		virtual layer_configuration_specific get_configuration() const = 0;
 
 		std::vector<feature_map_data_stat> get_feature_map_data_stat_list();

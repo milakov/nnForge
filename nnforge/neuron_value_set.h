@@ -17,11 +17,8 @@
 #pragma once
 
 #include <vector>
-#include <ostream>
-#include <istream>
 #include <string>
 #include <map>
-#include <boost/uuid/uuid.hpp>
 
 #include "nn_types.h"
 
@@ -54,23 +51,15 @@ namespace nnforge
 
 		void add_entry(const float * new_data);
 
-		// The stream should be created with std::ios_base::binary flag
-		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure
-		void write(std::ostream& binary_stream_to_write_to) const;
-
-		// The stream should be created with std::ios_base::binary flag
-		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
-		void read(std::istream& binary_stream_to_read_from);
-
 		nnforge_shared_ptr<std::vector<float> > get_average() const;
 
-		const boost::uuids::uuid& get_uuid() const;
+		void add(
+			const neuron_value_set& other,
+			float alpha,
+			float beta);
 
 	public:
 		unsigned int neuron_count;
 		std::vector<nnforge_shared_ptr<std::vector<float> > > neuron_value_list;
-
-	private:
-		static const boost::uuids::uuid neuron_value_set_guid;
 	};
 }

@@ -42,8 +42,16 @@ int main(int argc, char* argv[])
 		gtsrb_toolset gtsrb(nnforge::factory_generator::ptr(new nnforge::plain::factory_generator_plain()));
 		#endif
 
-		if (gtsrb.parse(argc, argv))
-			gtsrb.do_action();
+		try
+		{
+			if (gtsrb.parse(argc, argv))
+				gtsrb.do_action();
+		}
+		catch (const std::exception& e)
+		{
+			std::cout << "Exception caught: " << e.what() << std::endl;
+			return 1;
+		}
 	}
 	catch (const std::exception& e)
 	{

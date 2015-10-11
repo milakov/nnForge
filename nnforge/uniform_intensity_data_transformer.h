@@ -19,7 +19,9 @@
 #include "data_transformer.h"
 #include "rnd.h"
 #include "nn_types.h"
+
 #include <vector>
+#include <boost/thread/thread.hpp>
 
 namespace nnforge
 {
@@ -33,16 +35,14 @@ namespace nnforge
 		virtual ~uniform_intensity_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-		virtual bool is_deterministic() const;
-
 	protected:
 		random_generator generator;
+		boost::mutex gen_stream_mutex;
 
 		std::vector<nnforge_uniform_real_distribution<float> > shift_distribution_list;
 	};

@@ -59,6 +59,21 @@ namespace nnforge
 	{
 	}
 
+	bool forward_propagation::is_schema_with_weights() const
+	{
+		bool res = false;
+		std::vector<layer::const_ptr> layer_list = schema->get_layers();
+		for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
+		{
+			if ((!(*it)->is_empty_data()) || (!(*it)->is_empty_data_custom()))
+			{
+				res = true;
+				break;
+			}
+		}
+		return res;
+	}
+
 	void forward_propagation::clear_data()
 	{
 		actual_clear_data();

@@ -20,6 +20,8 @@
 #include "stream_duplicator.h"
 #include "network_trainer.h"
 #include "structured_data_stream_reader.h"
+#include "data_transformer.h"
+#include "normalize_data_transformer.h"
 
 #include <vector>
 #include <string>
@@ -39,6 +41,16 @@ namespace nnforge
 		std::string get_action() const;
 
 		void do_action();
+
+	protected:
+		enum dataset_usage
+		{
+			dataset_usage_train = 0,
+			dataset_usage_validate_when_train = 1,
+			dataset_usage_inference = 2,
+			dataset_usage_dump_data = 3,
+			dataset_usage_create_normalizer = 4
+		};
 
 	protected:
 		virtual std::string get_default_action() const;
@@ -69,8 +81,6 @@ namespace nnforge
 
 		virtual void train();
 
-		virtual structured_data_bunch_reader::ptr get_reader(const std::string& dataset_name) const;
-
 		virtual boost::filesystem::path get_ann_subfolder_name() const;
 
 		virtual network_trainer::ptr get_network_trainer() const;
@@ -83,8 +93,42 @@ namespace nnforge
 
 		virtual void prepare_testing_data();
 
+		virtual void shuffle_data();
+
+		virtual void dump_data();
+
+		virtual void create_normalizer();
+
+		virtual structured_data_bunch_reader::ptr get_structured_data_bunch_reader(
+			const std::string& dataset_name,
+			dataset_usage usage,
+			unsigned int multiple_epoch_count) const;
+
+		virtual raw_data_reader::ptr get_raw_reader(
+			const std::string& dataset_name,
+			const std::string& layer_name,
+			nnforge_shared_ptr<std::istream> in) const;
+
+		virtual structured_data_reader::ptr get_structured_reader(
+			const std::string& dataset_name,
+			const std::string& layer_name,
+			nnforge_shared_ptr<std::istream> in) const;
+
+		virtual std::vector<unsigned int> get_dump_data_dimension_list(unsigned int original_dimension_count) const;
+
+		virtual std::vector<data_transformer::ptr> get_data_transformer_list(
+			const std::string& dataset_name,
+			const std::string& layer_name,
+			dataset_usage usage) const;
+
 	protected:
-		void shuffle_data();
+
+		structured_data_reader::ptr apply_transformers(
+			structured_data_reader::ptr original_reader,
+			const std::vector<data_transformer::ptr>& data_transformer_list) const;
+
+		// Returns empty smart pointer if no normalize_data_transformer exists for the layer specified
+		normalize_data_transformer::ptr get_normalize_data_transformer(const std::string& layer_name) const;
 
 	private:
 		void dump_settings();
@@ -106,8 +150,8 @@ namespace nnforge
 	protected:
 		factory_generator::ptr master_factory;
 
-		forward_propagation_factory::ptr forward_propagation_factory;
-		backward_propagation_factory::ptr backward_propagation_factory;
+		forward_propagation_factory::ptr forward_prop_factory;
+		backward_propagation_factory::ptr backward_prop_factory;
 
 		nnforge_shared_ptr<stream_duplicator> out_to_log_duplicator;
 
@@ -121,6 +165,7 @@ namespace nnforge
 		std::string inference_dataset_name;
 		std::string training_dataset_name;
 		std::string shuffle_dataset_name;
+		std::string normalizer_dataset_name;
 		int inference_ann_data_index;
 		bool debug_mode;
 		std::vector<std::string> training_output_layer_names;
@@ -137,10 +182,22 @@ namespace nnforge
 		int batch_size;
 		std::string momentum_type_str;
 		float momentum_val;
-		bool load_snapshot;
+		bool resume_from_snapshot;
 		bool dump_snapshot;
 		int ann_count;
 		int batch_offset;
+		std::string inference_mode;
+		std::string inference_output_dataset_name;
+		std::string dump_dataset_name;
+		std::string dump_layer_name;
+		std::string normalizer_layer_name;
+		int dump_data_sample_count;
+		std::string dump_extension_image;
+		std::string dump_extension_video;
+		bool dump_data_rgb;
+		int dump_data_scale;
+		int dump_data_video_fps;
+		int epoch_count_in_training_dataset;
 
 		debug_state::ptr debug;
 
@@ -152,6 +209,7 @@ namespace nnforge
 		static const char * snapshot_ann_index_extractor_pattern;
 		static const char * ann_snapshot_subfolder_name;
 		static const char * dataset_extractor_pattern;
+		static const char * dump_data_subfolder_name;
 
 		std::string default_config_path;
 

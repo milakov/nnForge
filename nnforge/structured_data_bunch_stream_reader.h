@@ -27,7 +27,9 @@ namespace nnforge
 	public:
 		typedef nnforge_shared_ptr<structured_data_bunch_stream_reader> ptr;
 
-		structured_data_bunch_stream_reader(const std::map<std::string, structured_data_reader::ptr>& data_reader_map);
+		structured_data_bunch_stream_reader(
+			const std::map<std::string, structured_data_reader::ptr>& data_reader_map,
+			unsigned int multiple_epoch_count = 1);
 
 		virtual ~structured_data_bunch_stream_reader();
 
@@ -38,13 +40,15 @@ namespace nnforge
 			unsigned int entry_id,
 			const std::map<std::string, float *>& data_map);
 
-		virtual void next_epoch() const;
-
-		// Return -1 in case there is no info on entry count
 		virtual int get_entry_count() const;
+
+		virtual void next_epoch();
 
 	protected:
 		std::map<std::string, structured_data_reader::ptr> data_reader_map;
-		int entry_count;
+		int total_entry_count;
+		std::vector<int> entry_count_list;
+		std::vector<int> base_entry_count_list;
+		unsigned int current_epoch;
 	};
 }

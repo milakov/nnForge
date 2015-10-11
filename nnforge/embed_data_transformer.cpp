@@ -28,7 +28,7 @@ namespace nnforge
 	embed_data_transformer::embed_data_transformer(
 		const std::vector<unsigned int>& output_sizes,
 		const std::vector<unsigned int>& left_padding,
-		unsigned char padding_value)
+		float padding_value)
 		: output_sizes(output_sizes)
 		, left_padding(left_padding)
 		, padding_value(padding_value)
@@ -42,15 +42,11 @@ namespace nnforge
 	}
 
 	void embed_data_transformer::transform(
-		const void * data,
-		void * data_transformed,
-		neuron_data_type::input_type type,
+		const float * data,
+		float * data_transformed,
 		const layer_configuration_specific& original_config,
 		unsigned int sample_id)
 	{
-		if (type != neuron_data_type::type_byte)
-			throw neural_network_exception("embed_data_transformer is implemented for data stored as bytes only");
-
 		const std::vector<unsigned int>& dimension_sizes = original_config.dimension_sizes;
 
 		if (dimension_sizes.size() != output_sizes.size())
@@ -66,12 +62,14 @@ namespace nnforge
 
 		std::vector<unsigned int> src_pos_list(dimension_sizes.size(), 0);
 
-		const unsigned char * src = (const unsigned char *)data;
-		unsigned char * dst_begin = (unsigned char *)data_transformed;
+		const float * src = (const float *)data;
+		float * dst_begin = (float *)data_transformed;
 
 		layer_configuration_specific output_config = get_transformed_configuration(original_config);
 
-		memset(data_transformed, padding_value, output_config.get_neuron_count());
+		unsigned int elem_count = output_config.get_neuron_count();
+		for(unsigned int i = 0; i < elem_count; ++i)
+			data_transformed[i] = padding_value;
 
 		for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
 		{
@@ -81,7 +79,7 @@ namespace nnforge
 				for(int i = static_cast<int>(dimension_sizes.size()) - 2; i >= 0; --i)
 					dst_offset = dst_offset * output_sizes[i] + src_pos_list[i] + dst_offset_list[i];
 
-				memcpy(dst_begin + dst_offset, src, dimension_sizes[0]);
+				memcpy(dst_begin + dst_offset, src, dimension_sizes[0] * sizeof(float));
 				src += dimension_sizes[0];
 
 				bool inc = false;
@@ -110,15 +108,5 @@ namespace nnforge
 		res.dimension_sizes = output_sizes;
 
 		return res;
-	}
-
-	bool embed_data_transformer::is_in_place() const
-	{
-		return false;
-	}
-
- 	bool embed_data_transformer::is_deterministic() const
-	{
-		return true;
 	}
 }

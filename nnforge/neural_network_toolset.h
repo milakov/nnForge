@@ -16,6 +16,7 @@
 
 #pragma once
 
+/*
 #include "factory_generator.h"
 #include "config_options.h"
 #include "network_data_pusher.h"
@@ -314,3 +315,4 @@ namespace nnforge
 		neural_network_toolset(const neural_network_toolset&);
 	};
 }
+*/

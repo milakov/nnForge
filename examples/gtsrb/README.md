@@ -42,7 +42,7 @@ Train
 -----
 
 	./gtsrb prepare_training_data
-	./gtsrb randomize_data
+	./gtsrb shuffle_data
 	./gtsrb train
 	
 Validate
@@ -50,5 +50,4 @@ Validate
 
 	./gtsrb validate
 
-I got about 0.45-0.70% error rate on validation data for a single neural network.
-You could get 0.5% on 10 networks (./gtsrb train -N 10) 
+I got about 0.6-0.8% error rate on validation data for a single neural network.

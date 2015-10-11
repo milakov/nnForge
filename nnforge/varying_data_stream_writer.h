@@ -17,13 +17,14 @@
 #pragma once
 
 #include "nn_types.h"
+#include "raw_data_writer.h"
 
 #include <vector>
 #include <ostream>
 
 namespace nnforge
 {
-	class varying_data_stream_writer
+	class varying_data_stream_writer : public raw_data_writer
 	{
 	public:
 		typedef nnforge_shared_ptr<varying_data_stream_writer> ptr;
@@ -43,7 +44,6 @@ namespace nnforge
 
 		std::vector<unsigned long long> entry_offsets;
 		std::ostream::pos_type entry_count_pos;
-		std::ostream::pos_type reset_pos;
 
 	private:
 		varying_data_stream_writer(const varying_data_stream_writer&);

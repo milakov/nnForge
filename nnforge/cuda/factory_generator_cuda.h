@@ -29,7 +29,9 @@ namespace nnforge
 			factory_generator_cuda(
 				int cuda_device_id,
 				float cuda_max_global_memory_usage_ratio,
-				unsigned int cuda_reserved_thread_count);
+				unsigned int cuda_reserved_thread_count,
+				bool cuda_dont_share_buffers,
+				bool cuda_single_command_stream);
 
 			factory_generator_cuda();
 
@@ -47,10 +49,14 @@ namespace nnforge
 
 			virtual std::vector<int_option> get_int_options();
 
+			virtual std::vector<bool_option> get_bool_options();
+
 		protected:
 			int cuda_device_id;
 			float cuda_max_global_memory_usage_ratio;
 			int cuda_reserved_thread_count;
+			bool cuda_dont_share_buffers;
+			bool cuda_single_command_stream;
 
 			cuda_running_configuration::const_ptr cuda_config;
 		};

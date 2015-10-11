@@ -180,6 +180,28 @@ namespace nnforge
 			const reverse_action_schema_graph& g;
 		};
 
+		struct vertex_info_for_buffer_set
+		{
+			layer::const_ptr l;
+			layer_action action;
+			buffer_lifetime lifetime;
+
+			vertex_info_for_buffer_set(
+				layer::const_ptr l,
+				const layer_action& action,
+				const buffer_lifetime& lifetime)
+				: l(l)
+				, action(action)
+				, lifetime(lifetime)
+			{
+			}
+		};
+
+		struct vertex_info_list_for_buffer_set
+		{
+			std::vector<vertex_info_for_buffer_set> buffers;
+		};
+
 	private:
 		static const unsigned int border_penwidth;
 		static const unsigned int arrow_penwidth;

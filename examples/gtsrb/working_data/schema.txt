@@ -25,8 +25,8 @@ layer {
 	convolution_param {
 		input_feature_map_count: 1
 		output_feature_map_count: 38
-	        dimension_param { kernel_size: 5 }
-	        dimension_param { kernel_size: 5 }
+		dimension_param { kernel_size: 5 }
+		dimension_param { kernel_size: 5 }
 	}
 }
 layer {
@@ -48,8 +48,8 @@ layer {
 	name: "avg_0_layer"
 	input_layer_name: "abs_0_layer"
 	average_subsampling_param {
-	        dimension_param { subsampling_size: 2 }
-	        dimension_param { subsampling_size: 2 }
+		dimension_param { subsampling_size: 2 }
+		dimension_param { subsampling_size: 2 }
 	}
 }
 layer {
@@ -59,8 +59,8 @@ layer {
 	convolution_param {
 		input_feature_map_count: 38
 		output_feature_map_count: 96
-	        dimension_param { kernel_size: 5 }
-	        dimension_param { kernel_size: 5 }
+        dimension_param { kernel_size: 5 }
+        dimension_param { kernel_size: 5 }
 	}
 }
 layer {
@@ -82,8 +82,8 @@ layer {
 	name: "avg_1_layer"
 	input_layer_name: "abs_1_layer"
 	average_subsampling_param {
-	        dimension_param { subsampling_size: 2 }
-	        dimension_param { subsampling_size: 2 }
+		dimension_param { subsampling_size: 2 }
+		dimension_param { subsampling_size: 2 }
 	}
 }
 layer {
@@ -94,8 +94,8 @@ layer {
 		input_feature_map_count: 96
 		output_feature_map_count: 200
 		feature_map_connection_sparsity_ratio: 0.3
-	        dimension_param { kernel_size: 5 }
-	        dimension_param { kernel_size: 5 }
+		dimension_param { kernel_size: 5 }
+		dimension_param { kernel_size: 5 }
 	}
 }
 layer {
@@ -126,8 +126,8 @@ layer {
 		input_feature_map_count: 200
 		output_feature_map_count: 43
 		feature_map_connection_sparsity_ratio: 0.3
-	        dimension_param { kernel_size: 1 }
-	        dimension_param { kernel_size: 1 }
+		dimension_param { kernel_size: 1 }
+		dimension_param { kernel_size: 1 }
 	}
 }
 layer {

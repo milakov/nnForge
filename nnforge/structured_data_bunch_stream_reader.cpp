@@ -22,20 +22,42 @@
 
 namespace nnforge
 {
-	structured_data_bunch_stream_reader::structured_data_bunch_stream_reader(const std::map<std::string, structured_data_reader::ptr>& data_reader_map)
+	structured_data_bunch_stream_reader::structured_data_bunch_stream_reader(
+		const std::map<std::string, structured_data_reader::ptr>& data_reader_map,
+		unsigned int multiple_epoch_count)
 		: data_reader_map(data_reader_map)
+		, entry_count_list(multiple_epoch_count)
+		, base_entry_count_list(multiple_epoch_count)
+		, current_epoch(0)
 	{
-		entry_count = -1;
+		total_entry_count = -1;
 		for(std::map<std::string, structured_data_reader::ptr>::const_iterator it = data_reader_map.begin(); it != data_reader_map.end(); ++it)
 		{
 			int new_entry_count = it->second->get_entry_count();
 			if (new_entry_count >= 0)
 			{
-				if (entry_count < 0)
-					entry_count = new_entry_count;
-				else if (entry_count != new_entry_count)
-					throw std::runtime_error((boost::format("Entry count mismatch: %1% and %2%") % entry_count % new_entry_count).str());
+				if (total_entry_count < 0)
+					total_entry_count = new_entry_count;
+				else if (total_entry_count != new_entry_count)
+					throw std::runtime_error((boost::format("Entry count mismatch: %1% and %2%") % total_entry_count % new_entry_count).str());
 			}
+		}
+
+		if (multiple_epoch_count == 1)
+		{
+			entry_count_list[0] = total_entry_count;
+		}
+		else
+		{
+			if (total_entry_count < 0)
+				throw neural_network_exception("Multiple epoch count specified for structured_data_bunch_stream_reader while entry count cannot be determined");
+
+			unsigned int epoch_min_size = total_entry_count / multiple_epoch_count;
+			unsigned int plus1_epoch_count = total_entry_count % multiple_epoch_count;
+			std::fill_n(entry_count_list.begin(), plus1_epoch_count, epoch_min_size + 1);
+			std::fill_n(entry_count_list.begin() + plus1_epoch_count, multiple_epoch_count - plus1_epoch_count, epoch_min_size);
+			for(unsigned int i = 1; i < static_cast<unsigned int>(base_entry_count_list.size()); ++i)
+				base_entry_count_list[i] = base_entry_count_list[i - 1] + entry_count_list[i - 1];
 		}
 	}
 
@@ -51,32 +73,32 @@ namespace nnforge
 		return res;
 	}
 
+	void structured_data_bunch_stream_reader::next_epoch()
+	{
+		current_epoch = (current_epoch + 1) % entry_count_list.size();
+	}
+
 	bool structured_data_bunch_stream_reader::read(
 		unsigned int entry_id,
 		const std::map<std::string, float *>& data_map)
 	{
-		if ((entry_count >= 0) && (entry_id >= static_cast<unsigned int>(entry_count)))
+		if ((entry_count_list[current_epoch] >= 0) && (entry_id >= static_cast<unsigned int>(entry_count_list[current_epoch])))
 			return false;
 
+		unsigned int global_entry_id = entry_id + base_entry_count_list[current_epoch];
 		bool res = true;
 		for(std::map<std::string, float *>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
 		{
 			std::map<std::string, structured_data_reader::ptr>::const_iterator reader_it = data_reader_map.find(it->first);
 			if (reader_it == data_reader_map.end())
 				throw neural_network_exception((boost::format("structured_data_bunch_stream_reader is requested to read %1% data, while it doesn't have it") % it->first).str());
-			res &= reader_it->second->read(entry_id, it->second);
+			res &= reader_it->second->read(global_entry_id, it->second);
 		}
 		return res;
 	}
 
-	void structured_data_bunch_stream_reader::next_epoch() const
-	{
-		for(std::map<std::string, structured_data_reader::ptr>::const_iterator it = data_reader_map.begin(); it != data_reader_map.end(); ++it)
-			it->second->next_epoch();
-	}
-
 	int structured_data_bunch_stream_reader::get_entry_count() const
 	{
-		return entry_count;
+		return entry_count_list[current_epoch];
 	}
 }

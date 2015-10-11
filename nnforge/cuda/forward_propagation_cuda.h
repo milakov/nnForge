@@ -104,6 +104,8 @@ namespace nnforge
 			class read_entry_info
 			{
 			public:
+				typedef nnforge_shared_ptr<read_entry_info> ptr;
+
 				read_entry_info();
 
 				unsigned int entry_id;
@@ -116,6 +118,10 @@ namespace nnforge
 				boost::mutex read_entry_finished_mutex;
 				boost::condition_variable read_entry_finished_condition;
 				std::string error_message;
+
+			private:
+				read_entry_info(const read_entry_info&);
+				read_entry_info& operator =(const read_entry_info&);
 			};
 
 			static void read_input_data_static(read_entry_info * params);

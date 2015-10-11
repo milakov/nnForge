@@ -18,6 +18,7 @@
 
 #include "neural_network_exception.h"
 #include "structured_data_stream_schema.h"
+#include "structured_data_stream_writer.h"
 
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/format.hpp>
@@ -71,5 +72,10 @@ namespace nnforge
 	int structured_data_stream_reader::get_entry_count() const
 	{
 		return entry_count;
+	}
+
+	raw_data_writer::ptr structured_data_stream_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const
+	{
+		return raw_data_writer::ptr(new structured_data_stream_writer(out, get_configuration()));
 	}
 }

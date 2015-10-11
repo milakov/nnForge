@@ -1,0 +1,26 @@
+name: "GTSRB_tail"
+layer {
+	type: "Data"
+	name: "images"
+}
+layer {
+	type: "Data"
+	name: "labels"
+}
+layer {
+	type: "Data"
+	name: "tanh_3_layer"
+}
+layer {
+	type: "MSE"
+	name: "MSE"
+	input_layer_name: "tanh_3_layer"
+	input_layer_name: "labels"
+	mse_param { scale: 0.5 }
+}
+layer {
+	type: "Accuracy"
+	name: "Accuracy"
+	input_layer_name: "tanh_3_layer"
+	input_layer_name: "labels"
+}

@@ -40,9 +40,8 @@ namespace nnforge
 	}
 
 	void extract_data_transformer::transform(
-		const void * data,
-		void * data_transformed,
-		neuron_data_type::input_type type,
+		const float * data,
+		float * data_transformed,
 		const layer_configuration_specific& original_config,
 		unsigned int sample_id)
 	{
@@ -52,8 +51,6 @@ namespace nnforge
 
 			if (dimension_sizes.size() != input_window_sizes.size())
 				throw neural_network_exception((boost::format("extract_data_transformer is created with %1%-dimensions, data has %2% dimensions") % input_window_sizes.size() % dimension_sizes.size()).str());
-
-			size_t elem_size = neuron_data_type::get_input_size(type);
 
 			std::vector<unsigned int> src_offset_list;
 			for(unsigned int i = 0; i < dimension_sizes.size(); ++i)
@@ -65,8 +62,8 @@ namespace nnforge
 
 			std::vector<unsigned int> dst_pos_list(dimension_sizes.size(), 0);
 
-			const unsigned char * src_begin = (const unsigned char *)data;
-			unsigned char * dst = (unsigned char *)data_transformed;
+			const float * src_begin = data;
+			float * dst = data_transformed;
 
 			for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
 			{
@@ -76,8 +73,8 @@ namespace nnforge
 					for(int i = static_cast<int>(dimension_sizes.size()) - 2; i >= 0; --i)
 						offset = offset * dimension_sizes[i] + dst_pos_list[i] + src_offset_list[i];
 
-					memcpy(dst, src_begin + offset * elem_size, output_window_sizes[0] * elem_size);
-					dst += output_window_sizes[0] * elem_size;
+					memcpy(dst, src_begin + offset, output_window_sizes[0] * sizeof(float));
+					dst += output_window_sizes[0];
 
 					bool inc = false;
 					for(int i = 1; i < output_window_sizes.size(); ++i)
@@ -95,14 +92,11 @@ namespace nnforge
 						break;
 				}
 
-				src_begin += original_config.get_neuron_count_per_feature_map() * elem_size;
+				src_begin += original_config.get_neuron_count_per_feature_map();
 			}
 		}
 		else
 		{
-			if (type != neuron_data_type::type_byte)
-				throw neural_network_exception("Resizing extract_data_transformer is implemented for data stored as bytes only");
-
 			if (original_config.dimension_sizes.size() != 2)
 				throw neural_network_exception((boost::format("Resizing extract_data_transformer is processing 2D data only, data is passed with number of dimensions %1%") % original_config.dimension_sizes.size()).str());
 
@@ -115,9 +109,9 @@ namespace nnforge
 			unsigned int transformed_neuron_count_per_feature_map = get_transformed_configuration(original_config).get_neuron_count_per_feature_map();
 			for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
 			{
-				cv::Mat1b original_image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), const_cast<unsigned char *>(static_cast<const unsigned char *>(data)) + (original_neuron_count_per_feature_map * feature_map_id));
-				cv::Mat1b cropped_image = original_image.rowRange(window_top_left_y, window_bottom_right_y).colRange(window_top_left_x, window_bottom_right_x);
-				cv::Mat1b dest_image(static_cast<int>(output_window_sizes[1]), static_cast<int>(output_window_sizes[0]), static_cast<unsigned char *>(data_transformed) + (transformed_neuron_count_per_feature_map * feature_map_id));
+				cv::Mat1f original_image(static_cast<int>(original_config.dimension_sizes[1]), static_cast<int>(original_config.dimension_sizes[0]), const_cast<float *>(data) + (original_neuron_count_per_feature_map * feature_map_id));
+				cv::Mat1f cropped_image = original_image.rowRange(window_top_left_y, window_bottom_right_y).colRange(window_top_left_x, window_bottom_right_x);
+				cv::Mat1f dest_image(static_cast<int>(output_window_sizes[1]), static_cast<int>(output_window_sizes[0]), data_transformed + (transformed_neuron_count_per_feature_map * feature_map_id));
 				cv::resize(cropped_image, dest_image, dest_image.size());
 			}
 		}
@@ -129,15 +123,5 @@ namespace nnforge
 		res.dimension_sizes = output_window_sizes;
 
 		return res;
-	}
-
-	bool extract_data_transformer::is_in_place() const
-	{
-		return false;
-	}
-
- 	bool extract_data_transformer::is_deterministic() const
-	{
-		return true;
 	}
 }

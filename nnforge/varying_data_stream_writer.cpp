@@ -32,8 +32,6 @@ namespace nnforge
 		entry_count_pos = out_stream->tellp();
 		unsigned int entry_count = 0;
 		out_stream->write(reinterpret_cast<const char*>(&entry_count), sizeof(entry_count));
-
-		reset_pos = out_stream->tellp();
 	}
 
 	varying_data_stream_writer::~varying_data_stream_writer()

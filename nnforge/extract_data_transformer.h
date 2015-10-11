@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,17 +32,12 @@ namespace nnforge
 		virtual ~extract_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 
 		virtual layer_configuration_specific get_transformed_configuration(const layer_configuration_specific& original_config) const;
-
-		virtual bool is_in_place() const;
-
-		virtual bool is_deterministic() const;
 
 	protected:
 		std::vector<unsigned int> input_window_sizes;

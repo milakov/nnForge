@@ -1,0 +1,14 @@
+USE_PROTOBUF=yes
+USE_BOOST=yes
+USE_OPENCV=yes
+USE_OPENMP=yes
+USE_CUDA=yes
+USE_NNFORGE=yes
+
+include ../../Settings.mk
+include ../../Main.mk
+
+INPUT_DIRECTORY_SEPARATOR?=_
+
+include ../Example.mk
+

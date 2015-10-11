@@ -17,9 +17,11 @@
 #pragma once
 
 #include "nn_types.h"
+#include "raw_data_writer.h"
 
 #include <vector>
 #include <memory>
+#include <ostream>
 
 namespace nnforge
 {
@@ -37,6 +39,8 @@ namespace nnforge
 
 		// The method should return -1 if entry count is unknown
 		virtual int get_entry_count() const = 0;
+
+		virtual raw_data_writer::ptr get_writer(nnforge_shared_ptr<std::ostream> out) const = 0;
 
 	protected:
 		raw_data_reader();
