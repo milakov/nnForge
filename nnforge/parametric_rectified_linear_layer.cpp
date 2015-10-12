@@ -105,11 +105,11 @@ namespace nnforge
 	}
 
 	void parametric_rectified_linear_layer::randomize_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
-		std::fill(data[0].begin(), data[0].end(), 0.25F);
+		std::fill((*data)[0].begin(), (*data)[0].end(), 0.25F);
 	}
 
 	layer_data_configuration_list parametric_rectified_linear_layer::get_layer_data_configuration_list() const

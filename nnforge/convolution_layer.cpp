@@ -215,8 +215,8 @@ namespace nnforge
 	}
 
 	void convolution_layer::randomize_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
 		unsigned int weight_count = 1;
@@ -229,21 +229,21 @@ namespace nnforge
 
 		nnforge_normal_distribution<float> nd(0.0F, standard_deviation);
 
-		for(unsigned int i = 0; i < data[0].size(); ++i)
+		for(unsigned int i = 0; i < (*data)[0].size(); ++i)
 		{
 			float val = nd(generator);
 			while (fabs(val) > max_abs_value)
 				val = nd(generator);
 
-			data[0][i] = val;
+			(*data)[0][i] = val;
 		}
 
-		std::fill(data[1].begin(), data[1].end(), 0.0F);
+		std::fill((*data)[1].begin(), (*data)[1].end(), 0.0F);
 	}
 
 	void convolution_layer::randomize_orthogonal_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
 		unsigned int weight_count = 1;
@@ -252,12 +252,12 @@ namespace nnforge
 		unsigned int weight_row_count = output_feature_map_count;
 
 		nnforge_normal_distribution<float> nd(0.0F, 1.0F);
-		for(unsigned int i = 0; i < data[0].size(); ++i)
+		for(unsigned int i = 0; i < (*data)[0].size(); ++i)
 		{
 			float val = nd(generator);
-			data[0][i] = val;
+			(*data)[0][i] = val;
 		}
-		cv::Mat1f weights(weight_row_count, weight_col_count, &(data[0][0]));
+		cv::Mat1f weights(weight_row_count, weight_col_count, &((*data)[0][0]));
 		cv::Mat1f w;
 		cv::Mat1f u;
 		cv::Mat1f vt;
@@ -273,7 +273,7 @@ namespace nnforge
 
 		std::copy(orth.begin(), orth.end(), weights.begin());
 
-		std::fill(data[1].begin(), data[1].end(), 0.0F);
+		std::fill((*data)[1].begin(), (*data)[1].end(), 0.0F);
 	}
 
 	float convolution_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const

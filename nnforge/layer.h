@@ -88,14 +88,14 @@ namespace nnforge
 
 		// Override this member function to randomize data
 		virtual void randomize_data(
-			layer_data& data,
-			layer_data_custom& data_custom,
+			layer_data::ptr data,
+			layer_data_custom::ptr data_custom,
 			random_generator& generator) const;
 
 		// Override this member function to randomize data
 		virtual void randomize_orthogonal_data(
-			layer_data& data,
-			layer_data_custom& data_custom,
+			layer_data::ptr data,
+			layer_data_custom::ptr data_custom,
 			random_generator& generator) const;
 
 		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;

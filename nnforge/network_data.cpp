@@ -84,8 +84,8 @@ namespace nnforge
 			layer_data::ptr data = data_list.find((*it)->instance_name);
 			layer_data_custom::ptr data_custom = data_custom_list.find((*it)->instance_name);
 			(*it)->randomize_data(
-				*data,
-				*data_custom,
+				data,
+				data_custom,
 				gen);
 		}
 	}

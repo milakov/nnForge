@@ -49,8 +49,8 @@ namespace nnforge
 		virtual data_config get_data_config() const;
 
 		virtual void randomize_data(
-			layer_data& data,
-			layer_data_custom& data_custom,
+			layer_data::ptr data,
+			layer_data_custom::ptr data_custom,
 			random_generator& generator) const;
 
 		virtual layer_data_configuration_list get_layer_data_configuration_list() const;

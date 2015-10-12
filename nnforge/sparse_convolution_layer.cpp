@@ -286,13 +286,13 @@ namespace nnforge
 	}
 
 	void sparse_convolution_layer::randomize_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
-		randomize_custom_data(data_custom, generator);
+		randomize_custom_data(*data_custom, generator);
 
-		randomize_weights(data, data_custom, generator);
+		randomize_weights(*data, *data_custom, generator);
 	}
 
 	void sparse_convolution_layer::randomize_weights(
