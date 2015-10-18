@@ -36,9 +36,9 @@ int main(int argc, char* argv[])
 		#endif
 
 		#ifdef NNFORGE_CUDA_BACKEND_ENABLED
-		image_classifier_demo_toolset ts(nnforge::factory_generator_smart_ptr(new nnforge::cuda::factory_generator_cuda()));
+		image_classifier_demo_toolset ts(nnforge::factory_generator::ptr(new nnforge::cuda::factory_generator_cuda()));
 		#else
-		image_classifier_demo_toolset ts(nnforge::factory_generator_smart_ptr(new nnforge::plain::factory_generator_plain()));
+		image_classifier_demo_toolset ts(nnforge::factory_generator::ptr(new nnforge::plain::factory_generator_plain()));
 		#endif
 
 		try

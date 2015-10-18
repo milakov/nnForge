@@ -85,7 +85,7 @@ namespace nnforge
 		std::map<std::string, layer_configuration_specific> get_layer_configuration_specific_map(const std::map<std::string, layer_configuration_specific>& input_configuration_specific_map) const;
 
 		// The result includes output configuration
-		//layer_configuration_specific_list get_layer_configuration_specific_list_reverse(const layer_configuration_specific& output_layer_configuration_specific) const;
+		std::map<std::string, layer_configuration_specific> get_layer_configuration_specific_map_reverse(const std::map<std::string, layer_configuration_specific>& output_configuration_specific_map) const;
 
 		// Returns minimal input rectangle which is quasi-transformed into output one covering the rectangle supplied
 		//std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(

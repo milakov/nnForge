@@ -169,21 +169,34 @@ namespace nnforge
 
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		set_input_configuration_specific(reader.get_config_map());
+		structured_data_bunch_reader::ptr narrow_reader = reader.get_narrow_reader(data_layer_names);
 		res.flops_per_entry = flops;
 		std::vector<std::string> data_layer_name_list(data_layer_names.begin(), data_layer_names.end());
 		std::map<std::string, layer_configuration_specific> output_config_map;
 		for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
 			output_config_map[*it] = layer_config_map[*it];
 		writer.set_config_map(output_config_map);
-		std::pair<unsigned int, std::map<std::string, std::vector<float> > > p = actual_run(
-			reader,
-			writer,
-			data,
-			momentum_data,
-			learning_rates,
-			batch_size,
-			weight_decay,
-			momentum);
+		std::pair<unsigned int, std::map<std::string, std::vector<float> > > p;
+		if (narrow_reader)
+			p = actual_run(
+				*narrow_reader,
+				writer,
+				data,
+				momentum_data,
+				learning_rates,
+				batch_size,
+				weight_decay,
+				momentum);
+		else
+			p = actual_run(
+				reader,
+				writer,
+				data,
+				momentum_data,
+				learning_rates,
+				batch_size,
+				weight_decay,
+				momentum);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		res.entry_processed_count = p.first;
 		res.average_absolute_updates = p.second;

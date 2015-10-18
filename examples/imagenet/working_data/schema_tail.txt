@@ -1,0 +1,22 @@
+name: "Tail of the network"
+layer {
+	type: "Data"
+	name: "labels"
+}
+layer {
+	type: "Data"
+	name: "softmax"
+}
+layer {
+	type: "NegativeLogLikelihood"
+	name: "NLL"
+	input_layer_name: "softmax"
+	input_layer_name: "labels"
+}
+layer {
+	type: "Accuracy"
+	name: "Accuracy"
+	input_layer_name: "softmax"
+	input_layer_name: "labels"
+	accuracy_param { top_n: 5 }
+}

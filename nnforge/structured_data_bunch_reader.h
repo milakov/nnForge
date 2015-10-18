@@ -20,6 +20,7 @@
 #include "nn_types.h"
 
 #include <map>
+#include <set>
 
 namespace nnforge
 {
@@ -38,6 +39,9 @@ namespace nnforge
 			const std::map<std::string, float *>& data_map) = 0;
 
 		virtual void next_epoch() = 0;
+
+		// Empty return value (default) indicates original reader should be used
+		virtual structured_data_bunch_reader::ptr get_narrow_reader(const std::set<std::string>& layer_names) const;
 
 		// Return -1 in case there is no info on entry count
 		virtual int get_entry_count() const;

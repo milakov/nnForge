@@ -36,6 +36,7 @@ training_imagenet_raw_to_structured_data_transformer::~training_imagenet_raw_to_
 }
 
 void training_imagenet_raw_to_structured_data_transformer::transform(
+	unsigned int sample_id,
 	const std::vector<unsigned char>& raw_data,
 	float * structured_data)
 {

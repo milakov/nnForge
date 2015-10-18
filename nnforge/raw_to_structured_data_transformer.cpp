@@ -25,4 +25,9 @@ namespace nnforge
 	raw_to_structured_data_transformer::~raw_to_structured_data_transformer()
 	{
 	}
+
+	unsigned int raw_to_structured_data_transformer::get_sample_count() const
+	{
+		return 1;
+	}
 }

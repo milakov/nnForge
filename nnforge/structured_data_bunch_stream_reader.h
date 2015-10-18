@@ -20,6 +20,8 @@
 #include "structured_data_stream_reader.h"
 #include "nn_types.h"
 
+#include <string>
+
 namespace nnforge
 {
 	class structured_data_bunch_stream_reader : public structured_data_bunch_reader
@@ -42,6 +44,8 @@ namespace nnforge
 
 		virtual int get_entry_count() const;
 
+		virtual structured_data_bunch_reader::ptr get_narrow_reader(const std::set<std::string>& layer_names) const;
+
 		virtual void next_epoch();
 
 	protected:
@@ -50,5 +54,6 @@ namespace nnforge
 		std::vector<int> entry_count_list;
 		std::vector<int> base_entry_count_list;
 		unsigned int current_epoch;
+		std::string invalid_config_message;
 	};
 }

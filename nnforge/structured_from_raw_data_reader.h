@@ -50,6 +50,7 @@ namespace nnforge
 	protected:
 		raw_data_reader::ptr raw_reader;
 		raw_to_structured_data_transformer::ptr transformer;
+		unsigned int transformer_sample_count;
 
 	protected:
 		structured_from_raw_data_reader();

@@ -24,18 +24,23 @@ public:
 	validating_imagenet_raw_to_structured_data_transformer(
 		unsigned int image_size,
 		unsigned int target_image_width,
-		unsigned int target_image_height);
+		unsigned int target_image_height,
+		const std::vector<std::pair<float, float> >& position_list);
 
 	virtual ~validating_imagenet_raw_to_structured_data_transformer();
 
 	virtual void transform(
+		unsigned int sample_id,
 		const std::vector<unsigned char>& raw_data,
 		float * structured_data);
 
 	virtual nnforge::layer_configuration_specific get_configuration() const;
 
+	virtual unsigned int get_sample_count() const;
+
 protected:
 	unsigned int image_size;
 	unsigned int target_image_width;
 	unsigned int target_image_height;
+	std::vector<std::pair<float, float> > position_list;
 };

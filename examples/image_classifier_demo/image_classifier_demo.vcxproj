@@ -98,9 +98,6 @@
     <ProjectReference Include="..\..\nnforge\nnforge.vcxproj">
       <Project>{435cf80f-3a53-4b85-8569-3c477f3ceefc}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\nnforge\plain\plain.vcxproj">
-      <Project>{1e4c82dc-0c7f-43c1-8c1f-1f1b5fd54487}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="image_classifier_demo_toolset.h" />

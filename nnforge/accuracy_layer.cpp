@@ -60,11 +60,12 @@ namespace nnforge
 		return layer_configuration_specific(top_n, input_configuration_specific_list[0].dimension_sizes);
 	}
 
-	layer_configuration_specific accuracy_layer::get_input_layer_configuration_specific(
+	bool accuracy_layer::get_input_layer_configuration_specific(
+		layer_configuration_specific& input_configuration_specific,
 		const layer_configuration_specific& output_configuration_specific,
 		unsigned int input_layer_id) const
 	{
-		throw neural_network_exception("accuracy_layer cannot run get_input_layer_configuration_specific");
+		return false;
 	}
 
 	void accuracy_layer::write_proto(void * layer_proto) const
@@ -112,13 +113,13 @@ namespace nnforge
 	{
 		std::stringstream s;
 		s << instance_name << " acc/err = ";
-		unsigned int top_i = 1;
-		for(std::vector<float>::const_iterator it = data.begin(); it != data.end(); ++it, ++top_i)
+		unsigned int top_i_index = 0;
+		for(std::vector<float>::const_iterator it = data.begin(); it != data.end(); ++it, top_i_index = (top_i_index + 1) % top_n )
 		{
 			if (it != data.begin())
 				s << ", ";
 			float acc_val = *it * 100.0F;
-			s << (boost::format("Top-%1% %|2$.2f|%%/%|3$.2f|%%") % (top_i) % acc_val % (100.0F - acc_val)).str();
+			s << (boost::format("Top-%1% %|2$.2f|%%/%|3$.2f|%%") % (top_i_index + 1) % acc_val % (100.0F - acc_val)).str();
 		}
 		return s.str();
 	}

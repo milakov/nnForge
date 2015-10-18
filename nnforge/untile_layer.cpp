@@ -85,28 +85,29 @@ namespace nnforge
 		return res;
 	}
 
-	layer_configuration_specific untile_layer::get_input_layer_configuration_specific(
+	bool untile_layer::get_input_layer_configuration_specific(
+		layer_configuration_specific& input_configuration_specific,
 		const layer_configuration_specific& output_configuration_specific,
 		unsigned int input_layer_id) const
 	{
 		if (output_configuration_specific.get_dimension_count() != upsampling_sizes_list.front().size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output configuration (%2%) don't match") % upsampling_sizes_list.front().size() % output_configuration_specific.get_dimension_count()).str());
 
-		layer_configuration_specific res(output_configuration_specific);
+		input_configuration_specific = layer_configuration_specific(output_configuration_specific);
 
 		for(unsigned int i = 0; i < upsampling_sizes_list.size(); ++i)
 		{
 			const std::vector<unsigned int>& upsampling_sizes = upsampling_sizes_list[i];
 			for(unsigned int j = 0; j < upsampling_sizes.size(); ++j)
 			{
-				if (res.dimension_sizes[j] % upsampling_sizes[j] == 0)
-					res.dimension_sizes[j] /= upsampling_sizes[j];
+				if (input_configuration_specific.dimension_sizes[j] % upsampling_sizes[j] == 0)
+					input_configuration_specific.dimension_sizes[j] /= upsampling_sizes[j];
 				else
 					throw neural_network_exception("upsampling sizes of untile layer cannot evenly divide output sizes");
 			}
 		}
 
-		return res;
+		return true;
 	}
 
 	std::vector<std::pair<unsigned int, unsigned int> > untile_layer::get_input_rectangle_borders(

@@ -22,10 +22,12 @@
 validating_imagenet_raw_to_structured_data_transformer::validating_imagenet_raw_to_structured_data_transformer(
 	unsigned int image_size,
 	unsigned int target_image_width,
-	unsigned int target_image_height)
+	unsigned int target_image_height,
+	const std::vector<std::pair<float, float> >& position_list)
 	: image_size(image_size)
 	, target_image_width(target_image_width)
 	, target_image_height(target_image_height)
+	, position_list(position_list)
 {
 }
 
@@ -34,6 +36,7 @@ validating_imagenet_raw_to_structured_data_transformer::~validating_imagenet_raw
 }
 
 void validating_imagenet_raw_to_structured_data_transformer::transform(
+	unsigned int sample_id,
 	const std::vector<unsigned char>& raw_data,
 	float * structured_data)
 {
@@ -44,8 +47,8 @@ void validating_imagenet_raw_to_structured_data_transformer::transform(
 	unsigned int source_crop_image_width = std::min(static_cast<unsigned int>(static_cast<float>(target_image_width) * scale + 0.5F), static_cast<unsigned int>(original_image.cols));
 	unsigned int source_crop_image_height = std::min(static_cast<unsigned int>(static_cast<float>(target_image_height) * scale + 0.5F), static_cast<unsigned int>(original_image.rows));
 
-	unsigned int x = (original_image.cols - source_crop_image_width) / 2;
-	unsigned int y = (original_image.rows - source_crop_image_height) / 2;
+	unsigned int x = static_cast<unsigned int>((original_image.cols - source_crop_image_width) * position_list[sample_id].first);
+	unsigned int y = static_cast<unsigned int>((original_image.rows - source_crop_image_height) * position_list[sample_id].second);
 
 	cv::Mat3b source_image_crop = original_image.rowRange(y, y + source_crop_image_height).colRange(x, x + source_crop_image_height);
 	cv::Mat3b target_image(target_image_height, target_image_width);
@@ -68,4 +71,9 @@ nnforge::layer_configuration_specific validating_imagenet_raw_to_structured_data
 	res.dimension_sizes.push_back(target_image_width);
 	res.dimension_sizes.push_back(target_image_height);
 	return res;
+}
+
+unsigned int validating_imagenet_raw_to_structured_data_transformer::get_sample_count() const
+{
+	return static_cast<unsigned int>(position_list.size());
 }

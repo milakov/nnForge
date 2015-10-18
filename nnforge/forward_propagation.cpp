@@ -127,13 +127,17 @@ namespace nnforge
 
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		set_input_configuration_specific(reader.get_config_map());
+		structured_data_bunch_reader::ptr narrow_reader = reader.get_narrow_reader(data_layer_names);
 		res.flops_per_entry = flops;
 		std::vector<std::string> data_layer_name_list(data_layer_names.begin(), data_layer_names.end());
 		std::map<std::string, layer_configuration_specific> output_config_map;
 		for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
 			output_config_map[*it] = layer_config_map[*it];
 		writer.set_config_map(output_config_map);
-		res.entry_processed_count = actual_run(reader, writer);
+		if (narrow_reader)
+			res.entry_processed_count = actual_run(*narrow_reader, writer);
+		else
+			res.entry_processed_count = actual_run(reader, writer);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		res.total_seconds = sec.count();
 

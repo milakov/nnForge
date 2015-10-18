@@ -30,10 +30,13 @@ namespace nnforge
 		virtual ~raw_to_structured_data_transformer();
 
 		virtual void transform(
+			unsigned int sample_id,
 			const std::vector<unsigned char>& raw_data,
 			float * structured_data) = 0;
 
 		virtual layer_configuration_specific get_configuration() const = 0;
+
+		virtual unsigned int get_sample_count() const;
 
 	protected:
 		raw_to_structured_data_transformer();

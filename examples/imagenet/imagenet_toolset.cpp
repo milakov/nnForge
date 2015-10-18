@@ -46,12 +46,6 @@ const unsigned int imagenet_toolset::training_target_image_width = 224;
 const unsigned int imagenet_toolset::training_target_image_height = 224;
 const unsigned int imagenet_toolset::validating_image_size = 256;//384;
 
-const unsigned int imagenet_toolset::enrich_validation_report_frequency = 500;
-const unsigned int imagenet_toolset::overlapping_samples_x = 4;
-const unsigned int imagenet_toolset::overlapping_samples_y = 4;
-const float imagenet_toolset::sample_coverage_x = 1.0F;
-const float imagenet_toolset::sample_coverage_y = 1.0F;
-
 imagenet_toolset::imagenet_toolset(nnforge::factory_generator::ptr factory)
 	: nnforge::toolset(factory)
 {
@@ -61,12 +55,6 @@ imagenet_toolset::~imagenet_toolset()
 {
 }
 
-/*
-nnforge::const_error_function_smart_ptr imagenet_toolset::get_error_function() const
-{
-	return nnforge::const_error_function_smart_ptr(new nnforge::negative_log_likelihood_error_function());
-}
-*/
 void imagenet_toolset::prepare_training_data()
 {
 	prepare_true_randomized_training_data();
@@ -438,7 +426,17 @@ std::vector<nnforge::bool_option> imagenet_toolset::get_bool_options()
 {
 	std::vector<nnforge::bool_option> res = toolset::get_bool_options();
 
-	res.push_back(nnforge::bool_option("rich_inference", &rich_inference, false, "Run multiple samples for each entry and average results"));
+	res.push_back(nnforge::bool_option("rich_inference", &rich_inference, false, "Run multiple samples for each entry"));
+
+	return res;
+}
+
+std::vector<nnforge::int_option> imagenet_toolset::get_int_options()
+{
+	std::vector<nnforge::int_option> res = toolset::get_int_options();
+
+	res.push_back(nnforge::int_option("samples_x", &samples_x, 4, "Run multiple samples (in x direction) for each entry"));
+	res.push_back(nnforge::int_option("samples_y", &samples_y, 4, "Run multiple samples (in y direction) for each entry"));
 
 	return res;
 }
@@ -462,10 +460,35 @@ nnforge::structured_data_reader::ptr imagenet_toolset::get_structured_reader(
 		}
 		else if (dataset_name == "validating")
 		{
+			std::vector<std::pair<float, float> > position_list;
+			if (rich_inference)
+			{
+				for(int sample_id_x = 0; sample_id_x < samples_x; ++sample_id_x)
+				{
+					float pos_x = 0.5F;
+					if (samples_x > 1)
+						pos_x = sample_id_x / static_cast<float>(samples_x - 1);
+
+					for(int sample_id_y = 0; sample_id_y < samples_y; ++sample_id_y)
+					{
+						float pos_y = 0.5F;
+						if (samples_y > 1)
+							pos_y = sample_id_y / static_cast<float>(samples_y - 1);
+
+						position_list.push_back(std::make_pair(pos_x, pos_y));
+					}
+				}
+			}
+			else
+			{
+				position_list.push_back(std::make_pair(0.5F, 0.5F));
+			}
+
 			transformer = nnforge::raw_to_structured_data_transformer::ptr(new validating_imagenet_raw_to_structured_data_transformer(
 				validating_image_size,
 				training_target_image_width,
-				training_target_image_height));
+				training_target_image_height,
+				position_list));
 		}
 		return nnforge::structured_data_reader::ptr(new nnforge::structured_from_raw_data_reader(raw_reader, transformer));
 	}

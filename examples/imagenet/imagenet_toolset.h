@@ -43,6 +43,8 @@ protected:
 
 	virtual std::vector<nnforge::bool_option> get_bool_options();
 
+	virtual std::vector<nnforge::int_option> get_int_options();
+
 	virtual std::vector<nnforge::data_transformer::ptr> get_data_transformer_list(
 		const std::string& dataset_name,
 		const std::string& layer_name,
@@ -92,11 +94,7 @@ private:
 	static const unsigned int training_target_image_height;
 	static const unsigned int validating_image_size;
 
-	static const unsigned int enrich_validation_report_frequency;
-	static const unsigned int overlapping_samples_x;
-	static const unsigned int overlapping_samples_y;
-	static const float sample_coverage_x;
-	static const float sample_coverage_y;
-
 	bool rich_inference;
+	int samples_x;
+	int samples_y;
 };

@@ -120,7 +120,8 @@ namespace nnforge
 		return res;
 	}
 
-	layer_configuration_specific convolution_layer::get_input_layer_configuration_specific(
+	bool convolution_layer::get_input_layer_configuration_specific(
+		layer_configuration_specific& input_configuration_specific,
 		const layer_configuration_specific& output_configuration_specific,
 		unsigned int input_layer_id) const
 	{
@@ -130,12 +131,12 @@ namespace nnforge
 		if (output_configuration_specific.get_dimension_count() != window_sizes.size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output configuration (%2%) don't match") % window_sizes.size() % output_configuration_specific.get_dimension_count()).str());
 
-		layer_configuration_specific res(input_feature_map_count);
+		input_configuration_specific = layer_configuration_specific(input_feature_map_count);
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			res.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] + window_sizes[i] - 1 - left_zero_padding[i] - right_zero_padding[i]);
+			input_configuration_specific.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] + window_sizes[i] - 1 - left_zero_padding[i] - right_zero_padding[i]);
 
-		return res;
+		return true;
 	}
 
 	std::vector<std::pair<unsigned int, unsigned int> > convolution_layer::get_input_rectangle_borders(

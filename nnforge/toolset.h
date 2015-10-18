@@ -198,6 +198,7 @@ namespace nnforge
 		int dump_data_scale;
 		int dump_data_video_fps;
 		int epoch_count_in_training_dataset;
+		int dump_compact_samples;
 
 		debug_state::ptr debug;
 

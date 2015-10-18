@@ -81,12 +81,6 @@
     <Filter Include="Header Files\visualize">
       <UniqueIdentifier>{78ddf8f7-cbba-4c82-91f5-883fc2ba2fa4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\error_functions">
-      <UniqueIdentifier>{68a7b109-70a6-4331-8729-8b8ae44015f9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\error_functions">
-      <UniqueIdentifier>{86e0ebf3-d3f3-4784-9dee-b240b80087e1}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\training\peekers">
       <UniqueIdentifier>{3e81ccec-1e0a-436b-bd4b-bc6fe422ec11}</UniqueIdentifier>
     </Filter>
@@ -265,9 +259,6 @@
     </ClInclude>
     <ClInclude Include="debug_util.h">
       <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="cross_entropy_error_function.h">
-      <Filter>Header Files\error_functions</Filter>
     </ClInclude>
     <ClInclude Include="network_data_initializer.h">
       <Filter>Header Files\network_data</Filter>
@@ -591,9 +582,6 @@
     </ClCompile>
     <ClCompile Include="debug_util.cpp">
       <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="cross_entropy_error_function.cpp">
-      <Filter>Source Files\error_functions</Filter>
     </ClCompile>
     <ClCompile Include="network_data_initializer.cpp">
       <Filter>Source Files\network_data</Filter>

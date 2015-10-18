@@ -33,6 +33,7 @@ public:
 	virtual ~training_imagenet_raw_to_structured_data_transformer();
 
 	virtual void transform(
+		unsigned int sample_id,
 		const std::vector<unsigned char>& raw_data,
 		float * structured_data);
 

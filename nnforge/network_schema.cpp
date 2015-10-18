@@ -622,6 +622,34 @@ namespace nnforge
 			gv_graph_writer(layers));
 	}
 
+	std::map<std::string, layer_configuration_specific> network_schema::get_layer_configuration_specific_map_reverse(const std::map<std::string, layer_configuration_specific>& output_configuration_specific_map) const
+	{
+		std::map<std::string, layer_configuration_specific> res(output_configuration_specific_map);
+
+		std::vector<layer::const_ptr> layers_ordered = get_layers_in_forward_propagation_order();
+		for(std::vector<layer::const_ptr>::const_reverse_iterator it = layers_ordered.rbegin(); it != layers_ordered.rend(); ++it)
+		{
+			std::map<std::string, layer_configuration_specific>::const_iterator current_config_it = res.find((*it)->instance_name);
+			if (current_config_it == res.end())
+				continue;
+			const layer_configuration_specific& current_config = current_config_it->second;
+
+			layer::const_ptr current_l = *it;
+			unsigned int input_layer_id = 0;
+			for(std::vector<std::string>::const_iterator it2 = current_l->input_layer_instance_names.begin(); it2 != current_l->input_layer_instance_names.end(); ++it2, ++input_layer_id)
+			{
+				const std::string& previous_layer_name = *it2;
+				if (res.find(previous_layer_name) == res.end())
+				{
+					layer_configuration_specific input_config;
+					if (current_l->get_input_layer_configuration_specific(input_config, current_config, input_layer_id))
+						res.insert(std::make_pair(previous_layer_name, input_config));
+				}
+			}
+		}
+
+		return res;
+	}
 	
 /*
 	layer_configuration_specific_list network_schema::get_layer_configuration_specific_list_reverse(const layer_configuration_specific& output_layer_configuration_specific) const

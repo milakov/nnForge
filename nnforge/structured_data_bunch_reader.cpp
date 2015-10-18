@@ -30,4 +30,9 @@ namespace nnforge
 	{
 		return -1;
 	}
+
+	structured_data_bunch_reader::ptr structured_data_bunch_reader::get_narrow_reader(const std::set<std::string>& layer_names) const
+	{
+		return structured_data_bunch_reader::ptr();
+	}
 }

@@ -291,7 +291,7 @@ namespace nnforge
 		res.push_back(string_option("shuffle_dataset_name", &shuffle_dataset_name, "training", "Name of the dataset to be shuffled"));
 		res.push_back(string_option("training_algo", &training_algo, "", "Training algorithm (sgd)"));
 		res.push_back(string_option("momentum_type", &momentum_type_str, "vanilla", "Type of the momentum to use (none, vanilla, nesterov)"));
-		res.push_back(string_option("inference_mode", &inference_mode, "report_average_per_entry", "What to do with inference_output_layer_name (report_average_per_nn, dump_average_per_position)"));
+		res.push_back(string_option("inference_mode", &inference_mode, "report_average_per_entry", "What to do with inference_output_layer_name (report_average_per_nn, dump_average_across_nets)"));
 		res.push_back(string_option("inference_output_dataset_name", &inference_output_dataset_name, "", "Name of the dataset dumped during inference, empty value means using inference_dataset_name"));
 		res.push_back(string_option("dump_dataset_name", &dump_dataset_name, "training", "Name of the dataset to dump data from"));
 		res.push_back(string_option("dump_layer_name", &dump_layer_name, "", "Name of the layer to dump data from"));
@@ -366,6 +366,7 @@ namespace nnforge
 		res.push_back(int_option("dump_data_scale", &dump_data_scale, 1, "Scale dumped data dimensions by this value"));
 		res.push_back(int_option("dump_data_video_fps", &dump_data_video_fps, 5, "Frames per second when dumping videos"));
 		res.push_back(int_option("epoch_count_in_training_dataset", &epoch_count_in_training_dataset, 1, "The whole training dataset should be split in this amount of epochs"));
+		res.push_back(int_option("dump_compact_samples", &dump_compact_samples, 1, "Compact (average) results acrioss samples for inference of type dump_average_across_nets"));
 
 		return res;
 	}
@@ -482,12 +483,14 @@ namespace nnforge
 				forward_propagation::stat st = forward_prop->run(*reader, writer);
 				std::cout << "NN # " << it->first << " - " << st << std::endl;
 
-				for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it2 = writer.layer_name_to_config_and_value_set_map.begin(); it2 != writer.layer_name_to_config_and_value_set_map.end(); ++it2)
+				for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::iterator it2 = writer.layer_name_to_config_and_value_set_map.begin(); it2 != writer.layer_name_to_config_and_value_set_map.end(); ++it2)
 				{
 					if (inference_mode == "report_average_per_entry")
 						std::cout << schema->get_layer(it2->first)->get_string_for_average_data(it2->second.first, *it2->second.second->get_average()) << std::endl;
-					else if (inference_mode == "dump_average_per_position")
+					else if (inference_mode == "dump_average_across_nets")
 					{
+						it2->second.second->compact(dump_compact_samples);
+
 						if (it == ann_data_name_and_folderpath_list.begin())
 							average_layer_name_to_config_and_value_set_map.insert(*it2);
 						else
@@ -501,8 +504,7 @@ namespace nnforge
 						throw neural_network_exception((boost::format("Unknown inference_mode specified: %1%") % inference_mode).str());
 				}
 
-				if (inference_mode == "dump_average_per_position")
-					++accumulated_count;
+				++accumulated_count;
 			}
 		}
 		else
@@ -518,7 +520,7 @@ namespace nnforge
 			{
 				if (inference_mode == "report_average_per_entry")
 					std::cout << schema->get_layer(it2->first)->get_string_for_average_data(it2->second.first, *it2->second.second->get_average()) << std::endl;
-				else if (inference_mode == "dump_average_per_position")
+				else if (inference_mode == "dump_average_across_nets")
 				{
 					average_layer_name_to_config_and_value_set_map.insert(*it2);
 				}
@@ -526,11 +528,10 @@ namespace nnforge
 					throw neural_network_exception((boost::format("Unknown inference_mode specified: %1%") % inference_mode).str());
 			}
 
-			if (inference_mode == "dump_average_per_position")
-				++accumulated_count;
+			++accumulated_count;
 		}
 
-		if (inference_mode == "dump_average_per_position")
+		if (inference_mode == "dump_average_across_nets")
 		{
 			for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it = average_layer_name_to_config_and_value_set_map.begin(); it != average_layer_name_to_config_and_value_set_map.end(); ++it)
 			{

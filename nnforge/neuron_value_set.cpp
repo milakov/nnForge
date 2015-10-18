@@ -157,4 +157,30 @@ namespace nnforge
 				dst[neuron_id] = alpha * dst[neuron_id] + beta * src[neuron_id];
 		}
 	}
+
+	void neuron_value_set::compact(unsigned int sample_count)
+	{
+		if (sample_count == 1)
+			return;
+
+		unsigned int new_entry_count = static_cast<unsigned int>(neuron_value_list.size() / sample_count);
+		if ((new_entry_count * sample_count) != neuron_value_list.size())
+			throw neural_network_exception((boost::format("neuron_value_set::compact cannot operate on %1% entries no evenly divisible by sample count %2%") % neuron_value_list.size() % sample_count).str());
+
+		float mult = 1.0F / static_cast<float>(sample_count);
+		for(unsigned int dst_entry_id = 0; dst_entry_id < new_entry_count; ++dst_entry_id)
+		{
+			std::vector<float>& dst = *neuron_value_list[dst_entry_id];
+
+			for(unsigned int neuron_id = 0; neuron_id < neuron_count; ++neuron_id)
+			{
+				float sum = 0.0F;
+				for(unsigned int sample_id = 0; sample_id < sample_count; ++sample_id)
+					sum += neuron_value_list[dst_entry_id * sample_count + sample_id]->at(neuron_id);
+				dst[neuron_id] = mult * sum;
+			}
+		}
+
+		neuron_value_list.resize(new_entry_count);
+	}
 }

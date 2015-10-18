@@ -22,7 +22,6 @@
     <ClInclude Include="config_options.h" />
     <ClInclude Include="convert_to_polar_data_transformer.h" />
     <ClInclude Include="convolution_layer.h" />
-    <ClInclude Include="cross_entropy_error_function.h" />
     <ClInclude Include="cross_entropy_layer.h" />
     <ClInclude Include="data_layer.h" />
     <ClInclude Include="debug_state.h" />
@@ -130,10 +129,6 @@
     <ClCompile Include="complex_network_data_pusher.cpp" />
     <ClCompile Include="convert_to_polar_data_transformer.cpp" />
     <ClCompile Include="convolution_layer.cpp" />
-    <ClCompile Include="cross_entropy_error_function.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="cross_entropy_layer.cpp" />
     <ClCompile Include="data_layer.cpp" />
     <ClCompile Include="debug_state.cpp" />

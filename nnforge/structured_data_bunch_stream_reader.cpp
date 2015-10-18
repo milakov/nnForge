@@ -39,7 +39,10 @@ namespace nnforge
 				if (total_entry_count < 0)
 					total_entry_count = new_entry_count;
 				else if (total_entry_count != new_entry_count)
-					throw std::runtime_error((boost::format("Entry count mismatch: %1% and %2%") % total_entry_count % new_entry_count).str());
+				{
+					invalid_config_message = (boost::format("Entry count mismatch: %1% and %2%") % total_entry_count % new_entry_count).str();
+					return;
+				}
 			}
 		}
 
@@ -50,7 +53,10 @@ namespace nnforge
 		else
 		{
 			if (total_entry_count < 0)
-				throw neural_network_exception("Multiple epoch count specified for structured_data_bunch_stream_reader while entry count cannot be determined");
+			{
+				invalid_config_message = "Multiple epoch count specified for structured_data_bunch_stream_reader while entry count cannot be determined";
+				return;
+			}
 
 			unsigned int epoch_min_size = total_entry_count / multiple_epoch_count;
 			unsigned int plus1_epoch_count = total_entry_count % multiple_epoch_count;
@@ -65,6 +71,16 @@ namespace nnforge
 	{
 	}
 
+	structured_data_bunch_reader::ptr structured_data_bunch_stream_reader::get_narrow_reader(const std::set<std::string>& layer_names) const
+	{
+		std::map<std::string, structured_data_reader::ptr> narrow_data_reader_map;
+		for(std::map<std::string, structured_data_reader::ptr>::const_iterator it = data_reader_map.begin(); it != data_reader_map.end(); ++it)
+			if (layer_names.find(it->first) != layer_names.end())
+				narrow_data_reader_map.insert(*it);
+
+		return structured_data_bunch_reader::ptr(new structured_data_bunch_stream_reader(narrow_data_reader_map, static_cast<unsigned int>(entry_count_list.size())));
+	}
+
 	std::map<std::string, layer_configuration_specific> structured_data_bunch_stream_reader::get_config_map() const
 	{
 		std::map<std::string, layer_configuration_specific> res;
@@ -75,6 +91,9 @@ namespace nnforge
 
 	void structured_data_bunch_stream_reader::next_epoch()
 	{
+		if (!invalid_config_message.empty())
+			throw neural_network_exception(invalid_config_message);
+
 		current_epoch = (current_epoch + 1) % entry_count_list.size();
 	}
 
@@ -82,6 +101,9 @@ namespace nnforge
 		unsigned int entry_id,
 		const std::map<std::string, float *>& data_map)
 	{
+		if (!invalid_config_message.empty())
+			throw neural_network_exception(invalid_config_message);
+
 		if ((entry_count_list[current_epoch] >= 0) && (entry_id >= static_cast<unsigned int>(entry_count_list[current_epoch])))
 			return false;
 

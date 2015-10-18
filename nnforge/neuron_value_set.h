@@ -58,6 +58,8 @@ namespace nnforge
 			float alpha,
 			float beta);
 
+		void compact(unsigned int sample_count);
+
 	public:
 		unsigned int neuron_count;
 		std::vector<nnforge_shared_ptr<std::vector<float> > > neuron_value_list;

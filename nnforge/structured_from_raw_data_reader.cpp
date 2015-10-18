@@ -23,6 +23,7 @@ namespace nnforge
 		raw_to_structured_data_transformer::ptr transformer)
 		: raw_reader(raw_reader)
 		, transformer(transformer)
+		, transformer_sample_count(transformer->get_sample_count())
 	{
 	}
 
@@ -38,11 +39,14 @@ namespace nnforge
 		unsigned int entry_id,
 		float * data)
 	{
+		unsigned int original_entry_id = entry_id / transformer_sample_count;
+
 		std::vector<unsigned char> raw_data;
-		if (!raw_reader->raw_read(entry_id, raw_data))
+		if (!raw_reader->raw_read(original_entry_id, raw_data))
 			return false;
 
-		transformer->transform(raw_data, data);
+		unsigned int sample_id = entry_id - original_entry_id * transformer_sample_count;
+		transformer->transform(sample_id, raw_data, data);
 		return true;
 	}
 
@@ -60,7 +64,7 @@ namespace nnforge
 
 	int structured_from_raw_data_reader::get_entry_count() const
 	{
-		return raw_reader->get_entry_count();
+		return raw_reader->get_entry_count() * transformer_sample_count;
 	}
 
 	raw_data_writer::ptr structured_from_raw_data_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const

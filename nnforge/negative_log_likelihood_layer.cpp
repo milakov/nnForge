@@ -59,11 +59,12 @@ namespace nnforge
 		return layer_configuration_specific(1, input_configuration_specific_list[0].dimension_sizes);
 	}
 
-	layer_configuration_specific negative_log_likelihood_layer::get_input_layer_configuration_specific(
+	bool negative_log_likelihood_layer::get_input_layer_configuration_specific(
+		layer_configuration_specific& input_configuration_specific,
 		const layer_configuration_specific& output_configuration_specific,
 		unsigned int input_layer_id) const
 	{
-		throw neural_network_exception("negative_log_likelihood_layer cannot run get_input_layer_configuration_specific");
+		return false;
 	}
 
 	void negative_log_likelihood_layer::write_proto(void * layer_proto) const

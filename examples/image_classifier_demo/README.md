@@ -19,10 +19,12 @@ You need to download the archive with trained model and extract all the files fr
 		working_data/
 			image_classifier_demo/
 				LICENSE
-				ann.schema
 				class_names.txt
-				batch/
-					ann_trained_000.data
+				normalizer_images.txt
+				schema.txt
+				trained_data/
+					ann_trained_000/
+						...multiple data files...
 
 Config file
 -----------
