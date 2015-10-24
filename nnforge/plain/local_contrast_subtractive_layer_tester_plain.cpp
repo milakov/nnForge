@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,56 +35,61 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& local_contrast_subtractive_layer_tester_plain::get_uuid() const
+		std::string local_contrast_subtractive_layer_tester_plain::get_type_name() const
 		{
-			return local_contrast_subtractive_layer::layer_guid;
+			return local_contrast_subtractive_layer::layer_type_name;
 		}
 
-		void local_contrast_subtractive_layer_tester_plain::test(
-			additional_buffer_smart_ptr input_buffer,
-			additional_buffer_set& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void local_contrast_subtractive_layer_tester_plain::run_forward_propagation(
+			plain_buffer::ptr output_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_buffers,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
-			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
-			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
-			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
+			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
+			const unsigned int neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 			const std::vector<std::vector<float> >& window_weights_list = layer_derived->window_weights_list;
 			const std::vector<unsigned int>& feature_maps_affected = layer_derived->feature_maps_affected;
 			const unsigned int dimension_count = static_cast<unsigned int>(window_weights_list.size());
-			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
+			std::vector<unsigned int> input_slices(input_configuration_specific_list[0].dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
-				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific_list[0].dimension_sizes[i];
 
 			const std::vector<unsigned int>::const_iterator dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
 			const unsigned int feature_maps_affected_count = static_cast<unsigned int>(feature_maps_affected.size());
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator feature_maps_affected_it = feature_maps_affected.begin();
-			const std::vector<float>::iterator input_buffer_it = input_buffer->begin();
+			const float * const input_buffer_it = *input_buffers[0];
+			float * const output_buffer_it = *output_buffer;
 			const std::vector<std::vector<float> >::const_iterator window_weights_list_it = window_weights_list.begin();
+			float * const working_buffer_it = *temporary_working_fixed_buffer;
+
+			if (feature_maps_affected_count != output_configuration_specific.feature_map_count)
+				memcpy(output_buffer_it, input_buffer_it, output_configuration_specific.get_neuron_count() * entry_count * sizeof(float));
 
 			const int total_workload = entry_count * feature_maps_affected_count;
 			const int openmp_thread_count = plain_config->openmp_thread_count;
 			
-			#pragma omp parallel default(none) shared(additional_buffers) num_threads(openmp_thread_count)
+			#pragma omp parallel default(none) num_threads(openmp_thread_count)
 			{
-				additional_buffer_set local_additional_buffers;
+				std::vector<float *> local_additional_buffers;
 				int thread_id = 0;
 				#ifdef _OPENMP
 				thread_id = omp_get_thread_num();
 				#endif
 
-				local_additional_buffers.push_back(additional_buffers[thread_id]);
+				local_additional_buffers.push_back(working_buffer_it + thread_id * neuron_count_per_feature_map);
 				if (dimension_count > 1)
-					local_additional_buffers.push_back(additional_buffers[openmp_thread_count + thread_id]);
+					local_additional_buffers.push_back(working_buffer_it + (openmp_thread_count + thread_id) * neuron_count_per_feature_map);
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -96,17 +101,17 @@ namespace nnforge
 					unsigned int feature_map_id = *(feature_maps_affected_it + affected_feature_map_id);
 					for(unsigned int dimension_id = 0; dimension_id < dimension_count; ++dimension_id)
 					{
-						std::vector<float>::iterator out_it_base = local_additional_buffers[current_output_buffer_index]->begin();
-						std::vector<float>::const_iterator in_it;
+						float * out_it_base = local_additional_buffers[current_output_buffer_index];
+						const float * in_it;
 						if (dimension_id > 0)
-							in_it = local_additional_buffers[1 - current_output_buffer_index]->begin();
+							in_it = local_additional_buffers[1 - current_output_buffer_index];
 						else
-							in_it = input_buffer_it + (entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
+							in_it = input_buffer_it + (entry_id * neuron_count) + (feature_map_id * neuron_count_per_feature_map);
 						int max_output_size = *(dimension_sizes_it + dimension_id);
 						int input_slice_size = *(input_slices_it + dimension_id);
 
 						std::vector<unsigned int> current_output_position(dimension_count, 0);
-						for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it, ++in_it)
+						for(float * out_it = out_it_base; out_it != out_it_base + neuron_count_per_feature_map; ++out_it, ++in_it)
 						{
 							const std::vector<float>& current_window_weights_list = *(window_weights_list_it + dimension_id);
 							float sum = *in_it * current_window_weights_list[0];
@@ -141,33 +146,33 @@ namespace nnforge
 
 					// Subtract the gaussian blur
 					{
-						std::vector<float>::iterator out_it = input_buffer_it + (entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
-						std::vector<float>::const_iterator in_it = local_additional_buffers[1 - current_output_buffer_index]->begin();
-						for(int i = 0; i < static_cast<int>(input_neuron_count_per_feature_map); ++i)
-							*(out_it + i) -= *(in_it + i);
+						float * out_it = output_buffer_it + (entry_id * neuron_count) + (feature_map_id * neuron_count_per_feature_map);
+						const float * orig_it = input_buffer_it + (entry_id * neuron_count) + (feature_map_id * neuron_count_per_feature_map);
+						const float * in_it = local_additional_buffers[1 - current_output_buffer_index];
+						for(int i = 0; i < static_cast<int>(neuron_count_per_feature_map); ++i)
+							*(out_it + i) = *(orig_it + i) - *(in_it + i);
 					}
 				}
 			} // #pragma parallel
 		}
 
-		std::vector<std::pair<unsigned int, bool> > local_contrast_subtractive_layer_tester_plain::get_elem_count_and_per_entry_flag_additional_buffers(
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config) const
+		int local_contrast_subtractive_layer_tester_plain::get_input_index_layer_can_write(
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
-			std::vector<std::pair<unsigned int, bool> > res;
+			return 0;
+		}
 
-			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
-			unsigned int elem_count_per_intermediate_elem = static_cast<unsigned int>(layer_derived->feature_maps_affected.size() * output_configuration_specific.get_neuron_count_per_feature_map());
-
-			for(int i = 0; i < plain_config->openmp_thread_count; ++i)
-				res.push_back(std::make_pair(elem_count_per_intermediate_elem, false));
-			if (input_configuration_specific.dimension_sizes.size() > 1)
-				for(int i = 0; i < plain_config->openmp_thread_count; ++i)
-					res.push_back(std::make_pair(elem_count_per_intermediate_elem, false));
-
-			return res;
+		size_t local_contrast_subtractive_layer_tester_plain::get_temporary_working_fixed_buffer_size(
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			unsigned int elem_count_per_intermediate_elem = output_configuration_specific.get_neuron_count_per_feature_map();
+			return elem_count_per_intermediate_elem * plain_config->openmp_thread_count * (output_configuration_specific.dimension_sizes.size() > 1 ? 2 : 1) * sizeof(float);
 		}
 	}
 }

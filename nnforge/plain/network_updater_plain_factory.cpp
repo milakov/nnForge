@@ -22,7 +22,7 @@ namespace nnforge
 {
 	namespace plain
 	{
-		network_updater_plain_factory::network_updater_plain_factory(plain_running_configuration_const_smart_ptr plain_config)
+		network_updater_plain_factory::network_updater_plain_factory(plain_running_configuration::const_ptr plain_config)
 			: plain_config(plain_config)
 		{
 		}

@@ -26,17 +26,19 @@ namespace nnforge
 		class factory_generator_plain : public factory_generator
 		{
 		public:
+			factory_generator_plain(
+				float plain_max_global_memory_usage,
+				int plain_openmp_thread_count);
+
 			factory_generator_plain();
 
 			~factory_generator_plain();
 
 			virtual void initialize();
 
-			virtual network_tester_factory_smart_ptr create_tester_factory() const;
+			virtual forward_propagation_factory::ptr create_forward_propagation_factory() const;
 
-			virtual network_updater_factory_smart_ptr create_updater_factory() const;
-
-			virtual network_analyzer_factory_smart_ptr create_analyzer_factory() const;
+			virtual backward_propagation_factory::ptr create_backward_propagation_factory() const;
 
 			virtual void info() const;
 
@@ -48,7 +50,7 @@ namespace nnforge
 			float plain_max_global_memory_usage;
 			int plain_openmp_thread_count;
 
-			plain_running_configuration_const_smart_ptr plain_config;
+			plain_running_configuration::const_ptr plain_config;
 		};
 	}
 }

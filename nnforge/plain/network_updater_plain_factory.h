@@ -26,7 +26,7 @@ namespace nnforge
 		class network_updater_plain_factory : public network_updater_factory
 		{
 		public:
-			network_updater_plain_factory(plain_running_configuration_const_smart_ptr opencl_config);
+			network_updater_plain_factory(plain_running_configuration::const_ptr opencl_config);
 
 			virtual ~network_updater_plain_factory();
 
@@ -35,7 +35,7 @@ namespace nnforge
 				const_error_function_smart_ptr ef) const;
 
 		protected:
-			plain_running_configuration_const_smart_ptr plain_config;
+			plain_running_configuration::const_ptr plain_config;
 		};
 	}
 }

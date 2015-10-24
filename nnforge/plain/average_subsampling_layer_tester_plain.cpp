@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,35 +35,37 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& average_subsampling_layer_tester_plain::get_uuid() const
+		std::string average_subsampling_layer_tester_plain::get_type_name() const
 		{
-			return average_subsampling_layer::layer_guid;
+			return average_subsampling_layer::layer_type_name;
 		}
 
-		void average_subsampling_layer_tester_plain::test(
-			additional_buffer_smart_ptr input_buffer,
-			additional_buffer_set& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void average_subsampling_layer_tester_plain::run_forward_propagation(
+			plain_buffer::ptr output_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_buffers,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
-			const std::vector<float>::const_iterator in_it_global = input_buffer->begin();
-			const std::vector<float>::iterator out_it_global = additional_buffers[0]->begin();
-			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
+			const float * const in_it_global = *input_buffers[0];
+			float * const out_it_global = *output_buffer;
+			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
+			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 			const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
 			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->subsampling_sizes.size());
-			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
+			std::vector<unsigned int> input_slices(input_configuration_specific_list[0].dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
-				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific_list[0].dimension_sizes[i];
 			unsigned int subsampling_elem_count = 1;
 			for(unsigned int i = 0; i < dimension_count; ++i)
 				subsampling_elem_count *= subsampling_sizes[i];
@@ -105,11 +107,11 @@ namespace nnforge
 					int entry_id = workload_id / feature_map_count;
 					int feature_map_id = workload_id - (entry_id * feature_map_count);
 
-					std::vector<float>::const_iterator in_it_base = in_it_global + (entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
-					std::vector<float>::iterator out_it_base = out_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
+					const float * in_it_base = in_it_global + (entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
+					float * out_it_base = out_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
 
 					std::fill_n(current_output_position.begin(), dimension_count, 0);
-					for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
+					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
 						// Define the starting position of the first input elem
 						int in_it_offset = 0;
@@ -134,26 +136,6 @@ namespace nnforge
 					}
 				}
 			}
-		}
-
-		additional_buffer_smart_ptr average_subsampling_layer_tester_plain::get_output_buffer(
-			additional_buffer_smart_ptr input_buffer,
-			additional_buffer_set& additional_buffers) const
-		{
-			return additional_buffers[0];
-		}
-
-		std::vector<std::pair<unsigned int, bool> > average_subsampling_layer_tester_plain::get_elem_count_and_per_entry_flag_additional_buffers(
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config) const
-		{
-			std::vector<std::pair<unsigned int, bool> > res;
-
-			res.push_back(std::make_pair<unsigned int, bool>(output_configuration_specific.get_neuron_count(), true));
-
-			return res;
 		}
 	}
 }

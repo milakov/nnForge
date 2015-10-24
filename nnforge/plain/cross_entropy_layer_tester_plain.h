@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace plain
 	{
-		class hyperbolic_tangent_layer_tester_plain : public layer_tester_plain
+		class cross_entropy_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			hyperbolic_tangent_layer_tester_plain();
+			cross_entropy_layer_tester_plain();
 
-			virtual ~hyperbolic_tangent_layer_tester_plain();
+			virtual ~cross_entropy_layer_tester_plain();
 
 			virtual std::string get_type_name() const;
 
@@ -43,12 +43,6 @@ namespace nnforge
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int entry_count) const;
-
-			virtual int get_input_index_layer_can_write(
-				plain_running_configuration::const_ptr plain_config,
-				layer::const_ptr layer_schema,
-				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-				const layer_configuration_specific& output_configuration_specific) const;
 		};
 	}
 }

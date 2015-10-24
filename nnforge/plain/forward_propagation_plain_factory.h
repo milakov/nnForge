@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,24 +16,27 @@
 
 #pragma once
 
-#include "../network_tester_factory.h"
+#include "../forward_propagation_factory.h"
 #include "plain_running_configuration.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		class network_tester_plain_factory : public network_tester_factory
+		class forward_propagation_plain_factory : public forward_propagation_factory
 		{
 		public:
-			network_tester_plain_factory(plain_running_configuration_const_smart_ptr plain_config);
+			forward_propagation_plain_factory(plain_running_configuration::const_ptr plain_config);
 
-			virtual ~network_tester_plain_factory();
+			virtual ~forward_propagation_plain_factory();
 
-			virtual network_tester_smart_ptr create(network_schema_smart_ptr schema) const;
+			virtual forward_propagation::ptr create(
+				const network_schema& schema,
+				const std::vector<std::string>& output_layer_names,
+				debug_state::ptr debug) const;
 
 		protected:
-			plain_running_configuration_const_smart_ptr plain_config;
+			plain_running_configuration::const_ptr plain_config;
 		};
 	}
 }

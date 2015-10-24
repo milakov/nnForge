@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,22 +24,22 @@ namespace nnforge
 {
 	namespace plain
 	{
-		bool layer_tester_plain_factory::register_layer_tester_plain(layer_tester_plain_smart_ptr sample_layer_testing_schema)
+		bool layer_tester_plain_factory::register_layer_tester_plain(layer_tester_plain::const_ptr sample_layer_tester_plain)
 		{
-			return sample_layer_tester_plain_map.insert(sample_map::value_type(sample_layer_testing_schema->get_uuid(), sample_layer_testing_schema)).second;
+			return sample_layer_tester_plain_map.insert(sample_map::value_type(sample_layer_tester_plain->get_type_name(), sample_layer_tester_plain)).second;
 		}
 
-		bool layer_tester_plain_factory::unregister_layer_tester_plain(const boost::uuids::uuid& layer_guid)
+		bool layer_tester_plain_factory::unregister_layer_tester_plain(const std::string& layer_type_name)
 		{
-			return sample_layer_tester_plain_map.erase(layer_guid) == 1;
+			return sample_layer_tester_plain_map.erase(layer_type_name) == 1;
 		}
 
-		const_layer_tester_plain_smart_ptr layer_tester_plain_factory::get_tester_plain_layer(const boost::uuids::uuid& layer_guid) const
+		layer_tester_plain::const_ptr layer_tester_plain_factory::get_tester_plain_layer(const std::string& layer_type_name) const
 		{
-			sample_map::const_iterator i = sample_layer_tester_plain_map.find(layer_guid);
+			sample_map::const_iterator i = sample_layer_tester_plain_map.find(layer_type_name);
 
 			if (i == sample_layer_tester_plain_map.end())
-				throw neural_network_exception((boost::format("No plain layer tester is registered with id %1%") % layer_guid).str());
+				throw neural_network_exception((boost::format("No plain layer tester is registered with type %1%") % layer_type_name).str());
 
 			return i->second;
 		}

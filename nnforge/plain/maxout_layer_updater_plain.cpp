@@ -43,7 +43,7 @@ namespace nnforge
 			const_additional_buffer_smart_ptr input_buffer,
 			additional_buffer_smart_ptr output_buffer,
 			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
+			plain_running_configuration::const_ptr plain_config,
 			const_layer_smart_ptr layer_schema,
 			const_layer_data_smart_ptr data,
 			const_layer_data_custom_smart_ptr data_custom,
@@ -110,7 +110,7 @@ namespace nnforge
 			const_additional_buffer_smart_ptr output_errors,
 			const_additional_buffer_smart_ptr output_neurons,
 			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
+			plain_running_configuration::const_ptr plain_config,
 			const_layer_smart_ptr layer_schema,
 			const_layer_data_smart_ptr data,
 			const_layer_data_custom_smart_ptr data_custom,
@@ -161,7 +161,7 @@ namespace nnforge
 			const_layer_smart_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
+			plain_running_configuration::const_ptr plain_config,
 			bool backprop_required) const
 		{
 			std::vector<std::pair<unsigned int, bool> > res;

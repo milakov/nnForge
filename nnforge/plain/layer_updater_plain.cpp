@@ -33,7 +33,7 @@ namespace nnforge
 			const_layer_smart_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
+			plain_running_configuration::const_ptr plain_config,
 			bool backprop_required) const
 		{
 			std::vector<std::pair<unsigned int, bool> > buffer_sizes_per_entry_aligned = get_elem_count_and_per_entry_flag_additional_buffers(
@@ -62,7 +62,7 @@ namespace nnforge
 			const_layer_smart_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
+			plain_running_configuration::const_ptr plain_config,
 			bool backprop_required,
 			unsigned int updater_entry_count) const
 		{
@@ -91,7 +91,7 @@ namespace nnforge
 			const_layer_smart_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
+			plain_running_configuration::const_ptr plain_config,
 			bool backprop_required) const
 		{
 			return std::vector<std::pair<unsigned int, bool> >();
@@ -102,7 +102,7 @@ namespace nnforge
 			const_layer_smart_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
+			plain_running_configuration::const_ptr plain_config,
 			bool backprop_required) const
 		{
 			updater_additional_buffer_set res;
@@ -131,7 +131,7 @@ namespace nnforge
 			std::vector<additional_buffer_smart_ptr>& additional_buffers,
 			layer_data_smart_ptr gradient,
 			const_layer_data_custom_smart_ptr data_custom,
-			plain_running_configuration_const_smart_ptr plain_config,
+			plain_running_configuration::const_ptr plain_config,
 			const_layer_smart_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,

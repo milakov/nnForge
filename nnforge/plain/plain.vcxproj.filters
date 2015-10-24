@@ -21,18 +21,6 @@
     <Filter Include="Source Files\layer_testers">
       <UniqueIdentifier>{e981c114-1a29-4dd2-ad89-94e789c5b488}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\network_tester">
-      <UniqueIdentifier>{a0eee6da-a27a-4552-8ea6-c9b4b6c8e87f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\network_tester">
-      <UniqueIdentifier>{b3d60e6e-412a-4885-8580-44fbdf96f0df}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\network_updater">
-      <UniqueIdentifier>{8fba894e-99af-4b4a-bc03-f37465578302}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\network_updater">
-      <UniqueIdentifier>{43b650de-9031-4878-98e7-1becc80d14b0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\layer_updaters">
       <UniqueIdentifier>{fb133b7a-ed05-44ea-8647-3058443adab1}</UniqueIdentifier>
     </Filter>
@@ -45,11 +33,17 @@
     <Filter Include="Source Files\toolset">
       <UniqueIdentifier>{180960b4-38a1-45d8-88d2-4c437f678786}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\network_analyzer">
-      <UniqueIdentifier>{744c0f44-47f0-472b-a708-3d6e884fdd2c}</UniqueIdentifier>
+    <Filter Include="Source Files\forward_propagation">
+      <UniqueIdentifier>{b3d60e6e-412a-4885-8580-44fbdf96f0df}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\network_analyzer">
-      <UniqueIdentifier>{73233f80-6d80-4e8f-857f-aff5f302d96a}</UniqueIdentifier>
+    <Filter Include="Header Files\forward_propagation">
+      <UniqueIdentifier>{a0eee6da-a27a-4552-8ea6-c9b4b6c8e87f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\backward_propagation">
+      <UniqueIdentifier>{8fba894e-99af-4b4a-bc03-f37465578302}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\backward_propagation">
+      <UniqueIdentifier>{43b650de-9031-4878-98e7-1becc80d14b0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -81,28 +75,22 @@
       <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="layer_tester_plain.h">
-      <Filter>Header Files\network_tester</Filter>
-    </ClInclude>
-    <ClInclude Include="network_tester_plain_factory.h">
-      <Filter>Header Files\network_tester</Filter>
+      <Filter>Header Files\forward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="layer_tester_plain_factory.h">
-      <Filter>Header Files\network_tester</Filter>
-    </ClInclude>
-    <ClInclude Include="network_tester_plain.h">
-      <Filter>Header Files\network_tester</Filter>
+      <Filter>Header Files\forward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="network_updater_plain.h">
-      <Filter>Header Files\network_updater</Filter>
+      <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="network_updater_plain_factory.h">
-      <Filter>Header Files\network_updater</Filter>
+      <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="layer_updater_plain.h">
-      <Filter>Header Files\network_updater</Filter>
+      <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="layer_updater_plain_factory.h">
-      <Filter>Header Files\network_updater</Filter>
+      <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
     <ClInclude Include="absolute_layer_updater_plain.h">
       <Filter>Header Files\layer_updaters</Filter>
@@ -143,12 +131,6 @@
     <ClInclude Include="local_contrast_subtractive_layer_updater_plain.h">
       <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
-    <ClInclude Include="network_analyzer_plain.h">
-      <Filter>Header Files\network_analyzer</Filter>
-    </ClInclude>
-    <ClInclude Include="network_analyzer_plain_factory.h">
-      <Filter>Header Files\network_analyzer</Filter>
-    </ClInclude>
     <ClInclude Include="rgb_to_yuv_convert_layer_tester_plain.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
@@ -179,6 +161,27 @@
     <ClInclude Include="untile_layer_tester_plain.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
+    <ClInclude Include="mse_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="cross_entropy_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="negative_log_likelihood_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="accuracy_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="forward_propagation_plain.h">
+      <Filter>Header Files\forward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="plain_buffer.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="forward_propagation_plain_factory.h">
+      <Filter>Header Files\forward_propagation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_plain_size_configuration.cpp">
@@ -208,29 +211,23 @@
     <ClCompile Include="plain.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
-    <ClCompile Include="network_tester_plain_factory.cpp">
-      <Filter>Source Files\network_tester</Filter>
-    </ClCompile>
     <ClCompile Include="layer_tester_plain.cpp">
-      <Filter>Source Files\network_tester</Filter>
+      <Filter>Source Files\forward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="layer_tester_plain_factory.cpp">
-      <Filter>Source Files\network_tester</Filter>
-    </ClCompile>
-    <ClCompile Include="network_tester_plain.cpp">
-      <Filter>Source Files\network_tester</Filter>
+      <Filter>Source Files\forward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="network_updater_plain.cpp">
-      <Filter>Source Files\network_updater</Filter>
+      <Filter>Source Files\backward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="network_updater_plain_factory.cpp">
-      <Filter>Source Files\network_updater</Filter>
+      <Filter>Source Files\backward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="layer_updater_plain.cpp">
-      <Filter>Source Files\network_updater</Filter>
+      <Filter>Source Files\backward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="layer_updater_plain_factory.cpp">
-      <Filter>Source Files\network_updater</Filter>
+      <Filter>Source Files\backward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="absolute_layer_updater_plain.cpp">
       <Filter>Source Files\layer_updaters</Filter>
@@ -271,12 +268,6 @@
     <ClCompile Include="local_contrast_subtractive_layer_updater_plain.cpp">
       <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
-    <ClCompile Include="network_analyzer_plain.cpp">
-      <Filter>Source Files\network_analyzer</Filter>
-    </ClCompile>
-    <ClCompile Include="network_analyzer_plain_factory.cpp">
-      <Filter>Source Files\network_analyzer</Filter>
-    </ClCompile>
     <ClCompile Include="rgb_to_yuv_convert_layer_tester_plain.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
@@ -306,6 +297,27 @@
     </ClCompile>
     <ClCompile Include="untile_layer_tester_plain.cpp">
       <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="mse_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="cross_entropy_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="negative_log_likelihood_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="accuracy_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="plain_buffer.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="forward_propagation_plain_factory.cpp">
+      <Filter>Source Files\forward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="forward_propagation_plain.cpp">
+      <Filter>Source Files\forward_propagation</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

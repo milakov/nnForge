@@ -35,19 +35,21 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& max_subsampling_layer_tester_plain::get_uuid() const
+		std::string max_subsampling_layer_tester_plain::get_type_name() const
 		{
-			return max_subsampling_layer::layer_guid;
+			return max_subsampling_layer::layer_type_name;
 		}
 
-		void max_subsampling_layer_tester_plain::test(
-			additional_buffer_smart_ptr input_buffer,
-			additional_buffer_set& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void max_subsampling_layer_tester_plain::run_forward_propagation(
+			plain_buffer::ptr output_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_buffers,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
@@ -55,43 +57,37 @@ namespace nnforge
 
 			if (layer_derived->tiling)
 				test_tiling(
-					input_buffer,
-					additional_buffers,
+					output_buffer,
+					input_buffers[0],
 					plain_config,
 					layer_schema,
-					data,
-					data_custom,
-					input_configuration_specific,
+					input_configuration_specific_list[0],
 					output_configuration_specific,
 					entry_count);
 			else
 				test_non_tiling(
-					input_buffer,
-					additional_buffers,
+					output_buffer,
+					input_buffers[0],
 					plain_config,
 					layer_schema,
-					data,
-					data_custom,
-					input_configuration_specific,
+					input_configuration_specific_list[0],
 					output_configuration_specific,
 					entry_count);
 		}
 
 		void max_subsampling_layer_tester_plain::test_tiling(
-			additional_buffer_smart_ptr input_buffer,
-			additional_buffer_set& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
+			plain_buffer::ptr output_buffer,
+			plain_buffer::const_ptr input_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
 			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
-			const std::vector<float>::const_iterator in_it_global = input_buffer->begin();
-			const std::vector<float>::iterator out_it_global = additional_buffers[0]->begin();
+			const float * const in_it_global = *input_buffer;
+			float * const out_it_global = *output_buffer;
 			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
@@ -143,21 +139,21 @@ namespace nnforge
 					int feature_map_id = workload_id - (input_entry_id * feature_map_count);
 					int base_output_entry_id = input_entry_id * const_subsampling_elem_count;
 
-					std::vector<float>::const_iterator in_it_base = in_it_global + (input_entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
-					std::vector<float>::iterator out_it_base = out_it_global + (base_output_entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
+					const float * in_it_base = in_it_global + (input_entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
+					float * out_it_base = out_it_global + (base_output_entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
 
 					std::fill_n(current_output_position.begin(), dimension_count, 0);
-					for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
+					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
 						// Define the starting position of the first input elem
-						std::vector<float>::const_iterator in_it = in_it_base;
+						const float * in_it = in_it_base;
 						for(unsigned int i = 0; i < dimension_count; ++i)
 							in_it += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
 
 						for(unsigned int j = 0; j < const_subsampling_elem_count; ++j)
 						{
 							float current_max = -1.0e38F;
-							std::vector<float>::const_iterator in_it2 = in_it + *(offset_list_it + j);
+							const float * in_it2 = in_it + *(offset_list_it + j);
 							for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
 							{
 								float new_val = *(in_it2 + (*(offset_list_it + i)));
@@ -179,20 +175,18 @@ namespace nnforge
 		}
 
 		void max_subsampling_layer_tester_plain::test_non_tiling(
-			additional_buffer_smart_ptr input_buffer,
-			additional_buffer_set& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
+			plain_buffer::ptr output_buffer,
+			plain_buffer::const_ptr input_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
 			const layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
 			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
-			const std::vector<float>::const_iterator in_it_global = input_buffer->begin();
-			const std::vector<float>::iterator out_it_global = additional_buffers[0]->begin();
+			const float * const in_it_global = *input_buffer;
+			float * const out_it_global = *output_buffer;
 			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
@@ -243,14 +237,14 @@ namespace nnforge
 					int entry_id = workload_id / feature_map_count;
 					int feature_map_id = workload_id - (entry_id * feature_map_count);
 
-					std::vector<float>::const_iterator in_it_base = in_it_global + (entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
-					std::vector<float>::iterator out_it_base = out_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
+					const float * in_it_base = in_it_global + (entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
+					float * out_it_base = out_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
 
 					std::fill_n(current_output_position.begin(), dimension_count, 0);
-					for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
+					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
 						// Define the starting position of the first input elem
-						std::vector<float>::const_iterator in_it = in_it_base;
+						const float * in_it = in_it_base;
 						for(unsigned int i = 0; i < dimension_count; ++i)
 							in_it += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
 
@@ -272,37 +266,6 @@ namespace nnforge
 					}
 				}
 			}
-		}
-
-		additional_buffer_smart_ptr max_subsampling_layer_tester_plain::get_output_buffer(
-			additional_buffer_smart_ptr input_buffer,
-			additional_buffer_set& additional_buffers) const
-		{
-			return additional_buffers[0];
-		}
-
-		std::vector<std::pair<unsigned int, bool> > max_subsampling_layer_tester_plain::get_elem_count_and_per_entry_flag_additional_buffers(
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config) const
-		{
-			std::vector<std::pair<unsigned int, bool> > res;
-
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
-
-			if (layer_derived->tiling)
-			{
-				const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
-				unsigned int subsampling_elem_count = 1;
-				for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
-					subsampling_elem_count *= subsampling_sizes[i];
-				res.push_back(std::make_pair<unsigned int, bool>(output_configuration_specific.get_neuron_count() * subsampling_elem_count, true));
-			}
-			else
-				res.push_back(std::make_pair<unsigned int, bool>(output_configuration_specific.get_neuron_count(), true));
-
-			return res;
 		}
 	}
 }

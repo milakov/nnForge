@@ -166,6 +166,10 @@ namespace nnforge
 
 		private:
 			static const unsigned int max_max_entry_count;
+
+		private:
+			forward_propagation_cuda(const forward_propagation_cuda&);
+			forward_propagation_cuda& operator =(const forward_propagation_cuda&);
 		};
 	}
 }

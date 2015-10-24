@@ -157,4 +157,14 @@ namespace nnforge
 		if (!instance_name_to_data_custom_map.insert(std::make_pair(instance_name, data_custom)).second)
 			throw neural_network_exception((boost::format("Custom data with duplicate layer name %1%") % instance_name).str());
 	}
+
+	std::vector<std::string> layer_data_custom_list::get_data_custom_layer_name_list() const
+	{
+		std::vector<std::string> res;
+
+		for(std::map<std::string, layer_data_custom::ptr>::const_iterator it = instance_name_to_data_custom_map.begin(); it != instance_name_to_data_custom_map.end(); ++it)
+			res.push_back(it->first);
+
+		return res;
+	}
 }

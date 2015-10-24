@@ -13,14 +13,17 @@
   <ItemGroup>
     <ClInclude Include="absolute_layer_tester_plain.h" />
     <ClInclude Include="absolute_layer_updater_plain.h" />
+    <ClInclude Include="accuracy_layer_tester_plain.h" />
     <ClInclude Include="average_subsampling_layer_tester_plain.h" />
     <ClInclude Include="average_subsampling_layer_updater_plain.h" />
     <ClInclude Include="buffer_plain_size_configuration.h" />
     <ClInclude Include="convolution_layer_tester_plain.h" />
     <ClInclude Include="convolution_layer_updater_plain.h" />
+    <ClInclude Include="cross_entropy_layer_tester_plain.h" />
     <ClInclude Include="dropout_layer_tester_plain.h" />
     <ClInclude Include="dropout_layer_updater_plain.h" />
     <ClInclude Include="factory_generator_plain.h" />
+    <ClInclude Include="forward_propagation_plain.h" />
     <ClInclude Include="hyperbolic_tangent_layer_tester_plain.h" />
     <ClInclude Include="hyperbolic_tangent_layer_updater_plain.h" />
     <ClInclude Include="layer_tester_plain.h" />
@@ -33,15 +36,15 @@
     <ClInclude Include="maxout_layer_updater_plain.h" />
     <ClInclude Include="max_subsampling_layer_tester_plain.h" />
     <ClInclude Include="max_subsampling_layer_updater_plain.h" />
-    <ClInclude Include="network_analyzer_plain.h" />
-    <ClInclude Include="network_analyzer_plain_factory.h" />
-    <ClInclude Include="network_tester_plain.h" />
-    <ClInclude Include="network_tester_plain_factory.h" />
+    <ClInclude Include="mse_layer_tester_plain.h" />
+    <ClInclude Include="negative_log_likelihood_layer_tester_plain.h" />
+    <ClInclude Include="forward_propagation_plain_factory.h" />
     <ClInclude Include="network_updater_plain.h" />
     <ClInclude Include="network_updater_plain_factory.h" />
     <ClInclude Include="parametric_rectified_linear_layer_tester_plain.h" />
     <ClInclude Include="parametric_rectified_linear_layer_updater_plain.h" />
     <ClInclude Include="plain.h" />
+    <ClInclude Include="plain_buffer.h" />
     <ClInclude Include="plain_running_configuration.h" />
     <ClInclude Include="rectified_linear_layer_tester_plain.h" />
     <ClInclude Include="rectified_linear_layer_updater_plain.h" />
@@ -56,46 +59,100 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="absolute_layer_tester_plain.cpp" />
-    <ClCompile Include="absolute_layer_updater_plain.cpp" />
+    <ClCompile Include="absolute_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="accuracy_layer_tester_plain.cpp" />
     <ClCompile Include="average_subsampling_layer_tester_plain.cpp" />
-    <ClCompile Include="average_subsampling_layer_updater_plain.cpp" />
+    <ClCompile Include="average_subsampling_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="buffer_plain_size_configuration.cpp" />
     <ClCompile Include="convolution_layer_tester_plain.cpp" />
-    <ClCompile Include="convolution_layer_updater_plain.cpp" />
+    <ClCompile Include="convolution_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="cross_entropy_layer_tester_plain.cpp" />
     <ClCompile Include="dropout_layer_tester_plain.cpp" />
-    <ClCompile Include="dropout_layer_updater_plain.cpp" />
+    <ClCompile Include="dropout_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="factory_generator_plain.cpp" />
+    <ClCompile Include="forward_propagation_plain.cpp" />
     <ClCompile Include="hyperbolic_tangent_layer_tester_plain.cpp" />
-    <ClCompile Include="hyperbolic_tangent_layer_updater_plain.cpp" />
+    <ClCompile Include="hyperbolic_tangent_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="layer_tester_plain.cpp" />
     <ClCompile Include="layer_tester_plain_factory.cpp" />
-    <ClCompile Include="layer_updater_plain.cpp" />
-    <ClCompile Include="layer_updater_plain_factory.cpp" />
+    <ClCompile Include="layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="layer_updater_plain_factory.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="local_contrast_subtractive_layer_tester_plain.cpp" />
-    <ClCompile Include="local_contrast_subtractive_layer_updater_plain.cpp" />
+    <ClCompile Include="local_contrast_subtractive_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="maxout_layer_tester_plain.cpp" />
-    <ClCompile Include="maxout_layer_updater_plain.cpp" />
+    <ClCompile Include="maxout_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="max_subsampling_layer_tester_plain.cpp" />
-    <ClCompile Include="max_subsampling_layer_updater_plain.cpp" />
-    <ClCompile Include="network_analyzer_plain.cpp" />
-    <ClCompile Include="network_analyzer_plain_factory.cpp" />
-    <ClCompile Include="network_tester_plain.cpp" />
-    <ClCompile Include="network_tester_plain_factory.cpp" />
-    <ClCompile Include="network_updater_plain.cpp" />
-    <ClCompile Include="network_updater_plain_factory.cpp" />
+    <ClCompile Include="max_subsampling_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="mse_layer_tester_plain.cpp" />
+    <ClCompile Include="negative_log_likelihood_layer_tester_plain.cpp" />
+    <ClCompile Include="forward_propagation_plain_factory.cpp" />
+    <ClCompile Include="network_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="network_updater_plain_factory.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="parametric_rectified_linear_layer_tester_plain.cpp" />
-    <ClCompile Include="parametric_rectified_linear_layer_updater_plain.cpp" />
+    <ClCompile Include="parametric_rectified_linear_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="plain.cpp" />
+    <ClCompile Include="plain_buffer.cpp" />
     <ClCompile Include="plain_running_configuration.cpp" />
     <ClCompile Include="rectified_linear_layer_tester_plain.cpp" />
-    <ClCompile Include="rectified_linear_layer_updater_plain.cpp" />
+    <ClCompile Include="rectified_linear_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="rgb_to_yuv_convert_layer_tester_plain.cpp" />
     <ClCompile Include="sigmoid_layer_tester_plain.cpp" />
-    <ClCompile Include="sigmoid_layer_updater_plain.cpp" />
+    <ClCompile Include="sigmoid_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="softmax_layer_tester_plain.cpp" />
-    <ClCompile Include="softmax_layer_updater_plain.cpp" />
+    <ClCompile Include="softmax_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="sparse_convolution_layer_tester_plain.cpp" />
-    <ClCompile Include="sparse_convolution_layer_updater_plain.cpp" />
+    <ClCompile Include="sparse_convolution_layer_updater_plain.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="untile_layer_tester_plain.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

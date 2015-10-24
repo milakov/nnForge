@@ -43,7 +43,7 @@ namespace nnforge
 		network_updater_plain::network_updater_plain(
 			network_schema_smart_ptr schema,
 			const_error_function_smart_ptr ef,
-			plain_running_configuration_const_smart_ptr plain_config)
+			plain_running_configuration::const_ptr plain_config)
 			: network_updater(schema, ef)
 			, plain_config(plain_config)
 		{

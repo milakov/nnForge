@@ -33,7 +33,7 @@ namespace nnforge
 			network_updater_plain(
 				network_schema_smart_ptr schema,
 				const_error_function_smart_ptr ef,
-				plain_running_configuration_const_smart_ptr plain_config);
+				plain_running_configuration::const_ptr plain_config);
 
 			~network_updater_plain();
 
@@ -73,7 +73,7 @@ namespace nnforge
 				float weight_decay,
 				training_momentum momentum) const;
 
-			plain_running_configuration_const_smart_ptr plain_config;
+			plain_running_configuration::const_ptr plain_config;
 
 			unsigned int testing_layer_count;
 			const_layer_list::const_iterator start_layer_nonempty_weights_iterator;

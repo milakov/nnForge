@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-#include "maxout_layer_tester_plain.h"
+#include "mse_layer_tester_plain.h"
 
-#include "../maxout_layer.h"
+#include "../mse_layer.h"
 #include "../nn_types.h"
 
 #include <array>
@@ -25,20 +25,20 @@ namespace nnforge
 {
 	namespace plain
 	{
-		maxout_layer_tester_plain::maxout_layer_tester_plain()
+		mse_layer_tester_plain::mse_layer_tester_plain()
 		{
 		}
 
-		maxout_layer_tester_plain::~maxout_layer_tester_plain()
+		mse_layer_tester_plain::~mse_layer_tester_plain()
 		{
 		}
 
-		std::string maxout_layer_tester_plain::get_type_name() const
+		std::string mse_layer_tester_plain::get_type_name() const
 		{
-			return maxout_layer::layer_type_name;
+			return mse_layer::layer_type_name;
 		}
 
-		void maxout_layer_tester_plain::run_forward_propagation(
+		void mse_layer_tester_plain::run_forward_propagation(
 			plain_buffer::ptr output_buffer,
 			const std::vector<plain_buffer::const_ptr>& input_buffers,
 			plain_buffer::ptr temporary_working_fixed_buffer,
@@ -51,40 +51,37 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
-			const float * const in_it_global = *input_buffers[0];
+			const float * const in_it_global0 = *input_buffers[0];
+			const float * const in_it_global1 = *input_buffers[1];
 			float * const out_it_global = *output_buffer;
 			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
+			const int input_feature_map_count = static_cast<int>(input_configuration_specific_list[0].feature_map_count);
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
-			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const maxout_layer> layer_derived = nnforge_dynamic_pointer_cast<const maxout_layer>(layer_schema);
-			const unsigned int feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
-			const int output_feature_map_count = output_configuration_specific.feature_map_count;
-			const int total_workload = entry_count * output_feature_map_count;
+			nnforge_shared_ptr<const mse_layer> layer_derived = nnforge_dynamic_pointer_cast<const mse_layer>(layer_schema);
+			const float scale = layer_derived->scale;
+			const int total_workload = entry_count * output_neuron_count;
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
 			{
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 				{
-					int entry_id = workload_id / output_feature_map_count;
-					int output_feature_map_id = workload_id - (entry_id * output_feature_map_count);
+					int entry_id = workload_id / output_neuron_count;
+					int output_neuron_id = workload_id - (entry_id * output_neuron_count);
 
-					const float * in_it_base = in_it_global + (entry_id * input_neuron_count) + (output_feature_map_id * input_neuron_count_per_feature_map);
-					float * out_it_base = out_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
+					const float * in_it_base0 = in_it_global0 + entry_id * input_neuron_count + output_neuron_id;
+					const float * in_it_base1 = in_it_global1 + entry_id * input_neuron_count + output_neuron_id;
+					float * out_it = out_it_global + entry_id * output_neuron_count + output_neuron_id;
 
-					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it, ++in_it_base)
+					float err = 0.0F;
+					for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
 					{
-						const float * in_it = in_it_base;
-						float current_max = *in_it;
-						for(unsigned int i = 1; i < feature_map_subsampling_size; ++i)
-						{
-							in_it += output_feature_map_count * output_neuron_count_per_feature_map;
-							float new_val = *in_it;
-							current_max = std::max(new_val, current_max);
-						}
-						*out_it = current_max;
+						float local_err = *(in_it_base0 + feature_map_id * input_neuron_count_per_feature_map) - *(in_it_base1 + feature_map_id * input_neuron_count_per_feature_map);
+						err += local_err * local_err;
 					}
+
+					*out_it = err * scale;
 				}
 			}
 		}

@@ -56,6 +56,8 @@ namespace nnforge
 
 		void read(const boost::filesystem::path& folder_path);
 
+		std::vector<std::string> get_data_custom_layer_name_list() const;
+
 	private:
 		std::map<std::string, layer_data_custom::ptr> instance_name_to_data_custom_map;
 

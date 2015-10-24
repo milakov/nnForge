@@ -29,6 +29,8 @@ namespace nnforge
 		class plain_running_configuration
 		{
 		public:
+			typedef nnforge_shared_ptr<const plain_running_configuration> const_ptr;
+
 			plain_running_configuration(
 				int openmp_thread_count,
 				float max_memory_usage_gigabytes);
@@ -45,8 +47,6 @@ namespace nnforge
 			plain_running_configuration(const plain_running_configuration&);
 			plain_running_configuration& operator =(const plain_running_configuration&);
 		};
-
-		typedef nnforge_shared_ptr<const plain_running_configuration> plain_running_configuration_const_smart_ptr;
 
 		std::ostream& operator<< (std::ostream& out, const plain_running_configuration& running_configuration);
 	}

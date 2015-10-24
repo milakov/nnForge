@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,26 +14,29 @@
  *  limitations under the License.
  */
 
-#include "network_tester_plain_factory.h"
+#include "forward_propagation_plain_factory.h"
 
-#include "network_tester_plain.h"
+#include "forward_propagation_plain.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		network_tester_plain_factory::network_tester_plain_factory(plain_running_configuration_const_smart_ptr plain_config)
+		forward_propagation_plain_factory::forward_propagation_plain_factory(plain_running_configuration::const_ptr plain_config)
 			: plain_config(plain_config)
 		{
 		}
 
-		network_tester_plain_factory::~network_tester_plain_factory()
+		forward_propagation_plain_factory::~forward_propagation_plain_factory()
 		{
 		}
 
-		network_tester_smart_ptr network_tester_plain_factory::create(network_schema_smart_ptr schema) const
+		forward_propagation::ptr forward_propagation_plain_factory::create(
+			const network_schema& schema,
+			const std::vector<std::string>& output_layer_names,
+			debug_state::ptr debug) const
 		{
-			return network_tester_smart_ptr(new network_tester_plain(schema, plain_config));
+			return forward_propagation::ptr(new forward_propagation_plain(schema, output_layer_names, debug, plain_config));
 		}
 	}
 }
