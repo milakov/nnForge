@@ -49,7 +49,7 @@ namespace nnforge
 				structured_data_bunch_reader& reader,
 				structured_data_bunch_writer& writer,
 				network_data& data,
-				network_data& momentum_data,
+				network_data::ptr momentum_data,
 				const std::map<std::string, std::vector<float> >& learning_rates,
 				unsigned int batch_size,
 				float weight_decay,
@@ -212,6 +212,10 @@ namespace nnforge
 
 		private:
 			static const unsigned int elem_count_update_accum_per_part;
+
+		private:
+			backward_propagation_cuda(const backward_propagation_cuda&);
+			backward_propagation_cuda& operator =(const backward_propagation_cuda&);
 		};
 	}
 }

@@ -61,7 +61,7 @@ namespace nnforge
 				bool add_update_to_destination,
 				unsigned int entry_count);
 
-			virtual void enqueue_update_weights_propagation(
+			virtual void enqueue_backward_weights_propagation(
 				cudaStream_t stream_id,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
 				const std::vector<cuda_linear_buffer_device::ptr>& gradient,

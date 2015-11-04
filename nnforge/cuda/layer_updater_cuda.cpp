@@ -150,22 +150,6 @@ namespace nnforge
 			return -1;
 		}
 
-		bool layer_updater_cuda::is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const
-		{
-			if (actions.find(layer_action(layer_action::backward_weights)) == actions.end())
-				throw neural_network_exception((boost::format("is_backward_weights_dependent_on_input_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_weights).str()).str());
-
-			return true;
-		}
-
-		bool layer_updater_cuda::is_backward_weights_dependent_on_temporary_per_entry_buffer() const
-		{
-			if (actions.find(layer_action(layer_action::backward_weights)) == actions.end())
-				throw neural_network_exception((boost::format("is_backward_weights_dependent_on_temporary_per_entry_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_weights).str()).str());
-
-			return (get_temporary_per_entry_buffer_size() != 0);
-		}
-
 		bool layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
 		{
 			if (actions.find(layer_action(layer_action::backward_data, action_input_index)) == actions.end())
@@ -190,6 +174,22 @@ namespace nnforge
 			return (get_temporary_per_entry_buffer_size() != 0);
 		}
 
+		bool layer_updater_cuda::is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const
+		{
+			if (actions.find(layer_action(layer_action::backward_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_weights_dependent_on_input_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_weights).str()).str());
+
+			return true;
+		}
+
+		bool layer_updater_cuda::is_backward_weights_dependent_on_temporary_per_entry_buffer() const
+		{
+			if (actions.find(layer_action(layer_action::backward_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_weights_dependent_on_temporary_per_entry_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_weights).str()).str());
+
+			return (get_temporary_per_entry_buffer_size() != 0);
+		}
+
 		void layer_updater_cuda::enqueue_backward_data_propagation(
 			cudaStream_t stream_id,
 			unsigned int input_index,
@@ -210,7 +210,7 @@ namespace nnforge
 			throw neural_network_exception((boost::format("enqueue_backward_data_propagation is not implemented for layer %1%") % layer_schema->instance_name).str());
 		}
 
-		void layer_updater_cuda::enqueue_update_weights_propagation(
+		void layer_updater_cuda::enqueue_backward_weights_propagation(
 			cudaStream_t stream_id,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
 			const std::vector<cuda_linear_buffer_device::ptr>& gradient,
@@ -223,7 +223,7 @@ namespace nnforge
 			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
 			unsigned int entry_count)
 		{
-			throw neural_network_exception((boost::format("enqueue_update_weights_propagation is not implemented for layer %1%") % layer_schema->instance_name).str());
+			throw neural_network_exception((boost::format("enqueue_backward_weights_propagation is not implemented for layer %1%") % layer_schema->instance_name).str());
 		}
 	}
 }

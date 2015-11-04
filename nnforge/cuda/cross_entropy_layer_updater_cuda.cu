@@ -102,7 +102,7 @@ namespace nnforge
 				float actual_val = target_input_neurons[elem_id];
 				float predicted_val = deriv_input_neurons[elem_id];
 
-				float gradient;
+				float gradient = 0.0F;
 				if (actual_val > 0.0F)
 				{
 					gradient = __fdividef(actual_val, max(predicted_val, 1.0e-20F));

@@ -80,12 +80,6 @@
     <ClInclude Include="layer_tester_plain_factory.h">
       <Filter>Header Files\forward_propagation</Filter>
     </ClInclude>
-    <ClInclude Include="network_updater_plain.h">
-      <Filter>Header Files\backward_propagation</Filter>
-    </ClInclude>
-    <ClInclude Include="network_updater_plain_factory.h">
-      <Filter>Header Files\backward_propagation</Filter>
-    </ClInclude>
     <ClInclude Include="layer_updater_plain.h">
       <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
@@ -182,6 +176,24 @@
     <ClInclude Include="forward_propagation_plain_factory.h">
       <Filter>Header Files\forward_propagation</Filter>
     </ClInclude>
+    <ClInclude Include="mse_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="cross_entropy_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="negative_log_likelihood_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="accuracy_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="backward_propagation_plain.h">
+      <Filter>Header Files\backward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="backward_propagation_plain_factory.h">
+      <Filter>Header Files\backward_propagation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_plain_size_configuration.cpp">
@@ -216,12 +228,6 @@
     </ClCompile>
     <ClCompile Include="layer_tester_plain_factory.cpp">
       <Filter>Source Files\forward_propagation</Filter>
-    </ClCompile>
-    <ClCompile Include="network_updater_plain.cpp">
-      <Filter>Source Files\backward_propagation</Filter>
-    </ClCompile>
-    <ClCompile Include="network_updater_plain_factory.cpp">
-      <Filter>Source Files\backward_propagation</Filter>
     </ClCompile>
     <ClCompile Include="layer_updater_plain.cpp">
       <Filter>Source Files\backward_propagation</Filter>
@@ -318,6 +324,24 @@
     </ClCompile>
     <ClCompile Include="forward_propagation_plain.cpp">
       <Filter>Source Files\forward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="mse_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
+    </ClCompile>
+    <ClCompile Include="cross_entropy_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
+    </ClCompile>
+    <ClCompile Include="negative_log_likelihood_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
+    </ClCompile>
+    <ClCompile Include="accuracy_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
+    </ClCompile>
+    <ClCompile Include="backward_propagation_plain.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="backward_propagation_plain_factory.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -77,7 +77,7 @@ namespace nnforge
 				bool add_update_to_destination,
 				unsigned int entry_count);
 
-			virtual void enqueue_update_weights_propagation(
+			virtual void enqueue_backward_weights_propagation(
 				cudaStream_t stream_id,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
 				const std::vector<cuda_linear_buffer_device::ptr>& gradient,
@@ -116,13 +116,13 @@ namespace nnforge
 			// Default impl returns true
 			virtual bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const;
 
-			// Default impl returns true
+			// Default impl returns get_temporary_per_entry_buffer_size() != 0
 			virtual bool is_backward_data_dependent_on_temporary_per_entry_buffer(unsigned int action_input_index) const;
 
 			// Default impl returns true
 			virtual bool is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const;
 
-			// Default impl returns true
+			// Default impl returns get_temporary_per_entry_buffer_size() != 0
 			virtual bool is_backward_weights_dependent_on_temporary_per_entry_buffer() const;
 
 		protected:

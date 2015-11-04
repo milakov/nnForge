@@ -17,8 +17,8 @@
 #include "max_subsampling_layer_updater_plain.h"
 
 #include "../max_subsampling_layer.h"
-#include "../neural_network_exception.h"
 #include "../nn_types.h"
+#include "../neural_network_exception.h"
 
 #include <array>
 
@@ -36,46 +36,44 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& max_subsampling_layer_updater_plain::get_uuid() const
+		std::string max_subsampling_layer_updater_plain::get_type_name() const
 		{
-			return max_subsampling_layer::layer_guid;
+			return max_subsampling_layer::layer_type_name;
 		}
 
-		void max_subsampling_layer_updater_plain::test(
-			const_additional_buffer_smart_ptr input_buffer,
-			additional_buffer_smart_ptr output_buffer,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
+		void max_subsampling_layer_updater_plain::run_forward_propagation(
+			plain_buffer::ptr output_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_buffers,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
 			plain_running_configuration::const_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			unsigned int offset_input_entry_id,
-			bool force_deterministic) const
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
 			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 			if (layer_derived->tiling)
 				throw neural_network_exception("max_subsampling_layer_updater_plain is not able to run for max subsampling layer with tiling");
 
-			if (offset_input_entry_id > 0)
-				throw neural_network_exception("max_subsampling_layer_updater_plain is not able to run using offset");
-
-			const std::vector<float>::const_iterator in_it_global = input_buffer->begin();
-			const std::vector<float>::iterator out_it_global = output_buffer->begin();
-			const std::vector<float>::iterator max_indexes_it_global = additional_buffers[0]->begin();
-			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
+			const float * const in_it_global = *input_buffers[0];
+			float * const out_it_global = *output_buffer;
+			unsigned int * const max_indexes_it_global = *temporary_per_entry_buffer;
+			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
+			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
 			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->subsampling_sizes.size());
-			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
+			std::vector<unsigned int> input_slices(input_configuration_specific_list[0].dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
-				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific_list[0].dimension_sizes[i];
 			unsigned int subsampling_elem_count = 1;
 			for(unsigned int i = 0; i < dimension_count; ++i)
 				subsampling_elem_count *= subsampling_sizes[i];
@@ -100,7 +98,7 @@ namespace nnforge
 				}
 			}
 
-			const int total_workload = updater_count * output_configuration_specific.feature_map_count;
+			const int total_workload = entry_count * output_configuration_specific.feature_map_count;
 			const std::vector<unsigned int>::const_iterator dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
 			const std::vector<unsigned int>::const_iterator subsampling_sizes_it = subsampling_sizes.begin();
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
@@ -117,12 +115,12 @@ namespace nnforge
 					int feature_map_id = workload_id - (entry_id * feature_map_count);
 
 					const int in_base_offset = (entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
-					std::vector<float>::iterator out_it_base = out_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
-					std::vector<float>::iterator max_indexes_it_base = max_indexes_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
+					float * out_it_base = out_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
+					unsigned int * max_indexes_it_base = max_indexes_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
 
 					std::fill_n(current_output_position.begin(), dimension_count, 0);
-					std::vector<float>::iterator max_indexes_it = max_indexes_it_base;
-					for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it, ++max_indexes_it)
+					unsigned int * max_indexes_it = max_indexes_it_base;
+					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it, ++max_indexes_it)
 					{
 						// Define the starting position of the first input elem
 						int in_offset = in_base_offset;
@@ -142,7 +140,7 @@ namespace nnforge
 							}
 						}
 						*out_it = best_val;
-						*((unsigned int *)(&(*max_indexes_it))) = max_index;
+						*max_indexes_it = max_index;
 
 						// Go to the next output element
 						for(unsigned int i = 0; i < dimension_count; ++i)
@@ -156,62 +154,94 @@ namespace nnforge
 			}
 		}
 
-		void max_subsampling_layer_updater_plain::backprop(
-			additional_buffer_smart_ptr input_errors,
-			const_additional_buffer_smart_ptr input_neurons,
-			const_additional_buffer_smart_ptr output_errors,
-			const_additional_buffer_smart_ptr output_neurons,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
+		void max_subsampling_layer_updater_plain::run_backward_data_propagation(
+			unsigned int input_index,
+			plain_buffer::ptr input_errors_buffer,
+			plain_buffer::const_ptr output_errors_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+			plain_buffer::const_ptr output_neurons_buffer,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
 			plain_running_configuration::const_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			bool force_deterministic) const
+			const bool add_update_to_destination,
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			const std::vector<float>::iterator in_err_it_global = input_errors->begin();
-			const std::vector<float>::const_iterator out_err_it_global = output_errors->begin();
-			const std::vector<float>::const_iterator max_indexes_it_global = additional_buffers[0]->begin();
+			float * const in_err_it_global = *input_errors_buffer;
+			const float * const out_err_it_global = *output_errors_buffer;
+			const unsigned int * const max_indexes_it_global = *temporary_per_entry_buffer;
 
-			const int total_clean_workload = updater_count * input_configuration_specific.get_neuron_count();
-
-			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-			for(int workload_id = 0; workload_id < total_clean_workload; ++workload_id)
+			if (!add_update_to_destination)
 			{
-				*(in_err_it_global + workload_id) = 0.0F;
+				const int total_clean_workload = entry_count * input_configuration_specific_list[0].get_neuron_count();
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int workload_id = 0; workload_id < total_clean_workload; ++workload_id)
+				{
+					*(in_err_it_global + workload_id) = 0.0F;
+				}
 			}
 
-			const int total_workload = updater_count * output_configuration_specific.get_neuron_count();
+			const int total_workload = entry_count * output_configuration_specific.get_neuron_count();
 
-			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-			for(int workload_id = 0; workload_id < total_workload; ++workload_id)
+			if (add_update_to_destination)
 			{
-				unsigned int max_index = *(((unsigned int *)(&(*max_indexes_it_global))) + workload_id);
-				float err = *(out_err_it_global + workload_id);
-				*(in_err_it_global + max_index) = err;
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
+				{
+					unsigned int max_index = *(max_indexes_it_global + workload_id);
+					float err = *(out_err_it_global + workload_id);
+					*(in_err_it_global + max_index) += err;
+				}
+			}
+			else
+			{
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
+				{
+					unsigned int max_index = *(max_indexes_it_global + workload_id);
+					float err = *(out_err_it_global + workload_id);
+					*(in_err_it_global + max_index) = err;
+				}
 			}
 		}
 
-		std::vector<std::pair<unsigned int, bool> > max_subsampling_layer_updater_plain::get_elem_count_and_per_entry_flag_additional_buffers(
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
+		bool max_subsampling_layer_updater_plain::is_backward_data_dependent_on_input_buffer(
+			unsigned int action_input_index,
+			unsigned int data_input_index,
+			const std::set<layer_action>& actions,
 			plain_running_configuration::const_ptr plain_config,
-			bool backprop_required) const
-		{
-			std::vector<std::pair<unsigned int, bool> > res;
-
-			if (backprop_required)
-				res.push_back(std::make_pair<unsigned int, bool>(output_configuration_specific.get_neuron_count(), true));
-
-			return res;
-		}
-
-		bool max_subsampling_layer_updater_plain::is_in_place_backprop() const
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
 			return false;
+		}
+
+		bool max_subsampling_layer_updater_plain::is_backward_data_dependent_on_output_buffer(
+			unsigned int action_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return false;
+		}
+
+		size_t max_subsampling_layer_updater_plain::get_temporary_per_entry_buffer_size(
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return output_configuration_specific.get_neuron_count() * sizeof(unsigned int);
 		}
 	}
 }

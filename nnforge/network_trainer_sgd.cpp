@@ -54,7 +54,7 @@ namespace nnforge
 			reader,
 			writer,
 			*task.data,
-			*task.momentum_data,
+			task.momentum_data,
 			lr_and_comment.first,
 			batch_size,
 			weight_decay,

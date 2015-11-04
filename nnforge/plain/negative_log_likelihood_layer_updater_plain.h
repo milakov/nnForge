@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,18 +17,17 @@
 #pragma once
 
 #include "layer_updater_plain.h"
-#include "../rnd.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		class dropout_layer_updater_plain : public layer_updater_plain
+		class negative_log_likelihood_layer_updater_plain : public layer_updater_plain
 		{
 		public:
-			dropout_layer_updater_plain();
+			negative_log_likelihood_layer_updater_plain();
 
-			virtual ~dropout_layer_updater_plain();
+			virtual ~negative_log_likelihood_layer_updater_plain();
 
 			virtual std::string get_type_name() const;
 
@@ -82,16 +81,6 @@ namespace nnforge
 				layer::const_ptr layer_schema,
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific) const;
-
-			virtual size_t get_temporary_per_entry_buffer_size(
-				const std::set<layer_action>& actions,
-				plain_running_configuration::const_ptr plain_config,
-				layer::const_ptr layer_schema,
-				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-				const layer_configuration_specific& output_configuration_specific) const;
-
-		private:
-			mutable random_generator gen;
 		};
 	}
 }

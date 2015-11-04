@@ -1404,7 +1404,7 @@ namespace nnforge
 				launch_backprop_kernel(dimension_count, window_sizes[0], ((dimension_count > 1) ? window_sizes[1] : 1));
 			}
 
-			virtual void enqueue_update_weights_propagation(
+			virtual void enqueue_backward_weights_propagation(
 				cudaStream_t stream_id,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
 				const std::vector<cuda_linear_buffer_device::ptr>& gradient,

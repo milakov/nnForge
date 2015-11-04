@@ -361,7 +361,7 @@ namespace nnforge
 			}
 		}
 
-		void sparse_fully_connected_1x1_layer_updater_cuda::enqueue_update_weights_propagation(
+		void sparse_fully_connected_1x1_layer_updater_cuda::enqueue_backward_weights_propagation(
 			cudaStream_t stream_id,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
 			const std::vector<cuda_linear_buffer_device::ptr>& gradient,

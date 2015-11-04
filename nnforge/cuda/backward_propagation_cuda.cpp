@@ -83,7 +83,7 @@ namespace nnforge
 			structured_data_bunch_reader& reader,
 			structured_data_bunch_writer& writer,
 			network_data& data,
-			network_data& momentum_data,
+			network_data::ptr momentum_data,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
 			float weight_decay,
@@ -104,7 +104,7 @@ namespace nnforge
 			}
 			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> > previous_upd;
 			if (momentum.type != training_momentum::no_momentum)
-				previous_upd = get_data(momentum_data.data_list);
+				previous_upd = get_data(momentum_data->data_list);
 			else
 			{
 				for(std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >::const_iterator it = net_data.begin(); it != net_data.end(); ++it)
@@ -397,7 +397,7 @@ namespace nnforge
 			read_data(net_data, data.data_list);
 
 			if (momentum.type != training_momentum::no_momentum)
-				read_data(previous_upd, momentum_data.data_list);
+				read_data(previous_upd, momentum_data->data_list);
 
 			std::pair<unsigned int, std::map<std::string, std::vector<float> > > res;
 			res.first = entry_processed_count;
@@ -681,7 +681,7 @@ namespace nnforge
 											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second]];
 									}
 
-									updaters.find(layer_name)->second->enqueue_update_weights_propagation(
+									updaters.find(layer_name)->second->enqueue_backward_weights_propagation(
 										*current_stream,
 										schema_data[layer_name],
 										params.gradient[layer_name],
@@ -953,8 +953,6 @@ namespace nnforge
 			setup_layer_buffer_sizes();
 
 			setup_temporary_working_fixed_buffer_sizes();
-
-			//update_data();
 
 			update_buffer_config();
 		}
@@ -1241,7 +1239,7 @@ namespace nnforge
 					debug_str << ")";
 				}
 				debug->output_message(debug_str.str().c_str());
-				boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_cuda_per_entry_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
+				boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_cuda_per_entry_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
 				action_schema->write_gv(out, layer_buffer_action_to_set_map, temporary_per_entry_data_action_to_set_map, temporary_working_per_entry_data_action_to_set_map);
 			}
 		}

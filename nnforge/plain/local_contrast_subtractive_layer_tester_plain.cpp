@@ -73,7 +73,7 @@ namespace nnforge
 			const std::vector<std::vector<float> >::const_iterator window_weights_list_it = window_weights_list.begin();
 			float * const working_buffer_it = *temporary_working_fixed_buffer;
 
-			if (feature_maps_affected_count != output_configuration_specific.feature_map_count)
+			if ((feature_maps_affected_count != output_configuration_specific.feature_map_count) && (output_buffer_it != input_buffer_it))
 				memcpy(output_buffer_it, input_buffer_it, output_configuration_specific.get_neuron_count() * entry_count * sizeof(float));
 
 			const int total_workload = entry_count * feature_maps_affected_count;

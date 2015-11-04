@@ -17,7 +17,7 @@
 #include "factory_generator_plain.h"
 
 #include "forward_propagation_plain_factory.h"
-//#include "backward_propagation_plain_factory.h"
+#include "backward_propagation_plain_factory.h"
 
 #include <iostream>
 
@@ -59,7 +59,7 @@ namespace nnforge
 
 		backward_propagation_factory::ptr factory_generator_plain::create_backward_propagation_factory() const
 		{
-			return backward_propagation_factory::ptr();//new backward_propagation_plain_factory(plain_config));
+			return backward_propagation_factory::ptr(new backward_propagation_plain_factory(plain_config));
 		}
 
 		std::vector<float_option> factory_generator_plain::get_float_options()

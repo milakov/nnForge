@@ -44,10 +44,10 @@ namespace nnforge
 
 			virtual int get_input_index_layer_can_write(const layer_action& action) const;
 
+			virtual size_t get_temporary_working_per_entry_buffer_size(const layer_action& action) const;
+
 		protected:
 			virtual void updater_configured();
-
-			virtual size_t get_temporary_working_per_entry_buffer_size(const layer_action& action) const;
 
 		private:
 			int affected_feature_map_count;

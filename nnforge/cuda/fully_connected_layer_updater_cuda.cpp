@@ -136,7 +136,7 @@ namespace nnforge
 				input_elem_count_per_entry_list[0]));
 		}
 
-		void fully_connected_layer_updater_cuda::enqueue_update_weights_propagation(
+		void fully_connected_layer_updater_cuda::enqueue_backward_weights_propagation(
 			cudaStream_t stream_id,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
 			const std::vector<cuda_linear_buffer_device::ptr>& gradient,

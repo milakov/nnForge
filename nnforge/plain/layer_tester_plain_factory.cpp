@@ -15,9 +15,9 @@
  */
 
 #include "layer_tester_plain_factory.h"
+
 #include "../neural_network_exception.h"
 
-#include <boost/uuid/uuid_io.hpp>
 #include <boost/format.hpp>
 
 namespace nnforge
