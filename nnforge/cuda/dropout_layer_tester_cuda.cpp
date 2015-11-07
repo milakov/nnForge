@@ -16,6 +16,8 @@
 
 #include "dropout_layer_tester_cuda.h"
 
+#include "util_cuda.h"
+
 namespace nnforge
 {
 	namespace cuda
@@ -28,15 +30,32 @@ namespace nnforge
 		{
 		}
 
-		void dropout_layer_tester_cuda::enqueue_test(
+		void dropout_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
+			if ((const float *)(*input_buffers[0]) != (const float *)(*output_buffer))
+			{
+				cuda_util::copy_buffer(
+					*cuda_config,
+					*input_buffers[0],
+					*output_buffer,
+					output_elem_count_per_entry * entry_count,
+					stream_id);
+			}
+		}
+
+		int dropout_layer_tester_cuda::get_input_index_layer_can_write() const
+		{
+			return 0;
 		}
 	}
 }

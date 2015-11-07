@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #endif
 
 #include "../softmax_layer.h"
-#include "../neural_network_exception.h"
 
 namespace nnforge
 {
@@ -35,154 +34,193 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& softmax_layer_updater_plain::get_uuid() const
+		std::string softmax_layer_updater_plain::get_type_name() const
 		{
-			return softmax_layer::layer_guid;
+			return softmax_layer::layer_type_name;
 		}
 
-		void softmax_layer_updater_plain::test(
-			const_additional_buffer_smart_ptr input_buffer,
-			additional_buffer_smart_ptr output_buffer,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void softmax_layer_updater_plain::run_forward_propagation(
+			plain_buffer::ptr output_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_buffers,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			unsigned int offset_input_entry_id,
-			bool force_deterministic) const
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			if (offset_input_entry_id > 0)
-				throw neural_network_exception("softmax_layer_updater_plain is not able to run using offset");
+			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
+			const unsigned int neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
+			const unsigned int feature_map_count = static_cast<unsigned int>(output_configuration_specific.feature_map_count);
 
-			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
-			const unsigned int feature_map_count = static_cast<unsigned int>(input_configuration_specific.feature_map_count);
+			const float * const input_buffer_it = *input_buffers[0];
+			float * const output_buffer_it = *output_buffer;
+			float * const working_buffer_it = *temporary_working_fixed_buffer;
 
-			const std::vector<float>::const_iterator input_buffer_it = input_buffer->begin();
-			const std::vector<float>::iterator output_buffer_it = output_buffer->begin();
-
-			const int total_workload = updater_count * input_neuron_count_per_feature_map;
+			const int total_workload = entry_count * neuron_count_per_feature_map;
 			const int openmp_thread_count = plain_config->openmp_thread_count;
 			
-			#pragma omp parallel default(none) shared(additional_buffers) num_threads(openmp_thread_count)
+			#pragma omp parallel default(none) num_threads(openmp_thread_count)
 			{
 				int thread_id = 0;
 				#ifdef _OPENMP
 				thread_id = omp_get_thread_num();
 				#endif
 
-				std::vector<float>& local_additional_buffer = *(additional_buffers[thread_id]);
+				float * local_additional_buffer = working_buffer_it + thread_id * feature_map_count;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 				{
-					int entry_id = workload_id / input_neuron_count_per_feature_map;
-					int neuron_id = workload_id - (entry_id * input_neuron_count_per_feature_map);
+					int entry_id = workload_id / neuron_count_per_feature_map;
+					int neuron_id = workload_id - (entry_id * neuron_count_per_feature_map);
 
-					const std::vector<float>::const_iterator in_it = input_buffer_it + (entry_id * input_neuron_count) + neuron_id;
-					const std::vector<float>::iterator out_it = output_buffer_it + (entry_id * input_neuron_count) + neuron_id;
+					const float * in_it = input_buffer_it + (entry_id * neuron_count) + neuron_id;
+					float * out_it = output_buffer_it + (entry_id * neuron_count) + neuron_id;
 
 					float max_val = -1.0e+37F;
 					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 					{
-						float val = *(in_it + (feature_map_id * input_neuron_count_per_feature_map));
+						float val = *(in_it + (feature_map_id * neuron_count_per_feature_map));
 						max_val = std::max(max_val, val);
 					}
 
 					float sum = 0.0F;
 					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 					{
-						float val = expf((*(in_it + (feature_map_id * input_neuron_count_per_feature_map))) - max_val);
+						float val = expf((*(in_it + (feature_map_id * neuron_count_per_feature_map))) - max_val);
 						sum += val;
 						local_additional_buffer[feature_map_id] = val;
 					}
 					float mult = 1.0F / sum;
 					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
-						*(out_it + (feature_map_id * input_neuron_count_per_feature_map)) = local_additional_buffer[feature_map_id] * mult;
+						*(out_it + (feature_map_id * neuron_count_per_feature_map)) = local_additional_buffer[feature_map_id] * mult;
 				} // for(int workload_id
 			} // #pragma parallel
 		}
 
-		void softmax_layer_updater_plain::backprop(
-			additional_buffer_smart_ptr input_errors,
-			const_additional_buffer_smart_ptr input_neurons,
-			const_additional_buffer_smart_ptr output_errors,
-			const_additional_buffer_smart_ptr output_neurons,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void softmax_layer_updater_plain::run_backward_data_propagation(
+			unsigned int input_index,
+			plain_buffer::ptr input_errors_buffer,
+			plain_buffer::const_ptr output_errors_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+			plain_buffer::const_ptr output_neurons_buffer,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			bool force_deterministic) const
+			const bool add_update_to_destination,
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
-			const unsigned int feature_map_count = static_cast<unsigned int>(input_configuration_specific.feature_map_count);
+			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
+			const unsigned int neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
+			const unsigned int feature_map_count = static_cast<unsigned int>(output_configuration_specific.feature_map_count);
 
-			const std::vector<float>::iterator input_errors_it = input_errors->begin();
-			const std::vector<float>::const_iterator output_errors_it = output_errors->begin();
-			const std::vector<float>::const_iterator output_neurons_it = output_neurons->begin();
+			float * const input_errors_it = *input_errors_buffer;
+			const float * const output_errors_it = *output_errors_buffer;
+			const float * const output_neurons_it = *output_neurons_buffer;
 
-			const int total_workload = updater_count * input_neuron_count_per_feature_map;
+			const int total_workload = entry_count * neuron_count_per_feature_map;
 			const int openmp_thread_count = plain_config->openmp_thread_count;
 			
-			#pragma omp parallel default(none) shared(additional_buffers) num_threads(openmp_thread_count)
+			#pragma omp parallel default(none) num_threads(openmp_thread_count)
 			{
-				int thread_id = 0;
-				#ifdef _OPENMP
-				thread_id = omp_get_thread_num();
-				#endif
-
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 				{
-					int entry_id = workload_id / input_neuron_count_per_feature_map;
-					int neuron_id = workload_id - (entry_id * input_neuron_count_per_feature_map);
+					int entry_id = workload_id / neuron_count_per_feature_map;
+					int neuron_id = workload_id - (entry_id * neuron_count_per_feature_map);
 
-					const std::vector<float>::iterator in_errors_it = input_errors_it + (entry_id * input_neuron_count) + neuron_id;
-					const std::vector<float>::const_iterator out_errors_it = output_errors_it + (entry_id * input_neuron_count) + neuron_id;
-					const std::vector<float>::const_iterator out_neurons_it = output_neurons_it + (entry_id * input_neuron_count) + neuron_id;
+					float * in_errors_it = input_errors_it + (entry_id * neuron_count) + neuron_id;
+					const float * out_errors_it = output_errors_it + (entry_id * neuron_count) + neuron_id;
+					const float * out_neurons_it = output_neurons_it + (entry_id * neuron_count) + neuron_id;
 
 					float sum = 0.0F;
 					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 					{
-						unsigned int offset = feature_map_id * input_neuron_count_per_feature_map;
+						unsigned int offset = feature_map_id * neuron_count_per_feature_map;
 						sum += (*(out_errors_it + offset)) * (*(out_neurons_it + offset));
 					}
 
-					for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+					if (add_update_to_destination)
 					{
-						unsigned int offset = feature_map_id * input_neuron_count_per_feature_map;
-						*(in_errors_it + offset) = (*(out_neurons_it + offset)) * (*(out_errors_it + offset) - sum);
+						for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+						{
+							unsigned int offset = feature_map_id * neuron_count_per_feature_map;
+							*(in_errors_it + offset) += (*(out_neurons_it + offset)) * (*(out_errors_it + offset) - sum);
+						}
+					}
+					else
+					{
+						for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
+						{
+							unsigned int offset = feature_map_id * neuron_count_per_feature_map;
+							*(in_errors_it + offset) = (*(out_neurons_it + offset)) * (*(out_errors_it + offset) - sum);
+						}
 					}
 				} // for(int workload_id
 			} // #pragma parallel
 		}
 
-		bool softmax_layer_updater_plain::is_in_place_backprop() const
+		int softmax_layer_updater_plain::get_input_index_layer_can_write(
+			const layer_action& action,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return true;
+			return 0;
 		}
 
-		std::vector<std::pair<unsigned int, bool> > softmax_layer_updater_plain::get_elem_count_and_per_entry_flag_additional_buffers(
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
-			bool backprop_required) const
+		size_t softmax_layer_updater_plain::get_temporary_working_fixed_buffer_size(
+			const layer_action& action,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
-			std::vector<std::pair<unsigned int, bool> > res;
+			if (action.get_action_type() == layer_action::forward)
+			{
+				return plain_config->openmp_thread_count * output_configuration_specific.feature_map_count * sizeof(float);
+			}
+			else
+				return 0;
+		}
 
-			for(int i = 0; i < plain_config->openmp_thread_count; ++i)
-				res.push_back(std::make_pair(input_configuration_specific.feature_map_count, false));
+		bool softmax_layer_updater_plain::is_backward_data_dependent_on_input_buffer(
+			unsigned int action_input_index,
+			unsigned int data_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return false;
+		}
 
-			return res;
+		bool softmax_layer_updater_plain::is_backward_data_dependent_on_output_buffer(
+			unsigned int action_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return true;
 		}
 	}
 }

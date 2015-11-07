@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,11 +16,8 @@
 
 #include "maxout_layer_updater_schema.h"
 
-#include "../neural_network_exception.h"
 #include "../maxout_layer.h"
 #include "maxout_layer_updater_cuda.h"
-
-#include <boost/format.hpp>
 
 namespace nnforge
 {
@@ -34,21 +31,21 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr maxout_layer_updater_schema::create_specific() const
+		layer_updater_schema::ptr maxout_layer_updater_schema::create_specific() const
 		{
-			return layer_updater_schema_smart_ptr(new maxout_layer_updater_schema());
+			return layer_updater_schema::ptr(new maxout_layer_updater_schema());
 		}
 
-		const boost::uuids::uuid& maxout_layer_updater_schema::get_uuid() const
+		std::string maxout_layer_updater_schema::get_type_name() const
 		{
-			return maxout_layer::layer_guid;
+			return maxout_layer::layer_type_name;
 		}
 
-		layer_updater_cuda_smart_ptr maxout_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr maxout_layer_updater_schema::create_updater_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_updater_cuda_smart_ptr(new maxout_layer_updater_cuda());
+			return layer_updater_cuda::ptr(new maxout_layer_updater_cuda());
 		}
 	}
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@
 
 namespace nnforge
 {
-	// {0EB03FB5-9BF7-4D34-8CEE-5CED01F11CB6}
+	// {62CEBAD9-7DB1-4D0D-8979-A73C42778E64}
 	const boost::uuids::uuid varying_data_stream_schema::varying_data_stream_guid =
-	{ 0x0e, 0xb0, 0x3f, 0xb5
-	, 0x9b, 0xf7
-	, 0x4d, 0x34
-	, 0x8c, 0xee
-	, 0x5c, 0xed, 0x1, 0xf1, 0x1c, 0xb6 };
+	{ 0x62, 0xce, 0xba, 0xd9
+	, 0x7d, 0xb1
+	, 0x4d, 0x0d
+	, 0x89, 0x79
+	, 0xa7, 0x3c, 0x42, 0x77, 0x8e, 0x64 };
 }

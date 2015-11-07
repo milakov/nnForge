@@ -29,22 +29,6 @@
 
 namespace nnforge
 {
-	// {5957B44F-699E-4DDB-836E-3FB3EEB54965}
-	const boost::uuids::uuid convolution_layer::layer_guid =
-		{ 0x59, 0x57, 0xb4, 0x4f
-		, 0x69, 0x9e
-		, 0x4d, 0xdb
-		, 0x83, 0x6e
-		, 0x3f, 0xb3, 0xee, 0xb5, 0x49, 0x65 };
-
-	// {8AD07635-DDFE-43B4-B26A-15CA19155A65}
-	const boost::uuids::uuid convolution_layer::layer_guid_v1 =
-		{ 0x8a, 0xd0, 0x76, 0x35
-		, 0xdd, 0xfe
-		, 0x43, 0xb4
-		, 0xb2, 0x6a
-		, 0x15, 0xca, 0x19, 0x15, 0x5a, 0x65 };
-
 	const std::string convolution_layer::layer_type_name = "Convolution";
 
 	convolution_layer::convolution_layer(
@@ -93,45 +77,40 @@ namespace nnforge
 				throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
 	}
 
-	const boost::uuids::uuid& convolution_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& convolution_layer::get_type_name() const
+	std::string convolution_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr convolution_layer::clone() const
+	layer::ptr convolution_layer::clone() const
 	{
-		return layer_smart_ptr(new convolution_layer(*this));
+		return layer::ptr(new convolution_layer(*this));
 	}
 
-	layer_configuration convolution_layer::get_layer_configuration(const layer_configuration& input_configuration) const
+	layer_configuration convolution_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
 	{
-		if ((input_configuration.feature_map_count >= 0) && (input_configuration.feature_map_count != static_cast<int>(input_feature_map_count)))
-			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % input_feature_map_count % input_configuration.feature_map_count).str());
+		if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count != static_cast<int>(input_feature_map_count)))
+			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % input_feature_map_count % input_configuration_list[0].feature_map_count).str());
 
-		if ((input_configuration.dimension_count >= 0) && (input_configuration.dimension_count != static_cast<int>(window_sizes.size())))
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % window_sizes.size() % input_configuration.dimension_count).str());
+		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(window_sizes.size())))
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % window_sizes.size() % input_configuration_list[0].dimension_count).str());
 
 		return layer_configuration(output_feature_map_count, static_cast<int>(window_sizes.size()));
 	}
 
-	layer_configuration_specific convolution_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific convolution_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		if (input_configuration_specific.feature_map_count != input_feature_map_count)
-			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % input_feature_map_count % input_configuration_specific.feature_map_count).str());
+		if (input_configuration_specific_list[0].feature_map_count != input_feature_map_count)
+			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and input configuration (%2%) don't match") % input_feature_map_count % input_configuration_specific_list[0].feature_map_count).str());
 
-		if (input_configuration_specific.get_dimension_count() != window_sizes.size())
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % window_sizes.size() % input_configuration_specific.get_dimension_count()).str());
+		if (input_configuration_specific_list[0].get_dimension_count() != window_sizes.size())
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % window_sizes.size() % input_configuration_specific_list[0].get_dimension_count()).str());
 
 		layer_configuration_specific res(output_feature_map_count);
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
 		{
-			unsigned int total_input_dimension_size = input_configuration_specific.dimension_sizes[i] + left_zero_padding[i] + right_zero_padding[i];
+			unsigned int total_input_dimension_size = input_configuration_specific_list[0].dimension_sizes[i] + left_zero_padding[i] + right_zero_padding[i];
 			if (total_input_dimension_size < window_sizes[i])
 				throw neural_network_exception((boost::format("Too small total dimension size (with padding) %1% of dimension (%2%) is smaller than layer window size (%3%)") % total_input_dimension_size % i % window_sizes[i]).str());
 
@@ -141,7 +120,10 @@ namespace nnforge
 		return res;
 	}
 
-	layer_configuration_specific convolution_layer::get_input_layer_configuration_specific(const layer_configuration_specific& output_configuration_specific) const
+	bool convolution_layer::get_input_layer_configuration_specific(
+		layer_configuration_specific& input_configuration_specific,
+		const layer_configuration_specific& output_configuration_specific,
+		unsigned int input_layer_id) const
 	{
 		if (output_configuration_specific.feature_map_count != output_feature_map_count)
 			throw neural_network_exception((boost::format("Feature map count in layer (%1%) and output configuration (%2%) don't match") % output_feature_map_count % output_configuration_specific.feature_map_count).str());
@@ -149,15 +131,17 @@ namespace nnforge
 		if (output_configuration_specific.get_dimension_count() != window_sizes.size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output configuration (%2%) don't match") % window_sizes.size() % output_configuration_specific.get_dimension_count()).str());
 
-		layer_configuration_specific res(input_feature_map_count);
+		input_configuration_specific = layer_configuration_specific(input_feature_map_count);
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			res.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] + window_sizes[i] - 1 - left_zero_padding[i] - right_zero_padding[i]);
+			input_configuration_specific.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] + window_sizes[i] - 1 - left_zero_padding[i] - right_zero_padding[i]);
 
-		return res;
+		return true;
 	}
 
-	std::vector<std::pair<unsigned int, unsigned int> > convolution_layer::get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const
+	std::vector<std::pair<unsigned int, unsigned int> > convolution_layer::get_input_rectangle_borders(
+		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
+		unsigned int input_layer_id) const
 	{
 		if (output_rectangle_borders.size() != window_sizes.size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output borders (%2%) don't match") % window_sizes.size() % output_rectangle_borders.size()).str());
@@ -173,18 +157,6 @@ namespace nnforge
 			);
 
 		return res;
-	}
-
-	void convolution_layer::write(std::ostream& binary_stream_to_write_to) const
-	{
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&input_feature_map_count), sizeof(input_feature_map_count));
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&output_feature_map_count), sizeof(output_feature_map_count));
-
-		unsigned int dimension_count = static_cast<unsigned int>(window_sizes.size());
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&dimension_count), sizeof(dimension_count));
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*left_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
 	void convolution_layer::write_proto(void * layer_proto) const
@@ -203,27 +175,6 @@ namespace nnforge
 				dim_param->set_left_padding(left_zero_padding[i]);
 			if (right_zero_padding[i] > 0)
 				dim_param->set_right_padding(right_zero_padding[i]);
-		}
-	}
-
-	void convolution_layer::read(
-		std::istream& binary_stream_to_read_from,
-		const boost::uuids::uuid& layer_read_guid)
-	{
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&input_feature_map_count), sizeof(input_feature_map_count));
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&output_feature_map_count), sizeof(output_feature_map_count));
-
-		unsigned int dimension_count;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));
-		window_sizes.resize(dimension_count);
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*window_sizes.begin())), sizeof(unsigned int) * dimension_count);
-
-		left_zero_padding.resize(dimension_count, 0);
-		right_zero_padding.resize(dimension_count, 0);
-		if (layer_read_guid != layer_guid_v1)
-		{
-			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*left_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
-			binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*right_zero_padding.begin())), sizeof(unsigned int) * dimension_count);
 		}
 	}
 
@@ -265,8 +216,8 @@ namespace nnforge
 	}
 
 	void convolution_layer::randomize_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
 		unsigned int weight_count = 1;
@@ -279,21 +230,21 @@ namespace nnforge
 
 		nnforge_normal_distribution<float> nd(0.0F, standard_deviation);
 
-		for(unsigned int i = 0; i < data[0].size(); ++i)
+		for(unsigned int i = 0; i < (*data)[0].size(); ++i)
 		{
 			float val = nd(generator);
 			while (fabs(val) > max_abs_value)
 				val = nd(generator);
 
-			data[0][i] = val;
+			(*data)[0][i] = val;
 		}
 
-		std::fill(data[1].begin(), data[1].end(), 0.0F);
+		std::fill((*data)[1].begin(), (*data)[1].end(), 0.0F);
 	}
 
 	void convolution_layer::randomize_orthogonal_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
 		unsigned int weight_count = 1;
@@ -302,12 +253,12 @@ namespace nnforge
 		unsigned int weight_row_count = output_feature_map_count;
 
 		nnforge_normal_distribution<float> nd(0.0F, 1.0F);
-		for(unsigned int i = 0; i < data[0].size(); ++i)
+		for(unsigned int i = 0; i < (*data)[0].size(); ++i)
 		{
 			float val = nd(generator);
-			data[0][i] = val;
+			(*data)[0][i] = val;
 		}
-		cv::Mat1f weights(weight_row_count, weight_col_count, &(data[0][0]));
+		cv::Mat1f weights(weight_row_count, weight_col_count, &((*data)[0][0]));
 		cv::Mat1f w;
 		cv::Mat1f u;
 		cv::Mat1f vt;
@@ -323,12 +274,12 @@ namespace nnforge
 
 		std::copy(orth.begin(), orth.end(), weights.begin());
 
-		std::fill(data[1].begin(), data[1].end(), 0.0F);
+		std::fill((*data)[1].begin(), (*data)[1].end(), 0.0F);
 	}
 
-	float convolution_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float convolution_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
+		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
 		unsigned int per_item_flops = input_feature_map_count * 2;
 		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
 		per_item_flops -= 1;
@@ -336,18 +287,20 @@ namespace nnforge
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 	}
 
-	float convolution_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float convolution_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
+		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
 		unsigned int per_item_flops = input_feature_map_count * 2;
 		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
 
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 	}
 
-	float convolution_layer::get_weights_update_flops(const layer_configuration_specific& input_configuration_specific) const
+	float convolution_layer::get_weights_update_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
+		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
 		unsigned int per_item_flops = input_feature_map_count * 2;
 		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
 

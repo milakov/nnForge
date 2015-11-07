@@ -16,55 +16,41 @@
 
 #pragma once
 
-#include <nnforge/neural_network_toolset.h>
+#include <nnforge/toolset.h>
 
 #include <map>
 #include <boost/filesystem/fstream.hpp>
 #include <nnforge/nnforge.h>
 
-class imagenet_toolset : public nnforge::neural_network_toolset
+class imagenet_toolset : public nnforge::toolset
 {
 public:
-	imagenet_toolset(nnforge::factory_generator_smart_ptr factory);
+	imagenet_toolset(nnforge::factory_generator::ptr factory);
 
 	virtual ~imagenet_toolset();
 
 protected:
 	virtual void prepare_training_data();
 
-	virtual void prepare_testing_data();
-
 	virtual bool is_training_with_validation() const;
-
-	virtual std::vector<nnforge::data_transformer_smart_ptr> get_input_data_transformer_list_for_training() const;
-
-	virtual std::vector<nnforge::data_transformer_smart_ptr> get_input_data_transformer_list_for_validating() const;
-
-	virtual std::vector<nnforge::data_transformer_smart_ptr> get_input_data_transformer_list_for_testing() const;
-
-	virtual void run_test_with_unsupervised_data(const nnforge::output_neuron_value_set& neuron_value_set);
 
 	virtual std::string get_class_name_by_id(unsigned int class_id) const;
 
-	virtual nnforge::supervised_data_reader_smart_ptr get_initial_data_reader_for_normalizing() const;
+	virtual nnforge::structured_data_reader::ptr get_structured_reader(
+		const std::string& dataset_name,
+		const std::string& layer_name,
+		nnforge_shared_ptr<std::istream> in) const;
 
-	virtual nnforge::supervised_data_reader_smart_ptr get_initial_data_reader_for_training(bool force_deterministic) const;
+	virtual std::vector<nnforge::bool_option> get_bool_options();
 
-	virtual nnforge::supervised_data_reader_smart_ptr get_initial_data_reader_for_validating() const;
+	virtual std::vector<nnforge::int_option> get_int_options();
 
-	virtual nnforge::const_error_function_smart_ptr get_error_function() const;
-
-	virtual unsigned int get_classifier_visualizer_top_n() const;
-
-	virtual std::vector<nnforge::network_data_pusher_smart_ptr> get_validators_for_training(nnforge::network_schema_smart_ptr schema);
-
-	virtual nnforge::supervised_data_reader_smart_ptr get_validating_reader(
-		nnforge_shared_ptr<std::istream> validating_data_stream,
-		bool enriched) const;
+	virtual std::vector<nnforge::data_transformer::ptr> get_data_transformer_list(
+		const std::string& dataset_name,
+		const std::string& layer_name,
+		dataset_usage usage) const;
 
 private:
-	void prepare_randomized_training_data();
-
 	void prepare_true_randomized_training_data();
 
 	void prepare_validating_data();
@@ -79,10 +65,9 @@ private:
 
 	void write_supervised_data(
 		const boost::filesystem::path& image_file_path,
-		nnforge::varying_data_stream_writer& writer,
-		unsigned int class_id);
-
-	virtual std::vector<nnforge::bool_option> get_bool_options();
+		nnforge::varying_data_stream_writer& image_writer,
+		unsigned int class_id,
+		nnforge::structured_data_writer& label_writer);
 
 private:
 	std::map<unsigned int, std::string> wnid_to_ilsvrc2014id_map;
@@ -103,16 +88,13 @@ private:
 	static const float max_color_shift;
 
 	static const unsigned int class_count;
-	static const unsigned int training_image_width;
-	static const unsigned int training_image_height;
-	static const unsigned int training_image_original_width;
-	static const unsigned int training_image_original_height;
-
-	static const unsigned int enrich_validation_report_frequency;
-	static const unsigned int overlapping_samples_x;
-	static const unsigned int overlapping_samples_y;
-	static const float sample_coverage_x;
-	static const float sample_coverage_y;
+	static const unsigned int training_min_image_size;
+	static const unsigned int training_max_image_size;
+	static const unsigned int training_target_image_width;
+	static const unsigned int training_target_image_height;
+	static const unsigned int validating_image_size;
 
 	bool rich_inference;
+	int samples_x;
+	int samples_y;
 };

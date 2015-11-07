@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,13 +48,16 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void convolution_layer_tester_cuda::enqueue_test(
+		void convolution_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
@@ -64,9 +67,9 @@ namespace nnforge
 				CUDNN_TENSOR_NCHW,
 				CUDNN_DATA_FLOAT,
 				entry_count,
-				input_configuration_specific.feature_map_count,
-				(input_configuration_specific.dimension_sizes.size() > 1) ? input_configuration_specific.dimension_sizes[1] : 1,
-				input_configuration_specific.dimension_sizes[0]));
+				input_configuration_specific_list[0].feature_map_count,
+				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
+				input_configuration_specific_list[0].dimension_sizes[0]));
 			cudnn_safe_call(cudnnSetTensor4dDescriptor(
 				output_data_desc,
 				CUDNN_TENSOR_NCHW,
@@ -85,7 +88,7 @@ namespace nnforge
 					convolution_desc,
 					output_data_desc,
 					CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
-					additional_buffers[1]->get_size(),
+					temporary_working_fixed_buffer->get_size(),
 					&algo));
 
 				float alpha = 1.0F;
@@ -94,16 +97,16 @@ namespace nnforge
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					input_data_desc,
-					*input_buffer,
+					*input_buffers[0],
 					weights_desc,
 					*data[0],
 					convolution_desc,
 					algo,
-					*additional_buffers[1],
-					additional_buffers[1]->get_size(),
+					*temporary_working_fixed_buffer,
+					temporary_working_fixed_buffer->get_size(),
 					&beta,
 					output_data_desc,
-					*additional_buffers[0]));
+					*output_buffer));
 			}
 
 			{
@@ -117,7 +120,7 @@ namespace nnforge
 					*data[1],
 					&beta,
 					output_data_desc,
-					*additional_buffers[0]));
+					*output_buffer));
 			}
 		}
 
@@ -138,7 +141,7 @@ namespace nnforge
 				weights_desc,
 				CUDNN_DATA_FLOAT,
 				output_configuration_specific.feature_map_count,
-				input_configuration_specific.feature_map_count,
+				input_configuration_specific_list[0].feature_map_count,
 				(window_sizes.size() > 1) ? window_sizes[1] : 1,
 				window_sizes[0]));
 
@@ -162,32 +165,12 @@ namespace nnforge
 				CUDNN_CROSS_CORRELATION));
 		}
 
-		std::vector<size_t> convolution_layer_tester_cuda::get_sizes_of_additional_buffers_per_entry() const
+		size_t convolution_layer_tester_cuda::get_temporary_working_fixed_buffer_size() const
 		{
-			std::vector<size_t> res;
-
-			res.push_back(output_elem_count_per_entry * sizeof(float));
-
-			return res;
-		}
-
-		std::vector<size_t> convolution_layer_tester_cuda::get_sizes_of_additional_buffers_fixed() const
-		{
-			std::vector<size_t> res;
-
-			unsigned int working_buffer_elem_count = input_configuration_specific.feature_map_count;
+			unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
 			for(int i = 0; i < window_sizes.size(); ++i)
 				working_buffer_elem_count *= window_sizes[i];
-			res.push_back(working_buffer_elem_count * sizeof(int));
-
-			return res;
-		}
-
-		cuda_linear_buffer_device_smart_ptr convolution_layer_tester_cuda::get_output_buffer(
-			cuda_linear_buffer_device_smart_ptr input_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
-		{
-			return additional_buffers[0];
+			return working_buffer_elem_count * sizeof(int);
 		}
 	}
 }

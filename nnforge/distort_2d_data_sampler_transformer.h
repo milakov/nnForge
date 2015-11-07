@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ namespace nnforge
 		float shift_down_y;
 		std::pair<float, float> stretch_factor_and_angle;
 		std::pair<float, float> perspective_distance_and_angle;
+		bool flip_around_x;
+		bool flip_around_y;
 	};
 
 	class distort_2d_data_sampler_transformer : public data_transformer
@@ -37,7 +39,7 @@ namespace nnforge
 	public:
 		distort_2d_data_sampler_transformer(
 			const std::vector<distort_2d_data_sampler_param>& params,
-			unsigned char border_value = 128);
+			float border_value = 0.5F);
 
 		distort_2d_data_sampler_transformer(
 			const std::vector<float>& rotation_angle_in_degrees_list,
@@ -46,25 +48,22 @@ namespace nnforge
 			const std::vector<float>& shift_down_y_list,
 			const std::vector<std::pair<float, float> >& stretch_factor_and_angle_list,
 			const std::vector<std::pair<float, float> >& perspective_distance_and_angle_list,
-			unsigned char border_value = 128);
+			bool flip_around_x,
+			bool flip_around_y,
+			float border_value = 0.5F);
 
 		virtual ~distort_2d_data_sampler_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-		virtual bool is_in_place() const;
-
 		virtual unsigned int get_sample_count() const;
-
-		virtual bool is_deterministic() const;
 
 	protected:
 		std::vector<distort_2d_data_sampler_param> params;
-		unsigned char border_value;
+		float border_value;
 	};
 }

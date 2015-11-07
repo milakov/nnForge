@@ -19,12 +19,10 @@
 namespace nnforge
 {
 	network_data_peeker_random::network_data_peeker_random(
-		network_output_type::output_type network_type,
 		unsigned int max_network_data_count,
 		unsigned int base_index,
 		const std::vector<network_data_peek_entry>& leading_tasks)
-		: network_type(network_type)
-		, max_network_data_count(max_network_data_count)
+		: max_network_data_count(max_network_data_count)
 		, base_index(base_index)
 		, leading_tasks(leading_tasks)
 		, trained_network_data_count(0)
@@ -37,7 +35,7 @@ namespace nnforge
 	{
 	}
 
-	network_data_peek_entry network_data_peeker_random::peek(network_schema_smart_ptr schema)
+	network_data_peek_entry network_data_peeker_random::peek(network_schema::ptr schema)
 	{
 		network_data_peek_entry res;
 
@@ -46,15 +44,14 @@ namespace nnforge
 
 		if (leading_tasks.empty())
 		{
-			network_data_smart_ptr data(new network_data(*schema));
+			network_data::ptr data(new network_data(schema->get_layers()));
 
 			data->randomize(
-				*schema,
+				schema->get_layers(),
 				gen);
 			init.initialize(
 				data->data_list,
-				*schema,
-				network_type);
+				*schema);
 
 			res.index = generated_network_data_count + base_index;
 			res.data = data;

@@ -28,26 +28,21 @@ namespace nnforge
 		embed_data_transformer(
 			const std::vector<unsigned int>& output_sizes,
 			const std::vector<unsigned int>& left_padding,
-			unsigned char padding_value = 128);
+			float padding_value = 0.5F);
 
 		virtual ~embed_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 
 		virtual layer_configuration_specific get_transformed_configuration(const layer_configuration_specific& original_config) const;
 
-		virtual bool is_in_place() const;
-
-		virtual bool is_deterministic() const;
-
 	protected:
 		std::vector<unsigned int> output_sizes;
 		std::vector<unsigned int> left_padding;
-		unsigned char padding_value;
+		float padding_value;
 	};
 }

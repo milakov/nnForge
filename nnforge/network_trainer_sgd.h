@@ -17,7 +17,7 @@
 #pragma once
 
 #include "network_trainer.h"
-#include "network_updater.h"
+#include "backward_propagation.h"
 
 #include <vector>
 
@@ -27,27 +27,31 @@ namespace nnforge
 	class network_trainer_sgd : public network_trainer
 	{
 	public:
+		typedef nnforge_shared_ptr<network_trainer_sgd> ptr;
+
 		network_trainer_sgd(
-			network_schema_smart_ptr schema,
-			network_updater_smart_ptr updater);
+			network_schema::ptr schema,
+			const std::vector<std::string>& output_layer_names,
+			const std::vector<std::string>& error_source_layer_names,
+			const std::vector<std::string>& exclude_data_update_layer_names,
+			backward_propagation::ptr backprop);
 
 		virtual ~network_trainer_sgd();
 
 	protected:
 		// The method should add testing result to the training history of each element
 		virtual void train_step(
-			supervised_data_reader& reader,
+			structured_data_bunch_reader& reader,
 			training_task_state& task);
 
-		virtual void initialize_train(supervised_data_reader& reader);
-
-		std::pair<std::vector<std::vector<float> >, std::string> prepare_learning_rates(
-			unsigned int epoch,
-			network_data_smart_ptr data);
+		virtual void initialize_train(structured_data_bunch_reader& reader);
 
 	private:
-		network_updater_smart_ptr updater;
-	};
+		std::pair<std::map<std::string, std::vector<float> >, std::string> prepare_learning_rates(
+			unsigned int epoch,
+			network_data::const_ptr data);
 
-	typedef nnforge_shared_ptr<network_trainer_sgd> network_trainer_sgd_smart_ptr;
+	private:
+		backward_propagation::ptr backprop;
+	};
 }

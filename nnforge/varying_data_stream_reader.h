@@ -17,33 +17,35 @@
 #pragma once
 
 #include "raw_data_reader.h"
+#include "nn_types.h"
 
 #include <istream>
+#include <boost/thread/thread.hpp>
 
 namespace nnforge
 {
 	class varying_data_stream_reader : public raw_data_reader
 	{
 	public:
+		typedef nnforge_shared_ptr<varying_data_stream_reader> ptr;
+
 		varying_data_stream_reader(nnforge_shared_ptr<std::istream> input_stream);
 
 		virtual ~varying_data_stream_reader();
 
-		// The method should return true in case entry is read and false if there is no more entries available (and no entry is read in this case)
-		virtual bool raw_read(std::vector<unsigned char>& all_elems);
+		// The method returns false in case the entry cannot be read
+		virtual bool raw_read(
+			unsigned int entry_id,
+			std::vector<unsigned char>& all_elems);
 
-		virtual void rewind(unsigned int entry_id);
+		virtual int get_entry_count() const;
 
-		virtual void reset();
-
-		virtual unsigned int get_entry_count() const;
+		virtual raw_data_writer::ptr get_writer(nnforge_shared_ptr<std::ostream> out) const;
 
 	protected:
 		nnforge_shared_ptr<std::istream> in_stream;
 		std::vector<unsigned long long> entry_offsets;
-		unsigned int entry_read_count;
 		std::istream::pos_type reset_pos;
+		boost::mutex read_data_from_stream_mutex;
 	};
-
-	typedef nnforge_shared_ptr<varying_data_stream_reader> varying_data_stream_reader_smart_ptr;
 }

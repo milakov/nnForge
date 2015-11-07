@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@
 #pragma once
 
 #include "data_transformer.h"
-
 #include "rnd.h"
 
-#include <memory>
+#include <boost/thread/thread.hpp>
 
 namespace nnforge
 {
@@ -32,18 +31,15 @@ namespace nnforge
 		virtual ~rotate_band_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-		virtual bool is_in_place() const;
-
-		virtual bool is_deterministic() const;
-
 	protected:
 		random_generator generator;
+		boost::mutex gen_stream_mutex;
+
 		std::vector<nnforge_uniform_int_distribution<int> > rotate_band_distributions;
 	};
 }

@@ -1,6 +1,16 @@
 name: "GTSRB"
 layer {
+	type: "Data"
+	name: "images"
+}
+layer {
+	type: "Data"
+	name: "labels"
+}
+layer {
 	type: "LCS"
+	name: "lcs_layer"
+	input_layer_name: "images"
 	lcs_param {
 		feature_map_count: 1
 		feature_map_affected: 0
@@ -10,88 +20,135 @@ layer {
 }
 layer {
 	type: "Convolution"
+	name: "parameters_0"
+	input_layer_name: "lcs_layer"
 	convolution_param {
 		input_feature_map_count: 1
 		output_feature_map_count: 38
-	        dimension_param { kernel_size: 5 }
-	        dimension_param { kernel_size: 5 }
+		dimension_param { kernel_size: 5 }
+		dimension_param { kernel_size: 5 }
 	}
 }
 layer {
 	type: "TanH"
+	name: "tanh_0_layer"
+	input_layer_name: "parameters_0"
 	tanh_param {
 		scale: 1.7159
 		steepness: 0.666666
 	}
 }
-layer {	type: "Absolute" }
+layer {
+	type: "Absolute"
+	name: "abs_0_layer"
+	input_layer_name: "tanh_0_layer"
+}
 layer {
 	type: "AverageSubsampling"
+	name: "avg_0_layer"
+	input_layer_name: "abs_0_layer"
 	average_subsampling_param {
-	        dimension_param { subsampling_size: 2 }
-	        dimension_param { subsampling_size: 2 }
+		dimension_param { subsampling_size: 2 }
+		dimension_param { subsampling_size: 2 }
 	}
 }
 layer {
 	type: "Convolution"
+	name: "parameters_1"
+	input_layer_name: "avg_0_layer"
 	convolution_param {
 		input_feature_map_count: 38
 		output_feature_map_count: 96
-	        dimension_param { kernel_size: 5 }
-	        dimension_param { kernel_size: 5 }
+        dimension_param { kernel_size: 5 }
+        dimension_param { kernel_size: 5 }
 	}
 }
 layer {
 	type: "TanH"
+	name: "tanh_1_layer"
+	input_layer_name: "parameters_1"
 	tanh_param {
 		scale: 1.7159
 		steepness: 0.666666
 	}
 }
-layer {	type: "Absolute" }
+layer {
+	type: "Absolute"
+	name: "abs_1_layer"
+	input_layer_name: "tanh_1_layer"
+}
 layer {
 	type: "AverageSubsampling"
+	name: "avg_1_layer"
+	input_layer_name: "abs_1_layer"
 	average_subsampling_param {
-	        dimension_param { subsampling_size: 2 }
-	        dimension_param { subsampling_size: 2 }
+		dimension_param { subsampling_size: 2 }
+		dimension_param { subsampling_size: 2 }
 	}
 }
 layer {
 	type: "SparseConvolution"
+	name: "parameters_2"
+	input_layer_name: "avg_1_layer"
 	sparse_convolution_param {
 		input_feature_map_count: 96
 		output_feature_map_count: 200
 		feature_map_connection_sparsity_ratio: 0.3
-	        dimension_param { kernel_size: 5 }
-	        dimension_param { kernel_size: 5 }
+		dimension_param { kernel_size: 5 }
+		dimension_param { kernel_size: 5 }
 	}
 }
 layer {
 	type: "TanH"
+	name: "tanh_2_layer"
+	input_layer_name: "parameters_2"
 	tanh_param {
 		scale: 1.7159
 		steepness: 0.666666
 	}
 }
-layer {	type: "Absolute" }
+layer {
+	type: "Absolute"
+	name: "abs_2_layer"
+	input_layer_name: "tanh_2_layer"
+}
 layer {
 	type: "Dropout"
+	name: "dropout_2_layer"
+	input_layer_name: "abs_2_layer"
 	dropout_param { dropout_rate: 0.1 }
 }
 layer {
 	type: "SparseConvolution"
+	name: "parameters_3"
+	input_layer_name: "dropout_2_layer"
 	sparse_convolution_param {
 		input_feature_map_count: 200
 		output_feature_map_count: 43
 		feature_map_connection_sparsity_ratio: 0.3
-	        dimension_param { kernel_size: 1 }
-	        dimension_param { kernel_size: 1 }
+		dimension_param { kernel_size: 1 }
+		dimension_param { kernel_size: 1 }
 	}
 }
 layer {
 	type: "TanH"
+	name: "tanh_3_layer"
+	input_layer_name: "parameters_3"
 	tanh_param {
 		scale: 1.7159
 		steepness: 0.666666
 	}
+}
+layer {
+	type: "MSE"
+	name: "MSE"
+	input_layer_name: "tanh_3_layer"
+	input_layer_name: "labels"
+	mse_param { scale: 0.5 }
+}
+layer {
+	type: "Accuracy"
+	name: "Accuracy"
+	input_layer_name: "tanh_3_layer"
+	input_layer_name: "labels"
 }

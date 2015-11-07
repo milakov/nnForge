@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,51 +21,38 @@
 #include <map>
 #include <boost/filesystem.hpp>
 
-#include <nnforge/neural_network_toolset.h>
+#include <nnforge/toolset.h>
 
-template<unsigned int index_id> class vector_element_extractor
+class gtsrb_toolset : public nnforge::toolset
 {
 public:
-	vector_element_extractor()
-	{
-	}
-
-	inline unsigned char operator()(cv::Vec3b x) const
-	{
-		return x[index_id];
-	}
-};
-
-class gtsrb_toolset : public nnforge::neural_network_toolset
-{
-public:
-	gtsrb_toolset(nnforge::factory_generator_smart_ptr factory);
+	gtsrb_toolset(nnforge::factory_generator::ptr factory);
 
 	virtual ~gtsrb_toolset();
 
 protected:
 	virtual void prepare_training_data();
 
+	virtual std::vector<nnforge::data_transformer::ptr> get_data_transformer_list(
+		const std::string& dataset_name,
+		const std::string& layer_name,
+		dataset_usage usage) const;
+
 	void write_single_entry(
-		nnforge::supervised_data_stream_writer& writer,
+		nnforge::structured_data_stream_writer& image_writer,
+		nnforge::structured_data_stream_writer& label_writer,
 		const boost::filesystem::path& absolute_file_path,
 		unsigned int class_id,
 		unsigned int roi_top_left_x,
 		unsigned int roi_top_left_y,
 		unsigned int roi_bottom_right_x,
-		unsigned int roi_bottom_right_y,
-		float rotation_angle_in_degrees = 0.0F,
-		float scale_factor = 1.0F,
-		float shift_x = 0.0F,
-		float shift_y = 0.0F,
-		float contrast = 1.0F,
-		float brightness_shift = 0.0F);
+		unsigned int roi_bottom_right_y);
 
 	void write_folder(
-		nnforge::supervised_data_stream_writer& writer,
+		nnforge::structured_data_stream_writer& image_writer,
+		nnforge::structured_data_stream_writer& label_writer,
 		const boost::filesystem::path& relative_subfolder_path,
-		const char * annotation_file_name,
-		bool jitter);
+		const char * annotation_file_name);
 
 	static const unsigned int image_width;
 	static const unsigned int image_height;
@@ -76,5 +63,4 @@ protected:
 	static const float max_shift;
 	static const float max_contrast_factor;
 	static const float max_brightness_shift;
-	static const unsigned int random_sample_count;
 };

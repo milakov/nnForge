@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}</ProjectGuid>
+    <ProjectGuid>{BD9805C1-D6AA-4604-995F-FD033FFAD16F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>imagenet</RootNamespace>
     <SccProjectName>Svn</SccProjectName>
@@ -89,10 +89,13 @@
   <ItemGroup>
     <ClCompile Include="imagenet.cpp" />
     <ClCompile Include="imagenet_toolset.cpp" />
+    <ClCompile Include="training_imagenet_raw_to_structured_data_transformer.cpp" />
+    <ClCompile Include="validating_imagenet_raw_to_structured_data_transformer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imagenet_toolset.h" />
-  </ItemGroup>
+    <ClInclude Include="training_imagenet_raw_to_structured_data_transformer.h" />
+    <ClInclude Include="validating_imagenet_raw_to_structured_data_transformer.h" />
   <ItemGroup>
     <ProjectReference Include="..\..\nnforge\cuda\cuda.vcxproj">
       <Project>{807bf109-6710-41d5-96bb-a2a55636752e}</Project>
@@ -106,10 +109,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="working_data\schema.txt" />
     <Text Include="working_data\schema_large.txt" />
+    <Text Include="working_data\schema_tail.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

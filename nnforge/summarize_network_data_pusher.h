@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #pragma once
 
 #include "network_data_pusher.h"
-#include "network_tester.h"
 
 #include <boost/filesystem.hpp>
 
@@ -30,9 +29,9 @@ namespace nnforge
 
 		virtual ~summarize_network_data_pusher();
 
-		virtual void push(const training_task_state& task_state);
-
-		void save_all(const boost::filesystem::path& folder_path) const;
+		virtual void push(
+			const training_task_state& task_state,
+			const network_schema& schema);
 
 	private:
 		boost::filesystem::path folder_path;

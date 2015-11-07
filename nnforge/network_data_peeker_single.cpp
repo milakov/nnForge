@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 namespace nnforge
 {
-	network_data_peeker_single::network_data_peeker_single(network_data_smart_ptr data)
+	network_data_peeker_single::network_data_peeker_single(network_data::ptr data)
 		: data(data)
 		, is_peeked(false)
 	{
@@ -28,7 +28,7 @@ namespace nnforge
 	{
 	}
 
-	network_data_peek_entry network_data_peeker_single::peek(network_schema_smart_ptr schema)
+	network_data_peek_entry network_data_peeker_single::peek(network_schema::ptr schema)
 	{
 		network_data_peek_entry res;
 

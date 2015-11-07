@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
+#include <sstream>
 
 namespace nnforge
 {
@@ -41,9 +42,9 @@ namespace nnforge
 		return get_data_custom_config().empty();
 	}
 
-	layer_data_smart_ptr layer::create_layer_data() const
+	layer_data::ptr layer::create_layer_data() const
 	{
-		layer_data_smart_ptr res(new layer_data());
+		layer_data::ptr res(new layer_data());
 
 		data_config dc = get_data_config();
 		res->resize(dc.size());
@@ -53,9 +54,9 @@ namespace nnforge
 		return res;
 	}
 
-	layer_data_custom_smart_ptr layer::create_layer_data_custom() const
+	layer_data_custom::ptr layer::create_layer_data_custom() const
 	{
-		layer_data_custom_smart_ptr res(new layer_data_custom());
+		layer_data_custom::ptr res(new layer_data_custom());
 
 		data_config dc = get_data_custom_config();
 		res->resize(dc.size());
@@ -90,15 +91,15 @@ namespace nnforge
 	}
 
 	void layer::randomize_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
 	}
 
 	void layer::randomize_orthogonal_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
 		randomize_data(
@@ -117,16 +118,6 @@ namespace nnforge
 		return data_custom_config();
 	}
 
-	void layer::write(std::ostream& binary_stream_to_write_to) const
-	{
-	}
-
-	void layer::read(
-		std::istream& binary_stream_to_read_from,
-		const boost::uuids::uuid& layer_read_guid)
-	{
-	}
-
 	void layer::read_proto(const void * layer_proto)
 	{
 	}
@@ -135,7 +126,7 @@ namespace nnforge
 	{
 	}
 
-	float layer::get_weights_update_flops(const layer_configuration_specific& input_configuration_specific) const
+	float layer::get_weights_update_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		return 0.0F;
 	}
@@ -145,22 +136,29 @@ namespace nnforge
 		return layer_data_configuration_list();
 	}
 
- 	layer_configuration layer::get_layer_configuration(const layer_configuration& input_configuration) const
+	layer_configuration layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
 	{
-		return layer_configuration(input_configuration);
+		return input_configuration_list.front();
 	}
 
-	layer_configuration_specific layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		return layer_configuration_specific(input_configuration_specific);
+		return input_configuration_specific_list.front();
 	}
 
-	layer_configuration_specific layer::get_input_layer_configuration_specific(const layer_configuration_specific& output_configuration_specific) const
+	bool layer::get_input_layer_configuration_specific(
+		layer_configuration_specific& input_configuration_specific,
+		const layer_configuration_specific& output_configuration_specific,
+		unsigned int input_layer_id) const
 	{
-		return layer_configuration_specific(output_configuration_specific);
+		input_configuration_specific = output_configuration_specific;
+
+		return true;
 	}
 
-	std::vector<std::pair<unsigned int, unsigned int> > layer::get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const
+	std::vector<std::pair<unsigned int, unsigned int> > layer::get_input_rectangle_borders(
+		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
+		unsigned int input_layer_id) const
 	{
 		return output_rectangle_borders;
 	}
@@ -183,5 +181,20 @@ namespace nnforge
 		std::for_each(tiling_factor_list.begin(), tiling_factor_list.end(), res *= boost::lambda::_1);
 
 		return res;
+	}
+
+	std::string layer::get_string_for_average_data(
+		const layer_configuration_specific& config,
+		const std::vector<float>& data) const
+	{
+		std::stringstream s;
+		s << instance_name << " = ";
+		for(std::vector<float>::const_iterator it = data.begin(); it != data.end(); ++it)
+		{
+			if (it != data.begin())
+				s << ", ";
+			s << *it;
+		}
+		return s.str();
 	}
 }

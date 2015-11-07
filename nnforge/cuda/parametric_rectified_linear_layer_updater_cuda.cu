@@ -49,8 +49,10 @@ namespace nnforge
 			}
 		}
 
+		template<bool add_update_to_destination>
 		__global__ void parametric_rectified_linear_backprop_upd_kernel(
-			float * __restrict errors,
+			float * __restrict input_errors,
+			const float * __restrict output_errors,
 			const float * __restrict input_neurons,
 			const float * __restrict data,
 			int elem_count_per_feature_map,
@@ -64,10 +66,13 @@ namespace nnforge
 			{
 				float a = __load_nc(data + feature_map_id);
 				int offset = (entry_id * feature_map_count + feature_map_id) * elem_count_per_feature_map + elem_id;
-				float output_err = errors[offset];
+				float output_err = output_errors[offset];
 				float input_val = input_neurons[offset];
 				float input_err = output_err * (input_val >= 0.0F ? 1.0F : a);
-				errors[offset] = input_err;
+				if (add_update_to_destination)
+					input_errors[offset] += input_err;
+				else
+					input_errors[offset] = input_err;
 			}
 		}
 
@@ -131,73 +136,87 @@ namespace nnforge
 		{
 		}
 
-		void parametric_rectified_linear_layer_updater_cuda::enqueue_test(
-			unsigned int offset_input_entry_id,
+		void parametric_rectified_linear_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
+			unsigned int entry_count)
 		{
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
-				input_elem_count_per_feature_map,
-				input_configuration_specific.feature_map_count,
+				output_elem_count_per_feature_map,
+				output_configuration_specific.feature_map_count,
 				entry_count);
 			parametric_rectified_linear_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-				*output_neurons_buffer,
-				(const float *)(*input_neurons_buffer) + offset_input_entry_id * input_elem_count_per_entry,
+				*output_buffer,
+				*input_buffers[0],
 				*data[0],
-				input_elem_count_per_feature_map,
-				input_configuration_specific.feature_map_count,
+				output_elem_count_per_feature_map,
+				output_configuration_specific.feature_map_count,
 				entry_count);
 		}
 
-		void parametric_rectified_linear_layer_updater_cuda::enqueue_backprop(
+		void parametric_rectified_linear_layer_updater_cuda::enqueue_backward_data_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			unsigned int input_index,
+			cuda_linear_buffer_device::ptr input_errors_buffer,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			bool add_update_to_destination,
+			unsigned int entry_count)
 		{
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
-				input_elem_count_per_feature_map,
-				input_configuration_specific.feature_map_count,
+				output_elem_count_per_feature_map,
+				output_configuration_specific.feature_map_count,
 				entry_count);
-			parametric_rectified_linear_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-				*output_errors_buffer,
-				*input_neurons_buffer,
-				*data[0],
-				input_elem_count_per_feature_map,
-				input_configuration_specific.feature_map_count,
-				entry_count);
+			if (add_update_to_destination)
+				parametric_rectified_linear_backprop_upd_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_errors_buffer,
+					*output_errors_buffer,
+					*input_neurons_buffers[0],
+					*data[0],
+					output_elem_count_per_feature_map,
+					output_configuration_specific.feature_map_count,
+					entry_count);
+			else
+				parametric_rectified_linear_backprop_upd_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_errors_buffer,
+					*output_errors_buffer,
+					*input_neurons_buffers[0],
+					*data[0],
+					output_elem_count_per_feature_map,
+					output_configuration_specific.feature_map_count,
+					entry_count);
 		}
 
-		void parametric_rectified_linear_layer_updater_cuda::enqueue_update_weights(
-			unsigned int offset_input_entry_id,
+		void parametric_rectified_linear_layer_updater_cuda::enqueue_backward_weights_propagation(
 			cudaStream_t stream_id,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& gradient,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			unsigned int entry_count)
 		{
 			int block_size = get_update_block_size(entry_count);
 			int block_count = (entry_count + block_size - 1) / block_size;
@@ -212,17 +231,32 @@ namespace nnforge
 			parametric_rectified_linear_update_weights_upd_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 				*gradient[0],
 				*output_errors_buffer,
-				(const float *)(*input_neurons_buffer) + offset_input_entry_id * input_elem_count_per_entry,
+				*input_neurons_buffers[0],
 				block_size,
 				output_elem_count_per_feature_map,
-				input_elem_count_per_entry,
+				output_elem_count_per_entry,
 				output_configuration_specific.feature_map_count,
 				entry_count);
 		}
 
-		bool parametric_rectified_linear_layer_updater_cuda::is_in_place_backprop() const
+		int parametric_rectified_linear_layer_updater_cuda::get_input_index_layer_can_write(const layer_action& action) const
+		{
+			return 0;
+		}
+
+		bool parametric_rectified_linear_layer_updater_cuda::is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const
 		{
 			return true;
+		}
+
+		bool parametric_rectified_linear_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
+		{
+			return true;
+		}
+
+		bool parametric_rectified_linear_layer_updater_cuda::is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
+		{
+			return false;
 		}
 
 		int parametric_rectified_linear_layer_updater_cuda::get_update_block_size(int entry_count)

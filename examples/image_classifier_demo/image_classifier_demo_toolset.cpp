@@ -32,8 +32,8 @@ const int image_classifier_demo_toolset::border_text = 2;
 const int image_classifier_demo_toolset::font_face = cv::FONT_HERSHEY_SIMPLEX;
 const float image_classifier_demo_toolset::prob_part = 0.25F;
 
-image_classifier_demo_toolset::image_classifier_demo_toolset(nnforge::factory_generator_smart_ptr factory)
-	: nnforge::neural_network_toolset(factory)
+image_classifier_demo_toolset::image_classifier_demo_toolset(nnforge::factory_generator::ptr factory)
+	: nnforge::toolset(factory)
 	, font_scale(0.4)
 	, text_thickness(1)
 {
@@ -56,7 +56,7 @@ void image_classifier_demo_toolset::do_custom_action()
 	}
 	else
 	{
-		neural_network_toolset::do_custom_action();
+		toolset::do_custom_action();
 	}
 }
 
@@ -78,6 +78,8 @@ void image_classifier_demo_toolset::run_demo()
 
 	init_input_config();
 	std::cout << "Network expects input image of size " << input_config.dimension_sizes[0] << "x" <<  input_config.dimension_sizes[1] << std::endl;
+
+	normalizer = get_normalize_data_transformer(input_layer_name);
 
 	dump_help();
 
@@ -177,42 +179,20 @@ void image_classifier_demo_toolset::run_classifier_loop()
 {
 	try
 	{
-		nnforge::network_tester_smart_ptr tester = get_tester();
+		nnforge::network_schema::ptr schema = load_schema();
+		nnforge::forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
 		{
-			nnforge::network_data_smart_ptr data = load_ann_data(0, tester->get_schema());
-			tester->set_data(data);
+			nnforge::network_data data;
+			boost::filesystem::path data_path = get_working_data_folder() / ann_subfolder_name / (boost::format("ann_trained_%|1$03d|") % 0).str();
+			data.read(data_path);
+			forward_prop->set_data(data);
 		}
-		tester->set_input_configuration_specific(input_config);
+		std::map<std::string, nnforge::layer_configuration_specific> layer_config_map;
+		layer_config_map.insert(std::make_pair(input_layer_name, input_config));
+		forward_prop->set_input_configuration_specific(layer_config_map);
 
-		while (!safe_peek_demo_should_stop())
-		{
-			nnforge_shared_ptr<std::vector<unsigned char> > input_data = safe_peek_input_data();
-			while (!input_data && !safe_peek_demo_should_stop())
-			{
-				boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
-				input_data = safe_peek_input_data();
-			}
-
-			if (input_data)
-			{
-				boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
-				nnforge::layer_configuration_specific_snapshot_smart_ptr output_data = tester->run(*input_data);
-				boost::chrono::duration<float> run_duration = boost::chrono::high_resolution_clock::now() - start;
-				safe_set_fps(1.0F / run_duration.count());
-
-				std::vector<std::pair<unsigned int, float> > full_output(output_data->data.size());
-				for(unsigned int class_id = 0; class_id < full_output.size(); ++class_id)
-					full_output[class_id] = std::make_pair(class_id, output_data->data[class_id]);
-
-				unsigned int top_n_actual = std::min(top_n, (unsigned int)full_output.size());
-				std::partial_sort(full_output.begin(), full_output.begin() + top_n_actual, full_output.end(), compare_results);
-
-				nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > new_output(new std::vector<std::pair<unsigned int, float> >(top_n_actual));
-				for(unsigned int i = 0; i < top_n_actual; ++i)
-					new_output->at(i) = full_output[i];
-				safe_set_output_data(new_output);
-			}
-		}
+		last_write = boost::chrono::high_resolution_clock::now();
+		forward_prop->run(*this, *this);
 	}
 	catch(std::exception& e)
 	{
@@ -307,14 +287,14 @@ void image_classifier_demo_toolset::add_classifier_fps(cv::Mat3b frame, float fp
 		text_thickness);
 }
 
-nnforge_shared_ptr<std::vector<unsigned char> > image_classifier_demo_toolset::safe_peek_input_data()
+nnforge_shared_ptr<std::vector<float> > image_classifier_demo_toolset::safe_peek_input_data()
 {
 	boost::lock_guard<boost::mutex> guard(input_data_mutex);
 
 	return input_data_smart_ptr;
 }
 
-void image_classifier_demo_toolset::safe_set_input_data(nnforge_shared_ptr<std::vector<unsigned char> > val)
+void image_classifier_demo_toolset::safe_set_input_data(nnforge_shared_ptr<std::vector<float> > val)
 {
 	boost::lock_guard<boost::mutex> guard(input_data_mutex);
 
@@ -365,11 +345,20 @@ void image_classifier_demo_toolset::safe_set_fps(float val)
 
 void image_classifier_demo_toolset::init_input_config()
 {
-	nnforge::network_schema_smart_ptr schema = load_schema();
-	const nnforge::const_layer_list& layer_list = *schema;
+	nnforge::network_schema::ptr schema = load_schema();
 
-	nnforge::layer_configuration_specific output_config(static_cast<unsigned int>(class_id_to_class_name_map.size()), std::vector<unsigned int>(2, 1));
-	input_config = schema->get_layer_configuration_specific_list_reverse(output_config).front();
+	if (inference_output_layer_names.size() != 1)
+		throw nnforge::neural_network_exception("You shouls set inference_output_layer_name exactly once");
+
+	std::map<std::string, nnforge::layer_configuration_specific> output_configuration_specific_map;
+	output_configuration_specific_map.insert(std::make_pair(inference_output_layer_names[0], nnforge::layer_configuration_specific(static_cast<unsigned int>(class_id_to_class_name_map.size()), std::vector<unsigned int>(2, 1))));
+	std::map<std::string, nnforge::layer_configuration_specific> input_configuration_specific_map = schema->get_layer_configuration_specific_map_reverse(output_configuration_specific_map);
+
+	std::map<std::string, nnforge::layer_configuration_specific>::const_iterator it = input_configuration_specific_map.find(input_layer_name);
+	if (it == input_configuration_specific_map.end())
+		throw nnforge::neural_network_exception((boost::format("Cannot determine config for layer %1%") % input_layer_name).str());
+
+	input_config = it->second;
 }
 
 void image_classifier_demo_toolset::set_input_data(cv::Mat original_image, bool truncate_image)
@@ -415,39 +404,40 @@ void image_classifier_demo_toolset::set_input_data(cv::Mat original_image, bool 
 		cv::resize(original_image, dest_sub_image, cv::Size(dest_sub_image.cols, dest_sub_image.rows), 0.0, 0.0);
 	}
 
-	nnforge_shared_ptr<std::vector<unsigned char> > new_input_data(new std::vector<unsigned char>(dest_image.rows * dest_image.cols * 3));
+	nnforge_shared_ptr<std::vector<float> > new_input_data(new std::vector<float>(dest_image.rows * dest_image.cols * 3));
 
-	unsigned char * input_data = &(*new_input_data->begin());
-	// Red
-	std::transform(
-		dest_image.begin(),
-		dest_image.end(),
-		input_data,
-		vector_element_extractor<2U>());
-	// Green
-	std::transform(
-		dest_image.begin(),
-		dest_image.end(),
-		input_data + (dest_image.rows * dest_image.cols),
-		vector_element_extractor<1U>());
-	// Blue
-	std::transform(
-		dest_image.begin(),
-		dest_image.end(),
-		input_data + (dest_image.rows * dest_image.cols * 2),
-		vector_element_extractor<0U>());
+	float * input_data = &(*new_input_data->begin());
+
+	float * r_dst_it = input_data;
+	float * g_dst_it = input_data + (dest_image.rows * dest_image.cols);
+	float * b_dst_it = input_data + (dest_image.rows * dest_image.cols * 2);
+	for(cv::Mat3b::const_iterator it = dest_image.begin(); it != dest_image.end(); ++it, ++r_dst_it, ++g_dst_it, ++b_dst_it)
+	{
+		*r_dst_it = static_cast<float>((*it)[2]) * (1.0F / 255.0F);
+		*g_dst_it = static_cast<float>((*it)[1]) * (1.0F / 255.0F);
+		*b_dst_it = static_cast<float>((*it)[0]) * (1.0F / 255.0F);
+	}
+
+	if (normalizer)
+		normalizer->transform(input_data, input_data, input_config, 0);
 
 	safe_set_input_data(new_input_data);
 }
 
 std::vector<nnforge::bool_option> image_classifier_demo_toolset::get_bool_options()
 {
-	std::vector<nnforge::bool_option> res;
+	std::vector<nnforge::bool_option> res = toolset::get_bool_options();
 
-	res.push_back(nnforge::bool_option("report_stats",
-		&should_report_stats,
-		false,
-		"Report stats to console"));
+	res.push_back(nnforge::bool_option("report_stats", &should_report_stats, false, "Report stats to console"));
+
+	return res;
+}
+
+std::vector<nnforge::string_option> image_classifier_demo_toolset::get_string_options()
+{
+	std::vector<nnforge::string_option> res = toolset::get_string_options();
+
+	res.push_back(nnforge::string_option("input_layer_name", &input_layer_name, "images", "Input layer name"));
 
 	return res;
 }
@@ -515,4 +505,66 @@ void image_classifier_demo_toolset::save_image(cv::Mat3b frame)
 	std::string filename = (boost::format("image_classifier_screenshot_%1%.jpg") % current_datetime).str();
 	boost::filesystem::path screenshot_filepath = screenshots_folder / filename;
 	cv::imwrite(screenshot_filepath.string(), frame);
+}
+
+std::map<std::string, nnforge::layer_configuration_specific> image_classifier_demo_toolset::get_config_map() const
+{
+	std::map<std::string, nnforge::layer_configuration_specific> res;
+	res.insert(std::make_pair(input_layer_name, input_config));
+	return res;
+}
+
+bool image_classifier_demo_toolset::read(
+	unsigned int entry_id,
+	const std::map<std::string, float *>& data_map)
+{
+	if (safe_peek_demo_should_stop())
+		return false;
+
+	nnforge_shared_ptr<std::vector<float> > input_data = safe_peek_input_data();
+	while (!input_data)
+	{
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+		input_data = safe_peek_input_data();
+		if (safe_peek_demo_should_stop())
+			return false;
+	}
+
+	memcpy(data_map.find(input_layer_name)->second, &input_data->at(0), input_data->size() * sizeof(float));
+
+	return true;
+}
+
+void image_classifier_demo_toolset::next_epoch()
+{
+}
+
+int image_classifier_demo_toolset::get_entry_count() const
+{
+	return 1;
+}
+
+void image_classifier_demo_toolset::set_config_map(const std::map<std::string, nnforge::layer_configuration_specific> config_map)
+{
+}
+
+void image_classifier_demo_toolset::write(const std::map<std::string, const float *>& data_map)
+{
+	boost::chrono::steady_clock::time_point new_last_write = boost::chrono::high_resolution_clock::now();
+	boost::chrono::duration<float> run_duration = new_last_write - last_write;
+	last_write = new_last_write;
+	safe_set_fps(1.0F / run_duration.count());
+
+	const float * data = data_map.find(inference_output_layer_names[0])->second;
+	std::vector<std::pair<unsigned int, float> > full_output(class_id_to_class_name_map.size());
+	for(unsigned int class_id = 0; class_id < full_output.size(); ++class_id)
+		full_output[class_id] = std::make_pair(class_id, data[class_id]);
+
+	unsigned int top_n_actual = std::min(top_n, (unsigned int)full_output.size());
+	std::partial_sort(full_output.begin(), full_output.begin() + top_n_actual, full_output.end(), compare_results);
+
+	nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > new_output(new std::vector<std::pair<unsigned int, float> >(top_n_actual));
+	for(unsigned int i = 0; i < top_n_actual; ++i)
+		new_output->at(i) = full_output[i];
+	safe_set_output_data(new_output);
 }

@@ -26,27 +26,18 @@ namespace nnforge
 	class sigmoid_layer : public layer
 	{
 	public:
-		sigmoid_layer(const std::vector<unsigned int>& affected_feature_map_id_list = std::vector<unsigned int>());
+		sigmoid_layer();
 
-		virtual layer_smart_ptr clone() const;
+		virtual layer::ptr clone() const;
 
-		virtual float get_forward_flops(const layer_configuration_specific& input_configuration_specific) const;
+		virtual float get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const;
 
-		virtual float get_backward_flops(const layer_configuration_specific& input_configuration_specific) const;
+		virtual float get_backward_flops(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			unsigned int input_layer_id) const;
 
-		virtual const boost::uuids::uuid& get_uuid() const;
-
-		virtual const std::string& get_type_name() const;
-
-		virtual void write_proto(void * layer_proto) const;
-
-		virtual void read_proto(const void * layer_proto);
-
-		static const boost::uuids::uuid layer_guid;
+		virtual std::string get_type_name() const;
 
 		static const std::string layer_type_name;
-
-	public:
-		std::vector<unsigned int> affected_feature_map_id_list;
 	};
 }

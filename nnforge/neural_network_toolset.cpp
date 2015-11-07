@@ -16,6 +16,7 @@
 
 #include "neural_network_toolset.h"
 
+/*
 #include <boost/program_options.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/format.hpp>
@@ -52,7 +53,7 @@
 #include "supervised_multiple_epoch_data_reader.h"
 #include "supervised_limited_entry_count_data_reader.h"
 #include "network_trainer_sgd.h"
-#include "save_resume_network_data_pusher.h"
+#include "save_snapshot_network_data_pusher.h"
 #include "debug_util.h"
 #include "supervised_shuffle_entries_data_reader.h"
 #include "training_momentum.h"
@@ -74,9 +75,9 @@ namespace nnforge
 	const char * neural_network_toolset::output_neurons_filename = "output_neurons.dt";
 	const char * neural_network_toolset::mixture_filename = "mixture.txt";
 	const char * neural_network_toolset::ann_subfolder_name = "batch";
-	const char * neural_network_toolset::ann_resume_subfolder_name = "resume";
+	const char * neural_network_toolset::ann_snapshot_subfolder_name = "snapshot";
 	const char * neural_network_toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)\\.data$";
-	const char * neural_network_toolset::resume_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)\\.data$";
+	const char * neural_network_toolset::snapshot_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)\\.data$";
 	const char * neural_network_toolset::output_neurons_extractor_pattern = "output_neurons(.*)\\.dt";
 	const char * neural_network_toolset::logfile_name = "log.txt";
 	float neural_network_toolset::check_gradient_step_modifiers[] = {1.0, sqrtf(10.0F), 1.0F / sqrtf(10.0F), 10.0F, 0.1F, 10.0F * sqrtf(10.0F), 1.0F / (sqrtf(10.0F) * 10.0F), 100.0F, 0.01F, 100.0F * sqrtf(10.0F), 1.0F / (sqrtf(10.0F) * 100.0F), 1000.0F, 0.001F, -1.0F};
@@ -229,8 +230,8 @@ namespace nnforge
 			("check_gradient_threshold", boost::program_options::value<float>(&check_gradient_threshold)->default_value(1.05F), "Threshold for gradient check.")
 			("check_gradient_base_step", boost::program_options::value<float>(&check_gradient_base_step)->default_value(1.0e-3F), "Base step size for gradient check.")
 			("training_algo", boost::program_options::value<std::string>(&training_algo)->default_value("sgd"), "Training algorithm (sgd).")
-			("dump_resume", boost::program_options::value<bool>(&dump_resume)->default_value(true), "Dump neural network data after each epoch.")
-			("load_resume,R", boost::program_options::value<bool>(&load_resume)->default_value(false), "Resume neural network training strating from saved.")
+			("dump_snapshot", boost::program_options::value<bool>(&dump_snapshot)->default_value(true), "Dump neural network data after each epoch.")
+			("load_snapshot,R", boost::program_options::value<bool>(&load_snapshot)->default_value(false), "snapshot neural network training strating from saved.")
 			("epoch_count_in_training_set", boost::program_options::value<unsigned int>(&epoch_count_in_training_set)->default_value(1), "The whole should be split in this amount of epochs.")
 			("weight_decay", boost::program_options::value<float>(&weight_decay)->default_value(0.0F), "Weight decay.")
 			("batch_size,B", boost::program_options::value<unsigned int>(&batch_size)->default_value(1), "Training mini-batch size.")
@@ -399,8 +400,8 @@ namespace nnforge
 			std::cout << "check_gradient_threshold" << "=" << check_gradient_threshold << std::endl;
 			std::cout << "check_gradient_base_step" << "=" << check_gradient_base_step << std::endl;
 			std::cout << "training_algo" << "=" << training_algo << std::endl;
-			std::cout << "dump_resume" << "=" << dump_resume << std::endl;
-			std::cout << "load_resume" << "=" << load_resume << std::endl;
+			std::cout << "dump_snapshot" << "=" << dump_snapshot << std::endl;
+			std::cout << "load_snapshot" << "=" << load_snapshot << std::endl;
 			std::cout << "epoch_count_in_training_set" << "=" << epoch_count_in_training_set << std::endl;
 			std::cout << "weight_decay" << "=" << weight_decay << std::endl;
 			std::cout << "batch_size" << "=" << batch_size << std::endl;
@@ -1664,18 +1665,18 @@ namespace nnforge
 		return current_reader;
 	}
 
-	std::map<unsigned int, unsigned int> neural_network_toolset::get_resume_ann_list(const std::set<unsigned int>& exclusion_ann_list) const
+	std::map<unsigned int, unsigned int> neural_network_toolset::get_snapshot_ann_list(const std::set<unsigned int>& exclusion_ann_list) const
 	{
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
-		boost::filesystem::path resume_ann_folder_path = batch_folder / ann_resume_subfolder_name;
-		boost::filesystem::create_directories(resume_ann_folder_path);
+		boost::filesystem::path snapshot_ann_folder_path = batch_folder / ann_snapshot_subfolder_name;
+		boost::filesystem::create_directories(snapshot_ann_folder_path);
 
 		std::map<unsigned int, unsigned int> res;
-		nnforge_regex expression(resume_ann_index_extractor_pattern);
+		nnforge_regex expression(snapshot_ann_index_extractor_pattern);
 		nnforge_cmatch what;
 
-		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(resume_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
+		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(snapshot_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
 			if (it->status().type() == boost::filesystem::regular_file)
 			{
@@ -1728,22 +1729,22 @@ namespace nnforge
 		return res;
 	}
 
-	std::vector<network_data_peek_entry> neural_network_toolset::get_resume_ann_list_entry_list() const
+	std::vector<network_data_peek_entry> neural_network_toolset::get_snapshot_ann_list_entry_list() const
 	{
 		std::vector<network_data_peek_entry> res;
 
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
-		boost::filesystem::path resume_ann_folder_path = batch_folder / ann_resume_subfolder_name;
-		boost::filesystem::create_directories(resume_ann_folder_path);
+		boost::filesystem::path snapshot_ann_folder_path = batch_folder / ann_snapshot_subfolder_name;
+		boost::filesystem::create_directories(snapshot_ann_folder_path);
 
 		std::set<unsigned int> trained_ann_list = get_trained_ann_list();
 
-		std::map<unsigned int, unsigned int> resume_ann_list = get_resume_ann_list(trained_ann_list);
+		std::map<unsigned int, unsigned int> snapshot_ann_list = get_snapshot_ann_list(trained_ann_list);
 
 		network_schema_smart_ptr schema = load_schema();
 
-		for(std::map<unsigned int, unsigned int>::const_iterator it = resume_ann_list.begin(); it != resume_ann_list.end(); ++it)
+		for(std::map<unsigned int, unsigned int>::const_iterator it = snapshot_ann_list.begin(); it != snapshot_ann_list.end(); ++it)
 		{
 			network_data_peek_entry new_item;
 			new_item.index = it->first;
@@ -1751,7 +1752,7 @@ namespace nnforge
 			
 			{
 				std::string filename = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|.data") % new_item.index % new_item.start_epoch).str();
-				boost::filesystem::path filepath = resume_ann_folder_path / filename;
+				boost::filesystem::path filepath = snapshot_ann_folder_path / filename;
 				new_item.data = network_data_smart_ptr(new network_data());
 				boost::filesystem::ifstream in(filepath, std::ios_base::in | std::ios_base::binary);
 				new_item.data->read(in);
@@ -1760,7 +1761,7 @@ namespace nnforge
 
 			{
 				std::string momentum_filename = (boost::format("momentum_%|1$03d|.data") % new_item.index).str();
-				boost::filesystem::path momentum_filepath = resume_ann_folder_path / momentum_filename;
+				boost::filesystem::path momentum_filepath = snapshot_ann_folder_path / momentum_filename;
 				if (boost::filesystem::exists(momentum_filepath))
 				{
 					new_item.momentum_data = network_data_smart_ptr(new network_data());
@@ -1792,13 +1793,13 @@ namespace nnforge
 
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
 		boost::filesystem::create_directories(batch_folder);
-		boost::filesystem::path batch_resume_folder = batch_folder / ann_resume_subfolder_name;
-		boost::filesystem::create_directories(batch_resume_folder);
+		boost::filesystem::path batch_snapshot_folder = batch_folder / ann_snapshot_subfolder_name;
+		boost::filesystem::create_directories(batch_snapshot_folder);
 
 		std::vector<network_data_peek_entry> leading_tasks;
-		if (load_resume)
+		if (load_snapshot)
 		{
-			leading_tasks = get_resume_ann_list_entry_list();
+			leading_tasks = get_snapshot_ann_list_entry_list();
 		}
 		unsigned int starting_index = get_starting_index_for_batch_training();
 		for(std::vector<network_data_peek_entry>::const_iterator it = leading_tasks.begin(); it != leading_tasks.end(); ++it)
@@ -1807,9 +1808,9 @@ namespace nnforge
 
 		complex_network_data_pusher progress;
 
-		if (dump_resume)
+		if (dump_snapshot)
 		{
-			progress.push_back(network_data_pusher_smart_ptr(new save_resume_network_data_pusher(batch_resume_folder)));
+			progress.push_back(network_data_pusher_smart_ptr(new save_snapshot_network_data_pusher(batch_snapshot_folder)));
 		}
 
 		progress.push_back(network_data_pusher_smart_ptr(new report_progress_network_data_pusher()));
@@ -1850,12 +1851,6 @@ namespace nnforge
 		std::vector<std::vector<float> > learning_rates;
 		for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
 			learning_rates.push_back(std::vector<float>((*it)->size(), learning_rate));
-		/*
-		{
-			boost::filesystem::ofstream data_file(get_working_data_folder() / ann_subfolder_name / "ann_trained_000_profile_updater_init.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			data->write(data_file);
-		}
-		*/
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> training_result = updater->update(
 			*training_data_reader,
@@ -1867,12 +1862,6 @@ namespace nnforge
 			training_momentum(momentum_type_str, momentum_val),
 			true);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
-		/*
-		{
-			boost::filesystem::ofstream data_file(get_working_data_folder() / ann_subfolder_name / "ann_trained_000_profile_updater.data", std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-			data->write(data_file);
-		}
-		*/
 		// save_ann_snapshot_raw("ann_snapshot_profile_updater", *data);
 
 		float time_to_complete_seconds = sec.count();
@@ -2136,3 +2125,4 @@ namespace nnforge
 		return false;
 	}
 }
+*/

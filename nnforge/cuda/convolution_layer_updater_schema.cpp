@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@
 #include "../convolution_layer.h"
 #include "../neural_network_exception.h"
 #include "fully_connected_layer_updater_cuda.h"
-#include "convolution_layer_updater_schema_helper_cuda_kepler.h"
-#include "convolution_layer_updater_schema_helper_cuda_fermi.h"
-#include "convolution_1x1_layer_updater_cuda.h"
 #include "convolution_layer_updater_cuda.h"
 
 #include <boost/format.hpp>
@@ -38,21 +35,21 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr convolution_layer_updater_schema::create_specific() const
+		layer_updater_schema::ptr convolution_layer_updater_schema::create_specific() const
 		{
-			return layer_updater_schema_smart_ptr(new convolution_layer_updater_schema());
+			return layer_updater_schema::ptr(new convolution_layer_updater_schema());
 		}
 
-		const boost::uuids::uuid& convolution_layer_updater_schema::get_uuid() const
+		std::string convolution_layer_updater_schema::get_type_name() const
 		{
-			return convolution_layer::layer_guid;
+			return convolution_layer::layer_type_name;
 		}
 
-		layer_updater_cuda_smart_ptr convolution_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr convolution_layer_updater_schema::create_updater_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			layer_updater_cuda_smart_ptr res;
+			layer_updater_cuda::ptr res;
 
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
@@ -61,20 +58,14 @@ namespace nnforge
 
 			if (zero_padding && (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count))
 			{
-				res = layer_updater_cuda_smart_ptr(new fully_connected_layer_updater_cuda());
+				res = layer_updater_cuda::ptr(new fully_connected_layer_updater_cuda());
 			}
-			else if (zero_padding && (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes))
+			else if (output_configuration_specific.dimension_sizes.size() <= 2)
 			{
-				res = layer_updater_cuda_smart_ptr(new convolution_1x1_layer_updater_cuda());
-			}
-			else if (input_configuration_specific.dimension_sizes.size() <= 2)
-			{
-				res = layer_updater_cuda_smart_ptr(new convolution_layer_updater_cuda());
+				res = layer_updater_cuda::ptr(new convolution_layer_updater_cuda());
 			}
 			else
-			{
-				res = convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific, output_configuration_specific);
-			}
+				throw neural_network_exception((boost::format("No CUDA updater for the convolutional layer of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());
 
 			return res;
 		}

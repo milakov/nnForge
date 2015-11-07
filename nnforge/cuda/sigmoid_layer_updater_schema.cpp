@@ -17,9 +17,7 @@
 #include "sigmoid_layer_updater_schema.h"
 
 #include "../sigmoid_layer.h"
-
 #include "activation_layer_cudnn_updater_cuda.h"
-#include "sigmoid_partial_layer_updater_cuda.h"
 
 namespace nnforge
 {
@@ -33,43 +31,21 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr sigmoid_layer_updater_schema::create_specific() const
+		layer_updater_schema::ptr sigmoid_layer_updater_schema::create_specific() const
 		{
-			return layer_updater_schema_smart_ptr(new sigmoid_layer_updater_schema());
+			return layer_updater_schema::ptr(new sigmoid_layer_updater_schema());
 		}
 
-		const boost::uuids::uuid& sigmoid_layer_updater_schema::get_uuid() const
+		std::string sigmoid_layer_updater_schema::get_type_name() const
 		{
-			return sigmoid_layer::layer_guid;
+			return sigmoid_layer::layer_type_name;
 		}
 
-		layer_updater_cuda_smart_ptr sigmoid_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr sigmoid_layer_updater_schema::create_updater_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			nnforge_shared_ptr<const sigmoid_layer> layer_derived = nnforge_dynamic_pointer_cast<const sigmoid_layer>(layer_schema);
-
-			if (layer_derived->affected_feature_map_id_list.empty())
-				return layer_updater_cuda_smart_ptr(new activation_layer_cudnn_updater_cuda(CUDNN_ACTIVATION_SIGMOID));
-			else
-				return layer_updater_cuda_smart_ptr(new sigmoid_partial_layer_updater_cuda());
-		}
-
-		std::vector<const_cuda_linear_buffer_device_smart_ptr> sigmoid_layer_updater_schema::get_schema_buffers() const
-		{
-			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
-
-			nnforge_shared_ptr<const sigmoid_layer> layer_derived = nnforge_dynamic_pointer_cast<const sigmoid_layer>(layer_schema);
-			if (!layer_derived->affected_feature_map_id_list.empty())
-			{
-				res.push_back(
-					cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-						&(layer_derived->affected_feature_map_id_list.front()),
-						layer_derived->affected_feature_map_id_list.size() * sizeof(unsigned int)))
-					);
-			}
-
-			return res;
+			return layer_updater_cuda::ptr(new activation_layer_cudnn_updater_cuda(CUDNN_ACTIVATION_SIGMOID));
 		}
 	}
 }

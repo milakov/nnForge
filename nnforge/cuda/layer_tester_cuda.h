@@ -17,11 +17,11 @@
 #pragma once
 
 #include "../layer.h"
+#include "../nn_types.h"
+
 #include "cuda_running_configuration.h"
 #include "buffer_cuda_size_configuration.h"
-#include "cuda_memobject.h"
 #include "cuda_linear_buffer_device.h"
-#include "../nn_types.h"
 
 #include <vector>
 #include <string>
@@ -34,36 +34,41 @@ namespace nnforge
 		class layer_tester_cuda
 		{
 		public:
+			typedef nnforge_shared_ptr<layer_tester_cuda> ptr;
+
 			virtual ~layer_tester_cuda();
 
 			void configure(
-				const layer_configuration_specific& input_configuration_specific,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific,
-				const_layer_smart_ptr layer_schema,
-				cuda_running_configuration_const_smart_ptr cuda_config);
+				layer::const_ptr layer_schema,
+				cuda_running_configuration::const_ptr cuda_config);
 
-			std::vector<cuda_linear_buffer_device_smart_ptr> allocate_additional_buffers(unsigned int max_entry_count) const;
-
-			void update_buffer_configuration(
-				buffer_cuda_size_configuration& buffer_configuration,
-				unsigned int tiling_factor) const;
-
-			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers);
-
-			virtual void enqueue_test(
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count) = 0;
 
-			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> get_data(const_layer_data_smart_ptr host_data) const;
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_data(layer_data::const_ptr host_data) const;
 
-			virtual std::vector<const_cuda_linear_buffer_device_smart_ptr> set_get_data_custom(const_layer_data_custom_smart_ptr host_data);
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> set_get_data_custom(layer_data_custom::const_ptr host_data);
+
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_persistent_working_data() const;
+
+			virtual int get_input_index_layer_can_write() const;
+
+			virtual size_t get_temporary_working_fixed_buffer_size() const;
+
+			virtual size_t get_temporary_working_per_entry_buffer_size() const;
+
+			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
 
 		protected:
 			layer_tester_cuda();
@@ -71,32 +76,22 @@ namespace nnforge
 			// The method is called when configuration is finished
 			virtual void tester_configured();
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
+			virtual void notify_data_custom(layer_data_custom::const_ptr host_data_custom);
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const;
+			layer::const_ptr layer_schema;
+			cuda_running_configuration::const_ptr cuda_config;
 
-			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
+			std::vector<layer_configuration_specific> input_configuration_specific_list;
+			std::vector<unsigned int> input_elem_count_per_entry_list;
+			std::vector<unsigned int> input_elem_count_per_feature_map_list;
 
-			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const;
-
-			virtual void notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom);
-
-			const_layer_smart_ptr layer_schema;
-			cuda_running_configuration_const_smart_ptr cuda_config;
-
-			layer_configuration_specific input_configuration_specific;
 			layer_configuration_specific output_configuration_specific;
-
-			unsigned int input_elem_count_per_entry;
 			unsigned int output_elem_count_per_entry;
-			unsigned int input_elem_count_per_feature_map;
 			unsigned int output_elem_count_per_feature_map;
 
 		private:
 			layer_tester_cuda(const layer_tester_cuda&);
 			layer_tester_cuda& operator =(const layer_tester_cuda&);
 		};
-
-		typedef nnforge_shared_ptr<layer_tester_cuda> layer_tester_cuda_smart_ptr;
 	}
 }

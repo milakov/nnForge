@@ -31,21 +31,21 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& hyperbolic_tangent_layer_testing_schema::get_uuid() const
+		std::string hyperbolic_tangent_layer_testing_schema::get_type_name() const
 		{
-			return hyperbolic_tangent_layer::layer_guid;
+			return hyperbolic_tangent_layer::layer_type_name;
 		}
 
-		layer_testing_schema_smart_ptr hyperbolic_tangent_layer_testing_schema::create_specific() const
+		layer_testing_schema::ptr hyperbolic_tangent_layer_testing_schema::create_specific() const
 		{
-			return layer_testing_schema_smart_ptr(new hyperbolic_tangent_layer_testing_schema());
+			return layer_testing_schema::ptr(new hyperbolic_tangent_layer_testing_schema());
 		}
 
-		layer_tester_cuda_smart_ptr hyperbolic_tangent_layer_testing_schema::create_tester_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_tester_cuda::ptr hyperbolic_tangent_layer_testing_schema::create_tester_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_tester_cuda_smart_ptr(new hyperbolic_tangent_layer_tester_cuda());
+			return layer_tester_cuda::ptr(new hyperbolic_tangent_layer_tester_cuda());
 		}
 	}
 }

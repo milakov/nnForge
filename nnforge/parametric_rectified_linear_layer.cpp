@@ -24,14 +24,6 @@
 
 namespace nnforge
 {
-	// {B31C91D1-ED44-47F7-A68E-91513F888544}
-	const boost::uuids::uuid parametric_rectified_linear_layer::layer_guid =
-		{ 0xb3, 0x1c, 0x91, 0xd1
-		, 0xed, 0x44
-		, 0x47, 0xf7
-		, 0xa6, 0x8e
-		, 0x91, 0x51, 0x3f, 0x88, 0x85, 0x44 };
-
 	const std::string parametric_rectified_linear_layer::layer_type_name = "PReLU";
 
 	parametric_rectified_linear_layer::parametric_rectified_linear_layer(unsigned int feature_map_count)
@@ -46,58 +38,42 @@ namespace nnforge
 			throw neural_network_exception("Feature map count should be > 0 for parametric rectified linear layer");
 	}
 
-	const boost::uuids::uuid& parametric_rectified_linear_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& parametric_rectified_linear_layer::get_type_name() const
+	std::string parametric_rectified_linear_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr parametric_rectified_linear_layer::clone() const
+	layer::ptr parametric_rectified_linear_layer::clone() const
 	{
-		return layer_smart_ptr(new parametric_rectified_linear_layer(*this));
+		return layer::ptr(new parametric_rectified_linear_layer(*this));
 	}
 
-	float parametric_rectified_linear_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration parametric_rectified_linear_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count() * 2);
-	}
-
-	float parametric_rectified_linear_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count() * 2);
-	}
-
-	float parametric_rectified_linear_layer::get_weights_update_flops(const layer_configuration_specific& input_configuration_specific) const
-	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count() * 3);
-	}
-
-	layer_configuration parametric_rectified_linear_layer::get_layer_configuration(const layer_configuration& input_configuration) const
-	{
-		if (input_configuration.feature_map_count >= 0)
+		if (input_configuration_list[0].feature_map_count >= 0)
 		{
-			if (input_configuration.feature_map_count != feature_map_count)
-				throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not equal to feature map count (%2%) in perametric_rectified_linear_layer") % input_configuration.feature_map_count % feature_map_count).str());
+			if (input_configuration_list[0].feature_map_count != feature_map_count)
+				throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not equal to feature map count (%2%) in perametric_rectified_linear_layer") % input_configuration_list[0].feature_map_count % feature_map_count).str());
 		}
 
-		return input_configuration;
+		return input_configuration_list[0];
 	}
 
-	layer_configuration_specific parametric_rectified_linear_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	float parametric_rectified_linear_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		if (input_configuration_specific.feature_map_count != feature_map_count)
-			throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not equal to feature map count (%2%) in perametric_rectified_linear_layer") % input_configuration_specific.feature_map_count % feature_map_count).str());
-
-		return input_configuration_specific;
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 2);
 	}
 
-	void parametric_rectified_linear_layer::write(std::ostream& binary_stream_to_write_to) const
+	float parametric_rectified_linear_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&feature_map_count), sizeof(feature_map_count));
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 2);
+	}
+
+	float parametric_rectified_linear_layer::get_weights_update_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
+	{
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 3);
 	}
 
 	void parametric_rectified_linear_layer::write_proto(void * layer_proto) const
@@ -106,13 +82,6 @@ namespace nnforge
 		protobuf::PReLUParam * param = layer_proto_typed->mutable_prelu_param();
 
 		param->set_feature_map_count(feature_map_count);
-	}
-
-	void parametric_rectified_linear_layer::read(
-		std::istream& binary_stream_to_read_from,
-		const boost::uuids::uuid& layer_read_guid)
-	{
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&feature_map_count), sizeof(feature_map_count));
 	}
 
 	void parametric_rectified_linear_layer::read_proto(const void * layer_proto)
@@ -136,11 +105,11 @@ namespace nnforge
 	}
 
 	void parametric_rectified_linear_layer::randomize_data(
-		layer_data& data,
-		layer_data_custom& data_custom,
+		layer_data::ptr data,
+		layer_data_custom::ptr data_custom,
 		random_generator& generator) const
 	{
-		std::fill(data[0].begin(), data[0].end(), 0.25F);
+		std::fill((*data)[0].begin(), (*data)[0].end(), 0.25F);
 	}
 
 	layer_data_configuration_list parametric_rectified_linear_layer::get_layer_data_configuration_list() const

@@ -45,12 +45,6 @@
     <Filter Include="Source Files\network_schema">
       <UniqueIdentifier>{7c90a5cf-d21d-4c53-8a7b-11b2a08c0d1f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\network_tester">
-      <UniqueIdentifier>{27a3c21f-472e-49cc-9eb9-cfbb6e0af44c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\network_tester">
-      <UniqueIdentifier>{4afce1dc-acb7-469f-8064-436dbcf82fde}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\training">
       <UniqueIdentifier>{9b96bf50-d878-479f-9356-b539c00211f1}</UniqueIdentifier>
     </Filter>
@@ -72,20 +66,11 @@
     <Filter Include="Source Files\training\peekers">
       <UniqueIdentifier>{a3de6945-23f7-4d9a-8afe-a7c6969b9a4c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\training\updater">
-      <UniqueIdentifier>{bdc6177d-b706-4bf6-b85f-31dcfe645487}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\training\updater">
-      <UniqueIdentifier>{86468817-fb2b-4eb4-bb2e-3306a1d6f4da}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\training\trainer">
       <UniqueIdentifier>{c41fe92d-1f0d-438b-8c7d-2a8eef2acd98}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\training\trainer">
       <UniqueIdentifier>{433b39ad-5f34-4eb1-9f6e-dbd11b7a5d90}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\visualize">
-      <UniqueIdentifier>{b746f866-9151-4d0a-abb5-5e38c9c02b36}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\toolset">
       <UniqueIdentifier>{bc27c2d5-5d17-4139-823f-7b5eb8d1529c}</UniqueIdentifier>
@@ -95,18 +80,6 @@
     </Filter>
     <Filter Include="Header Files\visualize">
       <UniqueIdentifier>{78ddf8f7-cbba-4c82-91f5-883fc2ba2fa4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\network_analyzer">
-      <UniqueIdentifier>{a1757a4f-8d4f-4cae-af27-40dfbfa9be09}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\network_analyzer">
-      <UniqueIdentifier>{21fe383a-601b-4554-8ad9-012253aa414f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\error_functions">
-      <UniqueIdentifier>{68a7b109-70a6-4331-8729-8b8ae44015f9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\error_functions">
-      <UniqueIdentifier>{86e0ebf3-d3f3-4784-9dee-b240b80087e1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\training\peekers">
       <UniqueIdentifier>{3e81ccec-1e0a-436b-bd4b-bc6fe422ec11}</UniqueIdentifier>
@@ -120,31 +93,25 @@
     <Filter Include="Proto Files">
       <UniqueIdentifier>{04441ca2-091a-4182-b23d-05f99b276a4a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\forward_propagation">
+      <UniqueIdentifier>{0823767e-6ce3-4f8a-957d-323edc162704}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\forward_propagation">
+      <UniqueIdentifier>{3a7d9f59-8c25-41d9-a4d9-42eb006c6bb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\backward_propagation">
+      <UniqueIdentifier>{63782343-24e2-458d-89bb-8116883bf58d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\backward_propagation">
+      <UniqueIdentifier>{8fd21c82-f5a5-496b-b9ff-99ba21b7232e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\visualize">
+      <UniqueIdentifier>{b746f866-9151-4d0a-abb5-5e38c9c02b36}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rnd.h">
       <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="testing_result.h">
-      <Filter>Header Files\result</Filter>
-    </ClInclude>
-    <ClInclude Include="output_neuron_class_set.h">
-      <Filter>Header Files\result</Filter>
-    </ClInclude>
-    <ClInclude Include="output_neuron_value_set.h">
-      <Filter>Header Files\result</Filter>
-    </ClInclude>
-    <ClInclude Include="testing_complete_result_set.h">
-      <Filter>Header Files\result</Filter>
-    </ClInclude>
-    <ClInclude Include="testing_complete_result_set_classifier_visualizer.h">
-      <Filter>Header Files\result</Filter>
-    </ClInclude>
-    <ClInclude Include="testing_complete_result_set_visualizer.h">
-      <Filter>Header Files\result</Filter>
-    </ClInclude>
-    <ClInclude Include="classifier_result.h">
-      <Filter>Header Files\result</Filter>
     </ClInclude>
     <ClInclude Include="neural_network_exception.h">
       <Filter>Header Files\util</Filter>
@@ -194,15 +161,6 @@
     <ClInclude Include="network_schema.h">
       <Filter>Header Files\network_schema</Filter>
     </ClInclude>
-    <ClInclude Include="network_tester.h">
-      <Filter>Header Files\network_tester</Filter>
-    </ClInclude>
-    <ClInclude Include="network_tester_factory.h">
-      <Filter>Header Files\network_tester</Filter>
-    </ClInclude>
-    <ClInclude Include="roc_result.h">
-      <Filter>Header Files\result</Filter>
-    </ClInclude>
     <ClInclude Include="nnforge.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -224,17 +182,8 @@
     <ClInclude Include="training_task_state.h">
       <Filter>Header Files\training\result</Filter>
     </ClInclude>
-    <ClInclude Include="network_updater.h">
-      <Filter>Header Files\training\updater</Filter>
-    </ClInclude>
-    <ClInclude Include="network_updater_factory.h">
-      <Filter>Header Files\training\updater</Filter>
-    </ClInclude>
     <ClInclude Include="network_trainer.h">
       <Filter>Header Files\training\trainer</Filter>
-    </ClInclude>
-    <ClInclude Include="snapshot_visualizer.h">
-      <Filter>Header Files\visualize</Filter>
     </ClInclude>
     <ClInclude Include="config_options.h">
       <Filter>Header Files\toolset</Filter>
@@ -245,28 +194,7 @@
     <ClInclude Include="neural_network_toolset.h">
       <Filter>Header Files\toolset</Filter>
     </ClInclude>
-    <ClInclude Include="supervised_data_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="supervised_data_stream_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
     <ClInclude Include="supervised_data_stream_schema.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="supervised_data_stream_writer.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_stream_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_stream_schema.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="unsupervised_data_stream_writer.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="neuron_data_type.h">
@@ -274,9 +202,6 @@
     </ClInclude>
     <ClInclude Include="network_output_type.h">
       <Filter>Header Files\toolset</Filter>
-    </ClInclude>
-    <ClInclude Include="testing_complete_result_set_roc_visualizer.h">
-      <Filter>Header Files\result</Filter>
     </ClInclude>
     <ClInclude Include="layer_data_configuration.h">
       <Filter>Header Files\network_schema</Filter>
@@ -302,23 +227,11 @@
     <ClInclude Include="feature_map_data_stat.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
-    <ClInclude Include="supervised_transformed_input_data_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="supervised_transformed_output_data_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
     <ClInclude Include="normalize_data_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
     </ClInclude>
-    <ClInclude Include="unsupervised_transformed_input_data_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
     <ClInclude Include="maxout_layer.h">
       <Filter>Header Files\layers</Filter>
-    </ClInclude>
-    <ClInclude Include="supervised_data_mem_reader.h">
-      <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="intensity_2d_data_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
@@ -326,29 +239,8 @@
     <ClInclude Include="distort_2d_data_sampler_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
     </ClInclude>
-    <ClInclude Include="flip_2d_data_sampler_transformer.h">
-      <Filter>Header Files\data_transformers</Filter>
-    </ClInclude>
-    <ClInclude Include="network_analyzer.h">
-      <Filter>Header Files\network_analyzer</Filter>
-    </ClInclude>
-    <ClInclude Include="network_analyzer_factory.h">
-      <Filter>Header Files\network_analyzer</Filter>
-    </ClInclude>
-    <ClInclude Include="error_function.h">
-      <Filter>Header Files\error_functions</Filter>
-    </ClInclude>
-    <ClInclude Include="mse_error_function.h">
-      <Filter>Header Files\error_functions</Filter>
-    </ClInclude>
-    <ClInclude Include="squared_hinge_loss_error_function.h">
-      <Filter>Header Files\error_functions</Filter>
-    </ClInclude>
     <ClInclude Include="nn_types.h">
       <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="data_writer.h">
-      <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="varying_data_stream_writer.h">
       <Filter>Header Files\training_data</Filter>
@@ -356,32 +248,17 @@
     <ClInclude Include="varying_data_stream_schema.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
-    <ClInclude Include="supervised_multiple_epoch_data_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="supervised_limited_entry_count_data_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
     <ClInclude Include="network_trainer_sgd.h">
       <Filter>Header Files\training\trainer</Filter>
     </ClInclude>
-    <ClInclude Include="save_resume_network_data_pusher.h">
-      <Filter>Header Files\training\pushers</Filter>
-    </ClInclude>
     <ClInclude Include="stream_duplicator.h">
       <Filter>Header Files\toolset</Filter>
-    </ClInclude>
-    <ClInclude Include="negative_log_likelihood_error_function.h">
-      <Filter>Header Files\error_functions</Filter>
     </ClInclude>
     <ClInclude Include="sigmoid_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
     <ClInclude Include="debug_util.h">
       <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="cross_entropy_error_function.h">
-      <Filter>Header Files\error_functions</Filter>
     </ClInclude>
     <ClInclude Include="network_data_initializer.h">
       <Filter>Header Files\network_data</Filter>
@@ -401,12 +278,6 @@
     <ClInclude Include="layer_data_list.h">
       <Filter>Header Files\network_data</Filter>
     </ClInclude>
-    <ClInclude Include="convert_data_type_transformer.h">
-      <Filter>Header Files\data_transformers</Filter>
-    </ClInclude>
-    <ClInclude Include="training_stat.h">
-      <Filter>Header Files\training\result</Filter>
-    </ClInclude>
     <ClInclude Include="network_data_peeker.h">
       <Filter>Header Files\training\peekers</Filter>
     </ClInclude>
@@ -416,26 +287,11 @@
     <ClInclude Include="network_data_peeker_single.h">
       <Filter>Header Files\training\peekers</Filter>
     </ClInclude>
-    <ClInclude Include="supervised_shuffle_entries_data_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="negate_data_transformer.h">
-      <Filter>Header Files\data_transformers</Filter>
-    </ClInclude>
     <ClInclude Include="convert_to_polar_data_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
     </ClInclude>
     <ClInclude Include="dropout_layer.h">
       <Filter>Header Files\layers</Filter>
-    </ClInclude>
-    <ClInclude Include="supervised_image_stream_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="supervised_random_image_data_stream_reader.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="supervised_image_data_sampler_stream_reader.h">
-      <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="parametric_rectified_linear_layer.h">
       <Filter>Header Files\layers</Filter>
@@ -476,31 +332,109 @@
     <ClInclude Include="untile_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="data_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="forward_propagation.h">
+      <Filter>Header Files\forward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="forward_propagation_factory.h">
+      <Filter>Header Files\forward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_bunch_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="neuron_value_set.h">
+      <Filter>Header Files\result</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_bunch_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="threadpool_job_runner.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="toolset.h">
+      <Filter>Header Files\toolset</Filter>
+    </ClInclude>
+    <ClInclude Include="mse_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="neuron_value_set_data_bunch_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="accuracy_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="debug_state.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="backward_propagation.h">
+      <Filter>Header Files\backward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="backward_propagation_factory.h">
+      <Filter>Header Files\backward_propagation</Filter>
+    </ClInclude>
+    <ClInclude Include="network_action_schema.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
+    <ClInclude Include="layer_action.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
+    <ClInclude Include="layer_name_with_action.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
+    <ClInclude Include="buffer_lifetime.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
+    <ClInclude Include="color_palette.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_stream_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_stream_schema.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_stream_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_bunch_stream_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="save_snapshot_network_data_pusher.h">
+      <Filter>Header Files\training\pushers</Filter>
+    </ClInclude>
+    <ClInclude Include="raw_data_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="data_visualizer.h">
+      <Filter>Header Files\visualize</Filter>
+    </ClInclude>
+    <ClInclude Include="transformed_structured_data_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_from_raw_data_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="raw_to_structured_data_transformer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="negative_log_likelihood_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="cross_entropy_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
       <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="testing_result.cpp">
-      <Filter>Source Files\result</Filter>
-    </ClCompile>
-    <ClCompile Include="output_neuron_class_set.cpp">
-      <Filter>Source Files\result</Filter>
-    </ClCompile>
-    <ClCompile Include="output_neuron_value_set.cpp">
-      <Filter>Source Files\result</Filter>
-    </ClCompile>
-    <ClCompile Include="testing_complete_result_set.cpp">
-      <Filter>Source Files\result</Filter>
-    </ClCompile>
-    <ClCompile Include="testing_complete_result_set_classifier_visualizer.cpp">
-      <Filter>Source Files\result</Filter>
-    </ClCompile>
-    <ClCompile Include="testing_complete_result_set_visualizer.cpp">
-      <Filter>Source Files\result</Filter>
-    </ClCompile>
-    <ClCompile Include="classifier_result.cpp">
-      <Filter>Source Files\result</Filter>
     </ClCompile>
     <ClCompile Include="neural_network_exception.cpp">
       <Filter>Source Files\util</Filter>
@@ -550,15 +484,6 @@
     <ClCompile Include="network_schema.cpp">
       <Filter>Source Files\network_schema</Filter>
     </ClCompile>
-    <ClCompile Include="network_tester.cpp">
-      <Filter>Source Files\network_tester</Filter>
-    </ClCompile>
-    <ClCompile Include="network_tester_factory.cpp">
-      <Filter>Source Files\network_tester</Filter>
-    </ClCompile>
-    <ClCompile Include="roc_result.cpp">
-      <Filter>Source Files\result</Filter>
-    </ClCompile>
     <ClCompile Include="nnforge.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
@@ -589,17 +514,8 @@
     <ClCompile Include="network_data_peeker_single.cpp">
       <Filter>Source Files\training\peekers</Filter>
     </ClCompile>
-    <ClCompile Include="network_updater.cpp">
-      <Filter>Source Files\training\updater</Filter>
-    </ClCompile>
-    <ClCompile Include="network_updater_factory.cpp">
-      <Filter>Source Files\training\updater</Filter>
-    </ClCompile>
     <ClCompile Include="network_trainer.cpp">
       <Filter>Source Files\training\trainer</Filter>
-    </ClCompile>
-    <ClCompile Include="snapshot_visualizer.cpp">
-      <Filter>Source Files\visualize</Filter>
     </ClCompile>
     <ClCompile Include="factory_generator.cpp">
       <Filter>Source Files\toolset</Filter>
@@ -607,35 +523,11 @@
     <ClCompile Include="neural_network_toolset.cpp">
       <Filter>Source Files\toolset</Filter>
     </ClCompile>
-    <ClCompile Include="supervised_data_stream_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
     <ClCompile Include="supervised_data_stream_schema.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_data_stream_writer.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_stream_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_stream_schema.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_stream_writer.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="unsupervised_data_reader.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="neuron_data_type.cpp">
       <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="testing_complete_result_set_roc_visualizer.cpp">
-      <Filter>Source Files\result</Filter>
     </ClCompile>
     <ClCompile Include="layer_data_configuration.cpp">
       <Filter>Source Files\network_schema</Filter>
@@ -661,23 +553,11 @@
     <ClCompile Include="feature_map_data_stat.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
-    <ClCompile Include="supervised_transformed_input_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_transformed_output_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
     <ClCompile Include="normalize_data_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
     </ClCompile>
-    <ClCompile Include="unsupervised_transformed_input_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
     <ClCompile Include="maxout_layer.cpp">
       <Filter>Source Files\layers</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_data_mem_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="intensity_2d_data_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
@@ -685,59 +565,23 @@
     <ClCompile Include="distort_2d_data_sampler_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
     </ClCompile>
-    <ClCompile Include="flip_2d_data_sampler_transformer.cpp">
-      <Filter>Source Files\data_transformers</Filter>
-    </ClCompile>
-    <ClCompile Include="network_analyzer.cpp">
-      <Filter>Source Files\network_analyzer</Filter>
-    </ClCompile>
-    <ClCompile Include="network_analyzer_factory.cpp">
-      <Filter>Source Files\network_analyzer</Filter>
-    </ClCompile>
-    <ClCompile Include="error_function.cpp">
-      <Filter>Source Files\error_functions</Filter>
-    </ClCompile>
-    <ClCompile Include="mse_error_function.cpp">
-      <Filter>Source Files\error_functions</Filter>
-    </ClCompile>
-    <ClCompile Include="squared_hinge_loss_error_function.cpp">
-      <Filter>Source Files\error_functions</Filter>
-    </ClCompile>
-    <ClCompile Include="data_writer.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
     <ClCompile Include="varying_data_stream_writer.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="varying_data_stream_schema.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
-    <ClCompile Include="supervised_multiple_epoch_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_limited_entry_count_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
     <ClCompile Include="network_trainer_sgd.cpp">
       <Filter>Source Files\training\trainer</Filter>
     </ClCompile>
-    <ClCompile Include="save_resume_network_data_pusher.cpp">
-      <Filter>Source Files\training\pushers</Filter>
-    </ClCompile>
     <ClCompile Include="stream_duplicator.cpp">
       <Filter>Source Files\toolset</Filter>
-    </ClCompile>
-    <ClCompile Include="negative_log_likelihood_error_function.cpp">
-      <Filter>Source Files\error_functions</Filter>
     </ClCompile>
     <ClCompile Include="sigmoid_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
     <ClCompile Include="debug_util.cpp">
       <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="cross_entropy_error_function.cpp">
-      <Filter>Source Files\error_functions</Filter>
     </ClCompile>
     <ClCompile Include="network_data_initializer.cpp">
       <Filter>Source Files\network_data</Filter>
@@ -757,32 +601,11 @@
     <ClCompile Include="sparse_convolution_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
-    <ClCompile Include="convert_data_type_transformer.cpp">
-      <Filter>Source Files\data_transformers</Filter>
-    </ClCompile>
-    <ClCompile Include="training_stat.cpp">
-      <Filter>Source Files\training\result</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_shuffle_entries_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="negate_data_transformer.cpp">
-      <Filter>Source Files\data_transformers</Filter>
-    </ClCompile>
     <ClCompile Include="convert_to_polar_data_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
     </ClCompile>
     <ClCompile Include="dropout_layer.cpp">
       <Filter>Source Files\layers</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_image_stream_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_random_image_data_stream_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="supervised_image_data_sampler_stream_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="parametric_rectified_linear_layer.cpp">
       <Filter>Source Files\layers</Filter>
@@ -821,6 +644,96 @@
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="untile_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="data_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="forward_propagation.cpp">
+      <Filter>Source Files\forward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="forward_propagation_factory.cpp">
+      <Filter>Source Files\forward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_bunch_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="neuron_value_set.cpp">
+      <Filter>Source Files\result</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_bunch_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="threadpool_job_runner.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="toolset.cpp">
+      <Filter>Source Files\toolset</Filter>
+    </ClCompile>
+    <ClCompile Include="mse_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="neuron_value_set_data_bunch_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="accuracy_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="debug_state.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="backward_propagation.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="backward_propagation_factory.cpp">
+      <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="network_action_schema.cpp">
+      <Filter>Source Files\network_schema</Filter>
+    </ClCompile>
+    <ClCompile Include="color_palette.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_stream_schema.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_stream_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_stream_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_bunch_stream_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="save_snapshot_network_data_pusher.cpp">
+      <Filter>Source Files\training\pushers</Filter>
+    </ClCompile>
+    <ClCompile Include="raw_data_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="data_visualizer.cpp">
+      <Filter>Source Files\visualize</Filter>
+    </ClCompile>
+    <ClCompile Include="transformed_structured_data_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_from_raw_data_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="raw_to_structured_data_transformer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="negative_log_likelihood_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="cross_entropy_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>

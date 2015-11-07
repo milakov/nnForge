@@ -19,42 +19,31 @@
 
 namespace nnforge
 {
-	// {185FC3A0-5C2C-41B3-B483-5E9B0EFE877F}
-	const boost::uuids::uuid rectified_linear_layer::layer_guid =
-		{ 0x18, 0x5f, 0xc3, 0xa0
-		, 0x5c, 0x2c
-		, 0x41, 0xb3
-		, 0xb4, 0x83
-		, 0x5e, 0x9b, 0xe, 0xfe, 0x87, 0x7f };
-
 	const std::string rectified_linear_layer::layer_type_name = "ReLU";
 
 	rectified_linear_layer::rectified_linear_layer()
 	{
 	}
 
-	const boost::uuids::uuid& rectified_linear_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& rectified_linear_layer::get_type_name() const
+	std::string rectified_linear_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr rectified_linear_layer::clone() const
+	layer::ptr rectified_linear_layer::clone() const
 	{
-		return layer_smart_ptr(new rectified_linear_layer(*this));
+		return layer::ptr(new rectified_linear_layer(*this));
 	}
 
-	float rectified_linear_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float rectified_linear_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count());
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count());
 	}
 
-	float rectified_linear_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float rectified_linear_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
-		return static_cast<float>(0.0F);
+		return 0.0F;
 	}
 }

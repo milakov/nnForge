@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -169,7 +169,8 @@ namespace nnforge
 			int feature_map_count,
 			int entry_count,
 			int packed_config_count,
-			float mult)
+			float mult,
+			bool add_update_to_destination)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int base_feature_map_id = (blockIdx.y * blockDim.y + threadIdx.y) * FEATURE_MAP_BLOCK_SIZE;
@@ -219,14 +220,35 @@ namespace nnforge
 				{
 					for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? subsampling_sizes[1] : 1); ++input_y)
 					{
-						input_errors[current_input_elem_id] = err[0];
-						#pragma unroll
-						for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-							if (item_valid[i - 1])
-								input_errors[current_input_elem_id + input_neuron_count_per_feature_map * i] = err[i];
-						if (DIMENSION_COUNT > 1)
+						if (add_update_to_destination)
 						{
-							current_input_elem_id += input_sizes[0];
+							float dst[FEATURE_MAP_BLOCK_SIZE];
+							dst[0] = input_errors[current_input_elem_id];
+							#pragma unroll
+							for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+								if (item_valid[i - 1])
+									dst[i] = input_errors[current_input_elem_id + input_neuron_count_per_feature_map * i];
+							input_errors[current_input_elem_id] = err[0];
+							#pragma unroll
+							for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+								if (item_valid[i - 1])
+									input_errors[current_input_elem_id + input_neuron_count_per_feature_map * i] = err[i] + dst[i];
+							if (DIMENSION_COUNT > 1)
+							{
+								current_input_elem_id += input_sizes[0];
+							}
+						}
+						else
+						{
+							input_errors[current_input_elem_id] = err[0];
+							#pragma unroll
+							for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+								if (item_valid[i - 1])
+									input_errors[current_input_elem_id + input_neuron_count_per_feature_map * i] = err[i];
+							if (DIMENSION_COUNT > 1)
+							{
+								current_input_elem_id += input_sizes[0];
+							}
 						}
 					} // for input_y
 					current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
@@ -247,25 +269,20 @@ namespace nnforge
 			{
 			}
 
-			virtual void enqueue_test(
-				unsigned int offset_input_entry_id,
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic)
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
+				unsigned int entry_count)
 			{
-				if (offset_input_entry_id > 0)
-					throw neural_network_exception("average_subsampling_layer_updater_cuda is not able to run using offset");
-
-				const float * input = *input_neurons_buffer;
-				float * output = *output_neurons_buffer;
-				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*additional_buffers[0]);
+				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*persistent_working_data[0]);
 
 				int feature_map_block_count = (output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE;
 
@@ -280,13 +297,13 @@ namespace nnforge
 				int smem_size = threadblock_size * sizeof(float) * FEATURE_MAP_BLOCK_SIZE;
 
 				average_subsampling_upd_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-					output,
-					input,
+					*output_buffer,
+					*input_buffers[0],
 					packed_config_list,
 					subsampling_sizes,
 					input_sizes,
 					output_sizes,
-					input_elem_count_per_feature_map,
+					input_elem_count_per_feature_map_list[0],
 					output_elem_count_per_feature_map,
 					output_configuration_specific.feature_map_count,
 					entry_count,
@@ -294,33 +311,34 @@ namespace nnforge
 					mult);
 			}
 
-			virtual void enqueue_backprop(
+			virtual void enqueue_backward_data_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic)
+				unsigned int input_index,
+				cuda_linear_buffer_device::ptr input_errors_buffer,
+				cuda_linear_buffer_device::const_ptr output_errors_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+				cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+				bool add_update_to_destination,
+				unsigned int entry_count)
 			{
-				if (!is_even_subsampling)
+				if ((!is_even_subsampling) && (!add_update_to_destination))
 				{
 					cuda_util::set_with_value(
 						*cuda_config,
 						*input_errors_buffer,
 						0.0F,
-						input_elem_count_per_entry * entry_count,
+						input_elem_count_per_entry_list[0] * entry_count,
 						stream_id);
 				}
 
-				const float * output_errors = *output_errors_buffer;
-				float * input_errors = *input_errors_buffer;
-				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*additional_buffers[0]);
+				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*persistent_working_data[0]);
 
 				int feature_map_block_count = (output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE;
 
@@ -335,18 +353,19 @@ namespace nnforge
 				int smem_size = threadblock_size * sizeof(float) * FEATURE_MAP_BLOCK_SIZE;
 
 				average_subsampling_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-					input_errors,
-					output_errors,
+					*input_errors_buffer,
+					*output_errors_buffer,
 					packed_config_list,
 					subsampling_sizes,
 					input_sizes,
 					output_sizes,
-					input_elem_count_per_feature_map,
+					input_elem_count_per_feature_map_list[0],
 					output_elem_count_per_feature_map,
 					output_configuration_specific.feature_map_count,
 					entry_count,
 					forward_packed_config_count,
-					mult);
+					mult,
+					add_update_to_destination);
 			}
 
 		protected:
@@ -361,7 +380,7 @@ namespace nnforge
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = layer_derived->subsampling_sizes[i];
-					input_sizes[i] = input_configuration_specific.dimension_sizes[i];
+					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 
 					toal_subsampling_size *= subsampling_sizes[i];
@@ -375,22 +394,20 @@ namespace nnforge
 					forward_packed_config_count *= output_sizes[i];
 			}
 
-			virtual bool is_in_place_backprop() const
+			bool is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
 			{
 				return false;
 			}
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const
+			bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
 			{
-				std::vector<size_t> res;
-
-				res.push_back(sizeof(packed_config<forward_dimension_count>) * forward_packed_config_count);
-
-				return res;
+				return false;
 			}
 
-			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_persistent_working_data() const
 			{
+				std::vector<cuda_linear_buffer_device::const_ptr> res;
+
 				std::vector<packed_config<forward_dimension_count> > task_list;
 				{
 					nnforge_array<int, dimension_count> size_list;
@@ -411,7 +428,10 @@ namespace nnforge
 						}
 					}
 				}
-				cuda_safe_call(cudaMemcpy(*additional_buffers[0], &(*task_list.begin()), sizeof(packed_config<forward_dimension_count>) * task_list.size(), cudaMemcpyHostToDevice));
+
+				res.push_back(cuda_linear_buffer_device::const_ptr(new cuda_linear_buffer_device(&task_list[0], sizeof(packed_config<forward_dimension_count>) * task_list.size())));
+
+				return res;
 			}
 
 		private:

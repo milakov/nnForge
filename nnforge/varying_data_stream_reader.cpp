@@ -21,6 +21,7 @@
 
 #include "varying_data_stream_schema.h"
 #include "neural_network_exception.h"
+#include "varying_data_stream_writer.h"
 
 namespace nnforge
 {
@@ -38,42 +39,41 @@ namespace nnforge
 		in_stream->read(reinterpret_cast<char*>(&entry_count), sizeof(entry_count));
 		entry_offsets.resize(entry_count + 1);
 
-		in_stream->read(reinterpret_cast<char*>(&(*entry_offsets.begin())), sizeof(unsigned long long) * entry_offsets.size());
-
 		reset_pos = in_stream->tellg();
+
+		in_stream->seekg(-static_cast<int>(sizeof(unsigned long long)) * entry_offsets.size(), std::ios::end);
+		in_stream->read(reinterpret_cast<char*>(&(*entry_offsets.begin())), sizeof(unsigned long long) * entry_offsets.size());
 	}
 
 	varying_data_stream_reader::~varying_data_stream_reader()
 	{
 	}
 
-	void varying_data_stream_reader::reset()
+	bool varying_data_stream_reader::raw_read(
+		unsigned int entry_id,
+		std::vector<unsigned char>& all_elems)
 	{
-		rewind(0);
-	}
-
-	bool varying_data_stream_reader::raw_read(std::vector<unsigned char>& all_elems)
-	{
-		if (entry_read_count >= entry_offsets.size() - 1)
+		if (entry_id >= entry_offsets.size() - 1)
 			return false;
 
-		unsigned long long total_entry_size = entry_offsets[entry_read_count + 1] - entry_offsets[entry_read_count];
+		unsigned long long total_entry_size = entry_offsets[entry_id + 1] - entry_offsets[entry_id];
 		all_elems.resize(total_entry_size);
-		in_stream->read(reinterpret_cast<char*>(&(*all_elems.begin())), total_entry_size);
-
-		++entry_read_count;
+		{
+			boost::lock_guard<boost::mutex> lock(read_data_from_stream_mutex);
+			in_stream->seekg(reset_pos + (std::istream::off_type)(entry_offsets[entry_id]), std::ios::beg);
+			in_stream->read(reinterpret_cast<char*>(&(*all_elems.begin())), total_entry_size);
+		}
 
 		return true;
 	}
 
-	void varying_data_stream_reader::rewind(unsigned int entry_id)
+	int varying_data_stream_reader::get_entry_count() const
 	{
-		entry_read_count = entry_id;
-		in_stream->seekg(reset_pos + (std::istream::off_type)(entry_offsets[entry_read_count]), std::ios::beg);
+		return static_cast<int>(entry_offsets.size() - 1);
 	}
 
-	unsigned int varying_data_stream_reader::get_entry_count() const
+	raw_data_writer::ptr varying_data_stream_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const
 	{
-		return static_cast<unsigned int>(entry_offsets.size() - 1);
+		return raw_data_writer::ptr(new varying_data_stream_writer(out));
 	}
 }

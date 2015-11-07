@@ -28,6 +28,9 @@ namespace nnforge
 	class layer_data : public std::vector<std::vector<float> >
 	{
 	public:
+		typedef nnforge_shared_ptr<layer_data> ptr;
+		typedef nnforge_shared_ptr<const layer_data> const_ptr;
+
 		layer_data();
 
 		// The stream should be created with std::ios_base::binary flag
@@ -35,8 +38,6 @@ namespace nnforge
 
 		// The stream should be created with std::ios_base::binary flag
 		void read(std::istream& binary_stream_to_read_from);
-
-		bool is_empty() const;
 
 		void fill(float val);
 
@@ -57,7 +58,4 @@ namespace nnforge
 			float mult;
 		};
 	};
-
-	typedef nnforge_shared_ptr<layer_data> layer_data_smart_ptr;
-	typedef nnforge_shared_ptr<const layer_data> const_layer_data_smart_ptr;
 }

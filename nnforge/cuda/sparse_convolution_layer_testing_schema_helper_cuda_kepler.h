@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace nnforge
 		class sparse_convolution_layer_testing_schema_helper_cuda_kepler
 		{
 		public:
-			static layer_tester_cuda_smart_ptr create_tester_specific(
+			static layer_tester_cuda::ptr create_tester_specific(
 				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific);
 		};

@@ -17,8 +17,6 @@
 #include "convolution_layer_updater_plain.h"
 
 #include "../convolution_layer.h"
-#include "../neural_network_exception.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -36,31 +34,32 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& convolution_layer_updater_plain::get_uuid() const
+		std::string convolution_layer_updater_plain::get_type_name() const
 		{
-			return convolution_layer::layer_guid;
+			return convolution_layer::layer_type_name;
 		}
 
-		void convolution_layer_updater_plain::test(
-			const_additional_buffer_smart_ptr input_buffer,
-			additional_buffer_smart_ptr output_buffer,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void convolution_layer_updater_plain::run_forward_propagation(
+			plain_buffer::ptr output_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_buffers,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			unsigned int offset_input_entry_id,
-			bool force_deterministic) const
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
+			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
+			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			const std::vector<float>::const_iterator in_it_global = input_buffer->begin() + input_neuron_count * offset_input_entry_id;
-			const std::vector<float>::iterator out_it_global = output_buffer->begin();
+			const float * const in_it_global = *input_buffers[0];
+			float * const out_it_global = *output_buffer;
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
@@ -75,15 +74,15 @@ namespace nnforge
 			right_zero_padding_extended.resize(max_dimension_count, 0);
 			const std::vector<unsigned int>& right_zero_padding = right_zero_padding_extended;
 
-			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific.dimension_sizes;
+			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific_list[0].dimension_sizes;
 			input_dimension_sizes_extended .resize(max_dimension_count, 1);
-			const std::vector<unsigned int>& input_dimension_sizes = input_dimension_sizes_extended ;
+			const std::vector<unsigned int>& input_dimension_sizes = input_dimension_sizes_extended;
 
 			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->window_sizes.size());
-			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
+			std::vector<unsigned int> input_slices(input_configuration_specific_list[0].dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
-				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific_list[0].dimension_sizes[i];
 			unsigned int window_elem_count = 1;
 			for(unsigned int i = 0; i < dimension_count; ++i)
 				window_elem_count *= window_sizes[i];
@@ -111,8 +110,8 @@ namespace nnforge
 			}
 
 			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
-			const unsigned int input_feature_map_count = input_configuration_specific.feature_map_count;
-			const int total_workload = updater_count * output_feature_map_count;
+			const unsigned int input_feature_map_count = input_configuration_specific_list[0].feature_map_count;
+			const int total_workload = entry_count * output_feature_map_count;
 			const std::vector<unsigned int>::const_iterator output_dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
@@ -128,12 +127,12 @@ namespace nnforge
 					int entry_id = workload_id / output_feature_map_count;
 					int output_feature_map_id = workload_id - (entry_id * output_feature_map_count);
 
-					std::vector<float>::iterator out_it_base = out_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
-					std::vector<float>::const_iterator in_it_base = in_it_global + entry_id * input_neuron_count;
+					float * out_it_base = out_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
+					const float * in_it_base = in_it_global + entry_id * input_neuron_count;
 
 					std::fill_n(current_input_position.begin(), max_dimension_count, 0);
 					std::fill_n(current_output_position.begin(), max_dimension_count, 0);
-					for(std::vector<float>::iterator out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
+					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
 						float sum = *(biases + output_feature_map_id);
 						std::vector<float>::const_iterator weights_it = weights + (output_feature_map_id * (const_window_elem_count * input_feature_map_count));
@@ -186,25 +185,29 @@ namespace nnforge
 			}
 		}
 
-		void convolution_layer_updater_plain::backprop(
-			additional_buffer_smart_ptr input_errors,
-			const_additional_buffer_smart_ptr input_neurons,
-			const_additional_buffer_smart_ptr output_errors,
-			const_additional_buffer_smart_ptr output_neurons,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void convolution_layer_updater_plain::run_backward_data_propagation(
+			unsigned int input_index,
+			plain_buffer::ptr input_errors_buffer,
+			plain_buffer::const_ptr output_errors_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+			plain_buffer::const_ptr output_neurons_buffer,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			bool force_deterministic) const
+			const bool add_update_to_destination,
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			const std::vector<float>::iterator in_err_it_global = input_errors->begin();
-			const std::vector<float>::const_iterator out_err_it_global = output_errors->begin();
-			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
+			float * const in_err_it_global = *input_errors_buffer;
+			const float * const out_err_it_global = *output_errors_buffer;
+			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
+			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
@@ -221,15 +224,15 @@ namespace nnforge
 			right_zero_padding_extended.resize(max_dimension_count, 0);
 			const std::vector<unsigned int>& right_zero_padding = right_zero_padding_extended;
 
-			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific.dimension_sizes;
+			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific_list[0].dimension_sizes;
 			input_dimension_sizes_extended .resize(max_dimension_count, 1);
 			const std::vector<unsigned int>& input_dimension_sizes = input_dimension_sizes_extended ;
 
 			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->window_sizes.size());
-			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
+			std::vector<unsigned int> input_slices(input_configuration_specific_list[0].dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
-				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific_list[0].dimension_sizes[i];
 			unsigned int window_elem_count = 1;
 			for(unsigned int i = 0; i < dimension_count; ++i)
 				window_elem_count *= window_sizes[i];
@@ -256,8 +259,8 @@ namespace nnforge
 			}
 
 			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
-			const unsigned int input_feature_map_count = input_configuration_specific.feature_map_count;
-			const int total_workload = updater_count * input_feature_map_count;
+			const unsigned int input_feature_map_count = input_configuration_specific_list[0].feature_map_count;
+			const int total_workload = entry_count * input_feature_map_count;
 			const std::vector<unsigned int>::const_iterator output_dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
@@ -273,14 +276,16 @@ namespace nnforge
 					int entry_id = workload_id / input_feature_map_count;
 					int input_feature_map_id = workload_id - (entry_id * input_feature_map_count);
 
-					std::vector<float>::const_iterator out_err_it_base = out_err_it_global + (entry_id * output_neuron_count);
-					std::vector<float>::iterator in_err_it_base = in_err_it_global + (entry_id * input_neuron_count) + (input_feature_map_id * input_neuron_count_per_feature_map);
+					const float * out_err_it_base = out_err_it_global + (entry_id * output_neuron_count);
+					float * in_err_it_base = in_err_it_global + (entry_id * input_neuron_count) + (input_feature_map_id * input_neuron_count_per_feature_map);
 					std::vector<float>::const_iterator weights_it_base = weights + (const_window_elem_count * input_feature_map_id);
 
-					std::fill_n(in_err_it_base, input_neuron_count_per_feature_map, 0.0F);
+					if (!add_update_to_destination)
+						std::fill_n(in_err_it_base, input_neuron_count_per_feature_map, 0.0F);
+
 					std::fill_n(current_input_position.begin(), max_dimension_count, 0);
 					std::fill_n(current_output_position.begin(), max_dimension_count, 0);
-					for(std::vector<float>::const_iterator out_err_it_base2 = out_err_it_base; out_err_it_base2 != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it_base2)
+					for(const float * out_err_it_base2 = out_err_it_base; out_err_it_base2 != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it_base2)
 					{
 						int in_err_offset = 0;
 
@@ -292,7 +297,7 @@ namespace nnforge
 
 						for(unsigned int output_feature_map_id = 0; output_feature_map_id < output_feature_map_count; ++output_feature_map_id)
 						{
-							std::vector<float>::const_iterator out_err_it = out_err_it_base2 + (output_feature_map_id * output_neuron_count_per_feature_map);
+							const float * out_err_it = out_err_it_base2 + (output_feature_map_id * output_neuron_count_per_feature_map);
 							std::vector<float>::const_iterator weights_it_base2 = weights_it_base + (output_feature_map_id * (const_window_elem_count * input_feature_map_count));
 							std::vector<float>::const_iterator weights_it = weights_it_base2;
 							float current_err = *out_err_it;
@@ -335,26 +340,27 @@ namespace nnforge
 			}
 		}
 
-		void convolution_layer_updater_plain::update_weights(
-			const_additional_buffer_smart_ptr input_neurons,
-			const_additional_buffer_smart_ptr output_errors,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			layer_data_smart_ptr gradient,
-			const_layer_data_custom_smart_ptr data_custom,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
+		void convolution_layer_updater_plain::run_backward_weights_propagation(
+			const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+			plain_buffer::const_ptr output_errors_buffer,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::ptr gradient,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			unsigned int offset_input_entry_id,
-			bool force_deterministic) const
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			const unsigned int input_neuron_count = input_configuration_specific.get_neuron_count();
-			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
+			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
+			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			const std::vector<float>::const_iterator in_it_global = input_neurons->begin() + input_neuron_count * offset_input_entry_id;
-			const std::vector<float>::const_iterator out_err_it_global = output_errors->begin();
+			const float * const in_it_global = *input_neurons_buffers[0];
+			const float * const out_err_it_global = *output_errors_buffer;
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
@@ -369,15 +375,15 @@ namespace nnforge
 			right_zero_padding_extended.resize(max_dimension_count, 0);
 			const std::vector<unsigned int>& right_zero_padding = right_zero_padding_extended;
 
-			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific.dimension_sizes;
+			std::vector<unsigned int> input_dimension_sizes_extended = input_configuration_specific_list[0].dimension_sizes;
 			input_dimension_sizes_extended .resize(max_dimension_count, 1);
 			const std::vector<unsigned int>& input_dimension_sizes = input_dimension_sizes_extended ;
 
 			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->window_sizes.size());
-			std::vector<unsigned int> input_slices(input_configuration_specific.dimension_sizes.size());
+			std::vector<unsigned int> input_slices(input_configuration_specific_list[0].dimension_sizes.size());
 			input_slices[0] = 1;
 			for(unsigned int i = 0; i < dimension_count - 1; ++i)
-				input_slices[i + 1] = input_slices[i] * input_configuration_specific.dimension_sizes[i];
+				input_slices[i + 1] = input_slices[i] * input_configuration_specific_list[0].dimension_sizes[i];
 			unsigned int window_elem_count = 1;
 			for(unsigned int i = 0; i < dimension_count; ++i)
 				window_elem_count *= window_sizes[i];
@@ -405,13 +411,13 @@ namespace nnforge
 			}
 
 			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
-			const unsigned int input_feature_map_count = input_configuration_specific.feature_map_count;
+			const unsigned int input_feature_map_count = input_configuration_specific_list[0].feature_map_count;
 			const int total_workload = output_feature_map_count * input_feature_map_count;
-			const unsigned int const_entry_count = updater_count;
+			const unsigned int const_entry_count = entry_count;
 			const std::vector<unsigned int>::const_iterator output_dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
-			const int const_updater_count = updater_count;
+			const int const_updater_count = entry_count;
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
@@ -431,12 +437,12 @@ namespace nnforge
 
 					for(int entry_id = 0; entry_id < const_updater_count; ++entry_id)
 					{
-						std::vector<float>::const_iterator in_it_base = in_it_global + (entry_id * input_neuron_count) + (input_feature_map_id * input_neuron_count_per_feature_map);
-						std::vector<float>::const_iterator out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
+						const float * in_it_base = in_it_global + (entry_id * input_neuron_count) + (input_feature_map_id * input_neuron_count_per_feature_map);
+						const float * out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
 
 						std::fill_n(current_input_position.begin(), max_dimension_count, 0);
 						std::fill_n(current_output_position.begin(), max_dimension_count, 0);
-						for(std::vector<float>::const_iterator out_err_it = out_err_it_base; out_err_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it)
+						for(const float * out_err_it = out_err_it_base; out_err_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it)
 						{
 							int in_it_offset = 0;
 
@@ -498,8 +504,8 @@ namespace nnforge
 				for(int entry_id = 0; entry_id < const_updater_count; ++entry_id)
 				{
 					float local_sum = 0.0F;
-					std::vector<float>::const_iterator out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
-					for(std::vector<float>::const_iterator out_err_it = out_err_it_base; out_err_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it)
+					const float * out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
+					for(const float * out_err_it = out_err_it_base; out_err_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it)
 						local_sum += *out_err_it;
 
 					sum += local_sum;
@@ -509,9 +515,38 @@ namespace nnforge
 			}
 		}
 
-		bool convolution_layer_updater_plain::is_in_place_backprop() const
+		bool convolution_layer_updater_plain::is_backward_data_dependent_on_input_buffer(
+			unsigned int action_input_index,
+			unsigned int data_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
 			return false;
+		}
+
+		bool convolution_layer_updater_plain::is_backward_data_dependent_on_output_buffer(
+			unsigned int action_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return false;
+		}
+
+		bool convolution_layer_updater_plain::is_backward_weights_dependent_on_input_buffer(
+			unsigned int data_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return true;
 		}
 	}
 }

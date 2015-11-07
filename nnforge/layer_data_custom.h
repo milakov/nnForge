@@ -27,6 +27,9 @@ namespace nnforge
 	class layer_data_custom : public std::vector<std::vector<int> >
 	{
 	public:
+		typedef nnforge_shared_ptr<layer_data_custom> ptr;
+		typedef nnforge_shared_ptr<const layer_data_custom> const_ptr;
+
 		layer_data_custom();
 
 		// The stream should be created with std::ios_base::binary flag
@@ -35,7 +38,4 @@ namespace nnforge
 		// The stream should be created with std::ios_base::binary flag
 		void read(std::istream& binary_stream_to_read_from);
 	};
-
-	typedef nnforge_shared_ptr<layer_data_custom> layer_data_custom_smart_ptr;
-	typedef nnforge_shared_ptr<const layer_data_custom> const_layer_data_custom_smart_ptr;
 }

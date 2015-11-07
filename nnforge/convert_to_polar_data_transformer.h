@@ -37,17 +37,12 @@ namespace nnforge
 		virtual ~convert_to_polar_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 
 		virtual layer_configuration_specific get_transformed_configuration(const layer_configuration_specific& original_config) const;
-
-		virtual bool is_in_place() const;
-
-		virtual bool is_deterministic() const;
 
 	protected:
 		std::vector<unsigned int> input_window_sizes;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -358,10 +358,10 @@ namespace nnforge
 		}
 
 #define launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_tex_exact_blocked_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*additional_buffers[0], input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map, entry_count, block_count_per_feature_map, weight_count_per_block, 0U);
+	sparse_convolution_tex_exact_blocked_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_feature_map, weight_count_per_block, 0U);
 
 #define launch_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_tex_generic_blocked_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*additional_buffers[0], input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map, entry_count, block_count_per_feature_map, weight_count_per_block);
+	sparse_convolution_tex_generic_blocked_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_feature_map, weight_count_per_block);
 
 #define launch_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -440,16 +440,19 @@ namespace nnforge
 			{
 			}
 
-			virtual void enqueue_test(
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count)
 			{
-				cuda_texture input_tex(input_buffer);
+				cuda_texture input_tex(input_buffers[0]);
 
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
@@ -458,13 +461,6 @@ namespace nnforge
 					1);
 
 				launch_kernel(dimension_count, window_sizes[0], ((dimension_count > 1) ? window_sizes[1] : 1));
-			}
-
-			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
-			{
-				return additional_buffers[0];
 			}
 
 		protected:
@@ -477,7 +473,7 @@ namespace nnforge
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					window_sizes[i] = layer_derived->window_sizes[i];
-					input_sizes[i] = input_configuration_specific.dimension_sizes[i];
+					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 					left_zero_padding[i] = layer_derived->left_zero_padding[i];
 
@@ -499,17 +495,10 @@ namespace nnforge
 				}
 			}
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const
-			{
-				std::vector<size_t> res;
-				res.push_back(output_elem_count_per_entry * sizeof(float));
-				return res;
-			}
-
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const
 			{
 				std::vector<unsigned int> res;
-				res.push_back(input_configuration_specific.get_neuron_count());
+				res.push_back(input_configuration_specific_list[0].get_neuron_count());
 				return res;
 			}
 

@@ -31,6 +31,16 @@ namespace nnforge
 		return std::vector<string_option>();
 	}
 
+	std::vector<multi_string_option> factory_generator::get_multi_string_options()
+	{
+		return std::vector<multi_string_option>();
+	}
+
+	std::vector<path_option> factory_generator::get_path_options()
+	{
+		return std::vector<path_option>();
+	}
+
 	std::vector<bool_option> factory_generator::get_bool_options()
 	{
 		return std::vector<bool_option>();

@@ -35,36 +35,36 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& average_subsampling_layer_testing_schema::get_uuid() const
+		std::string average_subsampling_layer_testing_schema::get_type_name() const
 		{
-			return average_subsampling_layer::layer_guid;
+			return average_subsampling_layer::layer_type_name;
 		}
 
-		layer_testing_schema_smart_ptr average_subsampling_layer_testing_schema::create_specific() const
+		layer_testing_schema::ptr average_subsampling_layer_testing_schema::create_specific() const
 		{
-			return layer_testing_schema_smart_ptr(new average_subsampling_layer_testing_schema());
+			return layer_testing_schema::ptr(new average_subsampling_layer_testing_schema());
 		}
 
-		layer_tester_cuda_smart_ptr average_subsampling_layer_testing_schema::create_tester_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_tester_cuda::ptr average_subsampling_layer_testing_schema::create_tester_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			layer_tester_cuda_smart_ptr res;
+			layer_tester_cuda::ptr res;
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
 				case 1: 
-					res = layer_tester_cuda_smart_ptr(new average_subsampling_layer_tester_cuda<1>());
+					res = layer_tester_cuda::ptr(new average_subsampling_layer_tester_cuda<1>());
 					break;
 				case 2:
-					res = layer_tester_cuda_smart_ptr(new average_subsampling_layer_tester_cuda<2>());
+					res = layer_tester_cuda::ptr(new average_subsampling_layer_tester_cuda<2>());
 //					res = layer_tester_cuda_smart_ptr(new average_subsampling_layer_cudnn_tester());
 					break;
 				case 3:
-					res = layer_tester_cuda_smart_ptr(new average_subsampling_layer_tester_cuda<3>());
+					res = layer_tester_cuda::ptr(new average_subsampling_layer_tester_cuda<3>());
 					break;
 				case 4:
-					res = layer_tester_cuda_smart_ptr(new average_subsampling_layer_tester_cuda<4>());
+					res = layer_tester_cuda::ptr(new average_subsampling_layer_tester_cuda<4>());
 					break;
 				default:
 					throw neural_network_exception((boost::format("No CUDA tester for the average subsampling of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());

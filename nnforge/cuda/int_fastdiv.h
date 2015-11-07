@@ -21,7 +21,7 @@ class int_fastdiv
 public:
 	// divisor != 0
 	__host__ __device__ __forceinline__
-	int_fastdiv(int divisor = 0)
+	explicit int_fastdiv(int divisor = 0)
 	: d(divisor)
 	{
 		update_magic_numbers();

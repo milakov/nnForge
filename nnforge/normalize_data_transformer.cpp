@@ -27,14 +27,6 @@
 
 namespace nnforge
 {
-	// {9BABFBB9-3502-4C58-AA38-A550C1AA843D}
-	const boost::uuids::uuid normalize_data_transformer::normalizer_guid =
-	{ 0x9b, 0xab, 0xfb, 0xb9
-	, 0x35, 0x02
-	, 0x4c, 0x58
-	, 0xaa, 0x38
-	, 0xa5, 0x50, 0xc1, 0xaa, 0x84, 0x3d };
-
 	normalize_data_transformer::normalize_data_transformer()
 	{
 	}
@@ -81,38 +73,15 @@ namespace nnforge
 	}
 
 	void normalize_data_transformer::transform(
-		const void * data,
-		void * data_transformed,
-		neuron_data_type::input_type type,
+		const float * data,
+		float * data_transformed,
 		const layer_configuration_specific& original_config,
 		unsigned int sample_id)
 	{
-		if (type != neuron_data_type::type_float)
-			throw neural_network_exception("normalize_data_transformer is implemented for data stored as floats only");
-
-		float * dt = static_cast<float *>(data_transformed);
 		unsigned int elem_count_per_feature_map = original_config.get_neuron_count_per_feature_map();
 
-		for(std::vector<std::pair<float, float> >::const_iterator mul_add_it = mul_add_list.begin(); mul_add_it != mul_add_list.end(); ++mul_add_it, dt += elem_count_per_feature_map)
-			std::transform(dt, dt + elem_count_per_feature_map, dt, normalize_helper_struct(mul_add_it->first, mul_add_it->second));
-	}
-
-	void normalize_data_transformer::write(std::ostream& binary_stream_to_write_to) const
-	{
-		binary_stream_to_write_to.exceptions(std::ostream::eofbit | std::ostream::failbit | std::ostream::badbit);
-
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(normalizer_guid.data), sizeof(normalizer_guid.data));
-
-		unsigned int feature_map_count = static_cast<unsigned int>(mul_add_list.size());
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&feature_map_count), sizeof(feature_map_count));
-
-		for(std::vector<std::pair<float, float> >::const_iterator it =  mul_add_list.begin(); it != mul_add_list.end(); ++it)
-		{
-			binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(it->first)), sizeof(float));
-			binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(it->second)), sizeof(float));
-		}
-
-		binary_stream_to_write_to.flush();
+		for(std::vector<std::pair<float, float> >::const_iterator mul_add_it = mul_add_list.begin(); mul_add_it != mul_add_list.end(); ++mul_add_it, data += elem_count_per_feature_map, data_transformed += elem_count_per_feature_map)
+			std::transform(data, data + elem_count_per_feature_map, data_transformed, normalize_helper_struct(mul_add_it->first, mul_add_it->second));
 	}
 
 	void normalize_data_transformer::write_proto(std::ostream& stream_to_write_to) const
@@ -130,31 +99,6 @@ namespace nnforge
 		google::protobuf::TextFormat::Print(normalizer, &output_stream);
 	}
 
-	void normalize_data_transformer::read(std::istream& binary_stream_to_read_from)
-	{
- 		mul_add_list.clear();
-
-		binary_stream_to_read_from.exceptions(std::ostream::eofbit | std::ostream::failbit | std::ostream::badbit);
-
-		boost::uuids::uuid normalizer_guid_read;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(normalizer_guid_read.data), sizeof(normalizer_guid_read.data));
-		if (normalizer_guid_read != normalizer_guid)
-			throw neural_network_exception((boost::format("Unknown normalizer GUID encountered in input stream: %1%") % normalizer_guid_read).str());
-
-		unsigned int feature_map_count_read;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&feature_map_count_read), sizeof(feature_map_count_read));
-
-		for(unsigned int i = 0; i < feature_map_count_read; ++i)
-		{
-			float mult;
-			binary_stream_to_read_from.read(reinterpret_cast<char*>(&mult), sizeof(float));
-			float add;
-			binary_stream_to_read_from.read(reinterpret_cast<char*>(&add), sizeof(float));
-
-			mul_add_list.push_back(std::make_pair(mult, add));
-		}
-	}
-
 	void normalize_data_transformer::read_proto(std::istream& stream_to_read_from)
 	{
  		mul_add_list.clear();
@@ -167,10 +111,5 @@ namespace nnforge
 		{
 			mul_add_list.push_back(std::make_pair(normalizer.feature_map_param(i).mul(), normalizer.feature_map_param(i).add()));
 		}
-	}
-
- 	bool normalize_data_transformer::is_deterministic() const
-	{
-		return true;
 	}
 }

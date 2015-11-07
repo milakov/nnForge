@@ -29,13 +29,13 @@ namespace nnforge
 
 			virtual ~average_subsampling_layer_testing_schema();
 
-			virtual const boost::uuids::uuid& get_uuid() const;
+			virtual std::string get_type_name() const;
 
 		protected:
-			virtual layer_testing_schema_smart_ptr create_specific() const;
+			virtual layer_testing_schema::ptr create_specific() const;
 
-			virtual layer_tester_cuda_smart_ptr create_tester_specific(
-				const layer_configuration_specific& input_configuration_specific,
+			virtual layer_tester_cuda::ptr create_tester_specific(
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific) const;
 		};
 	}

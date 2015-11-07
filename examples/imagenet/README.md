@@ -30,7 +30,21 @@ Train
 -----
 
 	./imagenet prepare_training_data
-	./imagenet generate_input_normalizer
+	./imagenet create_normalizer --normalizer_layer_name images
 	./imagenet train
 	
-Training will take a couple of weeks on modern GPU and will give you about 14% Top-5 error on single image inference.
+Training will take a week on modern GPU and will give you about 14% Top-5 error on single image inference on validation dataset.
+
+Improved validation
+-------------------
+
+You can run training process multiple times (just run "train" again), have multiple networks trained this way, and run samples through all the nets averaging the output. You should get better results this way:
+
+	./imagenet inference --inference_mode dump_average_across_nets --inference_output_layer_name softmax
+	./imagenet --schema schema_tail.txt
+
+Imagenet app also allows you to run different crops of each sample through the model, it works both with sinlge net and multiple nets:
+
+	./imagenet inference --inference_mode dump_average_across_nets --inference_output_layer_name softmax --rich_inference 1 --dump_compact_samples 16 --samples_x 4 --samples_y 4
+	./imagenet inference --schema schema_tail.txt
+

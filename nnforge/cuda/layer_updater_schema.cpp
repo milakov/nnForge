@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr layer_updater_schema::create(
-			const_layer_smart_ptr layer_schema,
-			cuda_running_configuration_const_smart_ptr cuda_config) const
+		nnforge_shared_ptr<layer_updater_schema> layer_updater_schema::create(
+			layer::const_ptr layer_schema,
+			cuda_running_configuration::const_ptr cuda_config) const
 		{
-			layer_updater_schema_smart_ptr res = create_specific();
+			nnforge_shared_ptr<layer_updater_schema> res = create_specific();
 
 			res->layer_schema = layer_schema;
 			res->cuda_config = cuda_config;
@@ -40,26 +40,26 @@ namespace nnforge
 			return res;
 		}
 
-		std::vector<const_cuda_linear_buffer_device_smart_ptr> layer_updater_schema::get_schema_buffers() const
+		std::vector<cuda_linear_buffer_device::const_ptr> layer_updater_schema::get_schema_buffers() const
 		{
-			return std::vector<const_cuda_linear_buffer_device_smart_ptr>();
+			return std::vector<cuda_linear_buffer_device::const_ptr>();
 		}
 
-		layer_updater_cuda_smart_ptr layer_updater_schema::create_updater(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr layer_updater_schema::create_updater(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			bool backprop_required) const
+			const std::set<layer_action>& actions) const
 		{
-			layer_updater_cuda_smart_ptr res = create_updater_specific(
-				input_configuration_specific,
+			layer_updater_cuda::ptr res = create_updater_specific(
+				input_configuration_specific_list,
 				output_configuration_specific);
 
 			res->configure(
-				input_configuration_specific,
+				input_configuration_specific_list,
 				output_configuration_specific,
 				layer_schema,
 				cuda_config,
-				backprop_required);
+				actions);
 
 			return res;
 		}

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,24 +24,24 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		bool layer_updater_schema_factory::register_layer_updater_schema(layer_updater_schema_smart_ptr sample_layer_updater_schema)
+		bool layer_updater_schema_factory::register_layer_updater_schema(layer_updater_schema::const_ptr sample_layer_updater_schema)
 		{
-			return sample_layer_updater_schema_map.insert(sample_map::value_type(sample_layer_updater_schema->get_uuid(), sample_layer_updater_schema)).second;
+			return sample_layer_updater_schema_map.insert(sample_map::value_type(sample_layer_updater_schema->get_type_name(), sample_layer_updater_schema)).second;
 		}
 
-		bool layer_updater_schema_factory::unregister_layer_updater_schema(const boost::uuids::uuid& layer_guid)
+		bool layer_updater_schema_factory::unregister_layer_updater_schema(const std::string& layer_name)
 		{
-			return sample_layer_updater_schema_map.erase(layer_guid) == 1;
+			return sample_layer_updater_schema_map.erase(layer_name) == 1;
 		}
 
-		layer_updater_schema_smart_ptr layer_updater_schema_factory::create_updater_schema_layer(
-			const_layer_smart_ptr layer,
-			cuda_running_configuration_const_smart_ptr cuda_config) const
+		layer_updater_schema::ptr layer_updater_schema_factory::create_updater_schema_layer(
+			layer::const_ptr layer,
+			cuda_running_configuration::const_ptr cuda_config) const
 		{
-			sample_map::const_iterator i = sample_layer_updater_schema_map.find(layer->get_uuid());
+			sample_map::const_iterator i = sample_layer_updater_schema_map.find(layer->get_type_name());
 
 			if (i == sample_layer_updater_schema_map.end())
-				throw neural_network_exception((boost::format("No CUDA layer updater schema is registered with id %1%") % layer->get_uuid()).str());
+				throw neural_network_exception((boost::format("No CUDA layer updater schema is registered with type name %1%") % layer->get_type_name()).str());
 
 			return i->second->create(
 				layer,

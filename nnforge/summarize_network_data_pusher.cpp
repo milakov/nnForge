@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@ namespace nnforge
 	{
 	}
 
-	void summarize_network_data_pusher::push(const training_task_state& task_state)
+	void summarize_network_data_pusher::push(
+		const training_task_state& task_state,
+		const network_schema& schema)
 	{
 		unsigned int index = task_state.index_peeked;
-		network_data_smart_ptr data = task_state.data;
+		network_data::const_ptr data = task_state.data;
 
-		std::string filename = (boost::format("ann_trained_%|1$03d|.data") % index).str();
-
-		boost::filesystem::ofstream file_with_data(folder_path / filename, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
-		data->write(file_with_data);
+		std::string data_folder_name = (boost::format("ann_trained_%|1$03d|") % index).str();
+		data->write(folder_path / data_folder_name);
 	}
 }

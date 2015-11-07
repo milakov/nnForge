@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <nnforge/neural_network_toolset.h>
+#include <nnforge/toolset.h>
 
 #include <map>
 
@@ -28,12 +28,23 @@
 
 #include <opencv2/core/core.hpp>
 
-class image_classifier_demo_toolset : public nnforge::neural_network_toolset
+class image_classifier_demo_toolset : public nnforge::toolset, public nnforge::structured_data_bunch_reader, public nnforge::structured_data_bunch_writer
 {
 public:
-	image_classifier_demo_toolset(nnforge::factory_generator_smart_ptr factory);
+	image_classifier_demo_toolset(nnforge::factory_generator::ptr factory);
 
 	virtual ~image_classifier_demo_toolset();
+
+public:
+	virtual std::map<std::string, nnforge::layer_configuration_specific> get_config_map() const;
+
+	virtual bool read(
+		unsigned int entry_id,
+		const std::map<std::string, float *>& data_map);
+
+	virtual void next_epoch();
+
+	virtual int get_entry_count() const;
 
 protected:
 	virtual std::string get_default_action() const;
@@ -42,6 +53,12 @@ protected:
 
 	virtual std::vector<nnforge::bool_option> get_bool_options();
 
+	virtual std::vector<nnforge::string_option> get_string_options();
+
+	virtual void set_config_map(const std::map<std::string, nnforge::layer_configuration_specific> config_map);
+
+	virtual void write(const std::map<std::string, const float *>& data_map);
+
 private:
 	void run_demo();
 
@@ -49,9 +66,9 @@ private:
 
 	void add_classifier_results(cv::Mat3b frame);
 
-	nnforge_shared_ptr<std::vector<unsigned char> > safe_peek_input_data();
+	nnforge_shared_ptr<std::vector<float> > safe_peek_input_data();
 
-	void safe_set_input_data(nnforge_shared_ptr<std::vector<unsigned char> > val);
+	void safe_set_input_data(nnforge_shared_ptr<std::vector<float> > val);
 
 	nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > safe_peek_output_data();
 
@@ -89,20 +106,24 @@ private:
 	bool demo_should_stop;
 	boost::mutex demo_should_stop_mutex;
 
-	nnforge_shared_ptr<std::vector<unsigned char> > input_data_smart_ptr;
+	nnforge_shared_ptr<std::vector<float> > input_data_smart_ptr;
 	boost::mutex input_data_mutex;
 
 	nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > output_data_smart_ptr;
 	boost::mutex output_data_mutex;
 
+	boost::chrono::steady_clock::time_point last_write;
 	float fps;
 	boost::mutex fps_mutex;
 
 	std::string error_message;
 
 	nnforge::layer_configuration_specific input_config;
+	nnforge::normalize_data_transformer::ptr normalizer;
 
 	bool should_report_stats;
+	std::string input_layer_name;
+
 	boost::chrono::steady_clock::time_point last_report_time;
 
 	std::map<unsigned int, std::string> class_id_to_class_name_map;
@@ -120,20 +141,6 @@ private:
 	static const float prob_part;
 
 	friend struct callable;
-
-private:
-	template<unsigned int index_id> class vector_element_extractor
-	{
-	public:
-		vector_element_extractor()
-		{
-		}
-
-		inline unsigned char operator()(cv::Vec3b x) const
-		{
-			return x[index_id];
-		}
-	};
 };
 
 struct callable

@@ -21,14 +21,18 @@
 #include <limits>
 
 #include "neural_network_exception.h"
+#include "neuron_value_set_data_bunch_writer.h"
 
 namespace nnforge
 {
 	network_trainer_sgd::network_trainer_sgd(
-		network_schema_smart_ptr schema,
-		network_updater_smart_ptr updater)
-		: network_trainer(schema)
-		, updater(updater)
+		network_schema::ptr schema,
+		const std::vector<std::string>& output_layer_names,
+		const std::vector<std::string>& error_source_layer_names,
+		const std::vector<std::string>& exclude_data_update_layer_names,
+		backward_propagation::ptr backprop)
+		: network_trainer(schema, output_layer_names, error_source_layer_names, exclude_data_update_layer_names)
+		, backprop(backprop)
 	{
 	}
 
@@ -37,52 +41,54 @@ namespace nnforge
 	}
 
 	void network_trainer_sgd::train_step(
-		supervised_data_reader& reader,
+		structured_data_bunch_reader& reader,
 		training_task_state& task)
 	{
 		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
 
-		std::pair<std::vector<std::vector<float> >, std::string> lr_and_comment = prepare_learning_rates(task.get_current_epoch(), task.data);
+		std::pair<std::map<std::string, std::vector<float> >, std::string> lr_and_comment = prepare_learning_rates(task.get_current_epoch(), task.data);
 		task.comments.push_back(lr_and_comment.second);
 
-		std::pair<testing_result_smart_ptr, training_stat_smart_ptr> train_result = updater->update(
+		neuron_value_set_data_bunch_writer writer;
+		backward_propagation::stat training_stat = backprop->run(
 			reader,
-			lr_and_comment.first,
-			task.data,
+			writer,
+			*task.data,
 			task.momentum_data,
+			lr_and_comment.first,
 			batch_size,
 			weight_decay,
-			momentum,
-			false);
+			momentum);
+		std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<float> > > > output_data_average_results;
+		for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it = writer.layer_name_to_config_and_value_set_map.begin(); it != writer.layer_name_to_config_and_value_set_map.end(); ++it)
+			output_data_average_results.insert(std::make_pair(it->first, std::make_pair(it->second.first, it->second.second->get_average())));
 
-		boost::chrono::duration<float> sec = (boost::chrono::high_resolution_clock::now() - start);
-
-		float flops = updater->get_flops_for_single_entry();
-
-		train_result.first->time_to_complete_seconds = sec.count();
-		train_result.first->flops = static_cast<float>(train_result.first->get_entry_count()) * flops;
-
-		task.history.push_back(train_result);
+		task.history.push_back(std::make_pair(training_stat, output_data_average_results));
 	}
 
-	std::pair<std::vector<std::vector<float> >, std::string> network_trainer_sgd::prepare_learning_rates(
+	std::pair<std::map<std::string, std::vector<float> >, std::string> network_trainer_sgd::prepare_learning_rates(
 		unsigned int epoch,
-		network_data_smart_ptr data)
+		network_data::const_ptr data)
 	{
 		float learning_rate = get_global_learning_rate(static_cast<unsigned int>(epoch));
 
-		std::vector<std::vector<float> > res;
+		std::map<std::string, std::vector<float> > res;
 
-		for(layer_data_list::const_iterator it = data->data_list.begin(); it != data->data_list.end(); ++it)
-			res.push_back(std::vector<float>((*it)->size(), learning_rate));
+		std::vector<std::string> layer_names = data->data_list.get_data_layer_name_list();
+		for(std::vector<std::string>::const_iterator it = layer_names.begin(); it != layer_names.end(); ++it)
+		{
+			layer_data::ptr dt = data->data_list.get(*it);
+
+			res.insert(std::make_pair(*it, std::vector<float>(dt->size(), learning_rate)));
+		}
 
 		std::string comment = (boost::format("LR %|1$.5e|") % learning_rate).str();
 
 		return std::make_pair(res, comment);
 	}
 
-	void network_trainer_sgd::initialize_train(supervised_data_reader& reader)
+	void network_trainer_sgd::initialize_train(structured_data_bunch_reader& reader)
 	{
-		updater->set_input_configuration_specific(reader.get_input_configuration());
+		backprop->set_input_configuration_specific(reader.get_config_map());
 	}
 }

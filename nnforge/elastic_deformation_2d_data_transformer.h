@@ -21,14 +21,7 @@
 #include "nn_types.h"
 
 #include <opencv2/core/core.hpp>
-#include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
-
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
-#endif 
-
-#include <boost/asio/io_service.hpp>
 
 namespace nnforge
 {
@@ -38,48 +31,31 @@ namespace nnforge
 		elastic_deformation_2d_data_transformer(
 			float sigma, // >0
 			float alpha,
-			unsigned char border_value);
+			float border_value = 0.5F);
 
 		virtual ~elastic_deformation_2d_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-		virtual bool is_deterministic() const;
-
 	private:
-		class smooth_info
-		{
-		public:
-			smooth_info();
-
-			cv::Mat1f disp;
-			int ksize;
-			float sigma;
-			float alpha;
-			bool is_x;
-			bool is_ready;
-			boost::mutex is_ready_mutex;
-			boost::condition_variable is_ready_condition;
-		};
+		void smooth(
+			cv::Mat1f disp,
+			int ksize,
+			float sigma,
+			float alpha,
+			bool is_x);
 
 	protected:
 		float alpha;
 		float sigma;
-		unsigned char border_value;
+		float border_value;
 
 		random_generator gen;
+		boost::mutex gen_stream_mutex;
 		nnforge_uniform_real_distribution<float> displacement_distribution;
-
-	private:
-		boost::asio::io_service io_service;
-		boost::thread_group threadpool;
-		boost::asio::io_service::work work;
-
-		static void smooth_worker(nnforge_shared_ptr<smooth_info> info);
 	};
 }

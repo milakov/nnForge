@@ -18,42 +18,31 @@
 
 namespace nnforge
 {
-	// {55B9D9C0-3FB5-464B-9C06-49D0EC9F4249}
-	const boost::uuids::uuid absolute_layer::layer_guid =
-		{ 0x55, 0xb9, 0xd9, 0xc0
-		, 0x3f, 0xb5
-		, 0x46, 0x4b
-		, 0x9c, 0x06
-		, 0x49, 0xd0, 0xec, 0x9f, 0x42, 0x49 };
-
 	const std::string absolute_layer::layer_type_name = "Absolute";
 
 	absolute_layer::absolute_layer()
 	{
 	}
 
-	const boost::uuids::uuid& absolute_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& absolute_layer::get_type_name() const
+	std::string absolute_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr absolute_layer::clone() const
+	layer::ptr absolute_layer::clone() const
 	{
-		return layer_smart_ptr(new absolute_layer(*this));
+		return layer::ptr(new absolute_layer(*this));
 	}
 
-	float absolute_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float absolute_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count());
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count());
 	}
 
-	float absolute_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float absolute_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
-		return static_cast<float>(input_configuration_specific.get_neuron_count());
+		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count());
 	}
 }

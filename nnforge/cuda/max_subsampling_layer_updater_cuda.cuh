@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -180,6 +180,7 @@ namespace nnforge
 			}
 		}
 
+		template<bool add_update_to_destination>
 		__global__ void max_subsampling_backprop_upd_kernel(
 			float * __restrict input_erros,
 			const int * __restrict max_positions,
@@ -188,7 +189,12 @@ namespace nnforge
 		{
 			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
 			if (elem_id < elem_count)
-				input_erros[max_positions[elem_id]] = output_errors[elem_id];
+			{
+				if (add_update_to_destination)
+					input_erros[max_positions[elem_id]] += output_errors[elem_id];
+				else
+					input_erros[max_positions[elem_id]] = output_errors[elem_id];
+			}
 		}
 
 		template<int dimension_count>
@@ -203,26 +209,21 @@ namespace nnforge
 			{
 			}
 
-			virtual void enqueue_test(
-				unsigned int offset_input_entry_id,
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic)
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
+				unsigned int entry_count)
 			{
-				if (offset_input_entry_id > 0)
-					throw neural_network_exception("max_subsampling_layer_updater_cuda is not able to run using offset");
-
-				const float * input = *input_neurons_buffer;
-				float * output = *output_neurons_buffer;
-				int * max_positions = (int *)((void *)(*additional_buffers[0]));
-				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*additional_buffers[1]);
+				int * max_positions = (int *)((void *)(*temporary_per_entry_buffer));
+				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*persistent_working_data[0]);
 
 				int feature_map_block_count = (output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE;
 
@@ -237,55 +238,66 @@ namespace nnforge
 				int smem_size = threadblock_size * (sizeof(float) + sizeof(int)) * FEATURE_MAP_BLOCK_SIZE;
 
 				max_subsampling_upd_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-					output,
+					*output_buffer,
 					max_positions,
-					input,
+					*input_buffers[0],
 					packed_config_list,
 					subsampling_sizes,
 					input_sizes,
 					output_sizes,
-					input_elem_count_per_feature_map,
+					input_elem_count_per_feature_map_list[0],
 					output_elem_count_per_feature_map,
 					output_configuration_specific.feature_map_count,
 					entry_count,
 					forward_packed_config_count);
 			}
 
-			virtual void enqueue_backprop(
+			virtual void enqueue_backward_data_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic)
+				unsigned int input_index,
+				cuda_linear_buffer_device::ptr input_errors_buffer,
+				cuda_linear_buffer_device::const_ptr output_errors_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+				cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+				bool add_update_to_destination,
+				unsigned int entry_count)
 			{
-				cuda_util::set_with_value(
-					*cuda_config,
-					*input_errors_buffer,
-					0.0F,
-					input_elem_count_per_entry * entry_count,
-					stream_id);
+				if (!add_update_to_destination)
+				{
+					cuda_util::set_with_value(
+						*cuda_config,
+						*input_errors_buffer,
+						0.0F,
+						input_elem_count_per_entry_list[0] * entry_count,
+						stream_id);
+				}
 
-				const float * output_errors = *output_errors_buffer;
-				float * input_errors = *input_errors_buffer;
-				const int * max_positions = (const int *)((const void *)(*additional_buffers[0]));
+				const int * max_positions = (const int *)((const void *)(*temporary_per_entry_buffer));
 
 				int elem_count = output_elem_count_per_entry * entry_count;
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
 					elem_count);
 
-				max_subsampling_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-					input_errors,
-					max_positions,
-					output_errors,
-					elem_count);
+				if (add_update_to_destination)
+					max_subsampling_backprop_upd_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+						*input_errors_buffer,
+						max_positions,
+						*output_errors_buffer,
+						elem_count);
+				else
+					max_subsampling_backprop_upd_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+						*input_errors_buffer,
+						max_positions,
+						*output_errors_buffer,
+						elem_count);
 			}
 
 		protected:
@@ -298,7 +310,7 @@ namespace nnforge
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = layer_derived->subsampling_sizes[i];
-					input_sizes[i] = input_configuration_specific.dimension_sizes[i];
+					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 				}
 
@@ -307,18 +319,19 @@ namespace nnforge
 					forward_packed_config_count *= output_sizes[i];
 			}
 
-			virtual bool is_in_place_backprop() const
+			bool is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
 			{
 				return false;
 			}
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const
+			bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
 			{
-				std::vector<size_t> res;
+				return false;
+			}
 
-				res.push_back(output_elem_count_per_entry * sizeof(float));
-
-				return res;
+			virtual size_t get_temporary_per_entry_buffer_size() const
+			{
+				return output_elem_count_per_entry * sizeof(int);
 			}
 
 			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const
@@ -330,8 +343,10 @@ namespace nnforge
 				return res;
 			}
 
-			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_persistent_working_data() const
 			{
+				std::vector<cuda_linear_buffer_device::const_ptr> res;
+
 				std::vector<packed_config<forward_dimension_count> > task_list;
 				{
 					nnforge_array<int, dimension_count> size_list;
@@ -352,7 +367,10 @@ namespace nnforge
 						}
 					}
 				}
-				cuda_safe_call(cudaMemcpy(*additional_buffers[1], &(*task_list.begin()), sizeof(packed_config<forward_dimension_count>) * task_list.size(), cudaMemcpyHostToDevice));
+
+				res.push_back(cuda_linear_buffer_device::const_ptr(new cuda_linear_buffer_device(&task_list[0], sizeof(packed_config<forward_dimension_count>) * task_list.size())));
+
+				return res;
 			}
 
 		private:

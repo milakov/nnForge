@@ -17,7 +17,6 @@
 #include "parametric_rectified_linear_layer_updater_schema.h"
 
 #include "../parametric_rectified_linear_layer.h"
-
 #include "parametric_rectified_linear_layer_updater_cuda.h"
 
 namespace nnforge
@@ -32,21 +31,21 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr parametric_rectified_linear_layer_updater_schema::create_specific() const
+		layer_updater_schema::ptr parametric_rectified_linear_layer_updater_schema::create_specific() const
 		{
-			return layer_updater_schema_smart_ptr(new parametric_rectified_linear_layer_updater_schema());
+			return layer_updater_schema::ptr(new parametric_rectified_linear_layer_updater_schema());
 		}
 
-		const boost::uuids::uuid& parametric_rectified_linear_layer_updater_schema::get_uuid() const
+		std::string parametric_rectified_linear_layer_updater_schema::get_type_name() const
 		{
-			return parametric_rectified_linear_layer::layer_guid;
+			return parametric_rectified_linear_layer::layer_type_name;
 		}
 
-		layer_updater_cuda_smart_ptr parametric_rectified_linear_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr parametric_rectified_linear_layer_updater_schema::create_updater_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_updater_cuda_smart_ptr(new parametric_rectified_linear_layer_updater_cuda());
+			return layer_updater_cuda::ptr(new parametric_rectified_linear_layer_updater_cuda());
 		}
 	}
 }

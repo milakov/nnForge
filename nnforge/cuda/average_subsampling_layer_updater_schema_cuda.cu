@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,36 +36,36 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr average_subsampling_layer_updater_schema::create_specific() const
+		layer_updater_schema::ptr average_subsampling_layer_updater_schema::create_specific() const
 		{
-			return layer_updater_schema_smart_ptr(new average_subsampling_layer_updater_schema());
+			return layer_updater_schema::ptr(new average_subsampling_layer_updater_schema());
 		}
 
-		const boost::uuids::uuid& average_subsampling_layer_updater_schema::get_uuid() const
+		std::string average_subsampling_layer_updater_schema::get_type_name() const
 		{
-			return average_subsampling_layer::layer_guid;
+			return average_subsampling_layer::layer_type_name;
 		}
 
-		layer_updater_cuda_smart_ptr average_subsampling_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr average_subsampling_layer_updater_schema::create_updater_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			layer_updater_cuda_smart_ptr res;
+			layer_updater_cuda::ptr res;
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
 				case 1:
-					res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda<1>());
+					res = layer_updater_cuda::ptr(new average_subsampling_layer_updater_cuda<1>());
 					break;
 				case 2:
-					res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda<2>());
-					//res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_cudnn_updater_cuda());
+					res = layer_updater_cuda::ptr(new average_subsampling_layer_updater_cuda<2>());
+					//res = layer_updater_cuda::ptr(new average_subsampling_layer_cudnn_updater_cuda());
 					break;
 				case 3:
-					res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda<3>());
+					res = layer_updater_cuda::ptr(new average_subsampling_layer_updater_cuda<3>());
 					break;
 				case 4:
-					res = layer_updater_cuda_smart_ptr(new average_subsampling_layer_updater_cuda<4>());
+					res = layer_updater_cuda::ptr(new average_subsampling_layer_updater_cuda<4>());
 					break;
 				default:
 					throw neural_network_exception((boost::format("No CUDA updater for the average subsampling of %1% dimensions") % output_configuration_specific.dimension_sizes.size()).str());

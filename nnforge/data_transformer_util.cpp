@@ -62,7 +62,7 @@ namespace nnforge
 		float stretch_angle_in_degrees,
 		float perspective_view_distance,
 		float perspective_view_angle,
-		unsigned char border_value)
+		float border_value)
 	{
 		cv::Mat stretch_full_mat(3, 3, CV_64FC1);
 		stretch_full_mat.at<double>(2, 0) = 0.0;
@@ -174,17 +174,22 @@ namespace nnforge
 	}
 
 	void data_transformer_util::change_brightness_and_contrast(
-		cv::Mat image,
+		cv::Mat dest_image,
+		const cv::Mat image,
 		float contrast,
 		float brightness)
 	{
 		if ((contrast != 1.0F) || (brightness != 0.0F))
 		{
 			image.convertTo(
-				image,
+				dest_image,
 				-1,
 				static_cast<double>(contrast),
 				static_cast<double>(brightness));
+		}
+		else
+		{
+			image.copyTo(dest_image);
 		}
 	}
 
@@ -210,6 +215,34 @@ namespace nnforge
 		}
 		
 		cv::flip(image, image, flip_code);
+	}
+
+	void data_transformer_util::flip(
+		cv::Mat dest_image,
+		const cv::Mat image,
+		bool flip_around_x_axis,
+		bool flip_around_y_axis)
+	{
+		int flip_code;
+		if (flip_around_x_axis)
+		{
+			if (flip_around_y_axis)
+				flip_code = -1;
+			else
+				flip_code = 0;
+		}
+		else
+		{
+			if (flip_around_y_axis)
+				flip_code = 1;
+			else
+			{
+				image.copyTo(dest_image);
+				return;
+			}
+		}
+		
+		cv::flip(image, dest_image, flip_code);
 	}
 
 	void data_transformer_util::rotate_band(

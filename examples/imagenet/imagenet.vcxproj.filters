@@ -23,9 +23,21 @@
     <ClCompile Include="imagenet_toolset.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="training_imagenet_raw_to_structured_data_transformer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="validating_imagenet_raw_to_structured_data_transformer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imagenet_toolset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="training_imagenet_raw_to_structured_data_transformer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="validating_imagenet_raw_to_structured_data_transformer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -33,12 +45,16 @@
     <None Include="config.cfg">
       <Filter>Config Files</Filter>
     </None>
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="working_data\schema.txt">
       <Filter>Working Data</Filter>
     </Text>
     <Text Include="working_data\schema_large.txt">
+      <Filter>Working Data</Filter>
+    </Text>
+    <Text Include="working_data\schema_tail.txt">
       <Filter>Working Data</Filter>
     </Text>
   </ItemGroup>

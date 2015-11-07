@@ -16,12 +16,15 @@
 
 #include "imagenet_toolset.h"
 
-#include <nnforge/supervised_transformed_input_data_reader.h>
-
 #include <algorithm>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <regex>
+
+#include <nnforge/rnd.h>
+
+#include "training_imagenet_raw_to_structured_data_transformer.h"
+#include "validating_imagenet_raw_to_structured_data_transformer.h"
 
 const char * imagenet_toolset::cls_class_info_filename = "cls_class_info.txt";
 const char * imagenet_toolset::training_images_folder_name = "ILSVRC2012_img_train";
@@ -37,19 +40,14 @@ const float imagenet_toolset::max_brightness_shift = 0.0F;//0.05F;
 const float imagenet_toolset::max_color_shift = 0.15F;
 
 const unsigned int imagenet_toolset::class_count = 1000;
-const unsigned int imagenet_toolset::training_image_width = 224;
-const unsigned int imagenet_toolset::training_image_height = 224;
-const unsigned int imagenet_toolset::training_image_original_width = 256;
-const unsigned int imagenet_toolset::training_image_original_height = 256;
+const unsigned int imagenet_toolset::training_min_image_size = 256;
+const unsigned int imagenet_toolset::training_max_image_size = 256;//512;
+const unsigned int imagenet_toolset::training_target_image_width = 224;
+const unsigned int imagenet_toolset::training_target_image_height = 224;
+const unsigned int imagenet_toolset::validating_image_size = 256;//384;
 
-const unsigned int imagenet_toolset::enrich_validation_report_frequency = 500;
-const unsigned int imagenet_toolset::overlapping_samples_x = 4;
-const unsigned int imagenet_toolset::overlapping_samples_y = 4;
-const float imagenet_toolset::sample_coverage_x = 1.0F;
-const float imagenet_toolset::sample_coverage_y = 1.0F;
-
-imagenet_toolset::imagenet_toolset(nnforge::factory_generator_smart_ptr factory)
-	: nnforge::neural_network_toolset(factory)
+imagenet_toolset::imagenet_toolset(nnforge::factory_generator::ptr factory)
+	: nnforge::toolset(factory)
 {
 }
 
@@ -57,128 +55,11 @@ imagenet_toolset::~imagenet_toolset()
 {
 }
 
-nnforge::const_error_function_smart_ptr imagenet_toolset::get_error_function() const
-{
-	return nnforge::const_error_function_smart_ptr(new nnforge::negative_log_likelihood_error_function());
-}
-
 void imagenet_toolset::prepare_training_data()
 {
 	prepare_true_randomized_training_data();
 
 	prepare_validating_data();
-}
-
-void imagenet_toolset::prepare_randomized_training_data()
-{
-	boost::filesystem::path training_images_folder_path = get_input_data_folder() / training_images_folder_name;
-	unsigned int total_training_image_count = 0;
-	std::cout << "Enumerating training images from " + training_images_folder_path.string() << "..." << std::endl;
-	std::map<std::string, std::vector<unsigned int> > ilsvrc2014id_to_localid_list_map;
-	{
-		nnforge_regex folder_expression(ilsvrc2014id_pattern);
-		nnforge_regex file_expression(training_image_filename_pattern);
-		nnforge_cmatch what;
-		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(training_images_folder_path); it != boost::filesystem::directory_iterator(); ++it)
-		{
-			if (it->status().type() == boost::filesystem::directory_file)
-			{
-				boost::filesystem::path folder_path = it->path();
-				std::string folder_name = folder_path.filename().string();
-				if (nnforge_regex_match(folder_name, folder_expression))
-				{
-					const std::string& ilsvrc2014id = folder_name;
-					unsigned int class_id = get_classid_by_wnid(get_wnid_by_ilsvrc2014id(ilsvrc2014id));
-					std::vector<unsigned int>& localid_list =  ilsvrc2014id_to_localid_list_map.insert(std::make_pair(ilsvrc2014id, std::vector<unsigned int>())).first->second;
-					for(boost::filesystem::directory_iterator it2 = boost::filesystem::directory_iterator(folder_path); it2 != boost::filesystem::directory_iterator(); ++it2)
-					{
-						if (it2->status().type() == boost::filesystem::regular_file)
-						{
-							boost::filesystem::path file_path = it2->path();
-							std::string file_name = file_path.filename().string();
-							if (nnforge_regex_search(file_name.c_str(), what, file_expression))
-							{
-								std::string ilsvrc2014id2 = std::string(what[1].first, what[1].second);
-								int localid = atol(std::string(what[2].first, what[2].second).c_str());
-								localid_list.push_back(localid);
-								++total_training_image_count;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	std::cout << total_training_image_count << " training images found\n";
-	std::map<std::string, std::pair<unsigned int, float> > ilsvrc2014id_to_localid_count_and_remaining_ratio_map;
-	for(std::map<std::string, std::vector<unsigned int> >::iterator it = ilsvrc2014id_to_localid_list_map.begin(); it != ilsvrc2014id_to_localid_list_map.end(); ++it)
-		ilsvrc2014id_to_localid_count_and_remaining_ratio_map.insert(std::make_pair(it->first, std::make_pair(it->second.size(), it->second.size() > 0 ? 1.0F : 0.0F)));
-	nnforge::random_generator rnd;
-
-	nnforge::varying_data_stream_writer_smart_ptr training_data_writer;
-	{
-		boost::filesystem::path training_file_path = get_working_data_folder() / training_randomized_data_filename;
-		std::cout << "Writing randomized training data to " << training_file_path.string() << "..." << std::endl;
-		nnforge_shared_ptr<std::ofstream> training_file(new boost::filesystem::ofstream(training_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
-		training_data_writer = nnforge::varying_data_stream_writer_smart_ptr(new nnforge::varying_data_stream_writer(
-			training_file,
-			total_training_image_count));
-	}
-
-	std::vector<std::string> best_ilsvrc2014id_list;
-	for(unsigned int entry_to_write_count = 0; entry_to_write_count < total_training_image_count; ++entry_to_write_count)
-	{
-		if (best_ilsvrc2014id_list.empty())
-		{
-			float best_ratio = -1.0F;
-			for(std::map<std::string, std::pair<unsigned int, float> >::const_iterator it = ilsvrc2014id_to_localid_count_and_remaining_ratio_map.begin(); it != ilsvrc2014id_to_localid_count_and_remaining_ratio_map.end(); ++it)
-			{
-				float new_ratio = it->second.second;
-				if (new_ratio > best_ratio)
-				{
-					best_ilsvrc2014id_list.clear();
-					best_ilsvrc2014id_list.push_back(it->first);
-					best_ratio = new_ratio;
-				}
-				else if (new_ratio == best_ratio)
-					best_ilsvrc2014id_list.push_back(it->first);
-			}
-		}
-
-		std::string best_ilsvrc2014id;
-		{
-			nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(best_ilsvrc2014id_list.size()) - 1);
-			unsigned int index = dist(rnd);
-			best_ilsvrc2014id = best_ilsvrc2014id_list[index];
-			best_ilsvrc2014id_list[index] = best_ilsvrc2014id_list.back();
-			best_ilsvrc2014id_list.pop_back();
-		}
-
-		std::map<std::string, std::vector<unsigned int> >::iterator bucket_it = ilsvrc2014id_to_localid_list_map.find(best_ilsvrc2014id);
-		std::vector<unsigned int>& localid_list = bucket_it->second;
-		if (localid_list.empty())
-			throw std::runtime_error("Unexpected error in prepare_training_data: No elements left");
-
-		nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(localid_list.size()) - 1);
-
-		unsigned int index = dist(rnd);
-		unsigned int local_id = localid_list[index];
-		unsigned int leftover_local_id = localid_list[localid_list.size() - 1];
-		localid_list[index] = leftover_local_id;
-		localid_list.pop_back();
-		std::map<std::string, std::pair<unsigned int, float> >::iterator it = ilsvrc2014id_to_localid_count_and_remaining_ratio_map.find(best_ilsvrc2014id);
-		it->second.second = static_cast<float>(localid_list.size()) / static_cast<float>(it->second.first);
-
-		std::string filename = (boost::format("%1%_%2%.JPEG") % best_ilsvrc2014id % local_id).str();
-		boost::filesystem::path image_file_path = training_images_folder_path / best_ilsvrc2014id / filename;
-		int class_id = get_classid_by_wnid(get_wnid_by_ilsvrc2014id(best_ilsvrc2014id));
-
-		write_supervised_data(image_file_path, *training_data_writer, class_id);
-
-		if (((entry_to_write_count + 1) % 100000) == 0)
-			std::cout << (entry_to_write_count + 1) << " entries written" << std::endl;
-	}
-	std::cout << total_training_image_count << " entries written" << std::endl;
 }
 
 void imagenet_toolset::prepare_true_randomized_training_data()
@@ -220,23 +101,30 @@ void imagenet_toolset::prepare_true_randomized_training_data()
 	unsigned int total_training_image_count = static_cast<unsigned int>(ilsvrc2014id_localid_pair_list.size());
 	std::cout << "Training images found: " << total_training_image_count << std::endl;
 
-	nnforge::random_generator rnd;
+	nnforge::random_generator gen = nnforge::rnd::get_random_generator();
 
-	nnforge::varying_data_stream_writer_smart_ptr training_data_writer;
+	nnforge::varying_data_stream_writer::ptr training_images_data_writer;
 	{
-		boost::filesystem::path training_file_path = get_working_data_folder() / training_randomized_data_filename;
-		std::cout << "Writing randomized training data to " << training_file_path.string() << "..." << std::endl;
-		nnforge_shared_ptr<std::ofstream> training_file(new boost::filesystem::ofstream(training_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
-		training_data_writer = nnforge::varying_data_stream_writer_smart_ptr(new nnforge::varying_data_stream_writer(
-			training_file,
-			static_cast<unsigned int>(ilsvrc2014id_localid_pair_list.size())));
+		boost::filesystem::path training_images_file_path = get_working_data_folder() / "training_images.dt";
+		std::cout << "Writing randomized training data (images) to " << training_images_file_path.string() << "..." << std::endl;
+		nnforge_shared_ptr<std::ofstream> training_images_file_stream(new boost::filesystem::ofstream(training_images_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		training_images_data_writer = nnforge::varying_data_stream_writer::ptr(new nnforge::varying_data_stream_writer(training_images_file_stream));
+	}
+
+	nnforge::structured_data_writer::ptr training_labels_data_writer;
+	{
+		boost::filesystem::path training_labels_file_path = get_working_data_folder() / "training_labels.dt";
+		std::cout << "Writing randomized training data (labels) to " << training_labels_file_path.string() << "..." << std::endl;
+		nnforge_shared_ptr<std::ofstream> training_labels_file_stream(new boost::filesystem::ofstream(training_labels_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge::layer_configuration_specific config(class_count, std::vector<unsigned int>(2, 1));
+		training_labels_data_writer = nnforge::structured_data_writer::ptr(new nnforge::structured_data_stream_writer(training_labels_file_stream, config));
 	}
 
 	for(unsigned int entry_written_count = 0; entry_written_count < total_training_image_count; ++entry_written_count)
 	{
 		nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(ilsvrc2014id_localid_pair_list.size()) - 1);
+		unsigned int index = dist(gen);
 
-		unsigned int index = dist(rnd);
 		std::pair<std::string, unsigned int> ilsvrc2014id_localid_pair = ilsvrc2014id_localid_pair_list[index];
 		ilsvrc2014id_localid_pair_list[index] = ilsvrc2014id_localid_pair_list[ilsvrc2014id_localid_pair_list.size() - 1];
 		ilsvrc2014id_localid_pair_list.pop_back();
@@ -245,9 +133,13 @@ void imagenet_toolset::prepare_true_randomized_training_data()
 		boost::filesystem::path image_file_path = training_images_folder_path / ilsvrc2014id_localid_pair.first / filename;
 		int class_id = get_classid_by_wnid(get_wnid_by_ilsvrc2014id(ilsvrc2014id_localid_pair.first));
 
-		write_supervised_data(image_file_path, *training_data_writer, class_id);
+		write_supervised_data(
+			image_file_path,
+			*training_images_data_writer,
+			class_id,
+			*training_labels_data_writer);
 
-		if (((entry_written_count + 1) % 100000) == 0)
+		if (((entry_written_count + 1) % 50000) == 0)
 			std::cout << (entry_written_count + 1) << " entries written" << std::endl;
 	}
 	std::cout << total_training_image_count << " entries written" << std::endl;
@@ -276,14 +168,21 @@ void imagenet_toolset::prepare_validating_data()
 	}
 	std::cout << classid_list.size() << " labels read\n";
 
-	nnforge::varying_data_stream_writer_smart_ptr validating_data_writer;
+	nnforge::varying_data_stream_writer::ptr validating_images_data_writer;
 	{
-		boost::filesystem::path validating_file_path = get_working_data_folder() / validating_data_filename;
-		std::cout << "Writing validating data to " << validating_file_path.string() << "..." << std::endl;
-		nnforge_shared_ptr<std::ofstream> validating_file(new boost::filesystem::ofstream(validating_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
-		validating_data_writer = nnforge::varying_data_stream_writer_smart_ptr(new nnforge::varying_data_stream_writer(
-			validating_file,
-			static_cast<unsigned int>(classid_list.size())));
+		boost::filesystem::path validating_images_file_path = get_working_data_folder() / "validating_images.dt";
+		std::cout << "Writing validating data (images) to " << validating_images_file_path.string() << "..." << std::endl;
+		nnforge_shared_ptr<std::ofstream> validating_images_file_stream(new boost::filesystem::ofstream(validating_images_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		validating_images_data_writer = nnforge::varying_data_stream_writer::ptr(new nnforge::varying_data_stream_writer(validating_images_file_stream));
+	}
+
+	nnforge::structured_data_writer::ptr validating_labels_data_writer;
+	{
+		boost::filesystem::path validating_labels_file_path = get_working_data_folder() / "validating_labels.dt";
+		std::cout << "Writing validating data (labels) to " << validating_labels_file_path.string() << "..." << std::endl;
+		nnforge_shared_ptr<std::ofstream> validating_labels_file_stream(new boost::filesystem::ofstream(validating_labels_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		nnforge::layer_configuration_specific config(class_count, std::vector<unsigned int>(2, 1));
+		validating_labels_data_writer = nnforge::structured_data_writer::ptr(new nnforge::structured_data_stream_writer(validating_labels_file_stream, config));
 	}
 
 	boost::filesystem::path validating_images_folder_path = get_input_data_folder() / validating_images_folder_name;
@@ -293,62 +192,48 @@ void imagenet_toolset::prepare_validating_data()
 		unsigned int image_id = i + 1;
 		boost::filesystem::path image_file_path = validating_images_folder_path / (boost::format("ILSVRC2012_val_%|1$08d|.JPEG") % image_id).str();
 
-		write_supervised_data(image_file_path, *validating_data_writer, class_id);
+		write_supervised_data(
+			image_file_path,
+			*validating_images_data_writer,
+			class_id,
+			*validating_labels_data_writer);
 	}
 	std::cout << classid_list.size() << " entries written" << std::endl;
 }
 
-void imagenet_toolset::prepare_testing_data()
-{
-}
-
 void imagenet_toolset::write_supervised_data(
 	const boost::filesystem::path& image_file_path,
-	nnforge::varying_data_stream_writer& writer,
-	unsigned int class_id)
+	nnforge::varying_data_stream_writer& image_writer,
+	unsigned int class_id,
+	nnforge::structured_data_writer& label_writer)
 {
 	uintmax_t file_size = boost::filesystem::file_size(image_file_path);
-	std::vector<unsigned char> image_content(file_size + sizeof(unsigned int));
+	std::vector<unsigned char> image_content(file_size);
 	{
 		boost::filesystem::ifstream in(image_file_path, std::ios::binary);
 		if (!in.read(reinterpret_cast<char *>(&(*image_content.begin())), file_size))
 			throw std::runtime_error((boost::format("Error reading file %1%") % image_file_path.string()).str());
 	}
-	unsigned char * class_id_ptr = reinterpret_cast<unsigned char *>(&class_id);
-	std::copy(class_id_ptr, class_id_ptr + sizeof(unsigned int), image_content.begin() + file_size);
-	writer.raw_write(&(*image_content.begin()), image_content.size());
+	image_writer.raw_write(&(*image_content.begin()), image_content.size());
+
+	std::vector<float> labels(class_count, 0.0F);
+	labels[class_id] = 1.0F;
+	label_writer.write(&labels[0]);
 }
 
 bool imagenet_toolset::is_training_with_validation() const
 {
 	return true;
 }
-
+/*
 std::vector<nnforge::data_transformer_smart_ptr> imagenet_toolset::get_input_data_transformer_list_for_training() const
 {
 	std::vector<nnforge::data_transformer_smart_ptr> res;
 	
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::intensity_2d_data_transformer(
-		max_contrast_factor,
-		max_brightness_shift)));
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::distort_2d_data_transformer(
-		0.0F,
-		1.0F,
-		0.0F,
-		0.0F,
-		0.0F,
-		0.0F,
-		false,
-		true,
-		1.0F,
-		std::numeric_limits<float>::max())));
 		
 	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::convert_data_type_transformer()));
 	res.push_back(get_input_data_normalize_transformer());
 
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::uniform_intensity_data_transformer(
-		std::vector<float>(3, -max_color_shift),
-		std::vector<float>(3, max_color_shift))));
 
 	return res;
 }
@@ -383,7 +268,7 @@ void imagenet_toolset::run_test_with_unsupervised_data(const nnforge::output_neu
 {
 
 }
-
+*/
 unsigned int imagenet_toolset::get_classid_by_wnid(unsigned int wnid) const
 {
 	return wnid - 1;
@@ -444,50 +329,7 @@ void imagenet_toolset::load_cls_class_info()
 		throw std::runtime_error((boost::format("No class info loaded from %1%") % cls_class_info_filepath.string()).str());
 }
 
-nnforge::supervised_data_reader_smart_ptr imagenet_toolset::get_initial_data_reader_for_normalizing() const
-{
-	nnforge_shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::in | std::ios_base::binary));
-	nnforge::supervised_data_reader_smart_ptr current_reader(new nnforge::supervised_random_image_data_stream_reader(
-		training_data_stream,
-		training_image_original_width,
-		training_image_original_height,
-		training_image_width,
-		training_image_height,
-		class_count,
-		true,
-		true));
-	current_reader = nnforge::supervised_data_reader_smart_ptr(new nnforge::supervised_transformed_input_data_reader(current_reader, nnforge::data_transformer_smart_ptr(new nnforge::convert_data_type_transformer())));
-	return current_reader;
-}
-
-nnforge::supervised_data_reader_smart_ptr imagenet_toolset::get_initial_data_reader_for_training(bool force_deterministic) const
-{
-	nnforge_shared_ptr<std::istream> training_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / training_randomized_data_filename, std::ios_base::in | std::ios_base::binary));
-
-	nnforge::supervised_data_reader_smart_ptr res(new nnforge::supervised_random_image_data_stream_reader(
-		training_data_stream,
-		training_image_original_width,
-		training_image_original_height,
-		training_image_width,
-		training_image_height,
-		class_count,
-		true,
-		force_deterministic));
-
-	return res;
-}
-
-nnforge::supervised_data_reader_smart_ptr imagenet_toolset::get_initial_data_reader_for_validating() const
-{
-	nnforge_shared_ptr<std::istream> validating_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / validating_data_filename, std::ios_base::in | std::ios_base::binary));
-	return get_validating_reader(validating_data_stream, rich_inference);
-}
-
-unsigned int imagenet_toolset::get_classifier_visualizer_top_n() const
-{
-	return 5;
-}
-
+/*
 std::vector<nnforge::network_data_pusher_smart_ptr> imagenet_toolset::get_validators_for_training(nnforge::network_schema_smart_ptr schema)
 {
 	std::vector<nnforge::network_data_pusher_smart_ptr> res = neural_network_toolset::get_validators_for_training(schema);
@@ -578,12 +420,117 @@ nnforge::supervised_data_reader_smart_ptr imagenet_toolset::get_validating_reade
 
 	return res;
 }
+*/
 
 std::vector<nnforge::bool_option> imagenet_toolset::get_bool_options()
 {
-	std::vector<nnforge::bool_option> res;
+	std::vector<nnforge::bool_option> res = toolset::get_bool_options();
 
-	res.push_back(nnforge::bool_option("rich_inference", &rich_inference, false, "Run multiple samples for each entry and average results"));
+	res.push_back(nnforge::bool_option("rich_inference", &rich_inference, false, "Run multiple samples for each entry"));
+
+	return res;
+}
+
+std::vector<nnforge::int_option> imagenet_toolset::get_int_options()
+{
+	std::vector<nnforge::int_option> res = toolset::get_int_options();
+
+	res.push_back(nnforge::int_option("samples_x", &samples_x, 4, "Run multiple samples (in x direction) for each entry"));
+	res.push_back(nnforge::int_option("samples_y", &samples_y, 4, "Run multiple samples (in y direction) for each entry"));
+
+	return res;
+}
+
+nnforge::structured_data_reader::ptr imagenet_toolset::get_structured_reader(
+	const std::string& dataset_name,
+	const std::string& layer_name,
+	nnforge_shared_ptr<std::istream> in) const
+{
+	if (layer_name == "images")
+	{
+		nnforge::raw_data_reader::ptr raw_reader(new nnforge::varying_data_stream_reader(in));
+		nnforge::raw_to_structured_data_transformer::ptr transformer;
+		if (dataset_name == "training")
+		{
+			transformer = nnforge::raw_to_structured_data_transformer::ptr(new training_imagenet_raw_to_structured_data_transformer(
+				training_min_image_size,
+				training_max_image_size,
+				training_target_image_width,
+				training_target_image_height));
+		}
+		else if (dataset_name == "validating")
+		{
+			std::vector<std::pair<float, float> > position_list;
+			if (rich_inference)
+			{
+				for(int sample_id_x = 0; sample_id_x < samples_x; ++sample_id_x)
+				{
+					float pos_x = 0.5F;
+					if (samples_x > 1)
+						pos_x = sample_id_x / static_cast<float>(samples_x - 1);
+
+					for(int sample_id_y = 0; sample_id_y < samples_y; ++sample_id_y)
+					{
+						float pos_y = 0.5F;
+						if (samples_y > 1)
+							pos_y = sample_id_y / static_cast<float>(samples_y - 1);
+
+						position_list.push_back(std::make_pair(pos_x, pos_y));
+					}
+				}
+			}
+			else
+			{
+				position_list.push_back(std::make_pair(0.5F, 0.5F));
+			}
+
+			transformer = nnforge::raw_to_structured_data_transformer::ptr(new validating_imagenet_raw_to_structured_data_transformer(
+				validating_image_size,
+				training_target_image_width,
+				training_target_image_height,
+				position_list));
+		}
+		return nnforge::structured_data_reader::ptr(new nnforge::structured_from_raw_data_reader(raw_reader, transformer));
+	}
+	else
+		return toolset::get_structured_reader(dataset_name, layer_name, in);
+}
+
+std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transformer_list(
+	const std::string& dataset_name,
+	const std::string& layer_name,
+	dataset_usage usage) const
+{
+	std::vector<nnforge::data_transformer::ptr> res;
+
+	if ((layer_name == "images") && (usage != dataset_usage_create_normalizer))
+	{
+		if (dataset_name == "training")
+		{
+			res.push_back(nnforge::data_transformer::ptr(new nnforge::distort_2d_data_transformer(
+				0.0F,
+				1.0F,
+				0.0F,
+				0.0F,
+				0.0F,
+				0.0F,
+				false,
+				true,
+				1.0F,
+				std::numeric_limits<float>::max())));
+			res.push_back(nnforge::data_transformer::ptr(new nnforge::intensity_2d_data_transformer(
+				max_contrast_factor,
+				max_brightness_shift)));
+			res.push_back(get_normalize_data_transformer(layer_name));
+			res.push_back(nnforge::data_transformer::ptr(new nnforge::uniform_intensity_data_transformer(
+				std::vector<float>(3, -max_color_shift),
+				std::vector<float>(3, max_color_shift))));
+		}
+		else if (dataset_name == "validating")
+		{
+			res.push_back(get_normalize_data_transformer(layer_name));
+		}
+	}
 
 	return res;
 }

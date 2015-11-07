@@ -37,9 +37,9 @@ int main(int argc, char* argv[])
 		#endif
 
 		#ifdef NNFORGE_CUDA_BACKEND_ENABLED
-		imagenet_toolset ts(nnforge::factory_generator_smart_ptr(new nnforge::cuda::factory_generator_cuda()));
+		imagenet_toolset ts(nnforge::factory_generator::ptr(new nnforge::cuda::factory_generator_cuda()));
 		#else
-		imagenet_toolset ts(nnforge::factory_generator_smart_ptr(new nnforge::plain::factory_generator_plain()));
+		imagenet_toolset ts(nnforge::factory_generator::ptr(new nnforge::plain::factory_generator_plain()));
 		#endif
 
 		try

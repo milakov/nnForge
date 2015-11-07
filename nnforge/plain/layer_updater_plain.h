@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,122 +16,161 @@
 
 #pragma once
 
-#include <memory>
-#include <boost/uuid/uuid.hpp>
-
 #include "../layer.h"
 #include "../nn_types.h"
+#include "../layer_action.h"
 
 #include "plain_running_configuration.h"
 #include "buffer_plain_size_configuration.h"
+#include "plain_buffer.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		typedef nnforge_shared_ptr<std::vector<float> > additional_buffer_smart_ptr;
-		typedef nnforge_shared_ptr<const std::vector<float> > const_additional_buffer_smart_ptr;
-		struct updater_additional_buffer_set
-		{
-			additional_buffer_smart_ptr output_neurons_buffer;
-			additional_buffer_smart_ptr input_errors_buffer;
-			std::vector<additional_buffer_smart_ptr> additional_buffers;
-		};
-
 		class layer_updater_plain
 		{
 		public:
+			typedef nnforge_shared_ptr<layer_updater_plain> ptr;
+			typedef nnforge_shared_ptr<const layer_updater_plain> const_ptr;
+
 			virtual ~layer_updater_plain();
 
-			virtual const boost::uuids::uuid& get_uuid() const = 0;
+			virtual std::string get_type_name() const = 0;
 
-			void update_buffer_configuration(
-				buffer_plain_size_configuration& buffer_configuration,
-				const_layer_smart_ptr layer_schema,
-				const layer_configuration_specific& input_configuration_specific,
+			virtual void run_forward_propagation(
+				plain_buffer::ptr output_buffer,
+				const std::vector<plain_buffer::const_ptr>& input_buffers,
+				plain_buffer::ptr temporary_working_fixed_buffer,
+				plain_buffer::ptr temporary_working_per_entry_buffer,
+				plain_buffer::ptr temporary_per_entry_buffer,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				layer_data::const_ptr data,
+				layer_data_custom::const_ptr data_custom,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific,
-				plain_running_configuration_const_smart_ptr plain_config,
-				bool backprop_required) const;
+				const std::set<layer_action>& actions,
+				unsigned int entry_count) const = 0;
 
-			void update_buffer_configuration(
-				buffer_plain_size_configuration& buffer_configuration,
-				const_layer_smart_ptr layer_schema,
-				const layer_configuration_specific& input_configuration_specific,
+			virtual void run_backward_data_propagation(
+				unsigned int input_index,
+				plain_buffer::ptr input_errors_buffer,
+				plain_buffer::const_ptr output_errors_buffer,
+				const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+				plain_buffer::const_ptr output_neurons_buffer,
+				plain_buffer::ptr temporary_working_fixed_buffer,
+				plain_buffer::ptr temporary_working_per_entry_buffer,
+				plain_buffer::ptr temporary_per_entry_buffer,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				layer_data::const_ptr data,
+				layer_data_custom::const_ptr data_custom,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific,
-				plain_running_configuration_const_smart_ptr plain_config,
-				bool backprop_required,
-				unsigned int updater_entry_count) const;
+				const bool add_update_to_destination,
+				const std::set<layer_action>& actions,
+				unsigned int entry_count) const;
 
-			updater_additional_buffer_set allocate_additional_buffers(
-				unsigned int updater_entry_count,
-				const_layer_smart_ptr layer_schema,
-				const layer_configuration_specific& input_configuration_specific,
+			virtual void run_backward_weights_propagation(
+				const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+				plain_buffer::const_ptr output_errors_buffer,
+				plain_buffer::ptr temporary_working_fixed_buffer,
+				plain_buffer::ptr temporary_working_per_entry_buffer,
+				plain_buffer::ptr temporary_per_entry_buffer,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				layer_data::ptr gradient,
+				layer_data_custom::const_ptr data_custom,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific,
-				plain_running_configuration_const_smart_ptr plain_config,
-				bool backprop_required) const;
+				const std::set<layer_action>& actions,
+				unsigned int entry_count) const;
 
-			virtual void test(
-				const_additional_buffer_smart_ptr input_buffer,
-				additional_buffer_smart_ptr output_buffer,
-				std::vector<additional_buffer_smart_ptr>& additional_buffers,
-				plain_running_configuration_const_smart_ptr plain_config,
-				const_layer_smart_ptr layer_schema,
-				const_layer_data_smart_ptr data,
-				const_layer_data_custom_smart_ptr data_custom,
-				const layer_configuration_specific& input_configuration_specific,
-				const layer_configuration_specific& output_configuration_specific,
-				unsigned int updater_count,
-				unsigned int offset_input_entry_id,
-				bool force_deterministic) const = 0;
+			// Default impl returns -1
+			virtual int get_input_index_layer_can_write(
+				const layer_action& action,
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
 
-			virtual void backprop(
-				additional_buffer_smart_ptr input_errors,
-				const_additional_buffer_smart_ptr input_neurons,
-				const_additional_buffer_smart_ptr output_errors,
-				const_additional_buffer_smart_ptr output_neurons,
-				std::vector<additional_buffer_smart_ptr>& additional_buffers,
-				plain_running_configuration_const_smart_ptr plain_config,
-				const_layer_smart_ptr layer_schema,
-				const_layer_data_smart_ptr data,
-				const_layer_data_custom_smart_ptr data_custom,
-				const layer_configuration_specific& input_configuration_specific,
-				const layer_configuration_specific& output_configuration_specific,
-				unsigned int updater_count,
-				bool force_deterministic) const = 0;
+			virtual size_t get_temporary_working_fixed_buffer_size(
+				const layer_action& action,
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
 
-			virtual void update_weights(
-				const_additional_buffer_smart_ptr input_neurons,
-				const_additional_buffer_smart_ptr output_errors,
-				std::vector<additional_buffer_smart_ptr>& additional_buffers,
-				layer_data_smart_ptr gradient,
-				const_layer_data_custom_smart_ptr data_custom,
-				plain_running_configuration_const_smart_ptr plain_config,
-				const_layer_smart_ptr layer_schema,
-				const layer_configuration_specific& input_configuration_specific,
-				const layer_configuration_specific& output_configuration_specific,
-				unsigned int updater_count,
-				unsigned int offset_input_entry_id,
-				bool force_deterministic) const;
+			virtual size_t get_temporary_working_per_entry_buffer_size(
+				const layer_action& action,
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
+
+			// Created when doing forward prop and used for backward prop
+			virtual size_t get_temporary_per_entry_buffer_size(
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
+
+			// Default impl returns true
+			virtual bool is_backward_data_dependent_on_input_buffer(
+				unsigned int action_input_index,
+				unsigned int data_input_index,
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
+
+			// Default impl returns true
+			virtual bool is_backward_data_dependent_on_output_buffer(
+				unsigned int action_input_index,
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
+
+			// Default impl returns get_temporary_per_entry_buffer_size() != 0
+			virtual bool is_backward_data_dependent_on_temporary_per_entry_buffer(
+				unsigned int action_input_index,
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
+
+			// Default impl returns true
+			virtual bool is_backward_weights_dependent_on_input_buffer(
+				unsigned int data_input_index,
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
+
+			// Default impl returns get_temporary_per_entry_buffer_size() != 0
+			virtual bool is_backward_weights_dependent_on_temporary_per_entry_buffer(
+				const std::set<layer_action>& actions,
+				plain_running_configuration::const_ptr plain_config,
+				layer::const_ptr layer_schema,
+				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+				const layer_configuration_specific& output_configuration_specific) const;
 
 		protected:
 			layer_updater_plain();
-
-			virtual bool is_in_place_backprop() const = 0;
-
-			virtual std::vector<std::pair<unsigned int, bool> > get_elem_count_and_per_entry_flag_additional_buffers(
-				const_layer_smart_ptr layer_schema,
-				const layer_configuration_specific& input_configuration_specific,
-				const layer_configuration_specific& output_configuration_specific,
-				plain_running_configuration_const_smart_ptr plain_config,
-				bool backprop_required) const;
 
 		private:
 			layer_updater_plain(const layer_updater_plain&);
 			layer_updater_plain& operator =(const layer_updater_plain&);
 		};
-
-		typedef nnforge_shared_ptr<layer_updater_plain> layer_updater_plain_smart_ptr;
-		typedef nnforge_shared_ptr<const layer_updater_plain> const_layer_updater_plain_smart_ptr;
-		typedef std::vector<const_layer_updater_plain_smart_ptr> const_layer_updater_plain_list;
 	}
 }

@@ -27,6 +27,8 @@ namespace nnforge
 		class cuda_event
 		{
 		public:
+			typedef nnforge_shared_ptr<cuda_event> ptr;
+
 			cuda_event();
 
 			virtual ~cuda_event();
@@ -34,13 +36,11 @@ namespace nnforge
 			operator cudaEvent_t ();
 
 		protected:
-			cudaEvent_t evnt;
+			cudaEvent_t event;
 
 		private:
 			cuda_event(const cuda_event&);
 			cuda_event& operator =(const cuda_event&);
 		};
-
-		typedef nnforge_shared_ptr<cuda_event> cuda_event_smart_ptr;
 	}
 }

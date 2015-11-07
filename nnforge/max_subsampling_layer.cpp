@@ -26,14 +26,6 @@
 
 namespace nnforge
 {
-	// {ACA81719-FBF9-4A3B-A24B-A0F2B9412772}
-	const boost::uuids::uuid max_subsampling_layer::layer_guid =
-		{ 0xac, 0xa8, 0x17, 0x19
-		, 0xfb, 0xf9
-		, 0x4a, 0x3b
-		, 0xa2, 0x4b
-		, 0xa0, 0xf2, 0xb9, 0x41, 0x27, 0x72 };
-
 	const std::string max_subsampling_layer::layer_type_name = "MaxSubsampling";
 
 	max_subsampling_layer::max_subsampling_layer(
@@ -57,82 +49,82 @@ namespace nnforge
 		}
 	}
 
-	const boost::uuids::uuid& max_subsampling_layer::get_uuid() const
-	{
-		return layer_guid;
-	}
-
-	const std::string& max_subsampling_layer::get_type_name() const
+	std::string max_subsampling_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer_smart_ptr max_subsampling_layer::clone() const
+	layer::ptr max_subsampling_layer::clone() const
 	{
-		return layer_smart_ptr(new max_subsampling_layer(*this));
+		return layer::ptr(new max_subsampling_layer(*this));
 	}
 
-	layer_configuration max_subsampling_layer::get_layer_configuration(const layer_configuration& input_configuration) const
+	layer_configuration max_subsampling_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
 	{
-		if ((input_configuration.dimension_count >= 0) && (input_configuration.dimension_count != static_cast<int>(subsampling_sizes.size())))
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration.dimension_count).str());
+		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(subsampling_sizes.size())))
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration_list[0].dimension_count).str());
 
-		return layer_configuration(input_configuration.feature_map_count, static_cast<int>(subsampling_sizes.size()));
+		return layer_configuration(input_configuration_list[0].feature_map_count, static_cast<int>(subsampling_sizes.size()));
 	}
 
-	layer_configuration_specific max_subsampling_layer::get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const
+	layer_configuration_specific max_subsampling_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		if (input_configuration_specific.get_dimension_count() != subsampling_sizes.size())
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration_specific.get_dimension_count()).str());
+		if (input_configuration_specific_list[0].get_dimension_count() != subsampling_sizes.size())
+			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration_specific_list[0].get_dimension_count()).str());
 
-		layer_configuration_specific res(input_configuration_specific.feature_map_count);
+		layer_configuration_specific res(input_configuration_specific_list[0].feature_map_count);
 
 		if (tiling)
 		{
 			for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
 			{
-				if (input_configuration_specific.dimension_sizes[i] < (subsampling_sizes[i] * 2 - 1))
-					throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) is smaller than subsampling size (%3%) * 2 - 1") % input_configuration_specific.dimension_sizes[i] % i % subsampling_sizes[i]).str());
+				if (input_configuration_specific_list[0].dimension_sizes[i] < (subsampling_sizes[i] * 2 - 1))
+					throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) is smaller than subsampling size (%3%) * 2 - 1") % input_configuration_specific_list[0].dimension_sizes[i] % i % subsampling_sizes[i]).str());
 
-				res.dimension_sizes.push_back((input_configuration_specific.dimension_sizes[i] - (subsampling_sizes[i] - 1))/ subsampling_sizes[i]);
+				res.dimension_sizes.push_back((input_configuration_specific_list[0].dimension_sizes[i] - (subsampling_sizes[i] - 1))/ subsampling_sizes[i]);
 			}
 		}
 		else
 		{
 			for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
 			{
-				if (input_configuration_specific.dimension_sizes[i] < subsampling_sizes[i])
-					throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) is smaller than subsampling size (%3%)") % input_configuration_specific.dimension_sizes[i] % i % subsampling_sizes[i]).str());
+				if (input_configuration_specific_list[0].dimension_sizes[i] < subsampling_sizes[i])
+					throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) is smaller than subsampling size (%3%)") % input_configuration_specific_list[0].dimension_sizes[i] % i % subsampling_sizes[i]).str());
 
-				res.dimension_sizes.push_back(input_configuration_specific.dimension_sizes[i] / subsampling_sizes[i]);
+				res.dimension_sizes.push_back(input_configuration_specific_list[0].dimension_sizes[i] / subsampling_sizes[i]);
 			}
 		}
 
 		return res;
 	}
 
-	layer_configuration_specific max_subsampling_layer::get_input_layer_configuration_specific(const layer_configuration_specific& output_configuration_specific) const
+	bool max_subsampling_layer::get_input_layer_configuration_specific(
+		layer_configuration_specific& input_configuration_specific,
+		const layer_configuration_specific& output_configuration_specific,
+		unsigned int input_layer_id) const
 	{
 		if (output_configuration_specific.get_dimension_count() != subsampling_sizes.size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output configuration (%2%) don't match") % subsampling_sizes.size() % output_configuration_specific.get_dimension_count()).str());
 
-		layer_configuration_specific res(output_configuration_specific.feature_map_count);
+		input_configuration_specific = layer_configuration_specific(output_configuration_specific.feature_map_count);
 
 		if (tiling)
 		{
 			for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
-				res.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] * subsampling_sizes[i] + (subsampling_sizes[i] - 1));
+				input_configuration_specific.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] * subsampling_sizes[i] + (subsampling_sizes[i] - 1));
 		}
 		else
 		{
 			for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
-				res.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] * subsampling_sizes[i]);
+				input_configuration_specific.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] * subsampling_sizes[i]);
 		}
 
-		return res;
+		return true;
 	}
 
-	std::vector<std::pair<unsigned int, unsigned int> > max_subsampling_layer::get_input_rectangle_borders(const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders) const
+	std::vector<std::pair<unsigned int, unsigned int> > max_subsampling_layer::get_input_rectangle_borders(
+		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
+		unsigned int input_layer_id) const
 	{
 		if (output_rectangle_borders.size() != subsampling_sizes.size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output borders (%2%) don't match") % subsampling_sizes.size() % output_rectangle_borders.size()).str());
@@ -143,13 +135,6 @@ namespace nnforge
 			res.push_back(std::make_pair(output_rectangle_borders[i].first * subsampling_sizes[i], output_rectangle_borders[i].second * subsampling_sizes[i] + (subsampling_sizes[i] - 1)));
 
 		return res;
-	}
-
-	void max_subsampling_layer::write(std::ostream& binary_stream_to_write_to) const
-	{
-		unsigned int dimension_count = static_cast<unsigned int>(subsampling_sizes.size());
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&dimension_count), sizeof(dimension_count));
-		binary_stream_to_write_to.write(reinterpret_cast<const char*>(&(*subsampling_sizes.begin())), sizeof(unsigned int) * dimension_count);
 	}
 
 	void max_subsampling_layer::write_proto(void * layer_proto) const
@@ -164,18 +149,6 @@ namespace nnforge
 
 		if (tiling)
 			param->set_tiling(true);
-	}
-
-	void max_subsampling_layer::read(
-		std::istream& binary_stream_to_read_from,
-		const boost::uuids::uuid& layer_read_guid)
-	{
-		unsigned int dimension_count;
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&dimension_count), sizeof(dimension_count));
-		subsampling_sizes.resize(dimension_count);
-		binary_stream_to_read_from.read(reinterpret_cast<char*>(&(*subsampling_sizes.begin())), sizeof(unsigned int) * dimension_count);
-
-		check();
 	}
 
 	void max_subsampling_layer::read_proto(const void * layer_proto)
@@ -195,9 +168,9 @@ namespace nnforge
 		check();
 	}
 
-	float max_subsampling_layer::get_forward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float max_subsampling_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific).get_neuron_count();
+		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
 		unsigned int per_item_flops = 1;
 		std::for_each(subsampling_sizes.begin(), subsampling_sizes.end(), per_item_flops *= boost::lambda::_1);
 		per_item_flops -= 1;
@@ -208,7 +181,9 @@ namespace nnforge
 		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 	}
 
-	float max_subsampling_layer::get_backward_flops(const layer_configuration_specific& input_configuration_specific) const
+	float max_subsampling_layer::get_backward_flops(
+		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		unsigned int input_layer_id) const
 	{
 		return static_cast<float>(0);
 	}

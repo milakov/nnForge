@@ -27,7 +27,6 @@ namespace nnforge
 	{
 	public:
 		network_data_peeker_random(
-			network_output_type::output_type network_type,
 			unsigned int max_network_data_count,
 			unsigned int base_index,
 			const std::vector<network_data_peek_entry>& leading_tasks);
@@ -36,7 +35,7 @@ namespace nnforge
 
 		// The method should return empty data smart pointer in case no more layer data are available
 		// The caller is free to modify the data returned
-		virtual network_data_peek_entry peek(network_schema_smart_ptr schema);
+		virtual network_data_peek_entry peek(network_schema::ptr schema);
 
 	protected:
 		unsigned int max_network_data_count;
@@ -45,7 +44,6 @@ namespace nnforge
 		unsigned int base_index;
 		random_generator gen;
 		network_data_initializer init;
-		network_output_type::output_type network_type;
 		std::vector<network_data_peek_entry> leading_tasks;
 	};
 }

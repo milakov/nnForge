@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 #include "layer_updater_plain.h"
 
+#include "../neural_network_exception.h"
+
 namespace nnforge
 {
 	namespace plain
@@ -28,117 +30,169 @@ namespace nnforge
 		{
 		}
 
-		void layer_updater_plain::update_buffer_configuration(
-			buffer_plain_size_configuration& buffer_configuration,
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
+		void layer_updater_plain::run_backward_data_propagation(
+			unsigned int input_index,
+			plain_buffer::ptr input_errors_buffer,
+			plain_buffer::const_ptr output_errors_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+			plain_buffer::const_ptr output_neurons_buffer,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
-			bool backprop_required) const
+			const bool add_update_to_destination,
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			std::vector<std::pair<unsigned int, bool> > buffer_sizes_per_entry_aligned = get_elem_count_and_per_entry_flag_additional_buffers(
-				layer_schema,
-				input_configuration_specific,
-				output_configuration_specific,
-				plain_config,
-				backprop_required);
-			for(std::vector<std::pair<unsigned int, bool> >::const_iterator it = buffer_sizes_per_entry_aligned.begin(); it != buffer_sizes_per_entry_aligned.end(); ++it)
-			{
-				size_t s = static_cast<size_t>(it->first) * sizeof(float);
-				if (it->second)
-					buffer_configuration.add_per_entry_buffer(s);
-				else
-					buffer_configuration.add_constant_buffer(s);
-			}
-
-			buffer_configuration.add_per_entry_buffer(output_configuration_specific.get_neuron_count() * sizeof(float));
-
-			if (backprop_required && !is_in_place_backprop())
-				buffer_configuration.add_per_entry_buffer(input_configuration_specific.get_neuron_count() * sizeof(float));
+			throw neural_network_exception((boost::format("run_backward_data_propagation is not implemented for layer %1%") % layer_schema->instance_name).str());
 		}
 
-		void layer_updater_plain::update_buffer_configuration(
-			buffer_plain_size_configuration& buffer_configuration,
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
+		void layer_updater_plain::run_backward_weights_propagation(
+			const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+			plain_buffer::const_ptr output_errors_buffer,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::ptr gradient,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
-			bool backprop_required,
-			unsigned int updater_entry_count) const
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			std::vector<std::pair<unsigned int, bool> > buffer_sizes_per_entry_aligned = get_elem_count_and_per_entry_flag_additional_buffers(
-				layer_schema,
-				input_configuration_specific,
-				output_configuration_specific,
-				plain_config,
-				backprop_required);
-			for(std::vector<std::pair<unsigned int, bool> >::const_iterator it = buffer_sizes_per_entry_aligned.begin(); it != buffer_sizes_per_entry_aligned.end(); ++it)
-			{
-				size_t s = static_cast<size_t>(it->first) * sizeof(float);
-				if (it->second)
-					buffer_configuration.add_constant_buffer(s * updater_entry_count);
-				else
-					buffer_configuration.add_constant_buffer(s * updater_entry_count);
-			}
-
-			buffer_configuration.add_constant_buffer(output_configuration_specific.get_neuron_count() * sizeof(float) * updater_entry_count);
-
-			if (backprop_required && !is_in_place_backprop())
-				buffer_configuration.add_constant_buffer(input_configuration_specific.get_neuron_count() * sizeof(float) * updater_entry_count);
+			throw neural_network_exception((boost::format("run_backward_data_propagation is not implemented for layer %1%") % layer_schema->instance_name).str());
 		}
 
-		std::vector<std::pair<unsigned int, bool> > layer_updater_plain::get_elem_count_and_per_entry_flag_additional_buffers(
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
-			bool backprop_required) const
+		int layer_updater_plain::get_input_index_layer_can_write(
+			const layer_action& action,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return std::vector<std::pair<unsigned int, bool> >();
+			if (actions.find(action) == actions.end())
+				throw neural_network_exception((boost::format("get_input_index_layer_can_write called for layer %1% for action %2% while it is not configured to run such an action") % layer_schema->instance_name % action.str()).str());
+
+			return -1;
 		}
 
-		updater_additional_buffer_set layer_updater_plain::allocate_additional_buffers(
-			unsigned int updater_entry_count,
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
-			bool backprop_required) const
+		size_t layer_updater_plain::get_temporary_working_fixed_buffer_size(
+			const layer_action& action,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
-			updater_additional_buffer_set res;
+			if (actions.find(action) == actions.end())
+				throw neural_network_exception((boost::format("get_temporary_working_fixed_buffer_size called for layer %1% for action %2% while it is not configured to run such an action") % layer_schema->instance_name % action.str()).str());
 
-			std::vector<std::pair<unsigned int, bool> > buffer_sizes_per_entry_aligned = get_elem_count_and_per_entry_flag_additional_buffers(
-				layer_schema,
-				input_configuration_specific,
-				output_configuration_specific,
-				plain_config,
-				backprop_required);
-
-			for(std::vector<std::pair<unsigned int, bool> >::const_iterator it = buffer_sizes_per_entry_aligned.begin(); it != buffer_sizes_per_entry_aligned.end(); ++it)
-				res.additional_buffers.push_back(additional_buffer_smart_ptr(new std::vector<float>(it->first * (it->second ? updater_entry_count : 1))));
-
-			res.output_neurons_buffer = additional_buffer_smart_ptr(new std::vector<float>(output_configuration_specific.get_neuron_count() * updater_entry_count));
-
-			if (backprop_required && !is_in_place_backprop())
-				res.input_errors_buffer = additional_buffer_smart_ptr(new std::vector<float>(input_configuration_specific.get_neuron_count() * updater_entry_count));
-
-			return res;
+			return 0;
 		}
 
-		void layer_updater_plain::update_weights(
-			const_additional_buffer_smart_ptr input_neurons,
-			const_additional_buffer_smart_ptr output_errors,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			layer_data_smart_ptr gradient,
-			const_layer_data_custom_smart_ptr data_custom,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			unsigned int offset_input_entry_id,
-			bool force_deterministic) const
+		size_t layer_updater_plain::get_temporary_working_per_entry_buffer_size(
+			const layer_action& action,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
+			if (actions.find(action) == actions.end())
+				throw neural_network_exception((boost::format("get_temporary_working_per_entry_buffer_size called for layer %1% for action %2% while it is not configured to run such an action") % layer_schema->instance_name % action.str()).str());
+
+			return 0;
+		}
+
+		size_t layer_updater_plain::get_temporary_per_entry_buffer_size(
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			if (actions.find(layer_action(layer_action::forward)) == actions.end())
+				throw neural_network_exception((boost::format("get_temporary_per_entry_buffer_size called for layer %1% for action %2% while it is not configured to run such an action") % layer_schema->instance_name % layer_action(layer_action::forward).str()).str());
+
+			return 0;
+		}
+
+		bool layer_updater_plain::is_backward_data_dependent_on_input_buffer(
+			unsigned int action_input_index,
+			unsigned int data_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			if (actions.find(layer_action(layer_action::backward_data, action_input_index)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_data_dependent_on_input_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data, action_input_index).str()).str());
+
+			return true;
+		}
+
+		bool layer_updater_plain::is_backward_data_dependent_on_output_buffer(
+			unsigned int action_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			if (actions.find(layer_action(layer_action::backward_data, action_input_index)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_data_dependent_on_output_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data, action_input_index).str()).str());
+
+			return true;
+		}
+
+		bool layer_updater_plain::is_backward_data_dependent_on_temporary_per_entry_buffer(
+			unsigned int action_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			if (actions.find(layer_action(layer_action::backward_data, action_input_index)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_data_dependent_on_temporary_per_entry_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data, action_input_index).str()).str());
+
+			return (get_temporary_per_entry_buffer_size(actions, plain_config, layer_schema, input_configuration_specific_list, output_configuration_specific) != 0);
+		}
+
+		bool layer_updater_plain::is_backward_weights_dependent_on_input_buffer(
+			unsigned int data_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			if (actions.find(layer_action(layer_action::backward_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_weights_dependent_on_input_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_weights).str()).str());
+
+			return true;
+		}
+
+		bool layer_updater_plain::is_backward_weights_dependent_on_temporary_per_entry_buffer(
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			if (actions.find(layer_action(layer_action::backward_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_weights_dependent_on_temporary_per_entry_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_weights).str()).str());
+
+			return (get_temporary_per_entry_buffer_size(actions, plain_config, layer_schema, input_configuration_specific_list, output_configuration_specific) != 0);
 		}
 	}
 }

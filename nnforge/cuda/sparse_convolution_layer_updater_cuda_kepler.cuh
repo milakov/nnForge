@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -73,7 +73,6 @@ namespace nnforge
 			int output_feature_map_count,
 			int input_elem_count_per_feature_map,
 			int entry_count,
-			int input_elem_offset,
 			int block_count_per_feature_map,
 			int weight_count_per_block,
 			unsigned int dummy)
@@ -117,7 +116,6 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_elem_id_base = input_elem_id_base * input_sizes[i] + xyzw[i];
-				input_elem_id_base += input_elem_offset;
 
 				float sums[(DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1)][BLOCK_WIDTH];
 
@@ -254,7 +252,6 @@ namespace nnforge
 			int output_feature_map_count,
 			int input_elem_count_per_feature_map,
 			int entry_count,
-			int input_elem_offset,
 			int block_count_per_feature_map,
 			int weight_count_per_block)
 		{
@@ -297,7 +294,6 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_elem_id_base = input_elem_id_base * input_sizes[i] + xyzw[i];
-				input_elem_id_base += input_elem_offset;
 
 				float sums[(DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1)][BLOCK_WIDTH];
 
@@ -709,7 +705,6 @@ namespace nnforge
 			int output_feature_map_count,
 			int entry_count,
 			int entry_group_size,
-			int input_elem_offset,
 			int block_count_per_output_feature_map,
 			int feature_map_pair_count,
 			int input_elem_count_per_entry,
@@ -786,7 +781,6 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_elem_id = input_elem_id * input_sizes[i] + xyzw_input[i];
-				input_elem_id += input_elem_offset;
 
 				int output_elem_id = entry_id * output_feature_map_count + output_feature_map_id;
 				#pragma unroll
@@ -942,7 +936,6 @@ namespace nnforge
 			int output_feature_map_count,
 			int entry_count,
 			int entry_group_size,
-			int input_elem_offset,
 			int block_count_per_output_feature_map,
 			int feature_map_pair_count,
 			int input_elem_count_per_entry,
@@ -1011,7 +1004,6 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_elem_id = input_elem_id * input_sizes[i] + xyzw_input[i];
-				input_elem_id += input_elem_offset;
 
 				int output_elem_id = entry_id * output_feature_map_count + output_feature_map_id;
 				#pragma unroll
@@ -1127,10 +1119,10 @@ namespace nnforge
 		}
 
 #define launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map, entry_count, input_elem_offset, block_count_per_output_feature_map, weight_count_per_block, 0U);
+	sparse_convolution_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_output_feature_map, weight_count_per_block, 0U);
 
 #define launch_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_tex_generic_blocked_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_neurons_buffer, input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map, entry_count, input_elem_offset, block_count_per_output_feature_map, weight_count_per_block);
+	sparse_convolution_tex_generic_blocked_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_output_feature_map, weight_count_per_block);
 
 #define launch_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -1198,10 +1190,10 @@ namespace nnforge
 	};
 
 #define launch_backprop_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_backprop_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block, 0U);
+	sparse_convolution_backprop_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block, 0U);
 
 #define launch_backprop_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_backprop_tex_generic_blocked_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block);
+	sparse_convolution_backprop_tex_generic_blocked_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block);
 
 #define launch_backprop_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -1270,10 +1262,10 @@ namespace nnforge
 
 
 #define launch_update_gradient_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_update_gradient_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], output_tex, input_tex, row_index_col_index_pairs, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count, entry_group_size_and_count.first, input_elem_offset, block_count_per_output_feature_map, feature_map_connection_count, input_elem_count_per_entry, output_elem_count_per_entry, 0U);
+	sparse_convolution_update_gradient_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], output_tex, input_tex, row_index_col_index_pairs, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, entry_count, entry_group_size_and_count.first, block_count_per_output_feature_map, feature_map_connection_count, input_elem_count_per_entry_list[0], output_elem_count_per_entry, 0U);
 
 #define launch_update_gradient_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_update_gradient_tex_generic_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], output_tex, input_tex, row_index_col_index_pairs, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific.feature_map_count, output_configuration_specific.feature_map_count, entry_count, entry_group_size_and_count.first, input_elem_offset, block_count_per_output_feature_map, feature_map_connection_count, input_elem_count_per_entry, output_elem_count_per_entry, 0U);
+	sparse_convolution_update_gradient_tex_generic_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], output_tex, input_tex, row_index_col_index_pairs, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, entry_count, entry_group_size_and_count.first, block_count_per_output_feature_map, feature_map_connection_count, input_elem_count_per_entry_list[0], output_elem_count_per_entry, 0U);
 
 #define launch_update_gradient_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -1358,20 +1350,20 @@ namespace nnforge
 				cudnnDestroyTensorDescriptor(bias_desc);
 			}
 
-			virtual void enqueue_test(
-				unsigned int offset_input_entry_id,
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic)
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
+				unsigned int entry_count)
 			{
-				cuda_texture input_tex(input_neurons_buffer);
+				cuda_texture input_tex(input_buffers[0]);
 
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
@@ -1379,59 +1371,57 @@ namespace nnforge
 					entry_count,
 					1);
 
-				int input_elem_offset = offset_input_entry_id * input_elem_count_per_entry;
-
 				launch_kernel(dimension_count, window_sizes[0], ((dimension_count > 1) ? window_sizes[1] : 1));
 			}
 
-			virtual void enqueue_backprop(
+			virtual void enqueue_backward_data_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic)
+				unsigned int input_index,
+				cuda_linear_buffer_device::ptr input_errors_buffer,
+				cuda_linear_buffer_device::const_ptr output_errors_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+				cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+				bool add_update_to_destination,
+				unsigned int entry_count)
 			{
-				if (!backprop_required)
-					throw neural_network_exception("sparse_convolution_layer_updater_cuda_kepler is not configured to do backprop but requested to");
-
-				const row_index_weight_block_id_pair * row_index_weight_block_id_pairs = (row_index_weight_block_id_pair *)((void *)(*data_custom[2]));
+				const row_index_weight_block_id_pair * row_index_weight_block_id_pairs = (row_index_weight_block_id_pair *)((const void *)(*data_custom[2]));
 
 				cuda_texture output_tex(output_errors_buffer);
 
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
-					block_count_per_input_feature_map * input_configuration_specific.feature_map_count,
+					block_count_per_input_feature_map * input_configuration_specific_list[0].feature_map_count,
 					entry_count,
 					1);
 
 				launch_backprop_kernel(dimension_count, window_sizes[0], ((dimension_count > 1) ? window_sizes[1] : 1));
 			}
 
-			virtual void enqueue_update_weights(
-				unsigned int offset_input_entry_id,
+			virtual void enqueue_backward_weights_propagation(
 				cudaStream_t stream_id,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic)
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& gradient,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+				cuda_linear_buffer_device::const_ptr output_errors_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+				unsigned int entry_count)
 			{
 				// Update weights
 				{
-					const row_index_col_index_pair * row_index_col_index_pairs = (row_index_col_index_pair *)((void *)(*data_custom[4]));
+					const row_index_col_index_pair * row_index_col_index_pairs = (row_index_col_index_pair *)((const void *)(*data_custom[4]));
 
-					cuda_texture input_tex(input_neurons_buffer);
+					cuda_texture input_tex(input_neurons_buffers[0]);
 					cuda_texture output_tex(output_errors_buffer);
 
 					bool exact_kernel;
@@ -1455,8 +1445,6 @@ namespace nnforge
 						block_count_per_output_feature_map,
 						feature_map_connection_count * update_weight_count,
 						entry_group_size_and_count.second);
-
-					int input_elem_offset = offset_input_entry_id * input_elem_count_per_entry;
 
 					launch_update_gradient_kernel(dimension_count, window_sizes[0], ((dimension_count > 1) ? window_sizes[1] : 1));
 				}
@@ -1486,12 +1474,104 @@ namespace nnforge
 				}
 			}
 
-		protected:
-			virtual bool is_in_place_backprop() const
+			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const
+			{
+				std::vector<unsigned int> res;
+				res.push_back(input_configuration_specific_list[0].get_neuron_count());
+				return res;
+			}
+
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> set_get_data_custom(layer_data_custom::const_ptr host_data)
+			{
+				std::vector<cuda_linear_buffer_device::const_ptr> res;
+
+				const std::vector<int>& column_indices = host_data->at(0);
+				res.push_back(cuda_linear_buffer_device::const_ptr(new cuda_linear_buffer_device(
+					&(*column_indices.begin()),
+					column_indices.size() * sizeof(int))));
+				const std::vector<int>& row_ptrs = host_data->at(1);
+				res.push_back(cuda_linear_buffer_device::const_ptr(new cuda_linear_buffer_device(
+					&(*row_ptrs.begin()),
+					row_ptrs.size() * sizeof(int))));
+
+				std::vector<std::vector<row_index_weight_block_id_pair> > column_row_index_weight_block_id_pair_list(input_configuration_specific_list[0].feature_map_count);
+
+				for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_configuration_specific.feature_map_count); ++output_feature_map_id)
+				{
+					row_index_weight_block_id_pair new_elem;
+					new_elem.row_index = output_feature_map_id;
+
+					int start_column_index = row_ptrs[output_feature_map_id];
+					int end_column_index = row_ptrs[output_feature_map_id + 1];
+					for(int nnz_index = start_column_index; nnz_index < end_column_index; ++nnz_index)
+					{
+						int input_feature_map_id = column_indices[nnz_index];
+						new_elem.weight_block_id = nnz_index;
+						column_row_index_weight_block_id_pair_list[input_feature_map_id].push_back(new_elem);
+					}
+				}
+
+				std::vector<row_index_weight_block_id_pair> row_index_weight_block_id_pairs(column_indices.size());
+				std::vector<int> col_ptrs(input_configuration_specific_list[0].feature_map_count + 1);
+
+				int current_row_offset = 0;
+				for(int input_feature_map_id = 0; input_feature_map_id < static_cast<int>(input_configuration_specific_list[0].feature_map_count); ++input_feature_map_id)
+				{
+					col_ptrs[input_feature_map_id] = current_row_offset;
+					std::copy(
+						column_row_index_weight_block_id_pair_list[input_feature_map_id].begin(),
+						column_row_index_weight_block_id_pair_list[input_feature_map_id].end(),
+						row_index_weight_block_id_pairs.begin() + current_row_offset);
+
+					current_row_offset += static_cast<int>(column_row_index_weight_block_id_pair_list[input_feature_map_id].size());
+				}
+				col_ptrs[input_configuration_specific_list[0].feature_map_count] = current_row_offset;
+
+				res.push_back(cuda_linear_buffer_device::const_ptr(new cuda_linear_buffer_device(
+					&(*row_index_weight_block_id_pairs.begin()),
+					row_index_weight_block_id_pairs.size() * sizeof(row_index_weight_block_id_pair))));
+				res.push_back(cuda_linear_buffer_device::const_ptr(new cuda_linear_buffer_device(
+					&(*col_ptrs.begin()),
+					col_ptrs.size() * sizeof(int))));
+
+				int current_elem_id = 0;
+				std::vector<row_index_col_index_pair> row_index_col_index_pairs(feature_map_connection_count);
+				for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_configuration_specific.feature_map_count); ++output_feature_map_id)
+				{
+					int start_column_index = row_ptrs[output_feature_map_id];
+					int end_column_index = row_ptrs[output_feature_map_id + 1];
+					for(int nnz_index = start_column_index; nnz_index < end_column_index; ++nnz_index)
+					{
+						int input_feature_map_id = column_indices[nnz_index];
+						row_index_col_index_pairs[current_elem_id].row_index = output_feature_map_id;
+						row_index_col_index_pairs[current_elem_id].col_index = input_feature_map_id;
+						++current_elem_id;
+					}
+				}
+
+				res.push_back(cuda_linear_buffer_device::const_ptr(new cuda_linear_buffer_device(
+					&(*row_index_col_index_pairs.begin()),
+					row_index_col_index_pairs.size() * sizeof(row_index_col_index_pair))));
+
+				return res;
+			}
+
+			virtual bool is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
 			{
 				return false;
 			}
 
+			virtual bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
+			{
+				return false;
+			}
+
+			virtual bool is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const
+			{
+				return true;
+			}
+
+		protected:
 			virtual void updater_configured()
 			{
 				nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
@@ -1504,7 +1584,7 @@ namespace nnforge
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					window_sizes[i] = layer_derived->window_sizes[i];
-					input_sizes[i] = input_configuration_specific.dimension_sizes[i];
+					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 					left_zero_padding[i] = layer_derived->left_zero_padding[i];
 
@@ -1537,88 +1617,6 @@ namespace nnforge
 					output_configuration_specific.feature_map_count,
 					1,
 					1));
-			}
-
-			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const
-			{
-				std::vector<unsigned int> res;
-				res.push_back(input_configuration_specific.get_neuron_count());
-				return res;
-			}
-
-			virtual std::vector<cuda_linear_buffer_device_smart_ptr> get_data_custom(const_layer_data_custom_smart_ptr host_data_custom) const
-			{
-				std::vector<cuda_linear_buffer_device_smart_ptr> res;
-
-				const std::vector<int>& column_indices = host_data_custom->at(0);
-				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-					&(*column_indices.begin()),
-					column_indices.size() * sizeof(int))));
-				const std::vector<int>& row_ptrs = host_data_custom->at(1);
-				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-					&(*row_ptrs.begin()),
-					row_ptrs.size() * sizeof(int))));
-
-				std::vector<std::vector<row_index_weight_block_id_pair> > column_row_index_weight_block_id_pair_list(input_configuration_specific.feature_map_count);
-
-				for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_configuration_specific.feature_map_count); ++output_feature_map_id)
-				{
-					row_index_weight_block_id_pair new_elem;
-					new_elem.row_index = output_feature_map_id;
-
-					int start_column_index = row_ptrs[output_feature_map_id];
-					int end_column_index = row_ptrs[output_feature_map_id + 1];
-					for(int nnz_index = start_column_index; nnz_index < end_column_index; ++nnz_index)
-					{
-						int input_feature_map_id = column_indices[nnz_index];
-						new_elem.weight_block_id = nnz_index;
-						column_row_index_weight_block_id_pair_list[input_feature_map_id].push_back(new_elem);
-					}
-				}
-
-				std::vector<row_index_weight_block_id_pair> row_index_weight_block_id_pairs(column_indices.size());
-				std::vector<int> col_ptrs(input_configuration_specific.feature_map_count + 1);
-
-				int current_row_offset = 0;
-				for(int input_feature_map_id = 0; input_feature_map_id < static_cast<int>(input_configuration_specific.feature_map_count); ++input_feature_map_id)
-				{
-					col_ptrs[input_feature_map_id] = current_row_offset;
-					std::copy(
-						column_row_index_weight_block_id_pair_list[input_feature_map_id].begin(),
-						column_row_index_weight_block_id_pair_list[input_feature_map_id].end(),
-						row_index_weight_block_id_pairs.begin() + current_row_offset);
-
-					current_row_offset += static_cast<int>(column_row_index_weight_block_id_pair_list[input_feature_map_id].size());
-				}
-				col_ptrs[input_configuration_specific.feature_map_count] = current_row_offset;
-
-				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-					&(*row_index_weight_block_id_pairs.begin()),
-					row_index_weight_block_id_pairs.size() * sizeof(row_index_weight_block_id_pair))));
-				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-					&(*col_ptrs.begin()),
-					col_ptrs.size() * sizeof(int))));
-
-				int current_elem_id = 0;
-				std::vector<row_index_col_index_pair> row_index_col_index_pairs(feature_map_connection_count);
-				for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_configuration_specific.feature_map_count); ++output_feature_map_id)
-				{
-					int start_column_index = row_ptrs[output_feature_map_id];
-					int end_column_index = row_ptrs[output_feature_map_id + 1];
-					for(int nnz_index = start_column_index; nnz_index < end_column_index; ++nnz_index)
-					{
-						int input_feature_map_id = column_indices[nnz_index];
-						row_index_col_index_pairs[current_elem_id].row_index = output_feature_map_id;
-						row_index_col_index_pairs[current_elem_id].col_index = input_feature_map_id;
-						++current_elem_id;
-					}
-				}
-
-				res.push_back(cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
-					&(*row_index_col_index_pairs.begin()),
-					row_index_col_index_pairs.size() * sizeof(row_index_col_index_pair))));
-
-				return res;
 			}
 
 		private:

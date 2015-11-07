@@ -22,8 +22,8 @@ $(NNFORGE_WORKING_DATA_PATH)$(WORKING_DIRECTORY_SEPARATOR)$(APP_NAME)/%: working
 
 $(CONFIG_FILE): config.cfg
 	$(RM) $(CONFIG_FILE)
-	echo 'input_data_folder=$(NNFORGE_INPUT_DATA_PATH)/$(APP_NAME)' >> $(CONFIG_FILE)
-	echo 'working_data_folder=$(NNFORGE_WORKING_DATA_PATH)/$(APP_NAME)' >> $(CONFIG_FILE)
+	echo 'input_data_folder=$(NNFORGE_INPUT_DATA_PATH)$(INPUT_DIRECTORY_SEPARATOR)$(APP_NAME)' >> $(CONFIG_FILE)
+	echo 'working_data_folder=$(NNFORGE_WORKING_DATA_PATH)$(WORKING_DIRECTORY_SEPARATOR)$(APP_NAME)' >> $(CONFIG_FILE)
 	cat config.cfg >> $(CONFIG_FILE)
 
 clean:

@@ -20,7 +20,7 @@
 #include "rnd.h"
 #include "nn_types.h"
 
-#include <limits>
+#include <boost/thread/thread.hpp>
 
 namespace nnforge
 {
@@ -38,23 +38,21 @@ namespace nnforge
 			bool flip_around_y_axis_allowed,
 			float max_stretch_factor, // >=1
 			float min_perspective_distance, // std::numeric_limits<float>::max()
-			unsigned char border_value = 128); 
+			float border_value = 0.5F); 
 
 		virtual ~distort_2d_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-		virtual bool is_deterministic() const;
-
 	protected:
-		unsigned char border_value;
+		float border_value;
 
 		random_generator generator;
+		boost::mutex gen_stream_mutex;
 
 		nnforge_uniform_real_distribution<float> rotate_angle_distribution;
 		nnforge_uniform_real_distribution<float> scale_distribution;

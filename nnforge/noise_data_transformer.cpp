@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@
 
 namespace nnforge
 {
-	noise_data_transformer::noise_data_transformer(unsigned int max_noise)
+	noise_data_transformer::noise_data_transformer(float max_noise)
 	{
 		generator = rnd::get_random_generator();
 
-		max_noise_distribution = nnforge_uniform_int_distribution<int>(-static_cast<int>(max_noise), static_cast<int>(max_noise));
+		max_noise_distribution = nnforge_uniform_real_distribution<float>(-max_noise, max_noise);
 	}
 
 	noise_data_transformer::~noise_data_transformer()
@@ -35,29 +35,23 @@ namespace nnforge
 	}
 
 	void noise_data_transformer::transform(
-		const void * data,
-		void * data_transformed,
-		neuron_data_type::input_type type,
+		const float * data,
+		float * data_transformed,
 		const layer_configuration_specific& original_config,
 		unsigned int sample_id)
 	{
-		if (type != neuron_data_type::type_byte)
-			throw neural_network_exception("noise_data_transformer is implemented for data stored as bytes only");
-
-		unsigned char * dt = static_cast<unsigned char *>(data_transformed);
 		unsigned int elem_count = original_config.get_neuron_count();
 
-		for(unsigned char * data_it = dt; data_it != (dt + elem_count); data_it++)
 		{
-			int shift = max_noise_distribution.min();
-			if (max_noise_distribution.max() > max_noise_distribution.min())
-				shift = max_noise_distribution(generator);
-			*data_it = static_cast<unsigned char>(std::min<int>(std::max<int>((shift + static_cast<int>(*data_it)), 0), 255));
-		}
-	}
+			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
 
- 	bool noise_data_transformer::is_deterministic() const
-	{
-		return false;
+			for(unsigned int elem_id = 0; elem_id < elem_count; ++elem_id)
+			{
+				float shift = max_noise_distribution.min();
+				if (max_noise_distribution.max() > max_noise_distribution.min())
+					shift = max_noise_distribution(generator);
+				data_transformed[elem_id] = data[elem_id] + shift;
+			}
+		}
 	}
 }

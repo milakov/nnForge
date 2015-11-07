@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "nnforge", "nnforge\nnforge.vcxproj", "{435CF80F-3A53-4B85-8569-3C477F3CEEFC}"
 EndProject
@@ -28,9 +28,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gtsrb", "examples\gtsrb\gts
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "image_classifier_demo", "examples\image_classifier_demo\image_classifier_demo.vcxproj", "{2C7F62A9-5103-4ACF-9663-3A25787F208A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imagenet", "examples\imagenet\imagenet.vcxproj", "{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imagenet", "examples\imagenet\imagenet.vcxproj", "{BD9805C1-D6AA-4604-995F-FD033FFAD16F}"
 EndProject
 Global
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
 		Debug|x64 = Debug|x64
@@ -78,14 +82,14 @@ Global
 		{2C7F62A9-5103-4ACF-9663-3A25787F208A}.Release|Mixed Platforms.Build.0 = Release|x64
 		{2C7F62A9-5103-4ACF-9663-3A25787F208A}.Release|x64.ActiveCfg = Release|x64
 		{2C7F62A9-5103-4ACF-9663-3A25787F208A}.Release|x64.Build.0 = Release|x64
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}.Debug|Mixed Platforms.Build.0 = Debug|x64
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}.Debug|x64.ActiveCfg = Debug|x64
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}.Debug|x64.Build.0 = Debug|x64
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}.Release|Mixed Platforms.ActiveCfg = Release|x64
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}.Release|Mixed Platforms.Build.0 = Release|x64
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}.Release|x64.ActiveCfg = Release|x64
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3}.Release|x64.Build.0 = Release|x64
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F}.Debug|x64.ActiveCfg = Debug|x64
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F}.Debug|x64.Build.0 = Debug|x64
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F}.Release|Mixed Platforms.Build.0 = Release|x64
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F}.Release|x64.ActiveCfg = Release|x64
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,10 +99,6 @@ Global
 		{1E4C82DC-0C7F-43C1-8C1F-1F1B5FD54487} = {5EEEDE56-C299-45EC-9994-FBD2BA962D8D}
 		{C248E0D0-8AF0-4966-A521-3A18969F497F} = {C59D5649-DC50-457B-BBFB-A64608FA21E4}
 		{2C7F62A9-5103-4ACF-9663-3A25787F208A} = {C59D5649-DC50-457B-BBFB-A64608FA21E4}
-		{E6F660B8-7D9E-4DC7-872E-59CCF647BAA3} = {C59D5649-DC50-457B-BBFB-A64608FA21E4}
-	EndGlobalSection
-	GlobalSection(SubversionScc) = preSolution
-		Svn-Managed = True
-		Manager = AnkhSVN - Subversion Support for Visual Studio
+		{BD9805C1-D6AA-4604-995F-FD033FFAD16F} = {C59D5649-DC50-457B-BBFB-A64608FA21E4}
 	EndGlobalSection
 EndGlobal

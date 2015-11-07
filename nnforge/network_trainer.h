@@ -20,7 +20,7 @@
 #include "network_data_pusher.h"
 #include "training_task_state.h"
 #include "network_schema.h"
-#include "supervised_data_reader.h"
+#include "structured_data_bunch_reader.h"
 #include "nn_types.h"
 #include "training_momentum.h"
 
@@ -31,10 +31,12 @@ namespace nnforge
 	class network_trainer
 	{
 	public:
+		typedef nnforge_shared_ptr<network_trainer> ptr;
+
 		virtual ~network_trainer();
 
 		void train(
-			supervised_data_reader& reader,
+			structured_data_bunch_reader& reader,
 			network_data_peeker& peeker,
 			network_data_pusher& progress_pusher,
 			network_data_pusher& pusher);
@@ -50,18 +52,25 @@ namespace nnforge
 		training_momentum momentum;
 
 	protected:
-		network_trainer(network_schema_smart_ptr schema);
+		network_trainer(
+			network_schema::ptr schema,
+			const std::vector<std::string>& output_layer_names,
+			const std::vector<std::string>& error_source_layer_names,
+			const std::vector<std::string>& exclude_data_update_layer_names);
 
 		float get_global_learning_rate(unsigned int epoch) const;
 
-		virtual void initialize_train(supervised_data_reader& reader) = 0;
+		virtual void initialize_train(structured_data_bunch_reader& reader) = 0;
 
 		// The method should add testing result to the training history of each element
 		virtual void train_step(
-			supervised_data_reader& reader,
+			structured_data_bunch_reader& reader,
 			training_task_state& task) = 0;
 
-		network_schema_smart_ptr schema;
+		network_schema::ptr schema;
+		std::vector<std::string> output_layer_names;
+		std::vector<std::string> error_source_layer_names;
+		std::vector<std::string> exclude_data_update_layer_names;
 
 	private:
 		bool is_last_epoch(const training_task_state& state) const;
@@ -72,6 +81,4 @@ namespace nnforge
 		network_trainer(const network_trainer&);
 		network_trainer& operator =(const network_trainer&);
 	};
-
-	typedef nnforge_shared_ptr<network_trainer> network_trainer_smart_ptr;
 }

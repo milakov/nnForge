@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,54 +31,59 @@ namespace nnforge
 
 			virtual ~sparse_fully_connected_layer_updater_cuda();
 
-			virtual void enqueue_test(
-				unsigned int offset_input_entry_id,
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic);
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
+				unsigned int entry_count);
 
-			virtual void enqueue_backprop(
+			virtual void enqueue_backward_data_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-				cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic);
+				unsigned int input_index,
+				cuda_linear_buffer_device::ptr input_errors_buffer,
+				cuda_linear_buffer_device::const_ptr output_errors_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+				cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+				bool add_update_to_destination,
+				unsigned int entry_count);
 
-			virtual void enqueue_update_weights(
-				unsigned int offset_input_entry_id,
+			virtual void enqueue_backward_weights_propagation(
 				cudaStream_t stream_id,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-				const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-				std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-				unsigned int entry_count,
-				bool force_deterministic);
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& gradient,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+				cuda_linear_buffer_device::const_ptr output_errors_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+				unsigned int entry_count);
+
+			virtual bool is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const;
+
+			virtual bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const;
+
+			virtual bool is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const;
 
 		protected:
-			virtual bool is_in_place_backprop() const;
-
 			virtual void updater_configured();
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const;
-
-			virtual void notify_data_custom(const_layer_data_custom_smart_ptr host_data_custom);
+			virtual void notify_data_custom(layer_data_custom::const_ptr host_data_custom);
 
 		private:
 			std::pair<int, int> get_update_entry_block_size_and_count(unsigned int entry_count) const;

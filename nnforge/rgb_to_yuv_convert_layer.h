@@ -43,29 +43,21 @@ namespace nnforge
 	public:
 		rgb_to_yuv_convert_layer(const std::vector<color_feature_map_config>& color_feature_map_config_list);
 
-		virtual layer_smart_ptr clone() const;
+		virtual layer::ptr clone() const;
 
-		virtual layer_configuration_specific get_output_layer_configuration_specific(const layer_configuration_specific& input_configuration_specific) const;
+		virtual layer_configuration_specific get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const;
 
-		virtual float get_forward_flops(const layer_configuration_specific& input_configuration_specific) const;
+		virtual float get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const;
 
-		virtual float get_backward_flops(const layer_configuration_specific& input_configuration_specific) const;
+		virtual float get_backward_flops(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			unsigned int input_layer_id) const;
 
-		virtual const boost::uuids::uuid& get_uuid() const;
-
-		virtual const std::string& get_type_name() const;
-
-		virtual void write(std::ostream& binary_stream_to_write_to) const;
+		virtual std::string get_type_name() const;
 
 		virtual void write_proto(void * layer_proto) const;
 
-		virtual void read(
-			std::istream& binary_stream_to_read_from,
-			const boost::uuids::uuid& layer_read_guid);
-
 		virtual void read_proto(const void * layer_proto);
-
-		static const boost::uuids::uuid layer_guid;
 
 		static const std::string layer_type_name;
 

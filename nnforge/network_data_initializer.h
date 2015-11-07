@@ -17,9 +17,7 @@
 #pragma once
 
 #include "layer_data_list.h"
-#include "layer_data.h"
-#include "layer.h"
-#include "network_output_type.h"
+#include "network_schema.h"
 
 #include <vector>
 
@@ -33,7 +31,6 @@ namespace nnforge
 	public:
 		void initialize(
 			layer_data_list& data_list,
-			const const_layer_list& layer_list,
-			network_output_type::output_type type);
+			const network_schema& schema);
 	};
 }

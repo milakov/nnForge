@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include "network_tester_factory.h"
-#include "network_updater_factory.h"
-#include "network_analyzer_factory.h"
+#include "forward_propagation_factory.h"
+#include "backward_propagation_factory.h"
 #include "config_options.h"
 #include "nn_types.h"
 
@@ -27,19 +26,23 @@ namespace nnforge
 	class factory_generator
 	{
 	public:
+		typedef nnforge_shared_ptr<factory_generator> ptr;
+
 		virtual ~factory_generator();
 
 		virtual void initialize() = 0;
 
-		virtual network_tester_factory_smart_ptr create_tester_factory() const = 0;
+		virtual forward_propagation_factory::ptr create_forward_propagation_factory() const = 0;
 
-		virtual network_updater_factory_smart_ptr create_updater_factory() const = 0;
-
-		virtual network_analyzer_factory_smart_ptr create_analyzer_factory() const = 0;
+		virtual backward_propagation_factory::ptr create_backward_propagation_factory() const = 0;
 
 		virtual void info() const = 0;
 
 		virtual std::vector<string_option> get_string_options();
+
+		virtual std::vector<multi_string_option> get_multi_string_options();
+
+		virtual std::vector<path_option> get_path_options();
 
 		virtual std::vector<bool_option> get_bool_options();
 
@@ -50,6 +53,4 @@ namespace nnforge
 	protected:
 		factory_generator();
 	};
-
-	typedef nnforge_shared_ptr<factory_generator> factory_generator_smart_ptr;
 }

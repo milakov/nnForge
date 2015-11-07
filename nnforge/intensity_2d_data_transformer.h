@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 #include "rnd.h"
 #include "nn_types.h"
 
+#include <boost/thread/thread.hpp>
+
 namespace nnforge
 {
 	class intensity_2d_data_transformer : public data_transformer
@@ -32,16 +34,14 @@ namespace nnforge
 		virtual ~intensity_2d_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-		virtual bool is_deterministic() const;
-
 	protected:
 		random_generator generator;
+		boost::mutex gen_stream_mutex;
 
 		nnforge_uniform_real_distribution<float> contrast_distribution;
 		nnforge_uniform_real_distribution<float> brightness_shift_distribution;

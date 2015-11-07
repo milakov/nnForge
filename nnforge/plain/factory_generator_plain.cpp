@@ -16,9 +16,8 @@
 
 #include "factory_generator_plain.h"
 
-#include "network_tester_plain_factory.h"
-#include "network_updater_plain_factory.h"
-#include "network_analyzer_plain_factory.h"
+#include "forward_propagation_plain_factory.h"
+#include "backward_propagation_plain_factory.h"
 
 #include <iostream>
 
@@ -30,13 +29,15 @@ namespace nnforge
 {
 	namespace plain
 	{
+		factory_generator_plain::factory_generator_plain(
+			float plain_max_global_memory_usage,
+			int plain_openmp_thread_count)
+			: plain_max_global_memory_usage(plain_max_global_memory_usage)
+			, plain_openmp_thread_count(plain_openmp_thread_count)
+		{
+		}
+
 		factory_generator_plain::factory_generator_plain()
-			#ifdef _OPENMP
-			: plain_openmp_thread_count(omp_get_max_threads())
-			#else
-			: plain_openmp_thread_count(1)
-			#endif
-			, plain_max_global_memory_usage(0.5F)
 		{
 		}
 
@@ -46,22 +47,19 @@ namespace nnforge
 
 		void factory_generator_plain::initialize()
 		{
-			plain_config = plain_running_configuration_const_smart_ptr(new plain_running_configuration(plain_openmp_thread_count, plain_max_global_memory_usage));
+			plain_config = plain_running_configuration::const_ptr(new plain_running_configuration(
+				plain_openmp_thread_count,
+				plain_max_global_memory_usage));
 		}
 
-		network_tester_factory_smart_ptr factory_generator_plain::create_tester_factory() const
+		forward_propagation_factory::ptr factory_generator_plain::create_forward_propagation_factory() const
 		{
-			return network_tester_factory_smart_ptr(new network_tester_plain_factory(plain_config));
+			return forward_propagation_factory::ptr(new forward_propagation_plain_factory(plain_config));
 		}
 
-		network_updater_factory_smart_ptr factory_generator_plain::create_updater_factory() const
+		backward_propagation_factory::ptr factory_generator_plain::create_backward_propagation_factory() const
 		{
-			return network_updater_factory_smart_ptr(new network_updater_plain_factory(plain_config));
-		}
-
-		network_analyzer_factory_smart_ptr factory_generator_plain::create_analyzer_factory() const
-		{
-			return network_analyzer_factory_smart_ptr(new network_analyzer_plain_factory(plain_config));
+			return backward_propagation_factory::ptr(new backward_propagation_plain_factory(plain_config));
 		}
 
 		std::vector<float_option> factory_generator_plain::get_float_options()

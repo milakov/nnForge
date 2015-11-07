@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -34,26 +34,26 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& rgb_to_yuv_convert_layer_testing_schema::get_uuid() const
+		std::string rgb_to_yuv_convert_layer_testing_schema::get_type_name() const
 		{
-			return rgb_to_yuv_convert_layer::layer_guid;
+			return rgb_to_yuv_convert_layer::layer_type_name;
 		}
 
-		layer_testing_schema_smart_ptr rgb_to_yuv_convert_layer_testing_schema::create_specific() const
+		layer_testing_schema::ptr rgb_to_yuv_convert_layer_testing_schema::create_specific() const
 		{
-			return layer_testing_schema_smart_ptr(new rgb_to_yuv_convert_layer_testing_schema());
+			return layer_testing_schema::ptr(new rgb_to_yuv_convert_layer_testing_schema());
 		}
 
-		layer_tester_cuda_smart_ptr rgb_to_yuv_convert_layer_testing_schema::create_tester_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_tester_cuda::ptr rgb_to_yuv_convert_layer_testing_schema::create_tester_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_tester_cuda_smart_ptr(new rgb_to_yuv_convert_layer_tester_cuda());
+			return layer_tester_cuda::ptr(new rgb_to_yuv_convert_layer_tester_cuda());
 		}
 
-		std::vector<const_cuda_linear_buffer_device_smart_ptr> rgb_to_yuv_convert_layer_testing_schema::get_schema_buffers() const
+		std::vector<cuda_linear_buffer_device::const_ptr> rgb_to_yuv_convert_layer_testing_schema::get_schema_buffers() const
 		{
-			std::vector<const_cuda_linear_buffer_device_smart_ptr> res;
+			std::vector<cuda_linear_buffer_device::const_ptr> res;
 
 			nnforge_shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = nnforge_dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
 			std::vector<int> color_feature_map_config_raw_value_list;
@@ -65,7 +65,7 @@ namespace nnforge
 			}
 
 			res.push_back(
-				cuda_linear_buffer_device_smart_ptr(new cuda_linear_buffer_device(
+				cuda_linear_buffer_device::const_ptr(new cuda_linear_buffer_device(
 					&(*color_feature_map_config_raw_value_list.begin()),
 					color_feature_map_config_raw_value_list.size() * sizeof(int)))
 				);

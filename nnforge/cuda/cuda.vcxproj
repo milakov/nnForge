@@ -15,6 +15,10 @@
     <ClInclude Include="absolute_layer_testing_schema.h" />
     <ClInclude Include="absolute_layer_updater_cuda.h" />
     <ClInclude Include="absolute_layer_updater_schema.h" />
+    <ClInclude Include="accuracy_layer_tester_cuda.h" />
+    <ClInclude Include="accuracy_layer_testing_schema.h" />
+    <ClInclude Include="accuracy_layer_updater_cuda.h" />
+    <ClInclude Include="accuracy_layer_updater_schema.h" />
     <ClInclude Include="activation_layer_cudnn_updater_cuda.h" />
     <ClInclude Include="average_subsampling_layer_tester_cuda.cuh" />
     <ClInclude Include="average_subsampling_layer_cudnn_tester_cuda.h" />
@@ -22,24 +26,32 @@
     <ClInclude Include="average_subsampling_layer_cudnn_updater_cuda.h" />
     <ClInclude Include="average_subsampling_layer_updater_cuda.cuh" />
     <ClInclude Include="average_subsampling_layer_updater_schema.h" />
+    <ClInclude Include="backward_propagation_cuda.h" />
     <ClInclude Include="buffer_cuda_size_configuration.h" />
     <ClInclude Include="convolution_1x1_layer_tester_cuda.h" />
-    <ClInclude Include="convolution_1x1_layer_updater_cuda.h" />
     <ClInclude Include="convolution_layer_tester_cuda.h" />
     <ClInclude Include="convolution_layer_testing_schema.h" />
-    <ClInclude Include="convolution_layer_testing_schema_helper_cuda_fermi.h" />
     <ClInclude Include="convolution_layer_updater_cuda.h" />
-    <ClInclude Include="convolution_layer_updater_cuda_kepler.cuh" />
     <ClInclude Include="convolution_layer_updater_schema.h" />
-    <ClInclude Include="convolution_layer_updater_schema_helper_cuda_fermi.h" />
-    <ClInclude Include="convolution_layer_updater_schema_helper_cuda_kepler.h" />
-    <ClInclude Include="cross_entropy_error_function_updater_cuda.h" />
+    <ClInclude Include="cross_entropy_layer_tester_cuda.h" />
+    <ClInclude Include="cross_entropy_layer_testing_schema.h" />
+    <ClInclude Include="cross_entropy_layer_updater_cuda.h" />
+    <ClInclude Include="cross_entropy_layer_updater_schema.h" />
     <ClInclude Include="dropout_layer_tester_cuda.h" />
     <ClInclude Include="dropout_layer_testing_schema.h" />
     <ClInclude Include="dropout_layer_updater_cuda.h" />
     <ClInclude Include="dropout_layer_updater_schema.h" />
+    <ClInclude Include="forward_propagation_cuda.h" />
     <ClInclude Include="int_fastdiv.h" />
     <ClInclude Include="max_subsampling_tiling_layer_tester_cuda.cuh" />
+    <ClInclude Include="mse_layer_tester_cuda.h" />
+    <ClInclude Include="mse_layer_testing_schema.h" />
+    <ClInclude Include="mse_layer_updater_cuda.h" />
+    <ClInclude Include="mse_layer_updater_schema.h" />
+    <ClInclude Include="negative_log_likelihood_layer_tester_cuda.h" />
+    <ClInclude Include="negative_log_likelihood_layer_testing_schema.h" />
+    <ClInclude Include="negative_log_likelihood_layer_updater_cuda.h" />
+    <ClInclude Include="negative_log_likelihood_layer_updater_schema.h" />
     <ClInclude Include="parametric_rectified_linear_layer_tester_cuda.h" />
     <ClInclude Include="max_subsampling_layer_cudnn_tester_cuda.h" />
     <ClInclude Include="max_subsampling_layer_cudnn_updater_cuda.h" />
@@ -58,7 +70,6 @@
     <ClInclude Include="sparse_fully_connected_layer_tester_cuda.h" />
     <ClInclude Include="max_subsampling_layer_tester_cuda.cuh" />
     <ClInclude Include="max_subsampling_layer_updater_cuda.cuh" />
-    <ClInclude Include="negative_log_likelihood_error_function_updater_cuda.h" />
     <ClInclude Include="cuda_array.h" />
     <ClInclude Include="cuda_event.h" />
     <ClInclude Include="cuda_linear_buffer.h" />
@@ -69,8 +80,6 @@
     <ClInclude Include="cuda_running_configuration.h" />
     <ClInclude Include="cuda_stream.h" />
     <ClInclude Include="cuda_texture.h" />
-    <ClInclude Include="error_function_updater_cuda.h" />
-    <ClInclude Include="error_function_updater_cuda_factory.h" />
     <ClInclude Include="local_contrast_subtractive_2d_layer_updater_cuda.h" />
     <ClInclude Include="local_contrast_subtractive_layer_updater_schema.h" />
     <ClInclude Include="maxout_layer_tester_cuda.h" />
@@ -79,9 +88,6 @@
     <ClInclude Include="maxout_layer_updater_schema.h" />
     <ClInclude Include="max_subsampling_layer_testing_schema.h" />
     <ClInclude Include="max_subsampling_layer_updater_schema.h" />
-    <ClInclude Include="mse_error_function_updater_cuda.h" />
-    <ClInclude Include="network_analyzer_cuda.h" />
-    <ClInclude Include="network_analyzer_cuda_factory.h" />
     <ClInclude Include="neural_network_cusparse_exception.h" />
     <ClInclude Include="packed_config.h" />
     <ClInclude Include="rectified_linear_layer_testing_schema.h" />
@@ -104,9 +110,6 @@
     <ClInclude Include="sparse_fully_connected_1x1_layer_updater_cuda.h" />
     <ClInclude Include="sparse_fully_connected_layer_updater_cuda.h" />
     <ClInclude Include="split_policy_z_order.h" />
-    <ClInclude Include="squared_hinge_loss_error_function_updater_cuda.h" />
-    <ClInclude Include="supervised_data_reader_async_helper.h" />
-    <ClInclude Include="unsupervised_data_reader_async_helper.h" />
     <ClInclude Include="untile_layer_tester_cuda.h" />
     <ClInclude Include="untile_layer_testing_schema.h" />
     <ClInclude Include="util_cuda.h" />
@@ -125,10 +128,8 @@
     <ClInclude Include="layer_updater_schema_factory.h" />
     <ClInclude Include="local_contrast_subtractive_2d_layer_tester_cuda.h" />
     <ClInclude Include="local_contrast_subtractive_layer_testing_schema.h" />
-    <ClInclude Include="network_tester_cuda.h" />
-    <ClInclude Include="network_tester_cuda_factory.h" />
-    <ClInclude Include="network_updater_cuda.h" />
-    <ClInclude Include="network_updater_cuda_factory.h" />
+    <ClInclude Include="forward_propagation_cuda_factory.h" />
+    <ClInclude Include="backward_propagation_cuda_factory.h" />
     <ClInclude Include="neural_network_cublas_exception.h" />
     <ClInclude Include="neural_network_cuda_exception.h" />
     <ClInclude Include="cuda.h" />
@@ -136,15 +137,20 @@
   <ItemGroup>
     <ClCompile Include="absolute_layer_testing_schema.cpp" />
     <ClCompile Include="absolute_layer_updater_schema.cpp" />
+    <ClCompile Include="accuracy_layer_testing_schema.cpp" />
+    <ClCompile Include="accuracy_layer_updater_schema.cpp" />
     <ClCompile Include="activation_layer_cudnn_updater_cuda.cpp" />
     <ClCompile Include="average_subsampling_layer_cudnn_tester_cuda.cpp" />
     <ClCompile Include="average_subsampling_layer_cudnn_updater_cuda.cpp" />
+    <ClCompile Include="backward_propagation_cuda.cpp" />
     <ClCompile Include="buffer_cuda_size_configuration.cpp" />
     <ClCompile Include="convolution_1x1_layer_tester_cuda.cpp" />
     <ClCompile Include="convolution_layer_tester_cuda.cpp" />
     <ClCompile Include="convolution_layer_testing_schema.cpp" />
     <ClCompile Include="convolution_layer_updater_cuda.cpp" />
     <ClCompile Include="convolution_layer_updater_schema.cpp" />
+    <ClCompile Include="cross_entropy_layer_testing_schema.cpp" />
+    <ClCompile Include="cross_entropy_layer_updater_schema.cpp" />
     <ClCompile Include="cuda_array.cpp" />
     <ClCompile Include="cuda_event.cpp" />
     <ClCompile Include="cuda_linear_buffer.cpp" />
@@ -157,8 +163,8 @@
     <ClCompile Include="dropout_layer_tester_cuda.cpp" />
     <ClCompile Include="dropout_layer_testing_schema.cpp" />
     <ClCompile Include="dropout_layer_updater_schema.cpp" />
-    <ClCompile Include="error_function_updater_cuda_factory.cpp" />
     <ClCompile Include="factory_generator_cuda.cpp" />
+    <ClCompile Include="forward_propagation_cuda.cpp" />
     <ClCompile Include="fully_connected_layer_tester_cuda.cpp" />
     <ClCompile Include="fully_connected_layer_updater_cuda.cpp" />
     <ClCompile Include="hyperbolic_tangent_layer_testing_schema.cpp" />
@@ -166,6 +172,7 @@
     <ClCompile Include="layer_tester_cuda.cpp" />
     <ClCompile Include="layer_testing_schema.cpp" />
     <ClCompile Include="layer_testing_schema_factory.cpp" />
+    <ClCompile Include="layer_updater_cuda.cpp" />
     <ClCompile Include="layer_updater_schema.cpp" />
     <ClCompile Include="layer_updater_schema_factory.cpp" />
     <ClCompile Include="local_contrast_subtractive_layer_testing_schema.cpp" />
@@ -174,9 +181,12 @@
     <ClCompile Include="maxout_layer_updater_schema.cpp" />
     <ClCompile Include="max_subsampling_layer_cudnn_tester_cuda.cpp" />
     <ClCompile Include="max_subsampling_layer_cudnn_updater_cuda.cpp" />
-    <ClCompile Include="network_analyzer_cuda_factory.cpp" />
-    <ClCompile Include="network_tester_cuda_factory.cpp" />
-    <ClCompile Include="network_updater_cuda_factory.cpp" />
+    <ClCompile Include="mse_layer_testing_schema.cpp" />
+    <ClCompile Include="mse_layer_updater_schema.cpp" />
+    <ClCompile Include="negative_log_likelihood_layer_testing_schema.cpp" />
+    <ClCompile Include="negative_log_likelihood_layer_updater_schema.cpp" />
+    <ClCompile Include="forward_propagation_cuda_factory.cpp" />
+    <ClCompile Include="backward_propagation_cuda_factory.cpp" />
     <ClCompile Include="neural_network_cublas_exception.cpp" />
     <ClCompile Include="neural_network_cuda_exception.cpp" />
     <ClCompile Include="cuda.cpp" />
@@ -198,10 +208,19 @@
     <ClCompile Include="softmax_layer_updater_schema.cpp" />
     <ClCompile Include="sparse_convolution_layer_testing_schema.cpp" />
     <ClCompile Include="sparse_convolution_layer_updater_schema.cpp" />
+    <ClCompile Include="sparse_fully_connected_1x1_layer_tester_cuda.cpp" />
     <ClCompile Include="untile_layer_testing_schema.cpp" />
+    <CudaCompile Include="accuracy_layer_tester_cuda.cu" />
+    <CudaCompile Include="accuracy_layer_updater_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
+    <CudaCompile Include="cross_entropy_layer_tester_cuda.cu" />
+    <CudaCompile Include="cross_entropy_layer_updater_cuda.cu" />
     <CudaCompile Include="dropout_layer_updater_cuda.cu" />
+    <CudaCompile Include="mse_layer_tester_cuda.cu" />
+    <CudaCompile Include="mse_layer_updater_cuda.cu" />
+    <CudaCompile Include="negative_log_likelihood_layer_tester_cuda.cu" />
+    <CudaCompile Include="negative_log_likelihood_layer_updater_cuda.cu" />
     <CudaCompile Include="parametric_rectified_linear_layer_tester_cuda.cu" />
     <CudaCompile Include="parametric_rectified_linear_layer_updater_cuda.cu" />
     <CudaCompile Include="sigmoid_partial_layer_tester_cuda.cu" />
@@ -218,52 +237,25 @@
     <CudaCompile Include="sparse_fully_connected_layer_updater_cuda.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
-    <ClCompile Include="supervised_data_reader_async_helper.cpp" />
-    <ClCompile Include="unsupervised_data_reader_async_helper.cpp" />
+    <CudaCompile Include="util_cuda.cu" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="absolute_layer_tester_cuda.cu" />
     <CudaCompile Include="absolute_layer_updater_cuda.cu" />
-    <CudaCompile Include="convolution_1x1_layer_updater_cuda.cu" />
-    <CudaCompile Include="convolution_layer_testing_schema_helper_cuda_kepler.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_30,sm_30;compute_35,sm_35</CodeGeneration>
-    </CudaCompile>
-    <CudaCompile Include="convolution_layer_updater_schema_helper_cuda_kepler.cu">
-      <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_30,sm_30;compute_35,sm_35</CodeGeneration>
-    </CudaCompile>
-    <CudaCompile Include="cross_entropy_error_function_updater_cuda.cu" />
     <CudaCompile Include="max_subsampling_layer_testing_schema_cuda.cu" />
     <CudaCompile Include="max_subsampling_layer_updater_schema_cuda.cu" />
-    <CudaCompile Include="negative_log_likelihood_error_function_updater_cuda.cu" />
-    <CudaCompile Include="error_function_updater_cuda.cu" />
     <CudaCompile Include="local_contrast_subtractive_2d_layer_updater_cuda.cu" />
     <CudaCompile Include="maxout_layer_tester_cuda.cu" />
     <CudaCompile Include="maxout_layer_updater_cuda.cu" />
-    <CudaCompile Include="mse_error_function_updater_cuda.cu" />
-    <CudaCompile Include="network_analyzer_cuda.cu" />
     <CudaCompile Include="rgb_to_yuv_convert_layer_tester_cuda.cu" />
     <CudaCompile Include="rgb_to_yuv_convert_layer_updater_cuda.cu" />
-    <CudaCompile Include="sparse_fully_connected_1x1_layer_tester_cuda.cu" />
     <CudaCompile Include="sparse_fully_connected_1x1_layer_updater_cuda.cu" />
-    <CudaCompile Include="squared_hinge_loss_error_function_updater_cuda.cu" />
     <CudaCompile Include="untile_layer_tester_cuda.cu" />
-    <CudaCompile Include="util_cuda.cu" />
     <CudaCompile Include="hyperbolic_tangent_layer_tester_cuda.cu" />
     <CudaCompile Include="hyperbolic_tangent_layer_updater_cuda.cu" />
-    <CudaCompile Include="layer_updater_cuda.cu" />
     <CudaCompile Include="local_contrast_subtractive_2d_layer_tester_cuda.cu" />
-    <CudaCompile Include="network_tester_cuda.cu" />
-    <CudaCompile Include="network_updater_cuda.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="convolution_layer_testing_schema_helper_cuda_kepler.h">
-      <FileType>Document</FileType>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="convolution_layer_tester_cuda_kepler.cuh">
-      <FileType>Document</FileType>
-    </ClInclude>
     <ClInclude Include="sequential_curve.h">
       <FileType>Document</FileType>
     </ClInclude>
@@ -294,7 +286,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.0.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -350,6 +342,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.0.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 7.5.targets" />
   </ImportGroup>
 </Project>

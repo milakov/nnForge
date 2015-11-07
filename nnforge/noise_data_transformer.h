@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,28 +20,27 @@
 #include "rnd.h"
 #include "nn_types.h"
 
+#include <boost/thread/thread.hpp>
+
 namespace nnforge
 {
 	class noise_data_transformer : public data_transformer
 	{
 	public:
-		noise_data_transformer(unsigned int max_noise);
+		noise_data_transformer(float max_noise);
 
 		virtual ~noise_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-		virtual bool is_deterministic() const;
-
 	protected:
-		bool is_same_sequence_from_reset;
 		random_generator generator;
+		boost::mutex gen_stream_mutex;
 
-		nnforge_uniform_int_distribution<int> max_noise_distribution;
+		nnforge_uniform_real_distribution<float> max_noise_distribution;
 	};
 }

@@ -23,7 +23,6 @@
 #include <boost/format.hpp>
 
 #include "util_cuda.h"
-#include "cuda_texture.h"
 #include "neural_network_cuda_exception.h"
 #include "packed_config.h"
 #include "sequential_curve.h"
@@ -168,18 +167,19 @@ namespace nnforge
 			{
 			}
 
-			virtual void enqueue_test(
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count)
 			{
-				const float * input = *input_buffer;
-				float * output = *additional_buffers[0];
-				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*additional_buffers[1]);
+				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*persistent_working_data[0]);
 
 				int feature_map_block_count = (output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE;
 
@@ -194,13 +194,13 @@ namespace nnforge
 				int smem_size = threadblock_size * sizeof(float) * FEATURE_MAP_BLOCK_SIZE;
 
 				average_subsampling_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-					output,
-					input,
+					*output_buffer,
+					*input_buffers[0],
 					packed_config_list,
 					subsampling_sizes,
 					input_sizes,
 					output_sizes,
-					input_elem_count_per_feature_map,
+					input_elem_count_per_feature_map_list[0],
 					output_elem_count_per_feature_map,
 					output_configuration_specific.feature_map_count,
 					entry_count,
@@ -219,7 +219,7 @@ namespace nnforge
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = layer_derived->subsampling_sizes[i];
-					input_sizes[i] = input_configuration_specific.dimension_sizes[i];
+					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 
 					toal_subsampling_size *= subsampling_sizes[i];
@@ -232,54 +232,35 @@ namespace nnforge
 					forward_packed_config_count *= output_sizes[i];
 			}
 
-			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_persistent_working_data() const
 			{
-				return additional_buffers[0];
-			}
+				std::vector<cuda_linear_buffer_device::const_ptr> res;
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const
-			{
-				std::vector<size_t> res;
-
-				res.push_back(output_elem_count_per_entry * sizeof(float));
-
-				return res;
-			}
-
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const
-			{
-				std::vector<size_t> res;
-
-				res.push_back(sizeof(packed_config<forward_dimension_count>) * forward_packed_config_count);
-
-				return res;
-			}
-
-			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const
-			{
-				std::vector<packed_config<forward_dimension_count> > task_list;
 				{
-					nnforge_array<int, dimension_count> size_list;
-					for(int i = 0; i < dimension_count; ++i)
-						size_list[i] = output_sizes[i];
-					std::vector<nnforge_array<int, dimension_count> > ordered_list;
-					sequential_curve<dimension_count>::fill_pattern(size_list, ordered_list);
-					packed_config<forward_dimension_count> new_elem;
-					for(int j = 0; j < ordered_list.size(); ++j)
+					std::vector<packed_config<forward_dimension_count> > task_list;
 					{
-						const nnforge_array<int, dimension_count>& spatial_dimensions = ordered_list[j];
+						nnforge_array<int, dimension_count> size_list;
 						for(int i = 0; i < dimension_count; ++i)
-							new_elem.set_val(i + 1, spatial_dimensions[i]);
-						for(int k = 0; k < subsampling_sizes[0]; ++k)
+							size_list[i] = output_sizes[i];
+						std::vector<nnforge_array<int, dimension_count> > ordered_list;
+						sequential_curve<dimension_count>::fill_pattern(size_list, ordered_list);
+						packed_config<forward_dimension_count> new_elem;
+						for(int j = 0; j < ordered_list.size(); ++j)
 						{
-							new_elem.set_val(0, k);
-							task_list.push_back(new_elem);
+							const nnforge_array<int, dimension_count>& spatial_dimensions = ordered_list[j];
+							for(int i = 0; i < dimension_count; ++i)
+								new_elem.set_val(i + 1, spatial_dimensions[i]);
+							for(int k = 0; k < subsampling_sizes[0]; ++k)
+							{
+								new_elem.set_val(0, k);
+								task_list.push_back(new_elem);
+							}
 						}
 					}
+					res.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(&task_list[0], sizeof(packed_config<forward_dimension_count>) * task_list.size())));
 				}
-				cuda_safe_call(cudaMemcpy(*additional_buffers[1], &(*task_list.begin()), sizeof(packed_config<forward_dimension_count>) * task_list.size(), cudaMemcpyHostToDevice));
+
+				return res;
 			}
 
 		private:

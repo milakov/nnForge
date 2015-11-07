@@ -16,6 +16,7 @@
 
 #pragma once
 
+/*
 #include "factory_generator.h"
 #include "config_options.h"
 #include "network_data_pusher.h"
@@ -162,9 +163,9 @@ namespace nnforge
 		static const char * output_neurons_filename;
 		static const char * mixture_filename;
 		static const char * ann_subfolder_name;
-		static const char * ann_resume_subfolder_name;
+		static const char * ann_snapshot_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
-		static const char * resume_ann_index_extractor_pattern;
+		static const char * snapshot_ann_index_extractor_pattern;
 		static const char * output_neurons_extractor_pattern;
 		static const char * logfile_name;
 
@@ -194,8 +195,8 @@ namespace nnforge
 		std::string snapshot_data_set;
 		unsigned int profile_updater_entry_count;
 		std::string training_algo;
-		bool dump_resume;
-		bool load_resume;
+		bool dump_snapshot;
+		bool load_snapshot;
 		unsigned int epoch_count_in_training_set;
 		float weight_decay;
 		unsigned int snapshot_scale;
@@ -290,11 +291,11 @@ namespace nnforge
 
 		float get_gradient_rate(float gradient_backprop, float gradient_check) const;
 
-		std::map<unsigned int, unsigned int> get_resume_ann_list(const std::set<unsigned int>& exclusion_ann_list) const;
+		std::map<unsigned int, unsigned int> get_snapshot_ann_list(const std::set<unsigned int>& exclusion_ann_list) const;
 
 		std::set<unsigned int> get_trained_ann_list() const;
 
-		std::vector<network_data_peek_entry> get_resume_ann_list_entry_list() const;
+		std::vector<network_data_peek_entry> get_snapshot_ann_list_entry_list() const;
 
 		void save_output_neuron_value_set(const output_neuron_value_set& neuron_value_set) const;
 
@@ -317,3 +318,4 @@ namespace nnforge
 		neural_network_toolset(const neural_network_toolset&);
 	};
 }
+*/

@@ -25,38 +25,40 @@
 #include "layer_data_custom_list.h"
 
 #include <vector>
-#include <ostream>
-#include <istream>
 #include <string>
 #include <boost/uuid/uuid.hpp>
+#include <boost/filesystem.hpp>
 
 namespace nnforge
 {
 	class network_data
 	{
 	public:
+		typedef nnforge_shared_ptr<network_data> ptr;
+		typedef nnforge_shared_ptr<const network_data> const_ptr;
+
 		network_data();
+
+		network_data(
+			const std::vector<layer::const_ptr>& layer_list,
+			float val = 0.0F);
+
+		// Narrow other network_data to the layers from layer_list
+		network_data(
+			const std::vector<layer::const_ptr>& layer_list,
+			const network_data& other);
 
 		const boost::uuids::uuid& get_uuid() const;
 
-		network_data(const const_layer_list& layer_list, float val = 0.0F);
+		void write(const boost::filesystem::path& folder_path) const;
 
-		// This constructor maps existing network data to layer list effectively allowing any number of empty data layers
-		network_data(const const_layer_list& layer_list, const network_data& other);
-
-		// The stream should be created with std::ios_base::binary flag
-		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure
-		void write(std::ostream& binary_stream_to_write_to) const;
-
-		// The stream should be created with std::ios_base::binary flag
-		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
-		void read(std::istream& binary_stream_to_read_from);
+		void read(const boost::filesystem::path& folder_path);
 
 		// The method throws exception in case the data is not suitable for the layers
-		void check_network_data_consistency(const const_layer_list& layer_list) const;
+		void check_network_data_consistency(const std::vector<layer::const_ptr>& layer_list) const;
 
 		void randomize(
-			const const_layer_list& layer_list,
+			const std::vector<layer::const_ptr>& layer_list,
 			random_generator& gen);
 
 	public:
@@ -65,9 +67,5 @@ namespace nnforge
 
 	private:
 		static const boost::uuids::uuid data_guid;
-		static const boost::uuids::uuid data_guid_v1;
 	};
-
-	typedef nnforge_shared_ptr<network_data> network_data_smart_ptr;
-	typedef nnforge_shared_ptr<const network_data> network_data_const_smart_ptr;
 }

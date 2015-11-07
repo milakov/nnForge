@@ -7,7 +7,8 @@ message NetworkSchema {
 
 message Layer {
 	required string type = 1;
-	optional string name = 2;
+	required string name = 2;
+	repeated string input_layer_name = 14;
 
 	optional ConvolutionalParam convolution_param = 3;
 	optional AverageSubsamplingParam average_subsampling_param = 4;
@@ -20,7 +21,10 @@ message Layer {
 	optional RGBToYUVConvertParam rgb_to_yuv_convert_param = 11;
 	optional TanHParam tanh_param = 12;
 	optional UnTileParam untile_param = 13;
-	optional SigmoidParam sigmoid_param = 15;
+	optional MSEParam mse_param = 15;
+	optional AccuracyParam accuracy_param = 16;
+	optional NegativeLogLikelihoodParam negative_log_likelihood_param = 17;
+	optional CrossEntropyParam cross_entropy_param = 18;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -108,6 +112,22 @@ message UnTileParam {
 	repeated UnTileLevelParam level_param = 1;
 }
 
+message MSEParam {
+	optional float scale = 1 [default = 1.0];
+}
+
+message AccuracyParam {
+	optional uint32 top_n = 1 [default = 1];
+}
+
+message NegativeLogLikelihoodParam {
+	optional float scale = 1 [default = 1.0];
+}
+
+message CrossEntropyParam {
+	optional float scale = 1 [default = 1.0];
+}
+
 message CustomParam {
 	message CustomDimensionParam {
 		repeated sint32 int_param = 1;
@@ -116,8 +136,4 @@ message CustomParam {
 	repeated sint32 int_param = 1;
 	repeated float float_param = 2;
 	repeated CustomDimensionParam dimension_param = 3;
-}
-
-message SigmoidParam {
-	repeated uint32 feature_map_affected = 1;
 }

@@ -17,8 +17,6 @@
 #include "hyperbolic_tangent_layer_updater_plain.h"
 
 #include "../hyperbolic_tangent_layer.h"
-#include "../neural_network_exception.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -32,31 +30,29 @@ namespace nnforge
 		{
 		}
 
-		const boost::uuids::uuid& hyperbolic_tangent_layer_updater_plain::get_uuid() const
+		std::string hyperbolic_tangent_layer_updater_plain::get_type_name() const
 		{
-			return hyperbolic_tangent_layer::layer_guid;
+			return hyperbolic_tangent_layer::layer_type_name;
 		}
 
-		void hyperbolic_tangent_layer_updater_plain::test(
-			const_additional_buffer_smart_ptr input_buffer,
-			additional_buffer_smart_ptr output_buffer,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void hyperbolic_tangent_layer_updater_plain::run_forward_propagation(
+			plain_buffer::ptr output_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_buffers,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			unsigned int offset_input_entry_id,
-			bool force_deterministic) const
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			if (offset_input_entry_id > 0)
-				throw neural_network_exception("hyperbolic_tangent_layer_updater_plain is not able to run using offset");
-
-			const int elem_count = static_cast<int>(updater_count * input_configuration_specific.get_neuron_count());
-			const std::vector<float>::const_iterator in_it = input_buffer->begin();
-			const std::vector<float>::iterator out_it = output_buffer->begin();
+			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
+			float * const out_it = *output_buffer;
+			const float * const in_it = *input_buffers[0];
 
 			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 			const float hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
@@ -72,39 +68,87 @@ namespace nnforge
 			}
 		}
 
-		void hyperbolic_tangent_layer_updater_plain::backprop(
-			additional_buffer_smart_ptr input_errors,
-			const_additional_buffer_smart_ptr input_neurons,
-			const_additional_buffer_smart_ptr output_errors,
-			const_additional_buffer_smart_ptr output_neurons,
-			std::vector<additional_buffer_smart_ptr>& additional_buffers,
-			plain_running_configuration_const_smart_ptr plain_config,
-			const_layer_smart_ptr layer_schema,
-			const_layer_data_smart_ptr data,
-			const_layer_data_custom_smart_ptr data_custom,
-			const layer_configuration_specific& input_configuration_specific,
+		void hyperbolic_tangent_layer_updater_plain::run_backward_data_propagation(
+			unsigned int input_index,
+			plain_buffer::ptr input_errors_buffer,
+			plain_buffer::const_ptr output_errors_buffer,
+			const std::vector<plain_buffer::const_ptr>& input_neurons_buffers,
+			plain_buffer::const_ptr output_neurons_buffer,
+			plain_buffer::ptr temporary_working_fixed_buffer,
+			plain_buffer::ptr temporary_working_per_entry_buffer,
+			plain_buffer::ptr temporary_per_entry_buffer,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			layer_data::const_ptr data,
+			layer_data_custom::const_ptr data_custom,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int updater_count,
-			bool force_deterministic) const
+			const bool add_update_to_destination,
+			const std::set<layer_action>& actions,
+			unsigned int entry_count) const
 		{
-			const int elem_count = static_cast<int>(updater_count * input_configuration_specific.get_neuron_count());
-			const std::vector<float>::iterator in_err_it = input_errors->begin();
-			const std::vector<float>::const_iterator out_it = output_neurons->begin();
+			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
+			float * const in_err_it = *input_errors_buffer;
+			const float * const out_it = *output_neurons_buffer;
+			const float * const out_err_it = *output_errors_buffer;
 
 			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 			const float hyperbolic_tangent_major_multiplier_reverse = 1.0F / layer_derived->scale;
 			const float hyperbolic_tangent_steepness3 = layer_derived->steepness * layer_derived->scale;
-			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-			for(int i = 0; i < elem_count; ++i)
+			if (add_update_to_destination)
 			{
-				float out_neuron = *(out_it + i);
-				float normalized_value = out_neuron * hyperbolic_tangent_major_multiplier_reverse;
-				float der1st = hyperbolic_tangent_steepness3 * (1.0F - (normalized_value * normalized_value));
-				*(in_err_it + i) *= der1st;
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int i = 0; i < elem_count; ++i)
+				{
+					float out_neuron = *(out_it + i);
+					float normalized_value = out_neuron * hyperbolic_tangent_major_multiplier_reverse;
+					float der1st = hyperbolic_tangent_steepness3 * (1.0F - (normalized_value * normalized_value));
+					*(in_err_it + i) += *(out_err_it + i) * der1st;
+				}
+			}
+			else
+			{
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int i = 0; i < elem_count; ++i)
+				{
+					float out_neuron = *(out_it + i);
+					float normalized_value = out_neuron * hyperbolic_tangent_major_multiplier_reverse;
+					float der1st = hyperbolic_tangent_steepness3 * (1.0F - (normalized_value * normalized_value));
+					*(in_err_it + i) = *(out_err_it + i) * der1st;
+				}
 			}
 		}
 
-		bool hyperbolic_tangent_layer_updater_plain::is_in_place_backprop() const
+		int hyperbolic_tangent_layer_updater_plain::get_input_index_layer_can_write(
+			const layer_action& action,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return 0;
+		}
+
+		bool hyperbolic_tangent_layer_updater_plain::is_backward_data_dependent_on_input_buffer(
+			unsigned int action_input_index,
+			unsigned int data_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return false;
+		}
+
+		bool hyperbolic_tangent_layer_updater_plain::is_backward_data_dependent_on_output_buffer(
+			unsigned int action_input_index,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
 			return true;
 		}

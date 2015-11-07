@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 #pragma once
 
 #include <string>
+#include <vector>
+#include <boost/filesystem.hpp>
 
 namespace nnforge
 {
@@ -36,6 +38,43 @@ namespace nnforge
 
 		std::string name;
 		std::string * var;
+		std::string default_value;
+		std::string description;
+	};
+
+	struct multi_string_option
+	{
+		multi_string_option(
+			const char * name,
+			std::vector<std::string> * var,
+			const char * description)
+			: name(name)
+			, var(var)
+			, description(description)
+		{
+		}
+
+		std::string name;
+		std::vector<std::string> * var;
+		std::string description;
+	};
+
+	struct path_option
+	{
+		path_option(
+			const char * name,
+			boost::filesystem::path * var,
+			const char * default_value,
+			const char * description)
+			: name(name)
+			, var(var)
+			, default_value(default_value)
+			, description(description)
+		{
+		}
+
+		std::string name;
+		boost::filesystem::path * var;
 		std::string default_value;
 		std::string description;
 	};

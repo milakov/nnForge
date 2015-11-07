@@ -50,18 +50,18 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void convolution_layer_updater_cuda::enqueue_test(
-			unsigned int offset_input_entry_id,
+		void convolution_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			cuda_linear_buffer_device::ptr output_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
+			unsigned int entry_count)
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
@@ -70,9 +70,9 @@ namespace nnforge
 				CUDNN_TENSOR_NCHW,
 				CUDNN_DATA_FLOAT,
 				entry_count,
-				input_configuration_specific.feature_map_count,
-				(input_configuration_specific.dimension_sizes.size() > 1) ? input_configuration_specific.dimension_sizes[1] : 1,
-				input_configuration_specific.dimension_sizes[0]));
+				input_configuration_specific_list[0].feature_map_count,
+				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
+				input_configuration_specific_list[0].dimension_sizes[0]));
 			cudnn_safe_call(cudnnSetTensor4dDescriptor(
 				output_data_desc,
 				CUDNN_TENSOR_NCHW,
@@ -91,7 +91,7 @@ namespace nnforge
 					convolution_desc,
 					output_data_desc,
 					CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
-					additional_buffers[0]->get_size(),
+					temporary_working_fixed_buffer->get_size(),
 					&algo));
 
 				float alpha = 1.0F;
@@ -100,16 +100,16 @@ namespace nnforge
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					input_data_desc,
-					(const float *)(*input_neurons_buffer) + input_elem_count_per_entry * offset_input_entry_id,
+					*input_buffers[0],
 					weights_desc,
 					*data[0],
 					convolution_desc,
 					algo,
-					*additional_buffers[0],
-					additional_buffers[0]->get_size(),
+					*temporary_working_fixed_buffer,
+					temporary_working_fixed_buffer->get_size(),
 					&beta,
 					output_data_desc,
-					*output_neurons_buffer));
+					*output_buffer));
 			}
 
 			{
@@ -123,27 +123,27 @@ namespace nnforge
 					*data[1],
 					&beta,
 					output_data_desc,
-					*output_neurons_buffer));
+					*output_buffer));
 			}
 		}
 
-		void convolution_layer_updater_cuda::enqueue_backprop(
+		void convolution_layer_updater_cuda::enqueue_backward_data_propagation(
 			cudaStream_t stream_id,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const_cuda_linear_buffer_device_smart_ptr output_neurons_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-			cuda_linear_buffer_device_smart_ptr input_errors_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			unsigned int input_index,
+			cuda_linear_buffer_device::ptr input_errors_buffer,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			bool add_update_to_destination,
+			unsigned int entry_count)
 		{
-			if (!backprop_required)
-				throw neural_network_exception("convolution_layer_updater_cuda is not configured to do backprop but requested to");
-
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
 			cudnn_safe_call(cudnnSetTensor4dDescriptor(
@@ -151,9 +151,9 @@ namespace nnforge
 				CUDNN_TENSOR_NCHW,
 				CUDNN_DATA_FLOAT,
 				entry_count,
-				input_configuration_specific.feature_map_count,
-				(input_configuration_specific.dimension_sizes.size() > 1) ? input_configuration_specific.dimension_sizes[1] : 1,
-				input_configuration_specific.dimension_sizes[0]));
+				input_configuration_specific_list[0].feature_map_count,
+				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
+				input_configuration_specific_list[0].dimension_sizes[0]));
 			cudnn_safe_call(cudnnSetTensor4dDescriptor(
 				output_data_desc,
 				CUDNN_TENSOR_NCHW,
@@ -165,7 +165,7 @@ namespace nnforge
 
 			{
 				float alpha = 1.0F;
-				float beta = 0.0F;
+				float beta = (add_update_to_destination ? 1.0F : 0.0F);
 				cudnn_safe_call(cudnnConvolutionBackwardData(
 					cuda_config->get_cudnn_handle(),
 					&alpha,
@@ -180,18 +180,18 @@ namespace nnforge
 			}
 		}
 
-		void convolution_layer_updater_cuda::enqueue_update_weights(
-			unsigned int offset_input_entry_id,
+		void convolution_layer_updater_cuda::enqueue_backward_weights_propagation(
 			cudaStream_t stream_id,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& gradient,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& data_custom,
-			const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-			cuda_linear_buffer_device_smart_ptr output_errors_buffer,
-			const_cuda_linear_buffer_device_smart_ptr input_neurons_buffer,
-			const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
-			std::vector<cuda_memobject_smart_ptr>& dynamic_memobjects,
-			unsigned int entry_count,
-			bool force_deterministic)
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& gradient,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			unsigned int entry_count)
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
@@ -200,9 +200,9 @@ namespace nnforge
 				CUDNN_TENSOR_NCHW,
 				CUDNN_DATA_FLOAT,
 				entry_count,
-				input_configuration_specific.feature_map_count,
-				(input_configuration_specific.dimension_sizes.size() > 1) ? input_configuration_specific.dimension_sizes[1] : 1,
-				input_configuration_specific.dimension_sizes[0]));
+				input_configuration_specific_list[0].feature_map_count,
+				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
+				input_configuration_specific_list[0].dimension_sizes[0]));
 			cudnn_safe_call(cudnnSetTensor4dDescriptor(
 				output_data_desc,
 				CUDNN_TENSOR_NCHW,
@@ -219,7 +219,7 @@ namespace nnforge
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					input_data_desc,
-					(const float *)(*input_neurons_buffer) + input_elem_count_per_entry * offset_input_entry_id,
+					*input_neurons_buffers[0],
 					output_data_desc,
 					*output_errors_buffer,
 					convolution_desc,
@@ -259,7 +259,7 @@ namespace nnforge
 				weights_desc,
 				CUDNN_DATA_FLOAT,
 				output_configuration_specific.feature_map_count,
-				input_configuration_specific.feature_map_count,
+				input_configuration_specific_list[0].feature_map_count,
 				(window_sizes.size() > 1) ? window_sizes[1] : 1,
 				window_sizes[0]));
 
@@ -283,21 +283,33 @@ namespace nnforge
 				CUDNN_CROSS_CORRELATION));
 		}
 
-		std::vector<size_t> convolution_layer_updater_cuda::get_sizes_of_additional_buffers_fixed() const
+		size_t convolution_layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
 		{
-			std::vector<size_t> res;
+			if (action.get_action_type() == layer_action::forward)
+			{
+				unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
+				for(int i = 0; i < window_sizes.size(); ++i)
+					working_buffer_elem_count *= window_sizes[i];
 
-			unsigned int working_buffer_elem_count = input_configuration_specific.feature_map_count;
-			for(int i = 0; i < window_sizes.size(); ++i)
-				working_buffer_elem_count *= window_sizes[i];
-			res.push_back(working_buffer_elem_count * sizeof(int));
-
-			return res;
+				return working_buffer_elem_count * sizeof(int);
+			}
+			else
+				return layer_updater_cuda::get_temporary_working_fixed_buffer_size(action);
 		}
 
-		bool convolution_layer_updater_cuda::is_in_place_backprop() const
+		bool convolution_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
 		{
 			return false;
+		}
+
+		bool convolution_layer_updater_cuda::is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
+		{
+			return false;
+		}
+
+		bool convolution_layer_updater_cuda::is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const
+		{
+			return true;
 		}
 	}
 }

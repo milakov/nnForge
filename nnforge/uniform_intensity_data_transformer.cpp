@@ -38,36 +38,36 @@ namespace nnforge
 	}
 
 	void uniform_intensity_data_transformer::transform(
-		const void * data,
-		void * data_transformed,
-		neuron_data_type::input_type type,
+		const float * data,
+		float * data_transformed,
 		const layer_configuration_specific& original_config,
 		unsigned int sample_id)
 	{
-		if (type != neuron_data_type::type_float)
-			throw neural_network_exception("uniform_intensity_data_transformer is implemented for data stored as floats only");
-
 		if (original_config.feature_map_count != shift_distribution_list.size())
 			throw neural_network_exception((boost::format("uniform_intensity_data_transformer was initialized with %1% distributions and data provided has %2% feature maps") % shift_distribution_list.size() % original_config.feature_map_count).str());
 
-		float * data_typed = static_cast<float *>(data_transformed);
+		std::vector<float> shift_list(original_config.feature_map_count);
+		{
+			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
+
+			for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
+			{
+				nnforge_uniform_real_distribution<float>& dist = shift_distribution_list[feature_map_id];
+				float shift = dist.min();
+				if (dist.max() > dist.min())
+					shift = dist(generator);
+				shift_list[feature_map_id] = shift;
+			}
+		}
 
 		unsigned int neuron_count_per_feature_map = original_config.get_neuron_count_per_feature_map();
 		for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
 		{
-			nnforge_uniform_real_distribution<float>& dist = shift_distribution_list[feature_map_id];
-			float shift = dist.min();
-			if (dist.max() > dist.min())
-				shift = dist(generator);
-
-			float * dest_data = data_typed + feature_map_id * neuron_count_per_feature_map;
+			float shift = shift_list[feature_map_id];
+			const float * src_data = data + feature_map_id * neuron_count_per_feature_map;
+			float * dest_data = data_transformed + feature_map_id * neuron_count_per_feature_map;
 			for(unsigned int i = 0; i < neuron_count_per_feature_map; ++i)
-				dest_data[i] += shift;
+				dest_data[i] = src_data[i] + shift;
 		}
-	}
-
- 	bool uniform_intensity_data_transformer::is_deterministic() const
-	{
-		return false;
 	}
 }

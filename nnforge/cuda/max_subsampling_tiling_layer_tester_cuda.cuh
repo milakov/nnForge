@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include <boost/format.hpp>
 
 #include "util_cuda.h"
-#include "cuda_texture.h"
 #include "neural_network_cuda_exception.h"
 #include "packed_config.h"
 #include "space_filling_curve.h"
@@ -124,35 +123,36 @@ namespace nnforge
 			{
 			}
 
-			virtual void enqueue_test(
+			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& schema_data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data,
-				const std::vector<const_cuda_linear_buffer_device_smart_ptr>& data_custom,
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers,
+				cuda_linear_buffer_device::ptr output_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count)
 			{
-				const float * input = *input_buffer;
-				float * output = *additional_buffers[0];
-				const packed_config<spatial_dimension_count> * spatial_config_list = static_cast<const packed_config<spatial_dimension_count> *>((const void *)*additional_buffers[1]);
-				const packed_config<tiling_dimension_count> * tiling_config_list = static_cast<const packed_config<tiling_dimension_count> *>((const void *)*additional_buffers[2]);
+				const packed_config<spatial_dimension_count> * spatial_config_list = static_cast<const packed_config<spatial_dimension_count> *>((const void *)*persistent_working_data[0]);
+				const packed_config<tiling_dimension_count> * tiling_config_list = static_cast<const packed_config<tiling_dimension_count> *>((const void *)*persistent_working_data[1]);
 
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
 					tiling_config_count * spatial_config_count,
-					input_configuration_specific.feature_map_count,
+					input_configuration_specific_list[0].feature_map_count,
 					entry_count);
 
 				max_subsampling_tiling_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-					output,
-					input,
+					*output_buffer,
+					*input_buffers[0],
 					spatial_config_list,
 					tiling_config_list,
 					subsampling_sizes,
 					input_sizes,
 					output_sizes,
-					input_elem_count_per_feature_map,
+					input_elem_count_per_feature_map_list[0],
 					output_elem_count_per_feature_map,
 					output_configuration_specific.feature_map_count,
 					entry_count,
@@ -171,7 +171,7 @@ namespace nnforge
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = layer_derived->subsampling_sizes[i];
-					input_sizes[i] = input_configuration_specific.dimension_sizes[i];
+					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 				}
 
@@ -185,34 +185,10 @@ namespace nnforge
 				tiling_config_count = t1;
 			}
 
-			virtual cuda_linear_buffer_device_smart_ptr get_output_buffer(
-				cuda_linear_buffer_device_smart_ptr input_buffer,
-				const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers)
+			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_persistent_working_data() const
 			{
-				return additional_buffers[0];
-			}
+				std::vector<cuda_linear_buffer_device::const_ptr> res;
 
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_per_entry() const
-			{
-				std::vector<size_t> res;
-
-				res.push_back(output_elem_count_per_entry * tiling_config_count * sizeof(float));
-
-				return res;
-			}
-
-			virtual std::vector<size_t> get_sizes_of_additional_buffers_fixed() const
-			{
-				std::vector<size_t> res;
-
-				res.push_back(sizeof(packed_config<spatial_dimension_count>) * spatial_config_count);
-				res.push_back(sizeof(packed_config<tiling_dimension_count>) * tiling_config_count);
-
-				return res;
-			}
-
-			virtual void fill_additional_buffers(const std::vector<cuda_linear_buffer_device_smart_ptr>& additional_buffers) const
-			{
 				{
 					std::vector<packed_config<spatial_dimension_count> > task_list;
 					{
@@ -230,7 +206,7 @@ namespace nnforge
 							task_list.push_back(new_elem);
 						}
 					}
-					cuda_safe_call(cudaMemcpy(*additional_buffers[1], &(*task_list.begin()), sizeof(packed_config<spatial_dimension_count>) * task_list.size(), cudaMemcpyHostToDevice));
+					res.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(&task_list[0], sizeof(packed_config<spatial_dimension_count>) * task_list.size())));
 				}
 
 				{
@@ -250,8 +226,10 @@ namespace nnforge
 							task_list.push_back(new_elem);
 						}
 					}
-					cuda_safe_call(cudaMemcpy(*additional_buffers[2], &(*task_list.begin()), sizeof(packed_config<tiling_dimension_count>) * task_list.size(), cudaMemcpyHostToDevice));
+					res.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(&task_list[0], sizeof(packed_config<tiling_dimension_count>) * task_list.size())));
 				}
+
+				return res;
 			}
 
 		private:

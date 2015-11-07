@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,11 +18,8 @@
 
 #include "../layer.h"
 #include "layer_tester_plain.h"
-#include "plain_running_configuration.h"
 
 #include <map>
-#include <vector>
-#include <boost/uuid/uuid.hpp>
 #include <boost/serialization/singleton.hpp>
 
 namespace nnforge
@@ -32,17 +29,17 @@ namespace nnforge
 		class layer_tester_plain_factory
 		{
 		public:
-			bool register_layer_tester_plain(layer_tester_plain_smart_ptr sample_layer_tester_plain);
+			typedef boost::serialization::singleton<layer_tester_plain_factory> singleton;
 
-			bool unregister_layer_tester_plain(const boost::uuids::uuid& layer_guid);
+			bool register_layer_tester_plain(layer_tester_plain::const_ptr sample_layer_tester_plain);
 
-			const_layer_tester_plain_smart_ptr get_tester_plain_layer(const boost::uuids::uuid& layer_guid) const;
+			bool unregister_layer_tester_plain(const std::string& layer_type_name);
+
+			layer_tester_plain::const_ptr get_tester_plain_layer(const std::string& layer_type_name) const;
 
 		private:
-			typedef std::map<boost::uuids::uuid, layer_tester_plain_smart_ptr> sample_map;
+			typedef std::map<std::string, layer_tester_plain::const_ptr> sample_map;
 			sample_map sample_layer_tester_plain_map;
 		};
-
-		typedef boost::serialization::singleton<layer_tester_plain_factory> single_layer_tester_plain_factory;
 	}
 }

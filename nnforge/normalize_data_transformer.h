@@ -21,16 +21,14 @@
 #include "nn_types.h"
 
 #include <vector>
-#include <ostream>
-#include <istream>
-
-#include <boost/uuid/uuid.hpp>
 
 namespace nnforge
 {
 	class normalize_data_transformer : public data_transformer
 	{
 	public:
+		typedef nnforge_shared_ptr<normalize_data_transformer> ptr;
+
 		normalize_data_transformer();
 
 		normalize_data_transformer(const std::vector<feature_map_data_stat>& feature_map_data_stat_list);
@@ -38,27 +36,16 @@ namespace nnforge
 		virtual ~normalize_data_transformer();
 
 		virtual void transform(
-			const void * data,
-			void * data_transformed,
-			neuron_data_type::input_type type,
+			const float * data,
+			float * data_transformed,
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-		// The stream should be created with std::ios_base::binary flag
-		// The method modifies binary_stream_to_write_to to throw exceptions in case of failure
-		void write(std::ostream& binary_stream_to_write_to) const;
-
 		void write_proto(std::ostream& stream_to_write_to) const;
-
-		// The stream should be created with std::ios_base::binary flag
-		// The method modifies binary_stream_to_read_from to throw exceptions in case of failure
-		void read(std::istream& binary_stream_to_read_from);
 
 		void read_proto(std::istream& stream_to_read_from);
 
-		nnforge_shared_ptr<normalize_data_transformer> get_inverted_transformer() const;
-
-		virtual bool is_deterministic() const;
+		normalize_data_transformer::ptr get_inverted_transformer() const;
 
 	public:
 		std::vector<std::pair<float, float> > mul_add_list;
@@ -77,9 +64,5 @@ namespace nnforge
 			float mult;
 			float add;
 		};
-
-		static const boost::uuids::uuid normalizer_guid;
 	};
-
-	typedef nnforge_shared_ptr<normalize_data_transformer> normalize_data_transformer_smart_ptr;
 }

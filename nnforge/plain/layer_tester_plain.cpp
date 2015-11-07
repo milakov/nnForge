@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,64 +28,31 @@ namespace nnforge
 		{
 		}
 
-		void layer_tester_plain::update_buffer_configuration(
-			buffer_plain_size_configuration& buffer_configuration,
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config,
-			unsigned int tiling_factor) const
+		int layer_tester_plain::get_input_index_layer_can_write(
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
-			std::vector<std::pair<unsigned int, bool> > buffer_sizes_per_entry_aligned = get_elem_count_and_per_entry_flag_additional_buffers(
-				layer_schema,
-				input_configuration_specific,
-				output_configuration_specific,
-				plain_config);
-			for(std::vector<std::pair<unsigned int, bool> >::const_iterator it = buffer_sizes_per_entry_aligned.begin(); it != buffer_sizes_per_entry_aligned.end(); ++it)
-			{
-				size_t s = static_cast<size_t>(it->first) * sizeof(float);
-				if (it->second)
-					buffer_configuration.add_per_entry_buffer(s * tiling_factor);
-				else
-					buffer_configuration.add_constant_buffer(s);
-			}
+			return -1;
 		}
 
-		std::vector<std::pair<unsigned int, bool> > layer_tester_plain::get_elem_count_and_per_entry_flag_additional_buffers(
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config) const
+		size_t layer_tester_plain::get_temporary_working_fixed_buffer_size(
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return std::vector<std::pair<unsigned int, bool> >();
+			return 0;
 		}
 
-		additional_buffer_set layer_tester_plain::allocate_additional_buffers(
-			unsigned int max_entry_count,
-			const_layer_smart_ptr layer_schema,
-			const layer_configuration_specific& input_configuration_specific,
-			const layer_configuration_specific& output_configuration_specific,
-			plain_running_configuration_const_smart_ptr plain_config) const
+		size_t layer_tester_plain::get_temporary_working_per_entry_buffer_size(
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
 		{
-			additional_buffer_set res;
-
-			std::vector<std::pair<unsigned int, bool> > buffer_sizes_per_entry_aligned = get_elem_count_and_per_entry_flag_additional_buffers(
-				layer_schema,
-				input_configuration_specific,
-				output_configuration_specific,
-				plain_config);
-
-			for(std::vector<std::pair<unsigned int, bool> >::const_iterator it = buffer_sizes_per_entry_aligned.begin(); it != buffer_sizes_per_entry_aligned.end(); ++it)
-				res.push_back(additional_buffer_smart_ptr(new std::vector<float>(it->first * (it->second ? max_entry_count : 1))));
-
-			return res;
-		}
-
-		additional_buffer_smart_ptr layer_tester_plain::get_output_buffer(
-			additional_buffer_smart_ptr input_buffer,
-			additional_buffer_set& additional_buffers) const
-		{
-			return input_buffer;
+			return 0;
 		}
 	}
 }

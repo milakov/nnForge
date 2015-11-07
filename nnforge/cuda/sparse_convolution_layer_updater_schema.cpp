@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,21 +36,21 @@ namespace nnforge
 		{
 		}
 
-		layer_updater_schema_smart_ptr sparse_convolution_layer_updater_schema::create_specific() const
+		layer_updater_schema::ptr sparse_convolution_layer_updater_schema::create_specific() const
 		{
-			return layer_updater_schema_smart_ptr(new sparse_convolution_layer_updater_schema());
+			return layer_updater_schema::ptr(new sparse_convolution_layer_updater_schema());
 		}
 
-		const boost::uuids::uuid& sparse_convolution_layer_updater_schema::get_uuid() const
+		std::string sparse_convolution_layer_updater_schema::get_type_name() const
 		{
-			return sparse_convolution_layer::layer_guid;
+			return sparse_convolution_layer::layer_type_name;
 		}
 
-		layer_updater_cuda_smart_ptr sparse_convolution_layer_updater_schema::create_updater_specific(
-			const layer_configuration_specific& input_configuration_specific,
+		layer_updater_cuda::ptr sparse_convolution_layer_updater_schema::create_updater_specific(
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			layer_updater_cuda_smart_ptr res;
+			layer_updater_cuda::ptr res;
 
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
@@ -59,18 +59,18 @@ namespace nnforge
 
 			if (zero_padding && (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count))
 			{
-				if (input_configuration_specific.dimension_sizes == output_configuration_specific.dimension_sizes)
+				if (input_configuration_specific_list[0].dimension_sizes == output_configuration_specific.dimension_sizes)
 				{
-					res = layer_updater_cuda_smart_ptr(new sparse_fully_connected_1x1_layer_updater_cuda());
+					res = layer_updater_cuda::ptr(new sparse_fully_connected_1x1_layer_updater_cuda());
 				}
 				else
 				{
-					res = layer_updater_cuda_smart_ptr(new sparse_fully_connected_layer_updater_cuda());
+					res = layer_updater_cuda::ptr(new sparse_fully_connected_layer_updater_cuda());
 				}
 			}
 			else
 			{
-				res = sparse_convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific, output_configuration_specific);
+				res = sparse_convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific_list, output_configuration_specific);
 			}
 
 			return res;
