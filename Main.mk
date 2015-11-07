@@ -4,8 +4,7 @@ LDLIBSDEPEND+=-lnnforge_cuda
 GENERIC_CXXFLAGS+=-DNNFORGE_CUDA_BACKEND_ENABLED
 endif
 GENERIC_CXXFLAGS+=-I$(NNFORGE_PATH)
-# LDLIBSDEPEND+=-lnnforge_plain -lnnforge
-LDLIBSDEPEND+=-lnnforge
+LDLIBSDEPEND+=-lnnforge_plain -lnnforge
 VPATH+=$(NNFORGE_PATH)/lib
 LDFLAGS+=-L$(NNFORGE_PATH)/lib
 endif
