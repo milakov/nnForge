@@ -431,6 +431,9 @@
     <ClInclude Include="cross_entropy_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="stream_redirector.h">
+      <Filter>Header Files\toolset</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -735,6 +738,9 @@
     </ClCompile>
     <ClCompile Include="cross_entropy_layer.cpp">
       <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="stream_redirector.cpp">
+      <Filter>Source Files\toolset</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

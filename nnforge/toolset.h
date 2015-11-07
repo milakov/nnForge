@@ -18,6 +18,7 @@
 
 #include "factory_generator.h"
 #include "stream_duplicator.h"
+#include "stream_redirector.h"
 #include "network_trainer.h"
 #include "structured_data_stream_reader.h"
 #include "data_transformer.h"
@@ -154,6 +155,7 @@ namespace nnforge
 		backward_propagation_factory::ptr backward_prop_factory;
 
 		nnforge_shared_ptr<stream_duplicator> out_to_log_duplicator;
+		nnforge_shared_ptr<stream_redirector> out_to_log_redirector;
 
 	protected:
 		std::string action;
@@ -199,6 +201,7 @@ namespace nnforge
 		int dump_data_video_fps;
 		int epoch_count_in_training_dataset;
 		int dump_compact_samples;
+		std::string log_mode;
 
 		debug_state::ptr debug;
 

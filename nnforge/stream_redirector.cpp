@@ -14,28 +14,24 @@
  *  limitations under the License.
  */
 
-#pragma once
+#include "stream_redirector.h"
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/iostreams/tee.hpp>
-#include <boost/iostreams/stream.hpp>
-
-#include <ostream>
+#include <iostream>
 
 namespace nnforge
 {
-	class stream_duplicator
+	stream_redirector::stream_redirector(const boost::filesystem::path& logfile_path)
+		: logfile_stream(logfile_path, std::ios_base::out | std::ios_base::app)
+		, backup(std::cout.rdbuf())
 	{
-	public:
-		stream_duplicator(const boost::filesystem::path& logfile_path);
+		std::cout.rdbuf(logfile_stream.rdbuf());
+		std::cout << "########################################" << std::endl;
+	}
 
-		~stream_duplicator();
-
-	private:
-		boost::filesystem::ofstream logfile_stream;
-		std::ostream cout_stream;
-		boost::iostreams::tee_device<std::ostream, boost::filesystem::ofstream> td;
-		boost::iostreams::stream<boost::iostreams::tee_device<std::ostream, boost::filesystem::ofstream> > ts;
-	};
+	stream_redirector::~stream_redirector()
+	{
+		std::cout << "########################################" << std::endl;
+		std::cout.rdbuf(backup);
+		logfile_stream.close();
+	}
 }

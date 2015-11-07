@@ -244,8 +244,15 @@ namespace nnforge
 		}
 
 		boost::filesystem::path logfile_path = get_working_data_folder() / logfile_name;
-		std::cout << "Forking output log to " << logfile_path.string() << "..." << std::endl;
-		out_to_log_duplicator = nnforge_shared_ptr<stream_duplicator>(new stream_duplicator(logfile_path));
+		if (log_mode == "redirect")
+		{
+			out_to_log_redirector = nnforge_shared_ptr<stream_redirector>(new stream_redirector(logfile_path));
+		}
+		else
+		{
+			std::cout << "Duplicating output log to " << logfile_path.string() << "..." << std::endl;
+			out_to_log_duplicator = nnforge_shared_ptr<stream_duplicator>(new stream_duplicator(logfile_path));
+		}
 
 		{
 			time_t rawtime;
@@ -299,6 +306,7 @@ namespace nnforge
 		res.push_back(string_option("dump_extension_video", &dump_extension_video, "avi", "Extension (type) of the files for dumping 3D data"));
 		res.push_back(string_option("normalizer_dataset_name", &normalizer_dataset_name, "training", "Name of the dataset to create normalizer from"));
 		res.push_back(string_option("normalizer_layer_name", &normalizer_layer_name, "", "Name of the layer to create normalizer for"));
+		res.push_back(string_option("log_mode", &log_mode, "duplicate", "Duplicate or redirect output to log file (duplicate, redirect)"));
 
 		return res;
 	}

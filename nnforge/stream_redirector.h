@@ -18,24 +18,20 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include <boost/iostreams/tee.hpp>
-#include <boost/iostreams/stream.hpp>
 
 #include <ostream>
 
 namespace nnforge
 {
-	class stream_duplicator
+	class stream_redirector
 	{
 	public:
-		stream_duplicator(const boost::filesystem::path& logfile_path);
+		stream_redirector(const boost::filesystem::path& logfile_path);
 
-		~stream_duplicator();
+		~stream_redirector();
 
 	private:
 		boost::filesystem::ofstream logfile_stream;
-		std::ostream cout_stream;
-		boost::iostreams::tee_device<std::ostream, boost::filesystem::ofstream> td;
-		boost::iostreams::stream<boost::iostreams::tee_device<std::ostream, boost::filesystem::ofstream> > ts;
+		std::streambuf * backup;
 	};
 }
