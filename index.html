@@ -1,40 +1,28 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en-us">
   <head>
-    <meta charset='utf-8'>
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <meta name="description" content="nnForge : Convolutional and fully-connected neural networks C++ framework">
-
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
-
-    <title>nnForge</title>
+    <meta charset="UTF-8">
+    <title>nnForge by milakov</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
-
   <body>
+    <section class="page-header">
+      <h1 class="project-name">nnForge</h1>
+      <h2 class="project-tagline">Convolutional and fully-connected neural networks C++ framework</h2>
+      <a href="https://github.com/milakov/nnForge" class="btn">View on GitHub</a>
+      <a href="https://github.com/milakov/nnForge/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/milakov/nnForge/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/milakov/nnForge">View on GitHub</a>
-
-          <h1 id="project_title">nnForge</h1>
-          <h2 id="project_tagline">Convolutional and fully-connected neural networks C++ framework</h2>
-
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/milakov/nnForge/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/milakov/nnForge/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h2>
+    <section class="main-content">
+      <h2>
 <a id="what-is-nnforge" class="anchor" href="#what-is-nnforge" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is nnForge?</h2>
 
-<p>nnForge is a framework for training convolutional and fully-connected neural networks. It includes CPU and GPU (CUDA) backends.</p>
+<p>nnForge is a framework for training convolutional and fully-connected neural networks. It includes CPU and GPU (CUDA) backends. The schema of the networks is DAG (directed acyclic graph).</p>
 
 <h2>
 <a id="layers" class="anchor" href="#layers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Layers</h2>
@@ -42,11 +30,11 @@
 <p>The framework has a number of layers defined:</p>
 
 <ul>
-<li>Convolutional (1D, 2D, 3D, and 4D)</li>
+<li>Convolutional (1D, 2D, and 3D)</li>
 <li>Sparse (in feature map dimension) convolutional (1D, 2D, 3D, and 4D) </li>
 <li>Fully connected</li>
 <li>Local contrast subtractive (CPU backend - no limitations, GPU backend - 2D only)</li>
-<li>RGB-&gt;YUV conversion (CPU backend: forward propagation only, GPU backend - forward + backward prop)</li>
+<li>RGB-&gt;YUV conversion (CPU backend: inference only, GPU backend - training and inference)</li>
 <li>Max spatial subsampling (1D, 2D, 3D, and 4D)</li>
 <li>Average spatial subsampling (1D, 2D, 3D, and 4D)</li>
 <li>Maxout - <a href="http://arxiv.org/abs/1302.4389">arXiv:1302.4389</a>
@@ -58,12 +46,25 @@
 <li>Parametric ReLU - <a href="http://arxiv.org/abs/1502.01852">arXiv:1502.01852</a>
 </li>
 <li>Softmax</li>
+<li>Dropout</li>
+</ul>
+
+<h2>
+<a id="error-functions" class="anchor" href="#error-functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Error functions</h2>
+
+<p>Error functions available:</p>
+
+<ul>
+<li>Mean Squared Error</li>
+<li>Negative Log-Likelihood</li>
+<li>Cross-Entropy</li>
+<li>Accuracy (top-n) (cannot be source of error for backward propagation)</li>
 </ul>
 
 <h2>
 <a id="training" class="anchor" href="#training" aria-hidden="true"><span class="octicon octicon-link"></span></a>Training</h2>
 
-<p>The library implements Stochastic Gradient Descent training algorithm.</p>
+<p>The library implements Stochastic Gradient Descent training algorithm with optional momentum (vanilla or Nesterov).</p>
 
 <p>Mini-batch training supported.</p>
 
@@ -73,18 +74,6 @@
 <ul>
 <li>Weight decay</li>
 <li>Dropout (as a separate layer)</li>
-</ul>
-
-<h2>
-<a id="error-functions" class="anchor" href="#error-functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Error functions</h2>
-
-<p>Error functions available:</p>
-
-<ul>
-<li>MSE - Mean Squared Error</li>
-<li>SHL - Squared Hinge Loss</li>
-<li>NLL - Negative Log-Likelihood</li>
-<li>CE - Cross-Entropy</li>
 </ul>
 
 <h2>
@@ -110,18 +99,15 @@
 <a id="authors" class="anchor" href="#authors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Authors</h2>
 
 <p>nnForge is designed and implemented by <a href="http://milakov.org">Maxim Milakov</a>.</p>
-      </section>
-    </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">nnForge maintained by <a href="https://github.com/milakov">milakov</a></p>
-        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/milakov/nnForge">nnForge</a> is maintained by <a href="https://github.com/milakov">milakov</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
       </footer>
-    </div>
 
-    
+    </section>
 
+  
   </body>
 </html>
