@@ -238,7 +238,6 @@ namespace nnforge
 			("momentum_type", boost::program_options::value<std::string>(&momentum_type_str)->default_value("vanilla"), "Type of the momentum to use (none, vanilla, nesterov).")
 			("momentum,M", boost::program_options::value<float>(&momentum_val)->default_value(0.0F), "Momentum in training.")
 			("shuffle_block_size", boost::program_options::value<int>(&shuffle_block_size)->default_value(-1), "The size of contiguous blocks when shuffling training data, -1 indicates no shuffling.")
-			("threshold_for_binary_classifier", boost::program_options::value<float>(&threshold_for_binary_classifier)->default_value(0.5F), "The threshold used for binary classifier.")
 			;
 
 		{
@@ -408,7 +407,6 @@ namespace nnforge
 			std::cout << "momentum_type" << "=" << momentum_type_str << std::endl;
 			std::cout << "momentum" << "=" << momentum_val << std::endl;
 			std::cout << "shuffle_block_size" << "=" << shuffle_block_size << std::endl;
-			std::cout << "threshold_for_binary_classifier" << "=" << threshold_for_binary_classifier << std::endl;
 		}
 		{
 			std::vector<string_option> additional_string_options = get_string_options();
@@ -1381,7 +1379,7 @@ namespace nnforge
 
 	float neural_network_toolset::get_threshold_for_binary_classifier() const
 	{
-		return threshold_for_binary_classifier;
+		return 0.5F;
 	}
 
 	void neural_network_toolset::snapshot_invalid()
@@ -2064,15 +2062,10 @@ namespace nnforge
 		case network_output_type::type_classifier:
 			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_classifier_visualizer(get_classifier_visualizer_top_n()));
 		case network_output_type::type_roc:
-			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_roc_visualizer(get_threshold_for_binary_classifier(), 1.0F, get_neuron_id_valid_for_roc_set()));
+			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_roc_visualizer(get_threshold_for_binary_classifier()));
 		default:
 			return testing_complete_result_set_visualizer_smart_ptr(new testing_complete_result_set_visualizer());
 		}
-	}
-
-	std::set<unsigned int> neural_network_toolset::get_neuron_id_valid_for_roc_set() const
-	{
-		return std::set<unsigned int>();
 	}
 
 	bool neural_network_toolset::is_training_with_validation() const

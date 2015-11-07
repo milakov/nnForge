@@ -61,8 +61,6 @@
     <ClInclude Include="parametric_rectified_linear_layer_testing_schema.h" />
     <ClInclude Include="parametric_rectified_linear_layer_updater_cuda.h" />
     <ClInclude Include="parametric_rectified_linear_layer_updater_schema.h" />
-    <ClInclude Include="sigmoid_partial_layer_tester_cuda.h" />
-    <ClInclude Include="sigmoid_partial_layer_updater_cuda.h" />
     <ClInclude Include="sparse_convolution_layer_tester_cuda_kepler.cuh" />
     <ClInclude Include="sparse_convolution_layer_testing_schema_helper_cuda_kepler.h" />
     <ClInclude Include="sparse_convolution_layer_updater_cuda_kepler.cuh" />
@@ -223,8 +221,6 @@
     <CudaCompile Include="negative_log_likelihood_layer_updater_cuda.cu" />
     <CudaCompile Include="parametric_rectified_linear_layer_tester_cuda.cu" />
     <CudaCompile Include="parametric_rectified_linear_layer_updater_cuda.cu" />
-    <CudaCompile Include="sigmoid_partial_layer_tester_cuda.cu" />
-    <CudaCompile Include="sigmoid_partial_layer_updater_cuda.cu" />
     <CudaCompile Include="sparse_convolution_layer_testing_schema_helper_cuda_kepler.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_30,sm_30;compute_35,sm_35</CodeGeneration>
     </CudaCompile>

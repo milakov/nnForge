@@ -96,6 +96,7 @@
     <ClInclude Include="imagenet_toolset.h" />
     <ClInclude Include="training_imagenet_raw_to_structured_data_transformer.h" />
     <ClInclude Include="validating_imagenet_raw_to_structured_data_transformer.h" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\nnforge\cuda\cuda.vcxproj">
       <Project>{807bf109-6710-41d5-96bb-a2a55636752e}</Project>

@@ -47,4 +47,3 @@ Imagenet app also allows you to run different crops of each sample through the m
 
 	./imagenet inference --inference_mode dump_average_across_nets --inference_output_layer_name softmax --rich_inference 1 --dump_compact_samples 16 --samples_x 4 --samples_y 4
 	./imagenet inference --schema schema_tail.txt
-
