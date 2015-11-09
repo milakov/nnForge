@@ -434,6 +434,9 @@
     <ClInclude Include="stream_redirector.h">
       <Filter>Header Files\toolset</Filter>
     </ClInclude>
+    <ClInclude Include="min_weight_sequential_vertex_coloring.h">
+      <Filter>Header Files\network_schema</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">

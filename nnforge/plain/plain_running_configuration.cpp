@@ -39,8 +39,11 @@ namespace nnforge
 			const buffer_plain_size_configuration& buffers_config,
 			float ratio) const
 		{
-			size_t memory_left = static_cast<size_t>(max_memory_usage_gigabytes * ratio * static_cast<float>(1 << 30)) - buffers_config.constant_buffer_size;
-			size_t entry_count_limited_by_global = memory_left / buffers_config.per_entry_buffer_size;
+			long long memory_left = static_cast<long long>(max_memory_usage_gigabytes * ratio * static_cast<float>(1 << 30)) - static_cast<long long>(buffers_config.constant_buffer_size);
+			if (memory_left < 0)
+				memory_left = 0;
+
+			size_t entry_count_limited_by_global = static_cast<size_t>(memory_left) / buffers_config.per_entry_buffer_size;
 
 			return static_cast<unsigned int>(entry_count_limited_by_global);
 		}

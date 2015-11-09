@@ -25,6 +25,7 @@
 
 #include <vector>
 #include <map>
+#include <limits>
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>
@@ -85,7 +86,7 @@ namespace nnforge
 		// dependencies lists off buffers each action depends on
 		// input_index_layer_can_write_output_map contains info on whether the action is able to write the output to one of its input
 		std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > get_buffer_set(
-			const std::map<layer_name_with_action, std::vector<buffer_lifetime> >& buffers,
+			const std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > >& buffers,
 			const std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > >& dependencies,
 			const std::map<layer_name_with_action, unsigned int>& input_index_layer_can_write_output_map,
 			const std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >& should_be_placed_into_the_same_buffers) const;
@@ -199,7 +200,13 @@ namespace nnforge
 
 		struct vertex_info_list_for_buffer_set
 		{
+			vertex_info_list_for_buffer_set()
+				: buffer_size(-std::numeric_limits<float>::max())
+			{
+			};
+
 			std::vector<vertex_info_for_buffer_set> buffers;
+			float buffer_size;
 		};
 
 	private:

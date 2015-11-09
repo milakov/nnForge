@@ -34,6 +34,7 @@
     <ClInclude Include="layer_action.h" />
     <ClInclude Include="layer_data_custom_list.h" />
     <ClInclude Include="layer_name_with_action.h" />
+    <ClInclude Include="min_weight_sequential_vertex_coloring.h" />
     <ClInclude Include="mse_layer.h" />
     <ClInclude Include="negative_log_likelihood_layer.h" />
     <ClInclude Include="network_action_schema.h" />

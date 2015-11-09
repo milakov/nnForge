@@ -22,7 +22,9 @@
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/smallest_last_ordering.hpp>
-#include <boost/graph/sequential_vertex_coloring.hpp>
+#include <boost/graph/graph_traits.hpp>
+
+#include "min_weight_sequential_vertex_coloring.h"
 
 namespace nnforge
 {
@@ -295,22 +297,25 @@ namespace nnforge
 			gv_graph_writer(actions));
 	}
 
-	template <class VertexListGraph, class ColorMap>
+	template <class VertexListGraph, class ColorMap, class WeightMap>
 	int get_graph_coloring(
 		const VertexListGraph& graph,
-		ColorMap& color)
+		ColorMap& colors,
+		const WeightMap& weights)
 	{
+		typedef typename boost::graph_traits<VertexListGraph>::vertex_descriptor vertex_descriptor;
+
 		if (boost::num_vertices(graph) == 0)
 			return 0;
 
-		ColorMap order;
-		boost::smallest_last_vertex_ordering(graph, order);
-		typename boost::graph_traits<VertexListGraph>::vertices_size_type num_colors = boost::sequential_vertex_coloring(graph, order, color);
+		std::vector<vertex_descriptor> order(boost::num_vertices(graph));
+		boost::smallest_last_vertex_ordering(graph, boost::make_iterator_property_map(order.begin(), boost::identity_property_map(), boost::graph_traits<VertexListGraph>::null_vertex()));
+		typename boost::graph_traits<VertexListGraph>::vertices_size_type num_colors = min_weight_sequential_vertex_coloring(graph, boost::make_iterator_property_map(order.begin(), boost::identity_property_map(), boost::graph_traits<VertexListGraph>::null_vertex()), colors, weights);
 		return static_cast<int>(num_colors);
 	}
 
 	std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > network_action_schema::get_buffer_set(
-		const std::map<layer_name_with_action, std::vector<buffer_lifetime> >& buffers,
+		const std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > >& buffers,
 		const std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > >& dependencies,
 		const std::map<layer_name_with_action, unsigned int>& input_index_layer_can_write_output_map,
 		const std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >& should_be_placed_into_the_same_buffers) const
@@ -347,24 +352,34 @@ namespace nnforge
 				}
 			}
 
-			for(std::map<layer_name_with_action, std::vector<buffer_lifetime> >::const_iterator it = buffers.begin(); it != buffers.end(); ++it)
+			for(std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > >::const_iterator it = buffers.begin(); it != buffers.end(); ++it)
 			{
 				layer::const_ptr l = get_layer(it->first.get_name());
 				layer_action action = it->first.get_action();
-				const std::vector<buffer_lifetime>& lifetime_list = it->second;
+				const std::vector<std::pair<buffer_lifetime, float> >& lifetime_list = it->second;
 
 				std::map<buffer_lifetime, undirected_action_schema_graph2::vertex_descriptor>& tt = incompatible_output_action_to_vertex_decriptor_map.insert(
 					std::make_pair(
 						layer_name_with_action(l->instance_name, action),
 						std::map<buffer_lifetime, undirected_action_schema_graph2::vertex_descriptor>())).first->second;
-				for(std::vector<buffer_lifetime>::const_iterator it2 = lifetime_list.begin(); it2 != lifetime_list.end(); ++it2)
+				for(std::vector<std::pair<buffer_lifetime, float> >::const_iterator it2 = lifetime_list.begin(); it2 != lifetime_list.end(); ++it2)
 				{
-					const buffer_lifetime& lifetime = *it2;
-					if (tt.find(lifetime) != tt.end())
-						continue;
-					undirected_action_schema_graph2::vertex_descriptor new_action_descriptor = boost::add_vertex(incompatible_output_actions_with_lifetime);
-					incompatible_output_actions_with_lifetime[new_action_descriptor].buffers.push_back(vertex_info_for_buffer_set(l, action, lifetime));
-					tt.insert(std::make_pair(lifetime, new_action_descriptor));
+					const buffer_lifetime& lifetime = it2->first;
+					float buffer_size = it2->second;
+					std::map<buffer_lifetime, undirected_action_schema_graph2::vertex_descriptor>::iterator old_it = tt.find(lifetime);
+					undirected_action_schema_graph2::vertex_descriptor new_action_descriptor;
+					if (old_it != tt.end())
+					{
+						new_action_descriptor = old_it->second;
+					}
+					else
+					{
+						new_action_descriptor = boost::add_vertex(incompatible_output_actions_with_lifetime);
+						incompatible_output_actions_with_lifetime[new_action_descriptor].buffers.push_back(vertex_info_for_buffer_set(l, action, lifetime));
+						tt.insert(std::make_pair(lifetime, new_action_descriptor));
+					}
+
+					incompatible_output_actions_with_lifetime[new_action_descriptor].buffer_size = std::max(incompatible_output_actions_with_lifetime[new_action_descriptor].buffer_size, buffer_size);
 				}
 			}
 		} // incompatible_output_actions_with_lifetime is filled with layers, no edges yet
@@ -394,18 +409,18 @@ namespace nnforge
 		for(std::vector<layer_name_with_action>::const_iterator current_action_it = actions_in_execution_order.begin(); current_action_it != actions_in_execution_order.end(); ++current_action_it)
 		{
 			const layer_name_with_action& current_layer_name_with_action = *current_action_it;
-			std::map<layer_name_with_action, std::vector<buffer_lifetime> >::const_iterator current_buffer_list_it = buffers.find(current_layer_name_with_action);
+			std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > >::const_iterator current_buffer_list_it = buffers.find(current_layer_name_with_action);
 			if (current_buffer_list_it == buffers.end())
 				continue;
-			const std::vector<buffer_lifetime>& current_buffer_lifetimes = current_buffer_list_it->second;
+			const std::vector<std::pair<buffer_lifetime, float> >& current_buffer_lifetimes = current_buffer_list_it->second;
 
 			// Add incompatibility edges for the buffers of the same action
-			for(std::vector<buffer_lifetime>::const_iterator it1 = current_buffer_lifetimes.begin(); it1 != current_buffer_lifetimes.end(); ++it1)
+			for(std::vector<std::pair<buffer_lifetime, float> >::const_iterator it1 = current_buffer_lifetimes.begin(); it1 != current_buffer_lifetimes.end(); ++it1)
 			{
-				for(std::vector<buffer_lifetime>::const_iterator it2 = it1 + 1; it2 != current_buffer_lifetimes.end(); ++it2)
+				for(std::vector<std::pair<buffer_lifetime, float> >::const_iterator it2 = it1 + 1; it2 != current_buffer_lifetimes.end(); ++it2)
 				{
-					undirected_action_schema_graph2::vertex_descriptor v1 = incompatible_output_action_to_vertex_decriptor_map[current_layer_name_with_action][*it1];
-					undirected_action_schema_graph2::vertex_descriptor v2 = incompatible_output_action_to_vertex_decriptor_map[current_layer_name_with_action][*it2];
+					undirected_action_schema_graph2::vertex_descriptor v1 = incompatible_output_action_to_vertex_decriptor_map[current_layer_name_with_action][it1->first];
+					undirected_action_schema_graph2::vertex_descriptor v2 = incompatible_output_action_to_vertex_decriptor_map[current_layer_name_with_action][it2->first];
 					if ((v1 != v2) && (!boost::edge(v1, v2, incompatible_output_actions_with_lifetime).second))
 					{
 						boost::add_edge(
@@ -417,9 +432,9 @@ namespace nnforge
 			}
 
 			std::map<layer_name_with_action, std::map<buffer_lifetime, std::set<layer_name_with_action> > >::const_iterator reverse_dependencies_it = reverse_dependencies.find(current_layer_name_with_action);
-			for(std::vector<buffer_lifetime>::const_iterator source_buffer_lifetime_it = current_buffer_lifetimes.begin(); source_buffer_lifetime_it != current_buffer_lifetimes.end(); ++source_buffer_lifetime_it)
+			for(std::vector<std::pair<buffer_lifetime, float> >::const_iterator source_buffer_lifetime_it = current_buffer_lifetimes.begin(); source_buffer_lifetime_it != current_buffer_lifetimes.end(); ++source_buffer_lifetime_it)
 			{
-				const buffer_lifetime& source_buffer_lifetime = *source_buffer_lifetime_it;
+				const buffer_lifetime& source_buffer_lifetime = source_buffer_lifetime_it->first;
 
 				std::set<layer_name_with_action> dependent_actions;
 				if (reverse_dependencies_it != reverse_dependencies.end())
@@ -442,16 +457,16 @@ namespace nnforge
 					for(std::vector<layer_name_with_action>::const_iterator subsequent_action_it = current_action_it + 1; subsequent_action_it != actions_in_execution_order.end(); ++subsequent_action_it)
 					{
 						const layer_name_with_action& subsequent_layer_name_with_action = *subsequent_action_it;
-						std::map<layer_name_with_action, std::vector<buffer_lifetime> >::const_iterator subsequent_buffer_list_it = buffers.find(subsequent_layer_name_with_action);
+						std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > >::const_iterator subsequent_buffer_list_it = buffers.find(subsequent_layer_name_with_action);
 						if (subsequent_buffer_list_it == buffers.end())
 							continue;
 						if (dependent_vertices.find(layer_instance_name_with_action_to_vertex_decriptor_map.find(subsequent_layer_name_with_action)->second) != dependent_vertices.end())
 							continue;
-						const std::vector<buffer_lifetime>& incompatible_buffer_lifetimes = subsequent_buffer_list_it->second;
-						for(std::vector<buffer_lifetime>::const_iterator incompatible_buffer_lifetime_it = incompatible_buffer_lifetimes.begin(); incompatible_buffer_lifetime_it != incompatible_buffer_lifetimes.end(); ++incompatible_buffer_lifetime_it)
+						const std::vector<std::pair<buffer_lifetime, float> >& incompatible_buffer_lifetimes = subsequent_buffer_list_it->second;
+						for(std::vector<std::pair<buffer_lifetime, float> >::const_iterator incompatible_buffer_lifetime_it = incompatible_buffer_lifetimes.begin(); incompatible_buffer_lifetime_it != incompatible_buffer_lifetimes.end(); ++incompatible_buffer_lifetime_it)
 						{
 							undirected_action_schema_graph2::vertex_descriptor v1 = incompatible_output_action_to_vertex_decriptor_map[current_layer_name_with_action][source_buffer_lifetime];
-							undirected_action_schema_graph2::vertex_descriptor v2 = incompatible_output_action_to_vertex_decriptor_map[subsequent_layer_name_with_action][*incompatible_buffer_lifetime_it];
+							undirected_action_schema_graph2::vertex_descriptor v2 = incompatible_output_action_to_vertex_decriptor_map[subsequent_layer_name_with_action][incompatible_buffer_lifetime_it->first];
 							if ((v1 != v2) && (!boost::edge(v1, v2, incompatible_output_actions_with_lifetime).second))
 							{
 								boost::add_edge(
@@ -489,7 +504,7 @@ namespace nnforge
 					for(std::vector<layer_name_with_action>::const_iterator subsequent_action_it = current_action_it + 1; subsequent_action_it != actions_in_execution_order.end(); ++subsequent_action_it)
 					{
 						const layer_name_with_action& subsequent_layer_name_with_action = *subsequent_action_it;
-						std::map<layer_name_with_action, std::vector<buffer_lifetime> >::const_iterator subsequent_buffer_list_it = buffers.find(subsequent_layer_name_with_action);
+						std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > >::const_iterator subsequent_buffer_list_it = buffers.find(subsequent_layer_name_with_action);
 						if (subsequent_buffer_list_it == buffers.end())
 							continue;
 						if ((dependent_vertices.find(layer_instance_name_with_action_to_vertex_decriptor_map.find(subsequent_layer_name_with_action)->second) != dependent_vertices.end())
@@ -515,14 +530,14 @@ namespace nnforge
 								}
 							}
 						}
-						const std::vector<buffer_lifetime>& incompatible_buffer_lifetimes = subsequent_buffer_list_it->second;
-						for(std::vector<buffer_lifetime>::const_iterator incompatible_buffer_lifetime_it = incompatible_buffer_lifetimes.begin(); incompatible_buffer_lifetime_it != incompatible_buffer_lifetimes.end(); ++incompatible_buffer_lifetime_it)
+						const std::vector<std::pair<buffer_lifetime, float> >& incompatible_buffer_lifetimes = subsequent_buffer_list_it->second;
+						for(std::vector<std::pair<buffer_lifetime, float> >::const_iterator incompatible_buffer_lifetime_it = incompatible_buffer_lifetimes.begin(); incompatible_buffer_lifetime_it != incompatible_buffer_lifetimes.end(); ++incompatible_buffer_lifetime_it)
 						{
-							if (can_overwrite_input && (incompatible_buffer_lifetime_it->get_buffer_lifetime_type() == buffer_lifetime::action_output_buffer))
+							if (can_overwrite_input && (incompatible_buffer_lifetime_it->first.get_buffer_lifetime_type() == buffer_lifetime::action_output_buffer))
 								continue;
 
 							undirected_action_schema_graph2::vertex_descriptor v1 = incompatible_output_action_to_vertex_decriptor_map[current_layer_name_with_action][source_buffer_lifetime];
-							undirected_action_schema_graph2::vertex_descriptor v2 = incompatible_output_action_to_vertex_decriptor_map[subsequent_layer_name_with_action][*incompatible_buffer_lifetime_it];
+							undirected_action_schema_graph2::vertex_descriptor v2 = incompatible_output_action_to_vertex_decriptor_map[subsequent_layer_name_with_action][incompatible_buffer_lifetime_it->first];
 							if ((v1 != v2) && (!boost::edge(v1, v2, incompatible_output_actions_with_lifetime).second))
 							{
 								boost::add_edge(
@@ -537,13 +552,19 @@ namespace nnforge
 		}
 		// incompatible_output_layers is filled with edges
 
-		boost::vector_property_map<undirected_action_schema_graph2::vertex_descriptor> color;
-		int color_count = get_graph_coloring(incompatible_output_actions_with_lifetime, color);
+		std::vector<float> weights_vec(boost::num_vertices(incompatible_output_actions_with_lifetime));
+		boost::iterator_property_map<float*, typename boost::property_map<undirected_action_schema_graph2, boost::vertex_index_t>::const_type> weights(&weights_vec.front(), boost::get(boost::vertex_index, incompatible_output_actions_with_lifetime));
+		for(std::pair<undirected_action_schema_graph2::vertex_iterator, undirected_action_schema_graph2::vertex_iterator> vp = boost::vertices(incompatible_output_actions_with_lifetime); vp.first != vp.second; ++vp.first)
+			boost::put(weights, *vp.first, incompatible_output_actions_with_lifetime[*vp.first].buffer_size);
+
+		std::vector<typename boost::graph_traits<undirected_action_schema_graph2>::vertices_size_type> colors_vec(boost::num_vertices(incompatible_output_actions_with_lifetime));
+		boost::iterator_property_map<typename boost::graph_traits<undirected_action_schema_graph2>::vertices_size_type*, typename boost::property_map<undirected_action_schema_graph2, boost::vertex_index_t>::const_type> colors(&colors_vec.front(), boost::get(boost::vertex_index, incompatible_output_actions_with_lifetime));
+		int color_count = get_graph_coloring(incompatible_output_actions_with_lifetime, colors, weights);
 
 		std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > res(color_count);
 		for(std::pair<undirected_action_schema_graph2::vertex_iterator, undirected_action_schema_graph2::vertex_iterator> vp = boost::vertices(incompatible_output_actions_with_lifetime); vp.first != vp.second; ++vp.first)
 			for(std::vector<vertex_info_for_buffer_set>::const_iterator it = incompatible_output_actions_with_lifetime[*vp.first].buffers.begin(); it != incompatible_output_actions_with_lifetime[*vp.first].buffers.end(); ++it)
-				res[color[*vp.first]].push_back(std::make_pair(layer_name_with_action(it->l->instance_name, it->action), it->lifetime));
+				res[boost::get(colors, *vp.first)].push_back(std::make_pair(layer_name_with_action(it->l->instance_name, it->action), it->lifetime));
 
 		return res;
 	}

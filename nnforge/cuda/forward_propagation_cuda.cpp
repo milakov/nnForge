@@ -622,14 +622,16 @@ namespace nnforge
 						input_index_layer_can_write_output_map.insert(std::make_pair(layer_name_with_action(it->first, layer_action::forward), static_cast<unsigned int>(input_index_layer_can_write)));
 				}
 
-				std::map<layer_name_with_action, std::vector<buffer_lifetime> > buffers;
+				std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > > buffers;
 				std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > > dependencies;
 				std::set<std::string> dedicated_output_buffers(output_layer_names.begin(), output_layer_names.end());
 				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
 				{
-					if (dedicated_output_buffers.find(it->get_name()) == dedicated_output_buffers.end())
-						buffers.insert(std::make_pair(*it, std::vector<buffer_lifetime>(1, buffer_lifetime(buffer_lifetime::action_output_buffer))));
-					layer::const_ptr l = schema->get_layer(it->get_name());
+					std::string layer_name = it->get_name();
+					size_t buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[layer_name] * sizeof(float);
+					if (dedicated_output_buffers.find(layer_name) == dedicated_output_buffers.end())
+						buffers.insert(std::make_pair(*it, std::vector<std::pair<buffer_lifetime, float> >(1, std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), static_cast<float>(buffer_size_per_entry)))));
+					layer::const_ptr l = schema->get_layer(layer_name);
 					std::map<layer_name_with_action, std::vector<buffer_lifetime> > current_dependencies;
 					for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
 					{
@@ -645,7 +647,7 @@ namespace nnforge
 				{
 					size_t temporary_working_per_entry_buffer_size = it->second->get_temporary_working_per_entry_buffer_size();
 					if (temporary_working_per_entry_buffer_size > 0)
-						buffers.insert(std::make_pair(layer_name_with_action(it->first, layer_action::forward), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::working_buffer));
+						buffers.insert(std::make_pair(layer_name_with_action(it->first, layer_action::forward), std::vector<std::pair<buffer_lifetime, float> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::working_buffer), static_cast<float>(temporary_working_per_entry_buffer_size)));
 				}
 
 				layer_buffer_set_list = action_schema->get_buffer_set(
@@ -700,14 +702,16 @@ namespace nnforge
 				debug_str << "forward prop cuda per entry buffers: " << layer_buffer_set_per_entry_size_list.size();
 				if (!layer_buffer_set_per_entry_size_list.empty())
 				{
+					size_t total_buffer_size = 0;
 					debug_str << " (";
 					for(std::vector<size_t>::const_iterator it = layer_buffer_set_per_entry_size_list.begin(); it != layer_buffer_set_per_entry_size_list.end(); ++it)
 					{
 						if (it != layer_buffer_set_per_entry_size_list.begin())
 							debug_str << ", ";
 						debug_str << ((*it + 1024 - 1) / 1024) << " KB";
+						total_buffer_size += *it;
 					}
-					debug_str << ")";
+					debug_str << "), total " << ((total_buffer_size + 1024 - 1) / 1024) << " KB";
 				}
 				debug->output_message(debug_str.str().c_str());
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_per_entry_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
@@ -719,12 +723,12 @@ namespace nnforge
 		{
 			std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > temporary_working_fixed_buffer_set_list;
 			{
-				std::map<layer_name_with_action, std::vector<buffer_lifetime> > buffers;
+				std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > > buffers;
 				for(std::map<std::string, layer_tester_cuda::ptr>::const_iterator it = testers.begin(); it != testers.end(); ++it)
 				{
 					size_t temporary_working_fixed_buffer_size = it->second->get_temporary_working_fixed_buffer_size();
 					if (temporary_working_fixed_buffer_size > 0)
-						buffers.insert(std::make_pair(layer_name_with_action(it->first, layer_action::forward), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::working_buffer));
+						buffers.insert(std::make_pair(layer_name_with_action(it->first, layer_action::forward), std::vector<std::pair<buffer_lifetime, float> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::working_buffer), static_cast<float>(temporary_working_fixed_buffer_size)));
 				}
 
 				temporary_working_fixed_buffer_set_list = action_schema->get_buffer_set(
@@ -767,14 +771,16 @@ namespace nnforge
 				debug_str << "forward prop cuda working fixed buffers: " << temporary_working_fixed_set_size_list.size();
 				if (!temporary_working_fixed_set_size_list.empty())
 				{
+					size_t total_buffer_size = 0;
 					debug_str << " (";
 					for(std::vector<size_t>::const_iterator it = temporary_working_fixed_set_size_list.begin(); it != temporary_working_fixed_set_size_list.end(); ++it)
 					{
 						if (it != temporary_working_fixed_set_size_list.begin())
 							debug_str << ", ";
 						debug_str << ((*it + 1024 - 1) / 1024) << " KB";
+						total_buffer_size += *it;
 					}
-					debug_str << ")";
+					debug_str << "), total " << ((total_buffer_size + 1024 - 1) / 1024) << " KB";
 				}
 				debug->output_message(debug_str.str().c_str());
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_cuda_temporary_fixed_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
@@ -865,6 +871,9 @@ namespace nnforge
 			}
 
 			max_entry_count = cuda_config->get_max_entry_count(buffer_configuration);
+
+			if (max_entry_count == 0)
+				throw neural_network_exception("Insufficient memory to do forward prop for even one sample");
 
 			if (debug->is_debug())
 			{
