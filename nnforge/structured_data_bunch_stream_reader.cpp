@@ -78,7 +78,9 @@ namespace nnforge
 			if (layer_names.find(it->first) != layer_names.end())
 				narrow_data_reader_map.insert(*it);
 
-		return structured_data_bunch_reader::ptr(new structured_data_bunch_stream_reader(narrow_data_reader_map, static_cast<unsigned int>(entry_count_list.size())));
+		structured_data_bunch_stream_reader::ptr res(new structured_data_bunch_stream_reader(narrow_data_reader_map, static_cast<unsigned int>(entry_count_list.size())));
+		res->current_epoch = current_epoch;
+		return res;
 	}
 
 	std::map<std::string, layer_configuration_specific> structured_data_bunch_stream_reader::get_config_map() const
