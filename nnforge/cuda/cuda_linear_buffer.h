@@ -66,6 +66,14 @@ namespace nnforge
 
 			operator const int *() const;
 
+			operator uint4 *();
+
+			operator const uint4 *() const;
+
+			operator int4 *();
+
+			operator const int4 *() const;
+
 		protected:
 			cuda_linear_buffer();
 

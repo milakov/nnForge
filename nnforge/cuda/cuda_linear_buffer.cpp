@@ -45,7 +45,7 @@ namespace nnforge
 
 		cuda_linear_buffer::operator const float *() const
 		{
-			return (float *)(get_buf());
+			return (const float *)(get_buf());
 		}
 
 		cuda_linear_buffer::operator double *()
@@ -55,7 +55,7 @@ namespace nnforge
 
 		cuda_linear_buffer::operator const double *() const
 		{
-			return (double *)(get_buf());
+			return (const double *)(get_buf());
 		}
 
 		cuda_linear_buffer::operator float2 *()
@@ -65,7 +65,7 @@ namespace nnforge
 
 		cuda_linear_buffer::operator const float2 *() const
 		{
-			return (float2 *)(get_buf());
+			return (const float2 *)(get_buf());
 		}
 
 		cuda_linear_buffer::operator float4 *()
@@ -75,7 +75,7 @@ namespace nnforge
 
 		cuda_linear_buffer::operator const float4 *() const
 		{
-			return (float4 *)(get_buf());
+			return (const float4 *)(get_buf());
 		}
 
 		cuda_linear_buffer::operator unsigned char *()
@@ -85,7 +85,7 @@ namespace nnforge
 
 		cuda_linear_buffer::operator const unsigned char *() const
 		{
-			return (unsigned char *)(get_buf());
+			return (const unsigned char *)(get_buf());
 		}
 
 		cuda_linear_buffer::operator uchar4 *()
@@ -95,7 +95,7 @@ namespace nnforge
 
 		cuda_linear_buffer::operator const uchar4 *() const
 		{
-			return (uchar4 *)(get_buf());
+			return (const uchar4 *)(get_buf());
 		}
 
 		cuda_linear_buffer::operator unsigned int *()
@@ -105,7 +105,7 @@ namespace nnforge
 
 		cuda_linear_buffer::operator const unsigned int *() const
 		{
-			return (unsigned int *)(get_buf());
+			return (const unsigned int *)(get_buf());
 		}
 
 		cuda_linear_buffer::operator int *()
@@ -115,7 +115,27 @@ namespace nnforge
 
 		cuda_linear_buffer::operator const int *() const
 		{
-			return (int *)(get_buf());
+			return (const int *)(get_buf());
+		}
+
+		cuda_linear_buffer::operator uint4 *()
+		{
+			return (uint4 *)(get_buf());
+		}
+
+		cuda_linear_buffer::operator const uint4 *() const
+		{
+			return (const uint4 *)(get_buf());
+		}
+
+		cuda_linear_buffer::operator int4 *()
+		{
+			return (int4 *)(get_buf());
+		}
+
+		cuda_linear_buffer::operator const int4 *() const
+		{
+			return (const int4 *)(get_buf());
 		}
 	}
 }
