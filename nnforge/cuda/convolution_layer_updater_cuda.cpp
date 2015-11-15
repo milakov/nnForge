@@ -18,6 +18,7 @@
 
 #include <cuda_runtime.h>
 
+#include "cudnn_util.h"
 #include "util_cuda.h"
 #include "neural_network_cudnn_exception.h"
 #include "neural_network_cuda_exception.h"
@@ -65,24 +66,24 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				input_configuration_specific_list[0].feature_map_count,
-				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
-				input_configuration_specific_list[0].dimension_sizes[0]));
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				input_configuration_specific_list[0],
+				entry_count);
+			cudnn_util::set_tensor_descriptor(
 				output_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				(output_configuration_specific.dimension_sizes.size() > 1) ? output_configuration_specific.dimension_sizes[1] : 1,
-				output_configuration_specific.dimension_sizes[0]));
+				output_configuration_specific,
+				entry_count);
 
 			{
+				void * workspace = 0;
+				size_t workspace_size = 0;
+				if (temporary_working_fixed_buffer)
+				{
+					workspace = *temporary_working_fixed_buffer;
+					workspace_size = temporary_working_fixed_buffer->get_size();
+				}
+
 				cudnnConvolutionFwdAlgo_t algo;
 				cudnn_safe_call(cudnnGetConvolutionForwardAlgorithm(
 					cuda_config->get_cudnn_handle(),
@@ -90,8 +91,8 @@ namespace nnforge
 					weights_desc,
 					convolution_desc,
 					output_data_desc,
-					CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT,
-					temporary_working_fixed_buffer->get_size(),
+					workspace_size ? CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_FWD_NO_WORKSPACE,
+					workspace_size,
 					&algo));
 
 				float alpha = 1.0F;
@@ -105,8 +106,8 @@ namespace nnforge
 					*data[0],
 					convolution_desc,
 					algo,
-					*temporary_working_fixed_buffer,
-					temporary_working_fixed_buffer->get_size(),
+					workspace,
+					workspace_size,
 					&beta,
 					output_data_desc,
 					*output_buffer));
@@ -115,9 +116,8 @@ namespace nnforge
 			{
 				float alpha = 1.0F;
 				float beta = 1.0F;
-				cudnn_safe_call(cudnnAddTensor(
+				cudnn_safe_call(cudnnAddTensor_v3(
 					cuda_config->get_cudnn_handle(),
-					CUDNN_ADD_SAME_C,
 					&alpha,
 					bias_desc,
 					*data[1],
@@ -146,27 +146,38 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				input_configuration_specific_list[0].feature_map_count,
-				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
-				input_configuration_specific_list[0].dimension_sizes[0]));
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				input_configuration_specific_list[0],
+				entry_count);
+			cudnn_util::set_tensor_descriptor(
 				output_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				(output_configuration_specific.dimension_sizes.size() > 1) ? output_configuration_specific.dimension_sizes[1] : 1,
-				output_configuration_specific.dimension_sizes[0]));
+				output_configuration_specific,
+				entry_count);
 
 			{
+				void * workspace = 0;
+				size_t workspace_size = 0;
+				if (temporary_working_fixed_buffer)
+				{
+					workspace = *temporary_working_fixed_buffer;
+					workspace_size = temporary_working_fixed_buffer->get_size();
+				}
+
+				cudnnConvolutionBwdDataAlgo_t algo;
+				cudnn_safe_call(cudnnGetConvolutionBackwardDataAlgorithm(
+					cuda_config->get_cudnn_handle(),
+					weights_desc,
+					output_data_desc,
+					convolution_desc,
+					input_data_desc,
+					workspace_size ? CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_BWD_DATA_NO_WORKSPACE,
+					workspace_size,
+					&algo));
+
 				float alpha = 1.0F;
 				float beta = (add_update_to_destination ? 1.0F : 0.0F);
-				cudnn_safe_call(cudnnConvolutionBackwardData(
+				cudnn_safe_call(cudnnConvolutionBackwardData_v3(
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					weights_desc,
@@ -174,6 +185,9 @@ namespace nnforge
 					output_data_desc,
 					*output_errors_buffer,
 					convolution_desc,
+					algo,
+					workspace,
+					workspace_size,
 					&beta,
 					input_data_desc,
 					*input_errors_buffer));
@@ -195,27 +209,38 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				input_configuration_specific_list[0].feature_map_count,
-				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
-				input_configuration_specific_list[0].dimension_sizes[0]));
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				input_configuration_specific_list[0],
+				entry_count);
+			cudnn_util::set_tensor_descriptor(
 				output_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				(output_configuration_specific.dimension_sizes.size() > 1) ? output_configuration_specific.dimension_sizes[1] : 1,
-				output_configuration_specific.dimension_sizes[0]));
+				output_configuration_specific,
+				entry_count);
 
 			{
+				void * workspace = 0;
+				size_t workspace_size = 0;
+				if (temporary_working_fixed_buffer)
+				{
+					workspace = *temporary_working_fixed_buffer;
+					workspace_size = temporary_working_fixed_buffer->get_size();
+				}
+
+				cudnnConvolutionBwdFilterAlgo_t algo;
+				cudnn_safe_call(cudnnGetConvolutionBackwardFilterAlgorithm(
+					cuda_config->get_cudnn_handle(),
+					input_data_desc,
+					output_data_desc,
+					convolution_desc,
+					weights_desc,
+					workspace_size ? CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_BWD_FILTER_NO_WORKSPACE,
+					workspace_size,
+					&algo));
+
 				float alpha = 1.0F;
 				float beta = 1.0F;
-				cudnn_safe_call(cudnnConvolutionBackwardFilter(
+				cudnn_safe_call(cudnnConvolutionBackwardFilter_v3(
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					input_data_desc,
@@ -223,6 +248,9 @@ namespace nnforge
 					output_data_desc,
 					*output_errors_buffer,
 					convolution_desc,
+					algo,
+					workspace,
+					workspace_size,
 					&beta,
 					weights_desc,
 					*gradient[0]));
@@ -255,32 +283,20 @@ namespace nnforge
 					throw neural_network_exception("cuDNN is not able to run convolution when left and right padding sizes don't match");
 			}
 
-			cudnn_safe_call(cudnnSetFilter4dDescriptor(
+			cudnn_util::set_filter_descriptor(
 				weights_desc,
-				CUDNN_DATA_FLOAT,
 				output_configuration_specific.feature_map_count,
 				input_configuration_specific_list[0].feature_map_count,
-				(window_sizes.size() > 1) ? window_sizes[1] : 1,
-				window_sizes[0]));
+				window_sizes);
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_bias_descriptor(
 				bias_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				1,
 				output_configuration_specific.feature_map_count,
-				1,
-				1));
+				static_cast<unsigned int>(output_configuration_specific.dimension_sizes.size()));
 
-			cudnn_safe_call(cudnnSetConvolution2dDescriptor(
+			cudnn_util::set_convolution_descriptor(
 				convolution_desc,
-				(zero_padding.size() > 1) ? zero_padding[1] : 1,
-				zero_padding[0],
-				1,
-				1,
-				1,
-				1,
-				CUDNN_CROSS_CORRELATION));
+				zero_padding);
 		}
 
 		size_t convolution_layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
@@ -288,6 +304,14 @@ namespace nnforge
 			if (action.get_action_type() == layer_action::forward)
 			{
 				unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
+				for(int i = 0; i < window_sizes.size(); ++i)
+					working_buffer_elem_count *= window_sizes[i];
+
+				return working_buffer_elem_count * sizeof(int);
+			}
+			else if (action.get_action_type() == layer_action::backward_weights)
+			{
+				unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 				for(int i = 0; i < window_sizes.size(); ++i)
 					working_buffer_elem_count *= window_sizes[i];
 

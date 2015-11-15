@@ -19,9 +19,9 @@
 #include <cuda_runtime.h>
 
 #include "util_cuda.h"
+#include "cudnn_util.h"
 #include "neural_network_cuda_exception.h"
 #include "neural_network_cudnn_exception.h"
-
 #include "../sparse_convolution_layer.h"
 
 namespace nnforge
@@ -307,19 +307,14 @@ namespace nnforge
 			// Add bias
 			{
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
-				cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				cudnn_util::set_tensor_descriptor(
 					output_data_desc,
-					CUDNN_TENSOR_NCHW,
-					CUDNN_DATA_FLOAT,
-					entry_count,
-					output_configuration_specific.feature_map_count,
-					1,
-					1));
+					output_configuration_specific,
+					entry_count);
 				float alpha = 1.0F;
 				float beta = 1.0F;
-				cudnn_safe_call(cudnnAddTensor(
+				cudnn_safe_call(cudnnAddTensor_v3(
 					cuda_config->get_cudnn_handle(),
-					CUDNN_ADD_SAME_C,
 					&alpha,
 					bias_desc,
 					*data[1],
@@ -416,15 +411,10 @@ namespace nnforge
 			// Update biases
 			{
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
-				cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				cudnn_util::set_tensor_descriptor(
 					output_data_desc,
-					CUDNN_TENSOR_NCHW,
-					CUDNN_DATA_FLOAT,
-					entry_count,
-					output_configuration_specific.feature_map_count,
-					1,
-					output_elem_count_per_feature_map));
-
+					output_configuration_specific,
+					entry_count);
 				float alpha = 1.0F;
 				float beta = 1.0F;
 				cudnn_safe_call(cudnnConvolutionBackwardBias(
@@ -451,14 +441,10 @@ namespace nnforge
 			int input_data_single_backprop_entry_size = input_elem_count_per_entry_list[0] * sizeof(float);
 			max_update_entry_count_block_size = std::min(std::max(absolute_min_update_entry_count_block_size, cuda_config->l2_cache_size / 2 / input_data_single_backprop_entry_size), absolute_max_update_entry_count_block_size);
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_bias_descriptor(
 				bias_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				1,
 				output_configuration_specific.feature_map_count,
-				1,
-				1));
+				static_cast<unsigned int>(output_configuration_specific.dimension_sizes.size()));
 		}
 
 		void sparse_fully_connected_layer_updater_cuda::notify_data_custom(layer_data_custom::const_ptr host_data_custom)

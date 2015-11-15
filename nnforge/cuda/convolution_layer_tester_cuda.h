@@ -49,7 +49,6 @@ namespace nnforge
 			virtual void tester_configured();
 
 			std::vector<unsigned int> window_sizes;
-			std::vector<unsigned int> zero_padding;
 
 			cudnnTensorDescriptor_t input_data_desc;
 			cudnnTensorDescriptor_t output_data_desc;

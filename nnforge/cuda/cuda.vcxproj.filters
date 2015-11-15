@@ -260,9 +260,6 @@
     <ClInclude Include="max_subsampling_layer_tester_cuda.cuh">
       <Filter>Source Files\layer_testers</Filter>
     </ClInclude>
-    <ClInclude Include="convolution_1x1_layer_tester_cuda.h">
-      <Filter>Header Files\layer_testers</Filter>
-    </ClInclude>
     <ClInclude Include="sparse_convolution_layer_testing_schema.h">
       <Filter>Header Files\testing_schemas</Filter>
     </ClInclude>
@@ -434,6 +431,9 @@
     <ClInclude Include="rectified_linear_layer_updater_cuda.h">
       <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
+    <ClInclude Include="cudnn_util.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -562,9 +562,6 @@
     <ClCompile Include="fully_connected_layer_tester_cuda.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
-    <ClCompile Include="convolution_1x1_layer_tester_cuda.cpp">
-      <Filter>Source Files\layer_testers</Filter>
-    </ClCompile>
     <ClCompile Include="convolution_layer_tester_cuda.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
@@ -660,6 +657,9 @@
     </ClCompile>
     <ClCompile Include="cross_entropy_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="cudnn_util.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

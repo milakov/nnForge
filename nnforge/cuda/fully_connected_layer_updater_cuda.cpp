@@ -16,10 +16,10 @@
 
 #include "fully_connected_layer_updater_cuda.h"
 
+#include "cudnn_util.h"
 #include "neural_network_cublas_exception.h"
 #include "neural_network_cudnn_exception.h"
 #include "neural_network_cuda_exception.h"
-
 #include "../convolution_layer.h"
 
 namespace nnforge
@@ -76,20 +76,14 @@ namespace nnforge
 
 			{
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
-				cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				cudnn_util::set_tensor_descriptor(
 					output_data_desc,
-					CUDNN_TENSOR_NCHW,
-					CUDNN_DATA_FLOAT,
-					entry_count,
-					output_configuration_specific.feature_map_count,
-					1,
-					output_elem_count_per_feature_map));
-
+					output_configuration_specific,
+					entry_count);
 				float alpha = 1.0F;
 				float beta = 1.0F;
-				cudnn_safe_call(cudnnAddTensor(
+				cudnn_safe_call(cudnnAddTensor_v3(
 					cuda_config->get_cudnn_handle(),
-					CUDNN_ADD_SAME_C,
 					&alpha,
 					bias_desc,
 					*data[1],
@@ -174,15 +168,10 @@ namespace nnforge
 			// Update biases
 			{
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
-				cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				cudnn_util::set_tensor_descriptor(
 					output_data_desc,
-					CUDNN_TENSOR_NCHW,
-					CUDNN_DATA_FLOAT,
-					entry_count,
-					output_configuration_specific.feature_map_count,
-					1,
-					output_elem_count_per_feature_map));
-
+					output_configuration_specific,
+					entry_count);
 				float alpha = 1.0F;
 				float beta = 1.0F;
 				cudnn_safe_call(cudnnConvolutionBackwardBias(
@@ -198,14 +187,10 @@ namespace nnforge
 
 		void fully_connected_layer_updater_cuda::updater_configured()
 		{
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_bias_descriptor(
 				bias_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				1,
 				output_configuration_specific.feature_map_count,
-				1,
-				1));
+				static_cast<unsigned int>(output_configuration_specific.dimension_sizes.size()));
 		}
 
 		int fully_connected_layer_updater_cuda::get_block_size(int entry_count)

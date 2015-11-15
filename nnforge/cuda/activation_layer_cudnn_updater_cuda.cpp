@@ -18,6 +18,7 @@
 
 #include "neural_network_cudnn_exception.h"
 #include "util_cuda.h"
+#include "cudnn_util.h"
 
 namespace nnforge
 {
@@ -50,14 +51,10 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				1,
-				output_elem_count_per_feature_map));
+				output_configuration_specific,
+				entry_count);
 
 			float alpha = 1.0F;
 			float beta = 0.0F;
@@ -91,14 +88,10 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				1,
-				output_elem_count_per_feature_map));
+				output_configuration_specific,
+				entry_count);
 
 			float alpha = 1.0F;
 			float beta = add_update_to_destination ? 1.0F : 0.0F;
@@ -119,10 +112,7 @@ namespace nnforge
 
 		int activation_layer_cudnn_updater_cuda::get_input_index_layer_can_write(const layer_action& action) const
 		{
-			if (action.get_action_type() == layer_action::backward_data)
-				return 0;
-			else
-				return layer_updater_cuda::get_input_index_layer_can_write(action);
+			return 0;
 		}
 
 		bool activation_layer_cudnn_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const

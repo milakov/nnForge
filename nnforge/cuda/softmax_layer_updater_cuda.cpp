@@ -16,8 +16,8 @@
 
 #include "softmax_layer_updater_cuda.h"
 
+#include "cudnn_util.h"
 #include "neural_network_cudnn_exception.h"
-
 #include "../neural_network_exception.h"
 
 namespace nnforge
@@ -50,14 +50,10 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				1,
-				output_elem_count_per_feature_map));
+				output_configuration_specific,
+				entry_count);
 
 			float alpha = 1.0F;
 			float beta = 0.0F;
@@ -92,14 +88,10 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				1,
-				output_elem_count_per_feature_map));
+				output_configuration_specific,
+				entry_count);
 
 			float alpha = 1.0F;
 			float beta = add_update_to_destination ? 1.0F : 0.0F;

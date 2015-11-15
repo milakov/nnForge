@@ -17,6 +17,7 @@
 #include "average_subsampling_layer_cudnn_updater_cuda.h"
 
 #include "neural_network_cudnn_exception.h"
+#include "cudnn_util.h"
 #include "../average_subsampling_layer.h"
 
 namespace nnforge
@@ -55,22 +56,14 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				input_configuration_specific_list[0].feature_map_count,
-				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
-				input_configuration_specific_list[0].dimension_sizes[0]));
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				input_configuration_specific_list[0],
+				entry_count);
+			cudnn_util::set_tensor_descriptor(
 				output_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				(output_configuration_specific.dimension_sizes.size() > 1) ? output_configuration_specific.dimension_sizes[1] : 1,
-				output_configuration_specific.dimension_sizes[0]));
+				output_configuration_specific,
+				entry_count);
 
 			float alpha = 1.0F;
 			float beta = 0.0F;
@@ -104,22 +97,14 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				input_configuration_specific_list[0].feature_map_count,
-				(input_configuration_specific_list[0].dimension_sizes.size() > 1) ? input_configuration_specific_list[0].dimension_sizes[1] : 1,
-				input_configuration_specific_list[0].dimension_sizes[0]));
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+				input_configuration_specific_list[0],
+				entry_count);
+			cudnn_util::set_tensor_descriptor(
 				output_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				(output_configuration_specific.dimension_sizes.size() > 1) ? output_configuration_specific.dimension_sizes[1] : 1,
-				output_configuration_specific.dimension_sizes[0]));
+				output_configuration_specific,
+				entry_count);
 
 			float alpha = 1.0F;
 			float beta = (add_update_to_destination ? 1.0F : 0.0F);
@@ -142,15 +127,10 @@ namespace nnforge
 		{
 			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 
-			cudnn_safe_call(cudnnSetPooling2dDescriptor(
+			cudnn_util::set_pooling_descriptor(
 				subsampling_desc,
 				CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING,
-				(layer_derived->subsampling_sizes.size() > 1) ? layer_derived->subsampling_sizes[1] : 1,
-				layer_derived->subsampling_sizes[0],
-				0,
-				0,
-				(layer_derived->subsampling_sizes.size() > 1) ? layer_derived->subsampling_sizes[1] : 1,
-				layer_derived->subsampling_sizes[0]));
+				layer_derived->subsampling_sizes);
 		}
 
 		bool average_subsampling_layer_cudnn_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const

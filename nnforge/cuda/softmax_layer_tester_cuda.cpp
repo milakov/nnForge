@@ -16,6 +16,7 @@
 
 #include "softmax_layer_tester_cuda.h"
 
+#include "cudnn_util.h"
 #include "neural_network_cudnn_exception.h"
 
 namespace nnforge
@@ -47,14 +48,10 @@ namespace nnforge
 		{
 			cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 
-			cudnn_safe_call(cudnnSetTensor4dDescriptor(
+			cudnn_util::set_tensor_descriptor(
 				input_data_desc,
-				CUDNN_TENSOR_NCHW,
-				CUDNN_DATA_FLOAT,
-				entry_count,
-				output_configuration_specific.feature_map_count,
-				(output_configuration_specific.dimension_sizes.size() > 1) ? output_configuration_specific.dimension_sizes[1] : 1,
-				output_configuration_specific.dimension_sizes[0]));
+				output_configuration_specific,
+				entry_count);
 
 			float alpha = 1.0F;
 			float beta = 0.0F;
