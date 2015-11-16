@@ -477,6 +477,8 @@ namespace nnforge
 		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, epoch_count_in_validating_dataset);
 
 		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
+		std::cout << "Running inference for " << ann_data_name_and_folderpath_list.size() << " networks..." << std::endl;
+
 		std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> > average_layer_name_to_config_and_value_set_map;
 		unsigned int accumulated_count = 0;
 
