@@ -291,7 +291,7 @@ namespace nnforge
 	{
 		std::vector<string_option> res;
 
-		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, shuffle_data, dump_data, dump_schema, create_normalizer, run_inference, train)"));
+		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, shuffle_data, dump_data, dump_schema, create_normalizer, inference, train)"));
 		res.push_back(string_option("schema", &schema_filename, "schema.txt", "Name of the file with schema of the network, in protobuf format"));
 		res.push_back(string_option("inference_dataset_name", &inference_dataset_name, "validating", "Name of the dataset to be used for inference"));
 		res.push_back(string_option("training_dataset_name", &training_dataset_name, "training", "Name of the dataset to be used for training"));
@@ -374,6 +374,7 @@ namespace nnforge
 		res.push_back(int_option("dump_data_scale", &dump_data_scale, 1, "Scale dumped data dimensions by this value"));
 		res.push_back(int_option("dump_data_video_fps", &dump_data_video_fps, 5, "Frames per second when dumping videos"));
 		res.push_back(int_option("epoch_count_in_training_dataset", &epoch_count_in_training_dataset, 1, "The whole training dataset should be split in this amount of epochs"));
+		res.push_back(int_option("epoch_count_in_validating_dataset", &epoch_count_in_validating_dataset, 1, "Splitting validating dataset in multiple chunks, effectively the first chunk only will be used for inference"));
 		res.push_back(int_option("dump_compact_samples", &dump_compact_samples, 1, "Compact (average) results acrioss samples for inference of type dump_average_across_nets"));
 
 		return res;
@@ -473,7 +474,7 @@ namespace nnforge
 	{
 		network_schema::ptr schema = load_schema();
 		forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
-		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, 1);
+		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, epoch_count_in_validating_dataset);
 
 		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
 		std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> > average_layer_name_to_config_and_value_set_map;
@@ -673,7 +674,7 @@ namespace nnforge
 		{
 			res.push_back(network_data_pusher::ptr(new validate_progress_network_data_pusher(
 				forward_prop_factory->create(*schema, inference_output_layer_names, debug),
-				get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_validate_when_train, 1))));
+				get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_validate_when_train, epoch_count_in_validating_dataset))));
 		}
 
 		return res;
