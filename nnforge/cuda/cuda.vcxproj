@@ -308,7 +308,7 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <CodeGeneration>compute_30,sm_30;compute_35,sm_35</CodeGeneration>
+      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_50,sm_50</CodeGeneration>
       <FastMath>true</FastMath>
       <Defines>
       </Defines>
@@ -332,7 +332,7 @@
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
-      <CodeGeneration>compute_30,sm_30;compute_35,sm_35</CodeGeneration>
+      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_50,sm_50</CodeGeneration>
       <FastMath>true</FastMath>
       <Defines>
       </Defines>
