@@ -41,7 +41,7 @@ Improved validation
 You can run training process multiple times (just run "train" again), have multiple networks trained this way, and run samples through all the nets averaging the output. You should get better results this way:
 
 	./imagenet inference --inference_mode dump_average_across_nets --inference_output_layer_name softmax
-	./imagenet --schema schema_tail.txt
+	./imagenet inference --schema schema_tail.txt
 
 Imagenet app also allows you to run different crops of each sample through the model, it works both with sinlge net and multiple nets:
 
