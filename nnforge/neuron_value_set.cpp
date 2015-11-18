@@ -18,6 +18,7 @@
 
 #include "neural_network_exception.h"
 
+#include <cstring>
 #include <algorithm>
 #include <functional>
 #include <boost/format.hpp>
