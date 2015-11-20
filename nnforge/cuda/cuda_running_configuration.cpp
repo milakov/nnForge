@@ -121,7 +121,7 @@ namespace nnforge
 
 			cudnn_safe_call(cudnnCreate(&cudnn_handle));
 
-			curand_safe_call(curandCreateGenerator(&curand_gen, CURAND_RNG_PSEUDO_DEFAULT));
+			curand_safe_call(curandCreateGenerator(&curand_gen, CURAND_RNG_PSEUDO_MRG32K3A));
 			curand_safe_call(curandSetPseudoRandomGeneratorSeed(curand_gen, rnd::get_time_dependent_seed()));
 
 			unsigned int core_count = boost::thread::hardware_concurrency();
