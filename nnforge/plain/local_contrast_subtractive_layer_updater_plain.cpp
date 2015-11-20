@@ -22,6 +22,8 @@
 
 #include "../local_contrast_subtractive_layer.h"
 
+#include <cstring>
+
 namespace nnforge
 {
 	namespace plain

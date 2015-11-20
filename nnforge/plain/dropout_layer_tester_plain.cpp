@@ -18,6 +18,8 @@
 
 #include "../dropout_layer.h"
 
+#include <cstring>
+
 namespace nnforge
 {
 	namespace plain

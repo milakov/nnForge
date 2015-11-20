@@ -19,6 +19,8 @@
 #include "../rgb_to_yuv_convert_layer.h"
 #include "../nn_types.h"
 
+#include <cstring>
+
 #define w_r 0.299F
 #define w_b 0.114F
 #define w_g (1.0F - w_r - w_b)

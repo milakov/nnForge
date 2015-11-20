@@ -23,6 +23,8 @@
 #include "../local_contrast_subtractive_layer.h"
 #include "../nn_types.h"
 
+#include <cstring>
+
 namespace nnforge
 {
 	namespace plain
