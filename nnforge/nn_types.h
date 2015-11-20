@@ -20,6 +20,7 @@
 #include <random>
 #include <array>
 #include <regex>
+#include <cstring>
 
 #ifdef NNFORGE_CPP11COMPILER
 #define nnforge_shared_ptr std::shared_ptr
