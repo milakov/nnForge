@@ -40,11 +40,11 @@ const float imagenet_toolset::max_brightness_shift = 0.0F;//0.05F;
 const float imagenet_toolset::max_color_shift = 0.15F;
 
 const unsigned int imagenet_toolset::class_count = 1000;
-const unsigned int imagenet_toolset::training_min_image_size = 256;
-const unsigned int imagenet_toolset::training_max_image_size = 256;//512;
+const unsigned int imagenet_toolset::training_min_image_size = 224; //256
+const unsigned int imagenet_toolset::training_max_image_size = 288; //256
 const unsigned int imagenet_toolset::training_target_image_width = 224;
 const unsigned int imagenet_toolset::training_target_image_height = 224;
-const unsigned int imagenet_toolset::validating_image_size = 256;//384;
+const unsigned int imagenet_toolset::validating_image_size = 256; // 256
 
 imagenet_toolset::imagenet_toolset(nnforge::factory_generator::ptr factory)
 	: nnforge::toolset(factory)
