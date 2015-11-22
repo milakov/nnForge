@@ -41,6 +41,8 @@ namespace nnforge
 
 		network_action_schema();
 
+		network_action_schema(const network_action_schema& other);
+
 		void write_gv(
 			std::ostream& stream_to_write_to,
 			const std::map<layer_name_with_action, unsigned int>& layer_name_with_action_color_map = std::map<layer_name_with_action, unsigned int>(),
@@ -67,16 +69,22 @@ namespace nnforge
 			const layer_name_with_action& source_layer_and_action,
 			const layer_name_with_action& destination_layer_and_action) const;
 
+		void add_dependencies_for_distant_otherwise_inependent_actions(
+			const std::map<std::string, layer_configuration_specific>& layer_config_map,
+			const std::map<std::string, unsigned int>& tiling_factor_map,
+			float saturation_flops);
+
 		float get_flops(
 			const std::map<std::string, layer_configuration_specific>& layer_config_map,
 			const std::map<std::string, unsigned int>& tiling_factor_map) const;
-
-		float get_flops(const std::map<std::string, layer_configuration_specific>& layer_config_map) const;
 
 		std::vector<layer_name_with_action> get_dependencies(const layer_name_with_action& action) const;
 
 		// The function returns all actions in the correct execution order
 		std::vector<layer_name_with_action> get_actions_in_execution_order() const;
+
+		// The function returns all actions in the correct execution order
+		std::vector<layer_name_with_action> get_actions() const;
 
 		// The function returns sets of actions, each set corresponds to one stream
 		std::vector<std::vector<layer_name_with_action> > get_action_stream_set() const;
@@ -123,6 +131,9 @@ namespace nnforge
 		layer::const_ptr get_layer(const std::string& instance_name) const;
 
 	private:
+
+		static bool compare_distances(const std::pair<action_schema_graph::vertex_descriptor, double>& t1, const std::pair<action_schema_graph::vertex_descriptor, double>& t2);
+
 		template<class vertex>
 		struct record_all_edges : public boost::default_dfs_visitor
 		{

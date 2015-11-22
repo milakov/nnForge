@@ -33,14 +33,9 @@ namespace nnforge
 		return layer::ptr(new data_layer(*this));
 	}
 
-	float data_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		return 0.0F;
-	}
-
-	float data_layer::get_backward_flops(
+	float data_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
 		return 0.0F;
 	}

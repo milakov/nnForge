@@ -34,15 +34,18 @@ namespace nnforge
 		return layer::ptr(new absolute_layer(*this));
 	}
 
-	float absolute_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count());
-	}
-
-	float absolute_layer::get_backward_flops(
+	float absolute_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count());
+		switch (action.get_action_type())
+		{
+		case layer_action::forward:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count());
+		case layer_action::backward_data:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count());
+		default:
+			return 0.0F;
+		}
 	}
 }

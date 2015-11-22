@@ -40,16 +40,19 @@ namespace nnforge
 		return layer::ptr(new hyperbolic_tangent_layer(*this));
 	}
 
-	float hyperbolic_tangent_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 6);
-	}
-
-	float hyperbolic_tangent_layer::get_backward_flops(
+	float hyperbolic_tangent_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 5);
+		switch (action.get_action_type())
+		{
+		case layer_action::forward:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 6);
+		case layer_action::backward_data:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 5);
+		default:
+			return 0.0F;
+		}
 	}
 
 	void hyperbolic_tangent_layer::write_proto(void * layer_proto) const

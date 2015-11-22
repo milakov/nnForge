@@ -107,19 +107,24 @@ namespace nnforge
 		check();
 	}
 
-	float rgb_to_yuv_convert_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		unsigned int neuron_count = input_configuration_specific_list[0].get_neuron_count_per_feature_map() * static_cast<unsigned int>(color_feature_map_config_list.size());
-
-		return static_cast<float>(neuron_count * 9);
-	}
-
-	float rgb_to_yuv_convert_layer::get_backward_flops(
+	float rgb_to_yuv_convert_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
-		unsigned int neuron_count = input_configuration_specific_list[0].get_neuron_count_per_feature_map() * static_cast<unsigned int>(color_feature_map_config_list.size());
-
-		return static_cast<float>(neuron_count * 9);
+		switch (action.get_action_type())
+		{
+		case layer_action::forward:
+			{
+				unsigned int neuron_count = input_configuration_specific_list[0].get_neuron_count_per_feature_map() * static_cast<unsigned int>(color_feature_map_config_list.size());
+				return static_cast<float>(neuron_count * 9);
+			}
+		case layer_action::backward_data:
+			{
+				unsigned int neuron_count = input_configuration_specific_list[0].get_neuron_count_per_feature_map() * static_cast<unsigned int>(color_feature_map_config_list.size());
+				return static_cast<float>(neuron_count * 9);
+			}
+		default:
+			return 0.0F;
+		}
 	}
 }

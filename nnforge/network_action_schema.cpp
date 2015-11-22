@@ -18,13 +18,14 @@
 
 #include "neural_network_exception.h"
 #include "color_palette.h"
+#include "min_weight_sequential_vertex_coloring.h"
 
+#include <algorithm>
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/smallest_last_ordering.hpp>
 #include <boost/graph/graph_traits.hpp>
-
-#include "min_weight_sequential_vertex_coloring.h"
+#include <boost/graph/copy.hpp>
 
 namespace nnforge
 {
@@ -33,6 +34,24 @@ namespace nnforge
 
 	network_action_schema::network_action_schema()
 	{
+	}
+
+	network_action_schema::network_action_schema(const network_action_schema& other)
+	{
+		std::list<action_schema_graph::vertex_descriptor> vertex_list;
+		boost::topological_sort(other.actions, std::back_inserter(vertex_list));
+		for(std::list<action_schema_graph::vertex_descriptor>::const_iterator it = vertex_list.begin(); it != vertex_list.end(); ++it)
+		{
+			layer::const_ptr l = other.actions[*it].l;
+			layer_action action = other.actions[*it].action;
+			std::vector<layer_name_with_action> dependencies;
+			for(std::pair<action_schema_graph::out_edge_iterator, action_schema_graph::out_edge_iterator> edge_it = boost::out_edges(*it, other.actions); edge_it.first != edge_it.second; ++edge_it.first)
+			{
+				action_schema_graph::vertex_descriptor target_vertex = boost::target(*edge_it.first, other.actions);
+				dependencies.push_back(layer_name_with_action(other.actions[target_vertex].l->instance_name, other.actions[target_vertex].action));
+			}
+			add_action(l, action, dependencies);
+		}
 	}
 
 	bool network_action_schema::action_exists(const layer_name_with_action& layer_and_action) const
@@ -111,44 +130,11 @@ namespace nnforge
 			std::vector<layer_configuration_specific> input_layer_configs;
 			for(std::vector<std::string>::const_iterator it = l->input_layer_instance_names.begin(); it != l->input_layer_instance_names.end(); ++it)
 				input_layer_configs.push_back(layer_config_map.find(*it)->second);
-			switch (action.get_action_type())
-			{
-			case layer_action::forward:
-				flops += l->get_forward_flops(input_layer_configs) * tiling_factor_map.find(l->instance_name)->second;
-				break;
-			case layer_action::backward_weights:
-				flops += l->get_weights_update_flops(input_layer_configs) * tiling_factor_map.find(l->instance_name)->second;
-				break;
-			case layer_action::backward_data:
-				flops += l->get_backward_flops(input_layer_configs, action.get_backprop_index()) * tiling_factor_map.find(l->instance_name)->second;
-				break;
-			}
-		}
-		return flops;
-	}
-
-	float network_action_schema::get_flops(const std::map<std::string, layer_configuration_specific>& layer_config_map) const
-	{
-		float flops = 0.0F;
-		for(std::pair<action_schema_graph::vertex_iterator, action_schema_graph::vertex_iterator> vp = boost::vertices(actions); vp.first != vp.second; ++vp.first)
-		{
-			layer::const_ptr l = actions[*vp.first].l;
-			layer_action action = actions[*vp.first].action;
-			std::vector<layer_configuration_specific> input_layer_configs;
-			for(std::vector<std::string>::const_iterator it = l->input_layer_instance_names.begin(); it != l->input_layer_instance_names.end(); ++it)
-				input_layer_configs.push_back(layer_config_map.find(*it)->second);
-			switch (action.get_action_type())
-			{
-			case layer_action::forward:
-				flops += l->get_forward_flops(input_layer_configs);
-				break;
-			case layer_action::backward_weights:
-				flops += l->get_weights_update_flops(input_layer_configs);
-				break;
-			case layer_action::backward_data:
-				flops += l->get_backward_flops(input_layer_configs, action.get_backprop_index());
-				break;
-			}
+			unsigned int tiling_factor = 1;
+			std::map<std::string, unsigned int>::const_iterator tiling_it = tiling_factor_map.find(l->instance_name);
+			if (tiling_it != tiling_factor_map.end())
+				tiling_factor = tiling_it->second;
+			flops += l->get_flops_per_entry(input_layer_configs, action) * tiling_factor;
 		}
 		return flops;
 	}
@@ -160,6 +146,15 @@ namespace nnforge
 		std::vector<layer_name_with_action> res;
 		for(std::list<action_schema_graph::vertex_descriptor>::const_iterator it = vertex_list.begin(); it != vertex_list.end(); ++it)
 			res.push_back(layer_name_with_action(actions[*it].l->instance_name, actions[*it].action));
+		return res;
+	}
+
+	std::vector<layer_name_with_action> network_action_schema::get_actions() const
+	{
+		std::vector<layer_name_with_action> res;
+		action_schema_graph::vertex_iterator vi, vi_end;
+		for(boost::tie(vi, vi_end) = boost::vertices(actions); vi != vi_end; ++vi)
+			res.push_back(layer_name_with_action(actions[*vi].l->instance_name, actions[*vi].action));
 		return res;
 	}
 
@@ -176,38 +171,67 @@ namespace nnforge
 	{
 		std::vector<std::vector<layer_name_with_action> > res;
 
-		std::list<action_schema_graph::vertex_descriptor> vertex_list_in_execution_order;
+		std::vector<action_schema_graph::vertex_descriptor> vertex_list_in_execution_order;
 		boost::topological_sort(actions, std::back_inserter(vertex_list_in_execution_order));
 
 		std::set<layer_name_with_action> covered_layer_name_with_actions;
-		for(std::list<action_schema_graph::vertex_descriptor>::const_reverse_iterator it = vertex_list_in_execution_order.rbegin(); it != vertex_list_in_execution_order.rend(); ++it)
+		for(std::vector<action_schema_graph::vertex_descriptor>::const_reverse_iterator it = vertex_list_in_execution_order.rbegin(); it != vertex_list_in_execution_order.rend(); ++it)
 		{
 			layer::const_ptr current_layer = actions[*it].l;
 			layer_action action = actions[*it].action;
 			layer_name_with_action current_layer_name_with_action(current_layer->instance_name, action);
-			bool current_set = true;
 			if (covered_layer_name_with_actions.find(current_layer_name_with_action) != covered_layer_name_with_actions.end())
 				continue;
 
 			res.push_back(std::vector<layer_name_with_action>());
 			std::vector<layer_name_with_action>& actions_in_set = res.back();
 
+			bool current_set = true;
 			while (current_set)
 			{
 				actions_in_set.push_back(current_layer_name_with_action);
 				covered_layer_name_with_actions.insert(current_layer_name_with_action);
 
 				current_set = false;
-				for(std::pair<action_schema_graph::adjacency_iterator, action_schema_graph::adjacency_iterator> vp = boost::adjacent_vertices(layer_instance_name_with_action_to_vertex_decriptor_map.find(current_layer_name_with_action)->second, actions); vp.first != vp.second; ++vp.first)
+				action_schema_graph::vertex_descriptor current_vertex = layer_instance_name_with_action_to_vertex_decriptor_map.find(current_layer_name_with_action)->second;
+				for(std::pair<action_schema_graph::adjacency_iterator, action_schema_graph::adjacency_iterator> vp = boost::adjacent_vertices(current_vertex, actions); vp.first != vp.second; ++vp.first)
 				{
 					layer::const_ptr current_layer = actions[*vp.first].l;
 					layer_action action = actions[*vp.first].action;
-					current_layer_name_with_action = layer_name_with_action(current_layer->instance_name, action);
-
-					if (covered_layer_name_with_actions.find(current_layer_name_with_action) == covered_layer_name_with_actions.end())
+					layer_name_with_action new_layer_name_with_action = layer_name_with_action(current_layer->instance_name, action);
+					if (covered_layer_name_with_actions.find(new_layer_name_with_action) == covered_layer_name_with_actions.end())
 					{
+						current_layer_name_with_action = new_layer_name_with_action;
 						current_set = true;
 						break;
+					}
+				}
+
+				// All direct priors are already covered
+				if (!current_set)
+				{
+					std::set<action_schema_graph::vertex_descriptor> dependent_vertices;
+					record_all_edges<action_schema_graph::vertex_descriptor> vis(dependent_vertices);
+					std::vector<boost::default_color_type> color_map(boost::num_vertices(actions));
+					boost::depth_first_visit(
+						actions,
+						current_vertex,
+						vis,
+						boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
+					for(std::vector<action_schema_graph::vertex_descriptor>::const_reverse_iterator it2 = it + 1; it2 != vertex_list_in_execution_order.rend(); ++it2)
+					{
+						if (dependent_vertices.find(*it2) != dependent_vertices.end())
+						{
+							layer::const_ptr current_layer = actions[*it2].l;
+							layer_action action = actions[*it2].action;
+							layer_name_with_action new_layer_name_with_action = layer_name_with_action(current_layer->instance_name, action);
+							if (covered_layer_name_with_actions.find(new_layer_name_with_action) == covered_layer_name_with_actions.end())
+							{
+								current_layer_name_with_action = layer_name_with_action(current_layer->instance_name, action);
+								current_set = true;
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -614,6 +638,105 @@ namespace nnforge
 			layer_action action = actions[*vp.first].action;
 			name_to_layer_map.insert(std::make_pair(l->instance_name, l));
 			layer_instance_name_with_action_to_vertex_decriptor_map.insert(std::make_pair(layer_name_with_action(l->instance_name, action), *vp.first));
+		}
+	}
+
+	bool network_action_schema::compare_distances(const std::pair<action_schema_graph::vertex_descriptor, double>& t1, const std::pair<action_schema_graph::vertex_descriptor, double>& t2)
+	{
+		return (t1.second < t2.second);
+	}
+
+	void network_action_schema::add_dependencies_for_distant_otherwise_inependent_actions(
+		const std::map<std::string, layer_configuration_specific>& layer_config_map,
+		const std::map<std::string, unsigned int>& tiling_factor_map,
+		float saturation_flops)
+	{
+		std::vector<std::pair<action_schema_graph::vertex_descriptor, double> > vertex_distance_list;
+		{
+			std::map<action_schema_graph::vertex_descriptor, double> distance_map;
+			std::list<action_schema_graph::vertex_descriptor> vertex_list;
+			boost::topological_sort(actions, std::back_inserter(vertex_list));
+			for(std::list<action_schema_graph::vertex_descriptor>::const_iterator it = vertex_list.begin(); it != vertex_list.end(); ++it)
+			{
+				double max_distance = 0.0;
+				for(std::pair<action_schema_graph::out_edge_iterator, action_schema_graph::out_edge_iterator> edge_it = boost::out_edges(*it, actions); edge_it.first != edge_it.second; ++edge_it.first)
+				{
+					action_schema_graph::vertex_descriptor previous_vertex = boost::target(*edge_it.first, actions);
+					double current_distance = distance_map[previous_vertex];
+
+					float flops;
+					{
+						layer::const_ptr l = actions[previous_vertex].l;
+						std::vector<layer_configuration_specific> input_layer_configs;
+						for(std::vector<std::string>::const_iterator it = l->input_layer_instance_names.begin(); it != l->input_layer_instance_names.end(); ++it)
+							input_layer_configs.push_back(layer_config_map.find(*it)->second);
+						unsigned int tiling_factor = 1;
+						std::map<std::string, unsigned int>::const_iterator tiling_it = tiling_factor_map.find(l->instance_name);
+						if (tiling_it != tiling_factor_map.end())
+							tiling_factor = tiling_it->second;
+						flops = l->get_flops_per_entry(input_layer_configs, actions[previous_vertex].action) * tiling_factor;
+					}
+					current_distance += static_cast<double>(flops);
+					max_distance = std::max(max_distance, current_distance);
+				}
+				distance_map.insert(std::make_pair(*it, max_distance));
+				vertex_distance_list.push_back(std::make_pair(*it, max_distance));
+			}
+			std::stable_sort(vertex_distance_list.begin(), vertex_distance_list.end(), compare_distances);
+		}
+
+		for(std::vector<std::pair<action_schema_graph::vertex_descriptor, double> >::const_iterator it = vertex_distance_list.begin(); it != vertex_distance_list.end(); ++it)
+		{
+			std::vector<std::pair<action_schema_graph::vertex_descriptor, double> >::const_iterator candidate_it = it + 1;
+			double min_distance = it->second + static_cast<double>(saturation_flops);
+			while ((candidate_it != vertex_distance_list.end()) && (candidate_it->second < min_distance))
+				++candidate_it;
+
+			if (candidate_it == vertex_distance_list.end())
+				continue;
+
+			bool edge_addded = true;
+			while (edge_addded)
+			{
+				std::set<action_schema_graph::vertex_descriptor> dependent_vertices;
+				record_all_edges<action_schema_graph::vertex_descriptor> vis(dependent_vertices);
+				std::vector<boost::default_color_type> color_map(boost::num_vertices(actions));
+				boost::depth_first_visit(
+					boost::make_reverse_graph(actions),
+					it->first,
+					vis,
+					boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
+
+				edge_addded = false;
+				while (candidate_it != vertex_distance_list.end())
+				{
+					if (dependent_vertices.find(candidate_it->first) == dependent_vertices.end())
+					{
+						// To reduce the number of dependencies we better remove all the from candidate, where target is prior to current 
+						{
+							std::set<action_schema_graph::vertex_descriptor> dependent_vertices;
+							record_all_edges<action_schema_graph::vertex_descriptor> vis(dependent_vertices);
+							std::vector<boost::default_color_type> color_map(boost::num_vertices(actions));
+							boost::depth_first_visit(
+								actions,
+								it->first,
+								vis,
+								boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
+							for(std::set<action_schema_graph::vertex_descriptor>::const_iterator dep_it = dependent_vertices.begin(); dep_it != dependent_vertices.end(); ++dep_it)
+							{
+								if (boost::edge(candidate_it->first, *dep_it, actions).second)
+									boost::remove_edge(candidate_it->first, *dep_it, actions);
+							}
+						}
+
+						boost::add_edge(candidate_it->first, it->first, actions);
+						edge_addded = true;
+						break;
+					}
+
+					++candidate_it;
+				}
+			} // while (edge_addded)
 		}
 	}
 }

@@ -41,12 +41,14 @@ namespace nnforge
 			float max_global_memory_usage_ratio,
 			unsigned int reserved_thread_count,
 			bool dont_share_buffers,
-			bool single_command_stream)
+			bool single_command_stream,
+			unsigned int optimize_action_graph_assumed_chunk_size)
 			: device_id(device_id)
 			, max_global_memory_usage_ratio(max_global_memory_usage_ratio)
 			, reserved_thread_count(reserved_thread_count)
 			, dont_share_buffers(dont_share_buffers)
 			, single_command_stream(single_command_stream)
+			, optimize_action_graph_assumed_chunk_size(optimize_action_graph_assumed_chunk_size)
 			, cublas_handle(0)
 			, cusparse_handle(0)
 			, cudnn_handle(0)
@@ -178,6 +180,7 @@ namespace nnforge
 			#ifdef _WIN32
 				out << "Driver mode = " << (running_configuration.tcc_mode ? "TCC" : "WDDM") << std::endl;
 			#endif
+			out << "Estimated GFLOPS = " << static_cast<int>(running_configuration.get_flops() / 1.0e+12F) << std::endl;
 
 			out << "--- Settings ---" << std::endl;
 
@@ -185,6 +188,7 @@ namespace nnforge
 			out << "Threads reserved for CUDA sync (others will be used for on-the-fly data processing by job runner) = " << running_configuration.reserved_thread_count << std::endl;
 			out << "Don't share buffers = " << running_configuration.dont_share_buffers << std::endl;
 			out << "Use single command stream = " << running_configuration.single_command_stream << std::endl;
+			out << "Assumed chunk size when optimizing action graph = " << running_configuration.optimize_action_graph_assumed_chunk_size << std::endl;
 
 			out << "--- Status ---" << std::endl;
 
@@ -211,7 +215,7 @@ namespace nnforge
 
 			unsigned int entry_count_limited_by_linear_texture = buffers_config.max_tex_per_entry > 0 ? (max_texture_1d_linear - 1) / buffers_config.max_tex_per_entry : std::numeric_limits<int>::max();
 
-			unsigned int entry_count = std::min<unsigned int>(entry_count_limited_by_global, entry_count_limited_by_linear_texture);
+			unsigned int entry_count = std::min(static_cast<unsigned int>(entry_count_limited_by_global), entry_count_limited_by_linear_texture);
 
 			return entry_count;
 		}
@@ -249,6 +253,24 @@ namespace nnforge
 		bool cuda_running_configuration::is_single_command_stream() const
 		{
 			return single_command_stream;
+		}
+
+		int cuda_running_configuration::get_core_count_per_sm() const
+		{
+			if (compute_capability_major <= 3)
+				return 192;
+			else
+				return 128;
+		}
+
+		float cuda_running_configuration::get_flops() const
+		{
+			return static_cast<float>(get_core_count_per_sm() * 2 * multiprocessor_count) * clock_rate * 1000.0F;
+		}
+
+		float cuda_running_configuration::get_device_saturation_time() const
+		{
+			return 5.0e-5F; // 50 us
 		}
 	}
 }

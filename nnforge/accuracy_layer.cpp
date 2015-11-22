@@ -92,19 +92,23 @@ namespace nnforge
 		}
 	}
 
-	float accuracy_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
-		unsigned int per_item_flops = input_configuration_specific_list[0].feature_map_count * 2;
-
-		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
-	}
-
-	float accuracy_layer::get_backward_flops(
+	float accuracy_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
-		throw neural_network_exception("get_backward_flops is not implemented for accuracy_layer");
+		switch (action.get_action_type())
+		{
+		case layer_action::forward:
+			{
+				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
+				unsigned int per_item_flops = input_configuration_specific_list[0].feature_map_count * 2;
+				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
+			}
+		case layer_action::backward_data:
+			throw neural_network_exception("get_backward_flops is not implemented for accuracy_layer");
+		default:
+			return 0.0F;
+		}
 	}
 
 	std::string accuracy_layer::get_string_for_average_data(

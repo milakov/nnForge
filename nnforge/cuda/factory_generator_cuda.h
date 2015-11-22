@@ -31,7 +31,8 @@ namespace nnforge
 				float cuda_max_global_memory_usage_ratio,
 				unsigned int cuda_reserved_thread_count,
 				bool cuda_dont_share_buffers,
-				bool cuda_single_command_stream);
+				bool cuda_single_command_stream,
+				unsigned int optimize_action_graph_assumed_chunk_size);
 
 			factory_generator_cuda();
 
@@ -57,6 +58,7 @@ namespace nnforge
 			int cuda_reserved_thread_count;
 			bool cuda_dont_share_buffers;
 			bool cuda_single_command_stream;
+			int optimize_action_graph_assumed_chunk_size;
 
 			cuda_running_configuration::const_ptr cuda_config;
 		};

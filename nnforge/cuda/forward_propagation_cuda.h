@@ -72,6 +72,8 @@ namespace nnforge
 
 			void update_max_entry_count();
 
+			void setup_optimized_action_schema();
+
 		private:
 			class run_kernels_params
 			{
@@ -129,6 +131,7 @@ namespace nnforge
 		private:
 			cuda_running_configuration::const_ptr cuda_config;
 
+			network_action_schema::const_ptr optimized_action_schema;
 			std::vector<layer_name_with_action> actions_in_execution_order;
 
 			network_data::const_ptr host_net_data;

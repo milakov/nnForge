@@ -414,34 +414,25 @@ namespace nnforge
 		data_custom[1][output_feature_map_count] = current_column_offset;
 	}
 
-	float sparse_convolution_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count_per_feature_map();
-		unsigned int per_item_flops = feature_map_connection_count * 2;
-		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
-		per_item_flops -= 1;
-
-		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
-	}
-
-	float sparse_convolution_layer::get_backward_flops(
+	float sparse_convolution_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count_per_feature_map();
-		unsigned int per_item_flops = feature_map_connection_count * 2;
-		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
-
-		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
-	}
-
-	float sparse_convolution_layer::get_weights_update_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count_per_feature_map();
-		unsigned int per_item_flops = feature_map_connection_count * 2;
-		std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
-
-		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
+		switch (action.get_action_type())
+		{
+		case layer_action::forward:
+		case layer_action::backward_data:
+		case layer_action::backward_weights:
+			{
+				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count_per_feature_map();
+				unsigned int per_item_flops = feature_map_connection_count * 2;
+				std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
+				per_item_flops -= 1;
+				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
+			}
+		default:
+			return 0.0F;
+		}
 	}
 
 	layer_data_configuration_list sparse_convolution_layer::get_layer_data_configuration_list() const

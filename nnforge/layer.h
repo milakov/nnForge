@@ -24,6 +24,7 @@
 #include "layer_data_configuration.h"
 #include "nn_types.h"
 #include "tiling_factor.h"
+#include "layer_action.h"
 
 #include <ostream>
 #include <istream>
@@ -62,13 +63,9 @@ namespace nnforge
 
 		virtual layer_data_configuration_list get_layer_data_configuration_list() const;
 
-		virtual float get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const = 0;
-
-		virtual float get_backward_flops(
+		virtual float get_flops_per_entry(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-			unsigned int input_layer_id) const = 0;
-
-		virtual float get_weights_update_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const;
+			const layer_action& action) const = 0;
 
 		virtual std::string get_type_name() const = 0;
 

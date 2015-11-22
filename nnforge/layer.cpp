@@ -126,11 +126,6 @@ namespace nnforge
 	{
 	}
 
-	float layer::get_weights_update_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		return 0.0F;
-	}
-
 	layer_data_configuration_list layer::get_layer_data_configuration_list() const
 	{
 		return layer_data_configuration_list();

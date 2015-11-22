@@ -30,12 +30,14 @@ namespace nnforge
 			float cuda_max_global_memory_usage_ratio,
 			unsigned int cuda_reserved_thread_count,
 			bool cuda_dont_share_buffers,
-			bool cuda_single_command_stream)
+			bool cuda_single_command_stream,
+			unsigned int optimize_action_graph_assumed_chunk_size)
 			: cuda_device_id(cuda_device_id)
 			, cuda_max_global_memory_usage_ratio(cuda_max_global_memory_usage_ratio)
 			, cuda_reserved_thread_count(cuda_reserved_thread_count)
 			, cuda_dont_share_buffers(cuda_dont_share_buffers)
 			, cuda_single_command_stream(cuda_single_command_stream)
+			, optimize_action_graph_assumed_chunk_size(optimize_action_graph_assumed_chunk_size)
 		{
 		}
 
@@ -54,7 +56,8 @@ namespace nnforge
 				cuda_max_global_memory_usage_ratio,
 				cuda_reserved_thread_count,
 				cuda_dont_share_buffers,
-				cuda_single_command_stream));
+				cuda_single_command_stream,
+				optimize_action_graph_assumed_chunk_size));
 		}
 
 		forward_propagation_factory::ptr factory_generator_cuda::create_forward_propagation_factory() const
@@ -82,6 +85,7 @@ namespace nnforge
 
 			res.push_back(int_option("cuda_device_id,D", &cuda_device_id, 0, "CUDA device ID"));
 			res.push_back(int_option("cuda_reserved_thread_count", &cuda_reserved_thread_count, 1, "The number of hw threads not used for input data processing"));
+			res.push_back(int_option("optimize_action_graph_assumed_chunk_size", &optimize_action_graph_assumed_chunk_size, 32, "Assumed chunk size when optimizing action graph"));
 
 			return res;
 		}

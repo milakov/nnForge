@@ -35,15 +35,18 @@ namespace nnforge
 		return layer::ptr(new softmax_layer(*this));
 	}
 
-	float softmax_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count_per_feature_map() * (input_configuration_specific_list[0].feature_map_count * 3 - 1));
-	}
-
-	float softmax_layer::get_backward_flops(
+	float softmax_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count_per_feature_map() * (input_configuration_specific_list[0].feature_map_count * 4 - 1));
+		switch (action.get_action_type())
+		{
+		case layer_action::forward:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count_per_feature_map() * (input_configuration_specific_list[0].feature_map_count * 3 - 1));
+		case layer_action::backward_data:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count_per_feature_map() * (input_configuration_specific_list[0].feature_map_count * 4 - 1));
+		default:
+			return 0.0F;
+		}
 	}
 }

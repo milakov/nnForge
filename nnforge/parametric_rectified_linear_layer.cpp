@@ -59,21 +59,21 @@ namespace nnforge
 		return input_configuration_list[0];
 	}
 
-	float parametric_rectified_linear_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 2);
-	}
-
-	float parametric_rectified_linear_layer::get_backward_flops(
+	float parametric_rectified_linear_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 2);
-	}
-
-	float parametric_rectified_linear_layer::get_weights_update_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 3);
+		switch (action.get_action_type())
+		{
+		case layer_action::forward:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 2);
+		case layer_action::backward_data:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 2);
+		case layer_action::backward_weights:
+			return static_cast<float>(input_configuration_specific_list[0].get_neuron_count() * 3);
+		default:
+			return 0.0F;
+		}
 	}
 
 	void parametric_rectified_linear_layer::write_proto(void * layer_proto) const

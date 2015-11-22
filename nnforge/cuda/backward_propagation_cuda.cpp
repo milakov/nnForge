@@ -34,7 +34,6 @@ namespace nnforge
 	namespace cuda
 	{
 		const unsigned int backward_propagation_cuda::elem_count_update_accum_per_part = 64;
-
 		backward_propagation_cuda::backward_propagation_cuda(
 			const network_schema& schema,
 			const std::vector<std::string>& output_layer_names,
@@ -47,9 +46,9 @@ namespace nnforge
 		{
 			cuda_config->set_device();
 
-			actions_in_execution_order = action_schema->get_actions_in_execution_order();
+			std::vector<layer_name_with_action> actions = action_schema->get_actions();
 
-			for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
+			for(std::vector<layer_name_with_action>::const_iterator it = actions.begin(); it != actions.end(); ++it)
 			{
 				if (it->get_action().get_action_type() != layer_action::backward_data)
 					continue;
@@ -60,10 +59,8 @@ namespace nnforge
 
 			setup_network_cuda();
 
-			setup_streams_and_events();
-
 			std::set<std::string> action_layer_names;
-			for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
+			for(std::vector<layer_name_with_action>::const_iterator it = actions.begin(); it != actions.end(); ++it)
 				action_layer_names.insert(it->get_name());
 			for(std::set<std::string>::const_iterator it = action_layer_names.begin(); it != action_layer_names.end(); ++it)
 				updater_schemas.insert(
@@ -831,7 +828,7 @@ namespace nnforge
 			action_previous_events.clear();
 			output_data_ready_additional_events.clear();
 
-			std::vector<std::vector<layer_name_with_action> > layer_stream_set = action_schema->get_action_stream_set();
+			std::vector<std::vector<layer_name_with_action> > layer_stream_set = optimized_action_schema->get_action_stream_set();
 
 			if (cuda_config->is_single_command_stream())
 			{
@@ -858,7 +855,7 @@ namespace nnforge
 			{
 				debug->output_message((boost::format("backward prop cuda streams: %1%") % layer_stream_set.size()).str().c_str());
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_cuda_streams", "gv"), std::ios_base::out | std::ios_base::trunc);
-				action_schema->write_gv(out, action_to_stream_set_map);
+				optimized_action_schema->write_gv(out, action_to_stream_set_map);
 			}
 
 			for(std::vector<layer_name_with_action>::const_reverse_iterator it = actions_in_execution_order.rbegin(); it != actions_in_execution_order.rend(); ++it)
@@ -866,7 +863,7 @@ namespace nnforge
 				unsigned int current_stream_set_id = action_to_stream_set_map.find(*it)->second;
 
 				std::vector<cuda_event::ptr> previous_events;
-				std::vector<layer_name_with_action> previous_actions = action_schema->get_dependencies(*it);
+				std::vector<layer_name_with_action> previous_actions = optimized_action_schema->get_dependencies(*it);
 				for(std::vector<layer_name_with_action>::const_iterator it2 = previous_actions.begin(); it2 != previous_actions.end(); ++it2)
 				{
 					const layer_name_with_action& previous_layer_action = *it2;
@@ -922,9 +919,60 @@ namespace nnforge
 			}
 		}
 
+		void backward_propagation_cuda::setup_optimized_action_schema()
+		{
+			{
+				network_action_schema::ptr optimized_action_schema_tmp = network_action_schema::ptr(new network_action_schema(*action_schema));
+				float saturation_flops = cuda_config->get_flops() * cuda_config->get_device_saturation_time() / static_cast<float>(cuda_config->optimize_action_graph_assumed_chunk_size);
+				optimized_action_schema_tmp->add_dependencies_for_distant_otherwise_inependent_actions(
+					layer_config_map,
+					std::map<std::string, unsigned int>(),
+					saturation_flops);
+				optimized_action_schema = optimized_action_schema_tmp;
+			}
+
+			if (debug->is_debug())
+			{
+				std::vector<layer_name_with_action> actions = optimized_action_schema->get_actions();
+				std::map<layer_name_with_action, unsigned int> layer_name_with_action_color_map;
+				for(std::vector<layer_name_with_action>::const_iterator it = actions.begin(); it != actions.end(); ++it)
+				{
+					unsigned int color_id;
+					switch (it->get_action().get_action_type())
+					{
+					case layer_action::forward:
+						color_id = 0;
+						break;
+					case layer_action::backward_data:
+						color_id = 1;
+						break;
+					case layer_action::backward_weights:
+						color_id = 2;
+						break;
+					case layer_action::update_weights:
+						color_id = 3;
+						break;
+					default:
+						color_id = 4;
+						break;
+					}
+					layer_name_with_action_color_map.insert(std::make_pair(*it, color_id));
+				}
+
+				boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_optimized_action_schema", "gv"), std::ios_base::out | std::ios_base::trunc);
+				optimized_action_schema->write_gv(out, layer_name_with_action_color_map);
+			}
+
+			actions_in_execution_order = optimized_action_schema->get_actions_in_execution_order();
+		}
+
 		void backward_propagation_cuda::layer_config_map_modified()
 		{
 			cuda_config->set_device();
+
+			setup_optimized_action_schema();
+
+			setup_streams_and_events();
 
 			updaters.clear();
 
@@ -993,7 +1041,7 @@ namespace nnforge
 						buffers.insert(std::make_pair(*it, std::vector<std::pair<buffer_lifetime, float> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::working_buffer), static_cast<float>(temporary_working_fixed_buffer_size)));
 				}
 
-				temporary_working_fixed_buffer_set_list = action_schema->get_buffer_set(
+				temporary_working_fixed_buffer_set_list = optimized_action_schema->get_buffer_set(
 					buffers,
 					std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > >(),
 					std::map<layer_name_with_action, unsigned int>(),
@@ -1046,7 +1094,7 @@ namespace nnforge
 				}
 				debug->output_message(debug_str.str().c_str());
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_cuda_temporary_fixed_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
-				action_schema->write_gv(out, temporary_working_fixed_data_action_to_set_map);
+				optimized_action_schema->write_gv(out, temporary_working_fixed_data_action_to_set_map);
 			}
 		}
 
@@ -1171,7 +1219,7 @@ namespace nnforge
 						tt.push_back(std::make_pair(*it2, buffer_lifetime(buffer_lifetime::action_output_buffer)));
 				}
 
-				layer_buffer_set_list = action_schema->get_buffer_set(
+				layer_buffer_set_list = optimized_action_schema->get_buffer_set(
 					buffers,
 					dependencies,
 					input_index_layer_can_write_output_map,
@@ -1255,7 +1303,7 @@ namespace nnforge
 				}
 				debug->output_message(debug_str.str().c_str());
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_cuda_per_entry_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
-				action_schema->write_gv(out, layer_buffer_action_to_set_map, temporary_per_entry_data_action_to_set_map, temporary_working_per_entry_data_action_to_set_map);
+				optimized_action_schema->write_gv(out, layer_buffer_action_to_set_map, temporary_per_entry_data_action_to_set_map, temporary_working_per_entry_data_action_to_set_map);
 			}
 		}
 

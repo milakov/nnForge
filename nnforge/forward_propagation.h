@@ -86,7 +86,7 @@ namespace nnforge
 
 	protected:
 		network_schema::const_ptr schema;
-		network_action_schema::const_ptr action_schema;
+		network_action_schema::ptr action_schema;
 		std::vector<std::string> output_layer_names;
 		debug_state::ptr debug;
 		std::map<std::string, layer_configuration_specific> layer_config_map;

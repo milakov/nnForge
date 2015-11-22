@@ -74,6 +74,8 @@ namespace nnforge
 
 			void update_buffer_config();
 
+			void setup_optimized_action_schema();
+
 			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> > get_data(const layer_data_list& host_data) const;
 
 			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> > get_zero_gradient(const std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& net_data) const;
@@ -178,6 +180,7 @@ namespace nnforge
 		private:
 			cuda_running_configuration::const_ptr cuda_config;
 
+			network_action_schema::const_ptr optimized_action_schema;
 			std::vector<layer_name_with_action> actions_in_execution_order;
 			std::map<std::string, layer_name_with_action> input_to_random_output_map;
 

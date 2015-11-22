@@ -168,24 +168,27 @@ namespace nnforge
 		check();
 	}
 
-	float max_subsampling_layer::get_forward_flops(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
-	{
-		unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
-		unsigned int per_item_flops = 1;
-		std::for_each(subsampling_sizes.begin(), subsampling_sizes.end(), per_item_flops *= boost::lambda::_1);
-		per_item_flops -= 1;
-
-		if (tiling)
-			neuron_count *= get_tiling_factor();
-
-		return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
-	}
-
-	float max_subsampling_layer::get_backward_flops(
+	float max_subsampling_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-		unsigned int input_layer_id) const
+		const layer_action& action) const
 	{
-		return static_cast<float>(0);
+		switch (action.get_action_type())
+		{
+		case layer_action::forward:
+			{
+				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
+				unsigned int per_item_flops = 1;
+				std::for_each(subsampling_sizes.begin(), subsampling_sizes.end(), per_item_flops *= boost::lambda::_1);
+				per_item_flops -= 1;
+				if (tiling)
+					neuron_count *= get_tiling_factor();
+				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
+			}
+		case layer_action::backward_data:
+			return 0.0F;
+		default:
+			return 0.0F;
+		}
 	}
 
 	std::vector<tiling_factor> max_subsampling_layer::get_tiling_factor_list() const

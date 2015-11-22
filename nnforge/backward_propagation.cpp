@@ -81,7 +81,7 @@ namespace nnforge
 		}
 		if (debug->is_debug())
 		{
-			std::vector<layer_name_with_action> actions = action_schema->get_actions_in_execution_order();
+			std::vector<layer_name_with_action> actions = action_schema->get_actions();
 			std::map<layer_name_with_action, unsigned int> layer_name_with_action_color_map;
 			for(std::vector<layer_name_with_action>::const_iterator it = actions.begin(); it != actions.end(); ++it)
 			{
@@ -149,7 +149,7 @@ namespace nnforge
 
 	void backward_propagation::update_flops()
 	{
-		flops = action_schema->get_flops(layer_config_map);
+		flops = action_schema->get_flops(layer_config_map, std::map<std::string, unsigned int>());
 	}
 
 	backward_propagation::stat backward_propagation::run(

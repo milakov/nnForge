@@ -42,7 +42,8 @@ namespace nnforge
 				float max_global_memory_usage_ratio,
 				unsigned int reserved_thread_count,
 				bool dont_share_buffers,
-				bool single_command_stream);
+				bool single_command_stream,
+				unsigned int optimize_action_graph_assumed_chunk_size);
 
 			~cuda_running_configuration();
 
@@ -73,12 +74,17 @@ namespace nnforge
 
 			bool is_single_command_stream() const;
 
+			float get_flops() const;
+
+			float get_device_saturation_time() const;
+
 		public:
 			int device_id;
 			float max_global_memory_usage_ratio;
 			unsigned int reserved_thread_count;
 			bool dont_share_buffers;
 			bool single_command_stream;
+			unsigned int optimize_action_graph_assumed_chunk_size;
 
 			int driver_version;
 			int runtime_version;
@@ -106,6 +112,9 @@ namespace nnforge
 		#ifdef _WIN32
 			bool tcc_mode;
 		#endif
+
+		private:
+			int get_core_count_per_sm() const;
 
 		private:
 			cuda_running_configuration();
