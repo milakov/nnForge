@@ -1031,12 +1031,17 @@ namespace nnforge
 
 		void backward_propagation_cuda::setup_temporary_working_fixed_buffer_sizes()
 		{
+			size_t max_fixed_working_buffers_size = cuda_config->get_max_fixed_working_buffers_size();
+
 			std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > temporary_working_fixed_buffer_set_list;
 			{
 				std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > > buffers;
 				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
 				{
-					size_t temporary_working_fixed_buffer_size = updaters[it->get_name()]->get_temporary_working_fixed_buffer_size(it->get_action());
+					std::pair<size_t, bool> temporary_working_fixed_buffer_size_and_flag = updaters[it->get_name()]->get_temporary_working_fixed_buffer_size(it->get_action());
+					size_t temporary_working_fixed_buffer_size = temporary_working_fixed_buffer_size_and_flag.first;
+					if (temporary_working_fixed_buffer_size_and_flag.second)
+						temporary_working_fixed_buffer_size = std::max(temporary_working_fixed_buffer_size, max_fixed_working_buffers_size);
 					if (temporary_working_fixed_buffer_size > 0)
 						buffers.insert(std::make_pair(*it, std::vector<std::pair<buffer_lifetime, float> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::working_buffer), static_cast<float>(temporary_working_fixed_buffer_size)));
 				}
@@ -1062,15 +1067,30 @@ namespace nnforge
 
 			temporary_working_fixed_set_size_list.clear();
 			temporary_working_fixed_data_action_to_set_map.clear();
+
+			std::set<unsigned int> set_ids_with_hungry_working_buffers;
 			for(unsigned int set_id = 0; set_id < temporary_working_fixed_buffer_set_list.size(); ++set_id)
 			{
 				const std::vector<std::pair<layer_name_with_action, buffer_lifetime> >& action_list = temporary_working_fixed_buffer_set_list[set_id];
-				size_t max_buffer_size = 0;
+				for(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >::const_iterator it = action_list.begin(); it != action_list.end(); ++it)
+				{
+					std::string layer_name = it->first.get_name();
+					if (updaters[layer_name]->get_temporary_working_fixed_buffer_size(it->first.get_action()).second)
+						set_ids_with_hungry_working_buffers.insert(set_id);
+				}
+			}
+			if (set_ids_with_hungry_working_buffers.size() > 1)
+				max_fixed_working_buffers_size /= set_ids_with_hungry_working_buffers.size();
+
+			for(unsigned int set_id = 0; set_id < temporary_working_fixed_buffer_set_list.size(); ++set_id)
+			{
+				const std::vector<std::pair<layer_name_with_action, buffer_lifetime> >& action_list = temporary_working_fixed_buffer_set_list[set_id];
+				size_t max_buffer_size = (set_ids_with_hungry_working_buffers.find(set_id) != set_ids_with_hungry_working_buffers.end()) ? max_fixed_working_buffers_size : 1;
 				for(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >::const_iterator it = action_list.begin(); it != action_list.end(); ++it)
 				{
 					std::string layer_name = it->first.get_name();
 					temporary_working_fixed_data_action_to_set_map.insert(std::make_pair(it->first, set_id));
-					size_t buffer_size = updaters[layer_name]->get_temporary_working_fixed_buffer_size(it->first.get_action());
+					size_t buffer_size = updaters[layer_name]->get_temporary_working_fixed_buffer_size(it->first.get_action()).first;
 					max_buffer_size = std::max(max_buffer_size, buffer_size);
 				}
 				temporary_working_fixed_set_size_list.push_back(max_buffer_size);
@@ -1087,10 +1107,10 @@ namespace nnforge
 					{
 						if (it != temporary_working_fixed_set_size_list.begin())
 							debug_str << ", ";
-						debug_str << ((*it + 1024 - 1) / 1024) << " KB";
+						debug_str << ((*it + (1024 * 1024) - 1) / (1024 * 1024)) << " MB";
 						total_buffer_size += *it;
 					}
-					debug_str << "), total " << ((total_buffer_size + 1024 - 1) / 1024) << " KB";
+					debug_str << "), total " << ((total_buffer_size + (1024 * 1024) - 1) / (1024 * 1024)) << " MB";
 				}
 				debug->output_message(debug_str.str().c_str());
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_cuda_temporary_fixed_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);

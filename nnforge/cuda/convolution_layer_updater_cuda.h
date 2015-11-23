@@ -74,7 +74,7 @@ namespace nnforge
 				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
 				unsigned int entry_count);
 
-			virtual size_t get_temporary_working_fixed_buffer_size(const layer_action& action) const;
+			virtual std::pair<size_t, bool> get_temporary_working_fixed_buffer_size(const layer_action& action) const;
 
 			virtual bool is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const;
 

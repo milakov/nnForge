@@ -107,9 +107,9 @@ namespace nnforge
 			return std::vector<cuda_linear_buffer_device::const_ptr>();
 		}
 
-		size_t layer_tester_cuda::get_temporary_working_fixed_buffer_size() const
+		std::pair<size_t, bool> layer_tester_cuda::get_temporary_working_fixed_buffer_size() const
 		{
-			return 0;
+			return std::make_pair(0, false);
 		}
 
 		size_t layer_tester_cuda::get_temporary_working_per_entry_buffer_size() const

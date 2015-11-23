@@ -32,7 +32,8 @@ namespace nnforge
 				unsigned int cuda_reserved_thread_count,
 				bool cuda_dont_share_buffers,
 				bool cuda_single_command_stream,
-				unsigned int optimize_action_graph_assumed_chunk_size);
+				unsigned int cuda_optimize_action_graph_assumed_chunk_size,
+				float cuda_fixed_working_buffers_ratio);
 
 			factory_generator_cuda();
 
@@ -58,7 +59,8 @@ namespace nnforge
 			int cuda_reserved_thread_count;
 			bool cuda_dont_share_buffers;
 			bool cuda_single_command_stream;
-			int optimize_action_graph_assumed_chunk_size;
+			int cuda_optimize_action_graph_assumed_chunk_size;
+			float cuda_fixed_working_buffers_ratio;
 
 			cuda_running_configuration::const_ptr cuda_config;
 		};

@@ -151,12 +151,12 @@ namespace nnforge
 				zero_padding);
 		}
 
-		size_t convolution_layer_tester_cuda::get_temporary_working_fixed_buffer_size() const
+		std::pair<size_t, bool> convolution_layer_tester_cuda::get_temporary_working_fixed_buffer_size() const
 		{
 			unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
 			for(int i = 0; i < window_sizes.size(); ++i)
 				working_buffer_elem_count *= window_sizes[i];
-			return working_buffer_elem_count * sizeof(int);
+			return std::make_pair(working_buffer_elem_count * sizeof(int), true);
 		}
 	}
 }

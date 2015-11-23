@@ -43,13 +43,16 @@ namespace nnforge
 				unsigned int reserved_thread_count,
 				bool dont_share_buffers,
 				bool single_command_stream,
-				unsigned int optimize_action_graph_assumed_chunk_size);
+				unsigned int optimize_action_graph_assumed_chunk_size,
+				float cuda_fixed_working_buffers_ratio);
 
 			~cuda_running_configuration();
 
 			unsigned int get_max_entry_count(
 				const buffer_cuda_size_configuration& buffers_config,
 				float ratio = 1.0F) const;
+
+			size_t get_max_fixed_working_buffers_size() const;
 
 			cublasHandle_t get_cublas_handle() const;
 
@@ -85,6 +88,7 @@ namespace nnforge
 			bool dont_share_buffers;
 			bool single_command_stream;
 			unsigned int optimize_action_graph_assumed_chunk_size;
+			float cuda_fixed_working_buffers_ratio;
 
 			int driver_version;
 			int runtime_version;

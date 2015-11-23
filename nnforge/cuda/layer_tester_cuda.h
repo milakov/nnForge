@@ -64,7 +64,8 @@ namespace nnforge
 
 			virtual int get_input_index_layer_can_write() const;
 
-			virtual size_t get_temporary_working_fixed_buffer_size() const;
+			// The function should return the minimum size and the flag indicating whether the tester would be happy to have larger working buffer
+			virtual std::pair<size_t, bool> get_temporary_working_fixed_buffer_size() const;
 
 			virtual size_t get_temporary_working_per_entry_buffer_size() const;
 

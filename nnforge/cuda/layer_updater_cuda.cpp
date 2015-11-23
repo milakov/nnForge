@@ -118,12 +118,12 @@ namespace nnforge
 		{
 		}
 
-		size_t layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
+		std::pair<size_t, bool> layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
 		{
 			if (actions.find(action) == actions.end())
 				throw neural_network_exception((boost::format("get_temporary_working_fixed_buffer_size called for layer %1% for action %2% while it is not configured to run such an action") % layer_schema->instance_name % action.str()).str());
 
-			return 0;
+			return std::make_pair(0, false);
 		}
 
 		size_t layer_updater_cuda::get_temporary_working_per_entry_buffer_size(const layer_action& action) const

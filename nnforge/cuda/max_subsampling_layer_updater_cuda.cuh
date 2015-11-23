@@ -172,7 +172,7 @@ namespace nnforge
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					offset = offset * output_sizes[i] + xyzw[i];
 				output[offset] = res[0];
-				max_positions[offset] = max_pos[0];
+				max_positions[offset] = static_cast<position_type>(max_pos[0]);
 				#pragma unroll
 				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 				{

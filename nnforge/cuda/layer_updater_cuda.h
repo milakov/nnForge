@@ -100,7 +100,8 @@ namespace nnforge
 
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
 
-			virtual size_t get_temporary_working_fixed_buffer_size(const layer_action& action) const;
+			// The function should return the minimum size and the flag indicating whether the tester would be happy to have larger working buffer
+			virtual std::pair<size_t, bool> get_temporary_working_fixed_buffer_size(const layer_action& action) const;
 
 			virtual size_t get_temporary_working_per_entry_buffer_size(const layer_action& action) const;
 

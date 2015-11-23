@@ -299,26 +299,34 @@ namespace nnforge
 				zero_padding);
 		}
 
-		size_t convolution_layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
+		std::pair<size_t, bool> convolution_layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
 		{
-			if (action.get_action_type() == layer_action::forward)
+			switch (action.get_action_type())
 			{
-				unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
-				for(int i = 0; i < window_sizes.size(); ++i)
-					working_buffer_elem_count *= window_sizes[i];
-
-				return working_buffer_elem_count * sizeof(int);
+			case layer_action::forward:
+				{
+					unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
+					for(int i = 0; i < window_sizes.size(); ++i)
+						working_buffer_elem_count *= window_sizes[i];
+					return std::make_pair(working_buffer_elem_count * sizeof(int), true);
+				}
+			case layer_action::backward_data:
+				{
+					unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
+					for(int i = 0; i < window_sizes.size(); ++i)
+						working_buffer_elem_count *= window_sizes[i];
+					return std::make_pair(working_buffer_elem_count * sizeof(int), true);
+				}
+			case layer_action::backward_weights:
+				{
+					unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
+					for(int i = 0; i < window_sizes.size(); ++i)
+						working_buffer_elem_count *= window_sizes[i];
+					return std::make_pair(working_buffer_elem_count * sizeof(int), true);
+				}
+			default:
+				return std::make_pair(0, false);
 			}
-			else if (action.get_action_type() == layer_action::backward_weights)
-			{
-				unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
-				for(int i = 0; i < window_sizes.size(); ++i)
-					working_buffer_elem_count *= window_sizes[i];
-
-				return working_buffer_elem_count * sizeof(int);
-			}
-			else
-				return layer_updater_cuda::get_temporary_working_fixed_buffer_size(action);
 		}
 
 		bool convolution_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const

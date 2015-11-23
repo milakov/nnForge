@@ -43,7 +43,7 @@ namespace nnforge
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count);
 
-			virtual size_t get_temporary_working_fixed_buffer_size() const;
+			virtual std::pair<size_t, bool> get_temporary_working_fixed_buffer_size() const;
 
 		protected:
 			virtual void tester_configured();

@@ -89,7 +89,7 @@ __global__ void maxout_forward_only_upd_kernel(
 }
 
 template<typename position_type, bool add_update_to_destination>
-__global__ void maxout_deriviative_upd_kernel(
+__global__ void maxout_backprop_upd_kernel(
 	float * __restrict input_errors,
 	const position_type * __restrict max_feature_map_positions,
 	const float * __restrict output_errors,
@@ -209,7 +209,7 @@ namespace nnforge
 			if (feature_map_subsampling_size <= 256)
 			{
 				if (add_update_to_destination)
-					maxout_deriviative_upd_kernel<unsigned char, true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					maxout_backprop_upd_kernel<unsigned char, true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 						*input_errors_buffer,
 						*temporary_per_entry_buffer,
 						*output_errors_buffer,
@@ -219,7 +219,7 @@ namespace nnforge
 						feature_map_subsampling_size,
 						entry_count);
 				else
-					maxout_deriviative_upd_kernel<unsigned char, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					maxout_backprop_upd_kernel<unsigned char, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 						*input_errors_buffer,
 						*temporary_per_entry_buffer,
 						*output_errors_buffer,
@@ -232,7 +232,7 @@ namespace nnforge
 			else
 			{
 				if (add_update_to_destination)
-					maxout_deriviative_upd_kernel<int, true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					maxout_backprop_upd_kernel<int, true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 						*input_errors_buffer,
 						*temporary_per_entry_buffer,
 						*output_errors_buffer,
@@ -242,7 +242,7 @@ namespace nnforge
 						feature_map_subsampling_size,
 						entry_count);
 				else
-					maxout_deriviative_upd_kernel<int, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					maxout_backprop_upd_kernel<int, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 						*input_errors_buffer,
 						*temporary_per_entry_buffer,
 						*output_errors_buffer,

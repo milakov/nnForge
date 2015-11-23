@@ -42,13 +42,15 @@ namespace nnforge
 			unsigned int reserved_thread_count,
 			bool dont_share_buffers,
 			bool single_command_stream,
-			unsigned int optimize_action_graph_assumed_chunk_size)
+			unsigned int optimize_action_graph_assumed_chunk_size,
+			float cuda_fixed_working_buffers_ratio)
 			: device_id(device_id)
 			, max_global_memory_usage_ratio(max_global_memory_usage_ratio)
 			, reserved_thread_count(reserved_thread_count)
 			, dont_share_buffers(dont_share_buffers)
 			, single_command_stream(single_command_stream)
 			, optimize_action_graph_assumed_chunk_size(optimize_action_graph_assumed_chunk_size)
+			, cuda_fixed_working_buffers_ratio(cuda_fixed_working_buffers_ratio)
 			, cublas_handle(0)
 			, cusparse_handle(0)
 			, cudnn_handle(0)
@@ -180,11 +182,12 @@ namespace nnforge
 			#ifdef _WIN32
 				out << "Driver mode = " << (running_configuration.tcc_mode ? "TCC" : "WDDM") << std::endl;
 			#endif
-			out << "Estimated GFLOPS = " << static_cast<int>(running_configuration.get_flops() / 1.0e+12F) << std::endl;
+			out << "Estimated GFLOPS = " << static_cast<int>(running_configuration.get_flops() / 1.0e+9F) << std::endl;
 
 			out << "--- Settings ---" << std::endl;
 
 			out << "Max global memory usage ratio = " << running_configuration.max_global_memory_usage_ratio << std::endl;
+			out << "Fixed working buffers ratio = " << running_configuration.cuda_fixed_working_buffers_ratio << std::endl;
 			out << "Threads reserved for CUDA sync (others will be used for on-the-fly data processing by job runner) = " << running_configuration.reserved_thread_count << std::endl;
 			out << "Don't share buffers = " << running_configuration.dont_share_buffers << std::endl;
 			out << "Use single command stream = " << running_configuration.single_command_stream << std::endl;
@@ -218,6 +221,11 @@ namespace nnforge
 			unsigned int entry_count = std::min(static_cast<unsigned int>(entry_count_limited_by_global), entry_count_limited_by_linear_texture);
 
 			return entry_count;
+		}
+
+		size_t cuda_running_configuration::get_max_fixed_working_buffers_size() const
+		{
+			return static_cast<size_t>(static_cast<float>(global_memory_size) * max_global_memory_usage_ratio * cuda_fixed_working_buffers_ratio);
 		}
 
 		cublasHandle_t cuda_running_configuration::get_cublas_handle() const
