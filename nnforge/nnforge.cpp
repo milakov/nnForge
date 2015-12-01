@@ -29,5 +29,6 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new mse_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new accuracy_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new negative_log_likelihood_layer()));
+		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new cross_entropy_layer()));
 	}
 }

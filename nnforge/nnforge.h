@@ -37,6 +37,7 @@
 #include "mse_layer.h"
 #include "accuracy_layer.h"
 #include "negative_log_likelihood_layer.h"
+#include "cross_entropy_layer.h"
 
 #include "rnd.h"
 
