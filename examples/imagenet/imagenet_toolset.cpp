@@ -225,50 +225,7 @@ bool imagenet_toolset::is_training_with_validation() const
 {
 	return true;
 }
-/*
-std::vector<nnforge::data_transformer_smart_ptr> imagenet_toolset::get_input_data_transformer_list_for_training() const
-{
-	std::vector<nnforge::data_transformer_smart_ptr> res;
-	
-		
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::convert_data_type_transformer()));
-	res.push_back(get_input_data_normalize_transformer());
 
-
-	return res;
-}
-
-std::vector<nnforge::data_transformer_smart_ptr> imagenet_toolset::get_input_data_transformer_list_for_validating() const
-{
-	std::vector<nnforge::data_transformer_smart_ptr> res;
-
-	if (rich_inference)
-		res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::flip_2d_data_sampler_transformer(1)));
-
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::convert_data_type_transformer()));
-	res.push_back(get_input_data_normalize_transformer());
-
-	return res;
-}
-
-std::vector<nnforge::data_transformer_smart_ptr> imagenet_toolset::get_input_data_transformer_list_for_testing() const
-{
-	std::vector<nnforge::data_transformer_smart_ptr> res;
-
-	if (rich_inference)
-		res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::flip_2d_data_sampler_transformer(1)));
-
-	res.push_back(nnforge::data_transformer_smart_ptr(new nnforge::convert_data_type_transformer()));
-	res.push_back(get_input_data_normalize_transformer());
-
-	return res;
-}
-
-void imagenet_toolset::run_test_with_unsupervised_data(const nnforge::output_neuron_value_set& neuron_value_set)
-{
-
-}
-*/
 unsigned int imagenet_toolset::get_classid_by_wnid(unsigned int wnid) const
 {
 	return wnid - 1;
@@ -328,99 +285,6 @@ void imagenet_toolset::load_cls_class_info()
 	if (wnid_to_ilsvrc2014id_map.empty())
 		throw std::runtime_error((boost::format("No class info loaded from %1%") % cls_class_info_filepath.string()).str());
 }
-
-/*
-std::vector<nnforge::network_data_pusher_smart_ptr> imagenet_toolset::get_validators_for_training(nnforge::network_schema_smart_ptr schema)
-{
-	std::vector<nnforge::network_data_pusher_smart_ptr> res = neural_network_toolset::get_validators_for_training(schema);
-
-	nnforge_shared_ptr<std::istream> validating_data_stream(new boost::filesystem::ifstream(get_working_data_folder() / validating_data_filename, std::ios_base::in | std::ios_base::binary));
-	nnforge::supervised_data_reader_smart_ptr current_reader = get_validating_reader(validating_data_stream, true);
-	{
-		nnforge::supervised_data_reader_smart_ptr new_reader(new nnforge::supervised_transformed_input_data_reader(current_reader, nnforge::data_transformer_smart_ptr(new nnforge::flip_2d_data_sampler_transformer(1))));
-		current_reader = new_reader;
-	}
-	{
-		nnforge::supervised_data_reader_smart_ptr new_reader(new nnforge::supervised_transformed_input_data_reader(current_reader, nnforge::data_transformer_smart_ptr(new nnforge::convert_data_type_transformer())));
-		current_reader = new_reader;
-	}
-	{
-		nnforge::supervised_data_reader_smart_ptr new_reader(new nnforge::supervised_transformed_input_data_reader(current_reader, get_input_data_normalize_transformer()));
-		current_reader = new_reader;
-	}
-
-	res.push_back(nnforge::network_data_pusher_smart_ptr(new nnforge::validate_progress_network_data_pusher(
-		tester_factory->create(schema),
-		current_reader,
-		get_validating_visualizer(),
-		get_error_function(),
-		current_reader->get_sample_count(),
-		enrich_validation_report_frequency)));
-
-	return res;
-}
-
-nnforge::supervised_data_reader_smart_ptr imagenet_toolset::get_validating_reader(
-	nnforge_shared_ptr<std::istream> validating_data_stream,
-	bool enriched) const
-{
-	std::vector<std::pair<float, float> > position_list;
-	if (enriched)
-	{
-		float start_y;
-		float step_y;
-		if (overlapping_samples_y > 1)
-		{
-			start_y = (1.0F - sample_coverage_y) * 0.5F;
-			step_y = sample_coverage_y / static_cast<float>(overlapping_samples_y - 1);
-		}
-		else
-		{
-			start_y = 0.5F;
-			step_y = 0.0F;
-		}
-		float start_x;
-		float step_x;
-		if (overlapping_samples_x > 1)
-		{
-			start_x = (1.0F - sample_coverage_x) * 0.5F;
-			step_x = sample_coverage_x / static_cast<float>(overlapping_samples_x - 1);
-		}
-		else
-		{
-			start_x = 0.5F;
-			step_x = 0.0F;
-		}
-		for(unsigned int pos_y = 0; pos_y < overlapping_samples_y; ++pos_y)
-		{
-			float pos_y_f = static_cast<float>(pos_y) * step_y + start_y;
-			for(unsigned int pos_x = 0; pos_x < overlapping_samples_x; ++pos_x)
-			{
-				float pos_x_f = static_cast<float>(pos_x) * step_x + start_x;
-				position_list.push_back(std::make_pair(pos_x_f, pos_y_f));
-			}
-		}
-	}
-	else
-	{
-		position_list.push_back(std::make_pair(0.5F, 0.5F));
-	}
-
-	nnforge::supervised_data_reader_smart_ptr res(new nnforge::supervised_image_data_sampler_stream_reader(
-		validating_data_stream,
-		training_image_original_width,
-		training_image_original_height,
-		training_image_width,
-		training_image_height,
-		class_count,
-		false,
-		true,
-		128,
-		position_list));
-
-	return res;
-}
-*/
 
 std::vector<nnforge::bool_option> imagenet_toolset::get_bool_options()
 {
@@ -518,9 +382,6 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 				true,
 				1.0F,
 				std::numeric_limits<float>::max())));
-			res.push_back(nnforge::data_transformer::ptr(new nnforge::intensity_2d_data_transformer(
-				max_contrast_factor,
-				max_brightness_shift)));
 			res.push_back(get_normalize_data_transformer(layer_name));
 			res.push_back(nnforge::data_transformer::ptr(new nnforge::uniform_intensity_data_transformer(
 				std::vector<float>(3, -max_color_shift),
