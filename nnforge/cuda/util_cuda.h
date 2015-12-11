@@ -133,9 +133,11 @@ namespace nnforge
 
 			static void multiply_by_value(
 				const cuda_running_configuration& cuda_config,
-				float * buf_with_aligned_size,
+				float * output_buf_with_aligned_size,
+				const float * input_buf_with_aligned_size,
 				float v,
 				int elem_count,
+				bool add_to_destination,
 				cudaStream_t cuda_stream);
 
 			static void apply_weight_decay(

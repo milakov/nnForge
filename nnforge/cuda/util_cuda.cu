@@ -45,7 +45,7 @@ namespace nnforge
 			float v,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
 				float4 val;
@@ -62,7 +62,7 @@ namespace nnforge
 			int v,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
 				int4 val;
@@ -79,7 +79,7 @@ namespace nnforge
 			double v,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
 				double2 val;
@@ -89,20 +89,33 @@ namespace nnforge
 			}
 		}
 
+		template<bool add_to_destination>
 		__global__ void multiply_by_value_util_kernel(
-			float4 * __restrict buf,
+			const float4 * __restrict input_buf,
+			float4 * __restrict output_buf,
 			float v,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
-				float4 val = buf[elem_id];
-				val.x *= v;
-				val.y *= v;
-				val.z *= v;
-				val.w *= v;
-				buf[elem_id] = val;
+				float4 val = input_buf[elem_id];
+				if (add_to_destination)
+				{
+					float4 old_val = output_buf[elem_id];
+					val.x = old_val.x + val.x * v;
+					val.y = old_val.y + val.y * v;
+					val.z = old_val.z + val.z * v;
+					val.w = old_val.w + val.w * v;
+				}
+				else
+				{
+					val.x *= v;
+					val.y *= v;
+					val.z *= v;
+					val.w *= v;
+				}
+				output_buf[elem_id] = val;
 			}
 		}
 
@@ -112,7 +125,7 @@ namespace nnforge
 			float weight_decay,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
 				float4 val = learning_rates[elem_id];
@@ -136,7 +149,7 @@ namespace nnforge
 			float weight_decay,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
 				float2 lr = learning_rates[elem_id];
@@ -154,7 +167,7 @@ namespace nnforge
 			float4 * __restrict output_buf,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
 				float4 val = input_buf[elem_id];
@@ -171,7 +184,7 @@ namespace nnforge
 			float4 * __restrict output_buf,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 				output_buf[elem_id] = input_buf[elem_id];
 		}
@@ -701,16 +714,21 @@ namespace nnforge
 
 		void cuda_util::multiply_by_value(
 			const cuda_running_configuration& cuda_config,
-			float * buf_with_aligned_size,
+			float * output_buf_with_aligned_size,
+			const float * input_buf_with_aligned_size,
 			float v,
 			int elem_count,
+			bool add_to_destination,
 			cudaStream_t cuda_stream)
 		{
 			int new_elem_count = (elem_count + 3) / 4;
 			std::pair<dim3, dim3> kernel_dims = get_grid_and_threadblock_sizes_sequential_access(
 				cuda_config,
 				new_elem_count);
-			multiply_by_value_util_kernel<<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((float4 *)buf_with_aligned_size, v, new_elem_count);
+			if (add_to_destination)
+				multiply_by_value_util_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, v, new_elem_count);
+			else
+				multiply_by_value_util_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, v, new_elem_count);
 		}
 
 		void cuda_util::multiply_by_itself(
