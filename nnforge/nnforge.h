@@ -38,6 +38,7 @@
 #include "accuracy_layer.h"
 #include "negative_log_likelihood_layer.h"
 #include "cross_entropy_layer.h"
+#include "gradient_modifier_layer.h"
 
 #include "rnd.h"
 
@@ -45,6 +46,7 @@
 #include "varying_data_stream_reader.h"
 #include "varying_data_stream_writer.h"
 #include "structured_from_raw_data_reader.h"
+#include "structured_data_bunch_mix_reader.h"
 
 #include "data_transformer_util.h"
 

@@ -122,6 +122,10 @@ namespace nnforge
 			const std::string& layer_name,
 			dataset_usage usage) const;
 
+		virtual float get_dataset_value_data_value(
+			const std::string& dataset_name,
+			dataset_usage usage) const;
+
 	protected:
 
 		structured_data_reader::ptr apply_transformers(
@@ -203,6 +207,7 @@ namespace nnforge
 		int epoch_count_in_validating_dataset;
 		int dump_compact_samples;
 		std::string log_mode;
+		float training_mix_validating_ratio;
 
 		debug_state::ptr debug;
 
@@ -215,6 +220,7 @@ namespace nnforge
 		static const char * ann_snapshot_subfolder_name;
 		static const char * dataset_extractor_pattern;
 		static const char * dump_data_subfolder_name;
+		static const char * dataset_value_data_layer_name;
 
 		std::string default_config_path;
 

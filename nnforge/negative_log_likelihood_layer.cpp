@@ -16,7 +16,6 @@
 
 #include "negative_log_likelihood_layer.h"
 
-#include "layer_factory.h"
 #include "neural_network_exception.h"
 #include "proto/nnforge.pb.h"
 
@@ -46,7 +45,10 @@ namespace nnforge
 	layer_configuration negative_log_likelihood_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
 	{
 		if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[1].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count != input_configuration_list[1].feature_map_count))
-			throw neural_network_exception((boost::format("Feature map counts in 2 input layers don't match: %1% and %2%") % input_configuration_list[0].feature_map_count % input_configuration_list[1].feature_map_count).str());
+			throw neural_network_exception((boost::format("Feature map counts in 2 input layers for negative_log_likelihood_layer don't match: %1% and %2%") % input_configuration_list[0].feature_map_count % input_configuration_list[1].feature_map_count).str());
+
+		if ((input_configuration_list.size() > 2) && (input_configuration_list[2].feature_map_count >= 0) && (input_configuration_list[2].feature_map_count != 1))
+			throw neural_network_exception((boost::format("Feature map count for negative_log_likelihood_layer scaling should be equal to 1, while it is %1%") % input_configuration_list[2].feature_map_count).str());
 
 		return layer_configuration(1, input_configuration_list[0].dimension_count);
 	}
@@ -54,7 +56,19 @@ namespace nnforge
 	layer_configuration_specific negative_log_likelihood_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		if (input_configuration_specific_list[0].feature_map_count != input_configuration_specific_list[1].feature_map_count)
-			throw neural_network_exception((boost::format("Feature map counts in 2 input layers don't match: %1% and %2%") % input_configuration_specific_list[0].feature_map_count % input_configuration_specific_list[1].feature_map_count).str());
+			throw neural_network_exception((boost::format("Feature map counts in 2 input layers for negative_log_likelihood_layer don't match: %1% and %2%") % input_configuration_specific_list[0].feature_map_count % input_configuration_specific_list[1].feature_map_count).str());
+
+		if (input_configuration_specific_list[0].get_neuron_count_per_feature_map() != input_configuration_specific_list[1].get_neuron_count_per_feature_map())
+			throw neural_network_exception("Neuron count per feature maps mismatch in 2 input layers for negative_log_likelihood_layer");
+
+		if (input_configuration_specific_list.size() > 2)
+		{
+			if (input_configuration_specific_list[2].feature_map_count != 1)
+				throw neural_network_exception((boost::format("Feature map count for negative_log_likelihood_layer scaling should be equal to 1, while it is %1%") % input_configuration_specific_list[2].feature_map_count).str());
+
+			if (input_configuration_specific_list[2].get_neuron_count_per_feature_map() != input_configuration_specific_list[0].get_neuron_count_per_feature_map())
+				throw neural_network_exception((boost::format("Neuron count per feature map negative_log_likelihood_layer for scaling equals %1%, expected %2%") % input_configuration_specific_list[2].get_neuron_count_per_feature_map() % input_configuration_specific_list[0].get_neuron_count_per_feature_map()).str());
+		}
 
 		return layer_configuration_specific(1, input_configuration_specific_list[0].dimension_sizes);
 	}

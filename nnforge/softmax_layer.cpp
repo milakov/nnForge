@@ -15,7 +15,6 @@
  */
 
 #include "softmax_layer.h"
-#include "layer_factory.h"
 
 namespace nnforge
 {

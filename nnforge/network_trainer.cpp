@@ -49,8 +49,6 @@ namespace nnforge
 		network_data_pusher& progress_pusher,
 		network_data_pusher& pusher)
 	{
-		unsigned int reader_epoch_id = 0;
-
 		initialize_train(reader);
 
 		while(true)
@@ -90,24 +88,18 @@ namespace nnforge
 				std::cout << ", Starting with empty momentum";
 			std::cout << std::endl;
 
-			if (new_task.initial_epoch > reader_epoch_id)
-			{
-				for(unsigned int i = reader_epoch_id; i < new_task.initial_epoch; ++i)
-					reader.next_epoch();
-				reader_epoch_id += (new_task.initial_epoch - reader_epoch_id);
-			}
-			else if (new_task.initial_epoch < reader_epoch_id)
-				std::cout << "Warning: negative scrolling through reader requested. Index " << new_task.index_peeked << ", Initial epoch " << new_task.initial_epoch << std::endl;
+			unsigned int reader_epoch_id = new_task.initial_epoch;
 
 			while(true)
 			{
 				std::cout << "---------- NN # " << new_task.index_peeked << ", Epoch " << new_task.get_current_epoch() + 1 << " ----------" << std::endl;
 
+				reader.set_epoch(reader_epoch_id);
+
 				train_step(
 					reader,
 					new_task);
 
-				reader.next_epoch();
 				++reader_epoch_id;
 
 				progress_pusher.push(new_task, *schema);

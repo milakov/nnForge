@@ -48,16 +48,24 @@ namespace nnforge
 			if (!layer_data->empty())
 			{
 				std::cout << ", " << *it;
-				const std::vector<float>& absolute_updates = task_state.history[last_index].first.average_absolute_updates.find(*it)->second;
-				for(int part_id = 0; part_id < layer_data->size(); ++part_id)
+				std::map<std::string, std::vector<float> >::const_iterator it2 = task_state.history[last_index].first.average_absolute_updates.find(*it);
+				if (it2 != task_state.history[last_index].first.average_absolute_updates.end())
 				{
-					const std::vector<float>& weights = layer_data->at(part_id);
-					double sum = 0.0;
-					for(std::vector<float>::const_iterator it = weights.begin(); it != weights.end(); ++it)
-						sum += static_cast<double>(fabsf(*it));
-					float avg_weight = static_cast<float>(sum) / static_cast<float>(weights.size());
+					const std::vector<float>& absolute_updates = it2->second;
+					for(int part_id = 0; part_id < layer_data->size(); ++part_id)
+					{
+						const std::vector<float>& weights = layer_data->at(part_id);
+						double sum = 0.0;
+						for(std::vector<float>::const_iterator it = weights.begin(); it != weights.end(); ++it)
+							sum += static_cast<double>(fabsf(*it));
+						float avg_weight = static_cast<float>(sum) / static_cast<float>(weights.size());
 
-					std::cout << (boost::format(" [%|1$.2e| %|2$.2e| %|3$.2e|]") % (absolute_updates[part_id] / avg_weight) % avg_weight % absolute_updates[part_id]); 
+						std::cout << (boost::format(" [%|1$.2e| %|2$.2e| %|3$.2e|]") % (absolute_updates[part_id] / avg_weight) % avg_weight % absolute_updates[part_id]); 
+					}
+				}
+				else
+				{
+					std::cout << " [no updates]";
 				}
 			}
 		}

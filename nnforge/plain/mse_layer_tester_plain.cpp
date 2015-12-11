@@ -54,6 +54,10 @@ namespace nnforge
 			const float * const in_it_global0 = *input_buffers[0];
 			const float * const in_it_global1 = *input_buffers[1];
 			float * const out_it_global = *output_buffer;
+			const float * scale_mask_it = 0;
+			if (input_buffers.size() > 2)
+				scale_mask_it = *input_buffers[2];
+			const float * const const_scale_mask_it = scale_mask_it;
 			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const int input_feature_map_count = static_cast<int>(input_configuration_specific_list[0].feature_map_count);
@@ -72,16 +76,24 @@ namespace nnforge
 
 					const float * in_it_base0 = in_it_global0 + entry_id * input_neuron_count + output_neuron_id;
 					const float * in_it_base1 = in_it_global1 + entry_id * input_neuron_count + output_neuron_id;
-					float * out_it = out_it_global + entry_id * output_neuron_count + output_neuron_id;
+					int output_offset = entry_id * output_neuron_count + output_neuron_id;
+
+					float total_scale = scale;
+					if (const_scale_mask_it)
+						total_scale *= *(const_scale_mask_it + output_offset);
 
 					float err = 0.0F;
-					for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+					if (total_scale != 0.0F)
 					{
-						float local_err = *(in_it_base0 + feature_map_id * input_neuron_count_per_feature_map) - *(in_it_base1 + feature_map_id * input_neuron_count_per_feature_map);
-						err += local_err * local_err;
+						for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+						{
+							float local_err = *(in_it_base0 + feature_map_id * input_neuron_count_per_feature_map) - *(in_it_base1 + feature_map_id * input_neuron_count_per_feature_map);
+							err += local_err * local_err;
+						}
+						err *= total_scale;
 					}
 
-					*out_it = err * scale;
+					*(out_it_global + output_offset) = err;
 				}
 			}
 		}

@@ -38,6 +38,7 @@
 #include "accuracy_layer_testing_schema.h"
 #include "negative_log_likelihood_layer_testing_schema.h"
 #include "cross_entropy_layer_testing_schema.h"
+#include "gradient_modifier_layer_testing_schema.h"
 
 #include "layer_updater_schema_factory.h"
 #include "rectified_linear_layer_updater_schema.h"
@@ -58,12 +59,7 @@
 #include "accuracy_layer_updater_schema.h"
 #include "negative_log_likelihood_layer_updater_schema.h"
 #include "cross_entropy_layer_updater_schema.h"
-
-/*
-#include "error_function_updater_cuda_factory.h"
-#include "squared_hinge_loss_error_function_updater_cuda.h"
-#include "cross_entropy_error_function_updater_cuda.h"
-*/
+#include "gradient_modifier_layer_updater_schema.h"
 
 namespace nnforge
 {
@@ -92,6 +88,7 @@ namespace nnforge
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new accuracy_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new negative_log_likelihood_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new cross_entropy_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new gradient_modifier_layer_testing_schema()));
 
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new rectified_linear_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new sigmoid_layer_updater_schema()));
@@ -111,6 +108,7 @@ namespace nnforge
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new accuracy_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new negative_log_likelihood_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new cross_entropy_layer_updater_schema()));
+			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new gradient_modifier_layer_updater_schema()));
 		}
 	}
 }

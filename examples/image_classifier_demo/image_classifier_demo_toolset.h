@@ -42,7 +42,7 @@ public:
 		unsigned int entry_id,
 		const std::map<std::string, float *>& data_map);
 
-	virtual void next_epoch();
+	virtual void set_epoch(unsigned int epoch_id);
 
 	virtual int get_entry_count() const;
 

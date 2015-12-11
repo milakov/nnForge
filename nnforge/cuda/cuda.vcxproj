@@ -42,6 +42,10 @@
     <ClInclude Include="dropout_layer_updater_cuda.h" />
     <ClInclude Include="dropout_layer_updater_schema.h" />
     <ClInclude Include="forward_propagation_cuda.h" />
+    <ClInclude Include="gradient_modifier_layer_tester_cuda.h" />
+    <ClInclude Include="gradient_modifier_layer_testing_schema.h" />
+    <ClInclude Include="gradient_modifier_layer_updater_cuda.h" />
+    <ClInclude Include="gradient_modifier_layer_updater_schema.h" />
     <ClInclude Include="int_fastdiv.h" />
     <ClInclude Include="max_subsampling_tiling_layer_tester_cuda.cuh" />
     <ClInclude Include="mse_layer_tester_cuda.h" />
@@ -166,6 +170,10 @@
     <ClCompile Include="forward_propagation_cuda.cpp" />
     <ClCompile Include="fully_connected_layer_tester_cuda.cpp" />
     <ClCompile Include="fully_connected_layer_updater_cuda.cpp" />
+    <ClCompile Include="gradient_modifier_layer_tester_cuda.cpp" />
+    <ClCompile Include="gradient_modifier_layer_testing_schema.cpp" />
+    <ClCompile Include="gradient_modifier_layer_updater_cuda.cpp" />
+    <ClCompile Include="gradient_modifier_layer_updater_schema.cpp" />
     <ClCompile Include="hyperbolic_tangent_layer_testing_schema.cpp" />
     <ClCompile Include="hyperbolic_tangent_layer_updater_schema.cpp" />
     <ClCompile Include="layer_tester_cuda.cpp" />

@@ -54,6 +54,10 @@ namespace nnforge
 			const float * const in_it_global_predicted = *input_buffers[0];
 			const float * const in_it_global_actual = *input_buffers[1];
 			float * const out_it_global = *output_buffer;
+			const float * scale_mask_it = 0;
+			if (input_buffers.size() > 2)
+				scale_mask_it = *input_buffers[2];
+			const float * const const_scale_mask_it = scale_mask_it;
 			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const int input_feature_map_count = static_cast<int>(input_configuration_specific_list[0].feature_map_count);
@@ -72,25 +76,33 @@ namespace nnforge
 
 					const float * in_it_base_predicted = in_it_global_predicted + entry_id * input_neuron_count + output_neuron_id;
 					const float * in_it_base_actual = in_it_global_actual + entry_id * input_neuron_count + output_neuron_id;
-					float * out_it = out_it_global + entry_id * output_neuron_count + output_neuron_id;
+					int output_offset = entry_id * output_neuron_count + output_neuron_id;
+
+					float total_scale = scale;
+					if (const_scale_mask_it)
+						total_scale = *(const_scale_mask_it + output_offset);
 
 					float err = 0.0F;
-					for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+					if (total_scale != 0.0F)
 					{
-						float predicted_val = *(in_it_base_predicted + feature_map_id * input_neuron_count_per_feature_map);
-						float actual_val = *(in_it_base_actual + feature_map_id * input_neuron_count_per_feature_map);
+						for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+						{
+							float predicted_val = *(in_it_base_predicted + feature_map_id * input_neuron_count_per_feature_map);
+							float actual_val = *(in_it_base_actual + feature_map_id * input_neuron_count_per_feature_map);
 
-						if (actual_val > 0.0F)
-						{
-							err -= actual_val * logf(std::max(predicted_val, 1.0e-20F));
+							if (actual_val > 0.0F)
+							{
+								err -= actual_val * logf(std::max(predicted_val, 1.0e-20F));
+							}
+							if (actual_val < 1.0F)
+							{
+								err -= (1.0F - actual_val) * logf(std::max(1.0F - predicted_val, 1.0e-20F));
+							}
 						}
-						if (actual_val < 1.0F)
-						{
-							err -= (1.0F - actual_val) * logf(std::max(1.0F - predicted_val, 1.0e-20F));
-						}
+						err *= total_scale;
 					}
 
-					*out_it = err * scale;
+					*(out_it_global + output_offset) = err;
 				}
 			}
 		}

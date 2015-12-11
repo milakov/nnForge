@@ -16,7 +16,6 @@
 
 #include "max_subsampling_layer.h"
 
-#include "layer_factory.h"
 #include "neural_network_exception.h"
 #include "proto/nnforge.pb.h"
 

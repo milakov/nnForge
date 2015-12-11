@@ -91,12 +91,12 @@ namespace nnforge
 		return res;
 	}
 
-	void structured_data_bunch_stream_reader::next_epoch()
+	void structured_data_bunch_stream_reader::set_epoch(unsigned int epoch_id)
 	{
 		if (!invalid_config_message.empty())
 			throw neural_network_exception(invalid_config_message);
 
-		current_epoch = (current_epoch + 1) % entry_count_list.size();
+		current_epoch = epoch_id % entry_count_list.size();
 	}
 
 	bool structured_data_bunch_stream_reader::read(

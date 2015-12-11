@@ -54,6 +54,10 @@ namespace nnforge
 			const float * const in_it_global_predicted = *input_buffers[0];
 			const float * const in_it_global_actual = *input_buffers[1];
 			float * const out_it_global = *output_buffer;
+			const float * scale_mask_it = 0;
+			if (input_buffers.size() > 2)
+				scale_mask_it = *input_buffers[2];
+			const float * const const_scale_mask_it = scale_mask_it;
 			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const int input_feature_map_count = static_cast<int>(input_configuration_specific_list[0].feature_map_count);
@@ -72,18 +76,26 @@ namespace nnforge
 
 					const float * in_it_base_predicted = in_it_global_predicted + entry_id * input_neuron_count + output_neuron_id;
 					const float * in_it_base_actual = in_it_global_actual + entry_id * input_neuron_count + output_neuron_id;
-					float * out_it = out_it_global + entry_id * output_neuron_count + output_neuron_id;
+					int output_offset = entry_id * output_neuron_count + output_neuron_id;
+
+					float total_scale = scale;
+					if (const_scale_mask_it)
+						total_scale *= *(const_scale_mask_it + output_offset);
 
 					float err = 0.0F;
-					for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+					if (total_scale != 0.0F)
 					{
-						float predicted_val = *(in_it_base_predicted + feature_map_id * input_neuron_count_per_feature_map);
-						float actual_val = *(in_it_base_actual + feature_map_id * input_neuron_count_per_feature_map);
-						if (actual_val > 0.0F)
-							err -= actual_val * logf(std::max(predicted_val, 1.0e-20F));
+						for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+						{
+							float predicted_val = *(in_it_base_predicted + feature_map_id * input_neuron_count_per_feature_map);
+							float actual_val = *(in_it_base_actual + feature_map_id * input_neuron_count_per_feature_map);
+							if (actual_val > 0.0F)
+								err -= actual_val * logf(std::max(predicted_val, 1.0e-20F));
+						}
+						err *= total_scale;
 					}
 
-					*out_it = err * scale;
+					*(out_it_global + output_offset) = err;
 				}
 			}
 		}
@@ -109,40 +121,50 @@ namespace nnforge
 		{
 			if (input_index == 1)
 				throw neural_network_exception("negative_log_likelihood_layer_updater_plain cannot do backward propagation for targets");
+			if (input_index == 2)
+				throw neural_network_exception("negative_log_likelihood_layer_updater_plain cannot do backward propagation for scale mask");
 
 			float * const in_err_it = *input_errors_buffer;
-			const float * const deriv_input_neurons_it = *input_neurons_buffers[input_index];
-			const float * const target_input_neurons_it = *input_neurons_buffers[1 - input_index];
+			const float * const deriv_input_neurons_it = *input_neurons_buffers[0];
+			const float * const target_input_neurons_it = *input_neurons_buffers[1];
+			const float * scale_mask_it = 0;
+			if (input_neurons_buffers.size() > 2)
+				scale_mask_it = *input_neurons_buffers[2];
+			const float * const const_scale_mask_it = scale_mask_it;
 
 			nnforge_shared_ptr<const negative_log_likelihood_layer> layer_derived = nnforge_dynamic_pointer_cast<const negative_log_likelihood_layer>(layer_schema);
 			const float scale = layer_derived->scale;
-			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
+			const int neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
+			const int input_feature_map_count = input_configuration_specific_list[0].feature_map_count;
 
-			const int total_workload = entry_count * input_neuron_count;
-			if (add_update_to_destination)
+			const int total_workload = entry_count * neuron_count_per_feature_map;
+			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+			for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 			{
-				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-				for(int i = 0; i < total_workload; ++i)
+				int entry_id = workload_id / neuron_count_per_feature_map;
+				int neuron_id = workload_id - (entry_id * neuron_count_per_feature_map);
+				int output_offset = entry_id * neuron_count_per_feature_map + neuron_id;
+				float total_scale = scale;
+				if (const_scale_mask_it)
+					total_scale *= *(const_scale_mask_it + output_offset);
+
+				for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
 				{
-					float actual_val = *(target_input_neurons_it + i);
-					float predicted_val = *(deriv_input_neurons_it + i);
 					float gradient = 0.0F;
-					if (actual_val > 0.0F)
-						gradient = actual_val / std::max(predicted_val, 1.0e-20F);
-					*(in_err_it + i) += scale * gradient;
-				}
-			}
-			else
-			{
-				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-				for(int i = 0; i < total_workload; ++i)
-				{
-					float actual_val = *(target_input_neurons_it + i);
-					float predicted_val = *(deriv_input_neurons_it + i);
-					float gradient = 0.0F;
-					if (actual_val > 0.0F)
-						gradient = actual_val / std::max(predicted_val, 1.0e-20F);
-					*(in_err_it + i) = scale * gradient;
+					int input_offset = (entry_id * input_feature_map_count + feature_map_id) * neuron_count_per_feature_map + neuron_id;
+					if (total_scale != 0.0F)
+					{
+						float actual_val = *(target_input_neurons_it + input_offset);
+						float predicted_val = *(deriv_input_neurons_it + input_offset);
+						if (actual_val > 0.0F)
+							gradient = actual_val / std::max(predicted_val, 1.0e-20F);
+						gradient *= total_scale;
+					}
+
+					if (add_update_to_destination)
+						*(in_err_it + input_offset) += gradient;
+					else
+						*(in_err_it + input_offset) = gradient;
 				}
 			}
 		}

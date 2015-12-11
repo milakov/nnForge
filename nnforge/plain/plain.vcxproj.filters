@@ -194,6 +194,12 @@
     <ClInclude Include="backward_propagation_plain_factory.h">
       <Filter>Header Files\backward_propagation</Filter>
     </ClInclude>
+    <ClInclude Include="gradient_modifier_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="gradient_modifier_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_plain_size_configuration.cpp">
@@ -342,6 +348,12 @@
     </ClCompile>
     <ClCompile Include="backward_propagation_plain_factory.cpp">
       <Filter>Source Files\backward_propagation</Filter>
+    </ClCompile>
+    <ClCompile Include="gradient_modifier_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="gradient_modifier_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

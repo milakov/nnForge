@@ -535,7 +535,7 @@ bool image_classifier_demo_toolset::read(
 	return true;
 }
 
-void image_classifier_demo_toolset::next_epoch()
+void image_classifier_demo_toolset::set_epoch(unsigned int epoch_id)
 {
 }
 

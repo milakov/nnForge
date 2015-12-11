@@ -437,6 +437,15 @@
     <ClInclude Include="min_weight_sequential_vertex_coloring.h">
       <Filter>Header Files\network_schema</Filter>
     </ClInclude>
+    <ClInclude Include="structured_data_constant_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="structured_data_bunch_mix_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
+    <ClInclude Include="gradient_modifier_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -744,6 +753,15 @@
     </ClCompile>
     <ClCompile Include="stream_redirector.cpp">
       <Filter>Source Files\toolset</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_constant_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_bunch_mix_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="gradient_modifier_layer.cpp">
+      <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

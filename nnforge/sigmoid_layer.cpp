@@ -15,7 +15,6 @@
  */
 
 #include "sigmoid_layer.h"
-#include "layer_factory.h"
 
 namespace nnforge
 {

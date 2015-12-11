@@ -35,6 +35,8 @@
 #include "structured_data_bunch_stream_reader.h"
 #include "data_visualizer.h"
 #include "transformed_structured_data_reader.h"
+#include "structured_data_constant_reader.h"
+#include "structured_data_bunch_mix_reader.h"
 
 namespace nnforge
 {
@@ -46,6 +48,7 @@ namespace nnforge
 	const char * toolset::snapshot_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)$";
 	const char * toolset::ann_snapshot_subfolder_name = "snapshots";
 	const char * toolset::dataset_extractor_pattern = "^%1%_(.+)\\.dt$";
+	const char * toolset::dataset_value_data_layer_name = "dataset_value";
 
 	toolset::toolset(factory_generator::ptr master_factory)
 		: master_factory(master_factory)
@@ -355,6 +358,7 @@ namespace nnforge
 		res.push_back(float_option("learning_rate_rise_rate", &learning_rate_rise_rate, 0.1F, "Increase factor of learning rate at each head epoch (<1.0)"));
 		res.push_back(float_option("weight_decay", &weight_decay, 0.0F, "Weight decay"));
 		res.push_back(float_option("momentum,M", &momentum_val, 0.0F, "Momentum value"));
+		res.push_back(float_option("training_mix_validating_ratio", &training_mix_validating_ratio, 0.0F, "Momentum value"));
 
 		return res;
 	}
@@ -579,8 +583,21 @@ namespace nnforge
 			data_reader_map.insert(std::make_pair(it->first, dr));
 		}
 
+		data_reader_map.insert(std::make_pair(
+			std::string(dataset_value_data_layer_name),
+			structured_data_reader::ptr(new structured_data_constant_reader(get_dataset_value_data_value(dataset_name, usage), layer_configuration_specific(1)))));
+
 		structured_data_bunch_reader::ptr res(new structured_data_bunch_stream_reader(data_reader_map, multiple_epoch_count));
 		return res;
+	}
+
+	float toolset::get_dataset_value_data_value(
+		const std::string& dataset_name,
+		dataset_usage usage) const
+	{
+		if ((dataset_name == "training") || (usage != dataset_usage_train))
+			return 1.0F;
+		else return 0.0F;
 	}
 
 	boost::filesystem::path toolset::get_ann_subfolder_name() const
@@ -661,6 +678,13 @@ namespace nnforge
 		summarize_network_data_pusher res(batch_folder);
 
 		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(training_dataset_name, dataset_usage_train, epoch_count_in_training_dataset);
+
+		if (training_mix_validating_ratio > 0.0F)
+		{
+			structured_data_bunch_reader::ptr validating_reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_train, 1);
+			reader = structured_data_bunch_reader::ptr(new structured_data_bunch_mix_reader(reader, validating_reader, training_mix_validating_ratio));
+		}
+
 		trainer->train(
 			*reader,
 			*peeker,

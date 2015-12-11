@@ -25,6 +25,7 @@ message Layer {
 	optional AccuracyParam accuracy_param = 16;
 	optional NegativeLogLikelihoodParam negative_log_likelihood_param = 17;
 	optional CrossEntropyParam cross_entropy_param = 18;
+	optional GradientModifierParam gradient_modifier_param = 19;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -125,6 +126,10 @@ message NegativeLogLikelihoodParam {
 }
 
 message CrossEntropyParam {
+	optional float scale = 1 [default = 1.0];
+}
+
+message GradientModifierParam {
 	optional float scale = 1 [default = 1.0];
 }
 

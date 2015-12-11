@@ -46,7 +46,7 @@ namespace nnforge
 
 		virtual structured_data_bunch_reader::ptr get_narrow_reader(const std::set<std::string>& layer_names) const;
 
-		virtual void next_epoch();
+		virtual void set_epoch(unsigned int epoch_id);
 
 	protected:
 		std::map<std::string, structured_data_reader::ptr> data_reader_map;

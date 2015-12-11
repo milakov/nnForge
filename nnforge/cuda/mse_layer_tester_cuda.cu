@@ -29,6 +29,7 @@ namespace nnforge
 			float * __restrict output,
 			const float * __restrict input0,
 			const float * __restrict input1,
+			const float * __restrict scale_mask,
 			int input_feature_map_count,
 			int elem_count_per_feature_map,
 			float scale,
@@ -39,43 +40,52 @@ namespace nnforge
 			int entry_id = blockIdx.y;
 			int threadblock_size = blockDim.x;
 
-			int input_offset = (entry_id * input_feature_map_count + feature_map_id) * elem_count_per_feature_map + neuron_id;
 			float err = 0.0F;
-			while (feature_map_id < input_feature_map_count)
-			{
-				float local_err = input0[input_offset] - input1[input_offset];
-				err += local_err * local_err;
-				feature_map_id += threadblock_size;
-				input_offset += threadblock_size * elem_count_per_feature_map;
-			}
+			int output_offset = entry_id * elem_count_per_feature_map + neuron_id;
+
+			float mask = 1.0F;
+			if (scale_mask)
+				mask = scale_mask[output_offset];
 
 			int thread_id = threadIdx.x;
-			int lane_id = thread_id & 31;
-			#pragma unroll
-			for(int tx = 16; tx > 0; tx >>= 1)
-				err += __shfl_down(err, tx);
-
-			int warp_count = threadblock_size >> 5;
-			if (warp_count > 1)
+			if (mask != 0.0F)
 			{
-				if (lane_id == 0)
-					arr_sh[thread_id >> 5] = err;
-
-				__syncthreads();
-
-				if (thread_id < 32)
+				int input_offset = (entry_id * input_feature_map_count + feature_map_id) * elem_count_per_feature_map + neuron_id;
+				while (feature_map_id < input_feature_map_count)
 				{
-					err = 0.0F;
-					if (thread_id < warp_count)
-						err = arr_sh[thread_id];
-					#pragma unroll
-					for(int tx = 4; tx > 0; tx >>= 1)
-						err += __shfl_down(err, tx);
+					float local_err = input0[input_offset] - input1[input_offset];
+					err += local_err * local_err;
+					feature_map_id += threadblock_size;
+					input_offset += threadblock_size * elem_count_per_feature_map;
+				}
+
+				int lane_id = thread_id & 31;
+				#pragma unroll
+				for(int tx = 16; tx > 0; tx >>= 1)
+					err += __shfl_down(err, tx);
+
+				int warp_count = threadblock_size >> 5;
+				if (warp_count > 1)
+				{
+					if (lane_id == 0)
+						arr_sh[thread_id >> 5] = err;
+
+					__syncthreads();
+
+					if (thread_id < 32)
+					{
+						err = 0.0F;
+						if (thread_id < warp_count)
+							err = arr_sh[thread_id];
+						#pragma unroll
+						for(int tx = 4; tx > 0; tx >>= 1)
+							err += __shfl_down(err, tx);
+					}
 				}
 			}
 		
 			if (thread_id == 0)
-				output[entry_id * elem_count_per_feature_map + neuron_id] = err * scale;
+				output[output_offset] = err * (mask * scale);
 		}
 
 		mse_layer_tester_cuda::mse_layer_tester_cuda()
@@ -99,15 +109,19 @@ namespace nnforge
 			unsigned int entry_count)
 		{
 			int threadblock_size = get_threadblock_size(input_configuration_specific_list[0].feature_map_count);
-			int elem_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
+
+			const float * scale_mask = 0;
+			if (input_buffers.size() > 2)
+				scale_mask = *input_buffers[2];
 
 			int smem_size = ((threadblock_size + 32 - 1) / 32) * sizeof(float);
-			mse_kernel<<<dim3(elem_count_per_feature_map, entry_count), threadblock_size, smem_size, stream_id>>>(
+			mse_kernel<<<dim3(input_elem_count_per_feature_map_list[0], entry_count), threadblock_size, smem_size, stream_id>>>(
 				*output_buffer,
 				*input_buffers[0],
 				*input_buffers[1],
+				scale_mask,
 				input_configuration_specific_list[0].feature_map_count,
-				elem_count_per_feature_map,
+				input_elem_count_per_feature_map_list[0],
 				scale,
 				entry_count);
 		}

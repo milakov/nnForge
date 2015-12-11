@@ -15,7 +15,6 @@
  */
 
 #include "rectified_linear_layer.h"
-#include "layer_factory.h"
 
 namespace nnforge
 {

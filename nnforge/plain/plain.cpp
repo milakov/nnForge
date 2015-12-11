@@ -39,6 +39,7 @@
 #include "cross_entropy_layer_tester_plain.h"
 #include "negative_log_likelihood_layer_tester_plain.h"
 #include "accuracy_layer_tester_plain.h"
+#include "gradient_modifier_layer_tester_plain.h"
 
 #include "layer_updater_plain_factory.h"
 
@@ -59,6 +60,7 @@
 #include "cross_entropy_layer_updater_plain.h"
 #include "negative_log_likelihood_layer_updater_plain.h"
 #include "accuracy_layer_updater_plain.h"
+#include "gradient_modifier_layer_updater_plain.h"
 
 namespace nnforge
 {
@@ -87,6 +89,7 @@ namespace nnforge
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new cross_entropy_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new negative_log_likelihood_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new accuracy_layer_tester_plain()));
+			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new gradient_modifier_layer_tester_plain()));
 
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new hyperbolic_tangent_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new sigmoid_layer_updater_plain()));
@@ -105,6 +108,7 @@ namespace nnforge
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new cross_entropy_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new negative_log_likelihood_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new accuracy_layer_updater_plain()));
+			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new gradient_modifier_layer_updater_plain()));
 		}
 	}
 }

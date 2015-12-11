@@ -38,7 +38,7 @@ namespace nnforge
 			unsigned int entry_id,
 			const std::map<std::string, float *>& data_map) = 0;
 
-		virtual void next_epoch() = 0;
+		virtual void set_epoch(unsigned int epoch_id) = 0;
 
 		// Empty return value (default) indicates original reader should be used
 		virtual structured_data_bunch_reader::ptr get_narrow_reader(const std::set<std::string>& layer_names) const;
