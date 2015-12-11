@@ -45,5 +45,7 @@ You can run training process multiple times (just run "train" again), have multi
 
 Imagenet app also allows you to run different crops of each sample through the model, it works both with sinlge net and multiple nets:
 
-	./imagenet inference --inference_mode dump_average_across_nets --inference_output_layer_name softmax --rich_inference 1 --dump_compact_samples 16 --samples_x 4 --samples_y 4
+	./imagenet inference --inference_mode dump_average_across_nets --inference_output_layer_name softmax --rich_inference 1 --dump_compact_samples 32 --samples_x 4 --samples_y 4
 	./imagenet inference --schema schema_tail.txt
+
+Here dump_compact_samples = samples_x * samples_y * 2 (mirroring)

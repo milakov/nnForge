@@ -369,6 +369,7 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 
 	if ((layer_name == "images") && (usage != dataset_usage_create_normalizer))
 	{
+		res.push_back(get_normalize_data_transformer(layer_name));
 		if (dataset_name == "training")
 		{
 			res.push_back(nnforge::data_transformer::ptr(new nnforge::distort_2d_data_transformer(
@@ -382,14 +383,24 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 				true,
 				1.0F,
 				std::numeric_limits<float>::max())));
-			res.push_back(get_normalize_data_transformer(layer_name));
 			res.push_back(nnforge::data_transformer::ptr(new nnforge::uniform_intensity_data_transformer(
 				std::vector<float>(3, -max_color_shift),
 				std::vector<float>(3, max_color_shift))));
 		}
 		else if (dataset_name == "validating")
 		{
-			res.push_back(get_normalize_data_transformer(layer_name));
+			if (rich_inference)
+			{
+				res.push_back(nnforge::data_transformer::ptr(new nnforge::distort_2d_data_sampler_transformer(
+					std::vector<float>(1, 0.0F),
+					std::vector<float>(1, 1.0F),
+					std::vector<float>(1, 0.0F),
+					std::vector<float>(1, 0.0F),
+					std::vector<std::pair<float, float> >(1, std::make_pair(1.0F, 0.0F)),
+					std::vector<std::pair<float, float> >(1, std::make_pair(std::numeric_limits<float>::max(), 0.0F)),
+					false,
+					true)));
+			}
 		}
 	}
 
