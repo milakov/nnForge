@@ -26,13 +26,16 @@ namespace nnforge
 	training_momentum::training_momentum()
 		: type(no_momentum)
 		, momentum_val(0.0F)
+		, momentum_val2(0.0F)
 	{
 	}
 
 	training_momentum::training_momentum(
 		const std::string& momentum_type_str,
-		float momentum_val)
+		float momentum_val,
+		float momentum_val2)
 		: momentum_val(momentum_val)
+		, momentum_val2(momentum_val2)
 	{
 		if (momentum_val > 0.0F)
 		{
@@ -45,6 +48,8 @@ namespace nnforge
 				type = vanilla_momentum;
 			else if (momentum_type_str_lower_case == "nesterov")
 				type = nesterov_momentum;
+			else if (momentum_type_str_lower_case == "adam")
+				type = adam_momentum;
 			else
 				throw neural_network_exception((boost::format("Invalid momentum : %1%") % momentum_type_str).str());
 		}
@@ -52,5 +57,15 @@ namespace nnforge
 		{
 			type = no_momentum;
 		}
+	}
+
+	bool training_momentum::is_momentum_data() const
+	{
+		return (type != no_momentum);
+	}
+
+	bool training_momentum::is_momentum_data2() const
+	{
+		return (type == adam_momentum);
 	}
 }

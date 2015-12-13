@@ -27,6 +27,7 @@ namespace nnforge
 		unsigned int index;
 		network_data::ptr data;
 		network_data::ptr momentum_data;
+		network_data::ptr momentum_data2;
 		unsigned int start_epoch;
 	};
 

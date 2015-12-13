@@ -62,10 +62,8 @@ namespace nnforge
 			new_task.data = entry_peeked.data;
 			new_task.initial_epoch = entry_peeked.start_epoch;
 
-			bool empty_momentum = false;
-			if (momentum.type == training_momentum::no_momentum)
-				new_task.momentum_data = network_data::ptr();
-			else
+			bool empty_momentum1 = false;
+			if (momentum.is_momentum_data())
 			{
 				if (entry_peeked.momentum_data)
 					new_task.momentum_data = entry_peeked.momentum_data;
@@ -73,9 +71,27 @@ namespace nnforge
 				{
 					new_task.momentum_data = network_data::ptr(new network_data(schema->get_layers()));
 					if (new_task.initial_epoch > 0)
-						empty_momentum = true;
+						empty_momentum1 = true;
 				}
 			}
+			else
+				new_task.momentum_data = network_data::ptr();
+
+			bool empty_momentum2 = false;
+			if (momentum.is_momentum_data2())
+			{
+				if (entry_peeked.momentum_data2)
+					new_task.momentum_data2 = entry_peeked.momentum_data2;
+				else
+				{
+					new_task.momentum_data2 = network_data::ptr(new network_data(schema->get_layers()));
+					if (new_task.initial_epoch > 0)
+						empty_momentum2 = true;
+				}
+			}
+			else
+				new_task.momentum_data2 = network_data::ptr();
+
 			
 			if (is_last_epoch(new_task))
 			{
@@ -84,8 +100,10 @@ namespace nnforge
 			}
 
 			std::cout << "New task allocated: Index " << new_task.index_peeked << ", Base epoch " << new_task.initial_epoch;
-			if (empty_momentum)
-				std::cout << ", Starting with empty momentum";
+			if (empty_momentum1)
+				std::cout << ", Starting with the 1st empty momentum";
+			if (empty_momentum2)
+				std::cout << ", Starting with the 2nd empty momentum";
 			std::cout << std::endl;
 
 			unsigned int reader_epoch_id = new_task.initial_epoch;

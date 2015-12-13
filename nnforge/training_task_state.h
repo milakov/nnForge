@@ -31,6 +31,7 @@ namespace nnforge
 		unsigned int index_peeked;
 		network_data::ptr data;
 		network_data::ptr momentum_data;
+		network_data::ptr momentum_data2;
 		std::vector<std::pair<backward_propagation::stat, std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<float> > > > > > history;
 		std::vector<std::string> comments;
 		unsigned int initial_epoch;

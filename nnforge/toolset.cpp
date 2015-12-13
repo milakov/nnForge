@@ -300,7 +300,7 @@ namespace nnforge
 		res.push_back(string_option("training_dataset_name", &training_dataset_name, "training", "Name of the dataset to be used for training"));
 		res.push_back(string_option("shuffle_dataset_name", &shuffle_dataset_name, "training", "Name of the dataset to be shuffled"));
 		res.push_back(string_option("training_algo", &training_algo, "", "Training algorithm (sgd)"));
-		res.push_back(string_option("momentum_type", &momentum_type_str, "vanilla", "Type of the momentum to use (none, vanilla, nesterov)"));
+		res.push_back(string_option("momentum_type", &momentum_type_str, "vanilla", "Type of the momentum to use (none, vanilla, nesterov, adam)"));
 		res.push_back(string_option("inference_mode", &inference_mode, "report_average_per_entry", "What to do with inference_output_layer_name (report_average_per_nn, dump_average_across_nets)"));
 		res.push_back(string_option("inference_output_dataset_name", &inference_output_dataset_name, "", "Name of the dataset dumped during inference, empty value means using inference_dataset_name"));
 		res.push_back(string_option("dump_dataset_name", &dump_dataset_name, "training", "Name of the dataset to dump data from"));
@@ -357,8 +357,9 @@ namespace nnforge
 		res.push_back(float_option("learning_rate_decay_rate", &learning_rate_decay_rate, 0.5F, "Degradation of learning rate at each tail epoch"));
 		res.push_back(float_option("learning_rate_rise_rate", &learning_rate_rise_rate, 0.1F, "Increase factor of learning rate at each head epoch (<1.0)"));
 		res.push_back(float_option("weight_decay", &weight_decay, 0.0F, "Weight decay"));
-		res.push_back(float_option("momentum,M", &momentum_val, 0.0F, "Momentum value"));
-		res.push_back(float_option("training_mix_validating_ratio", &training_mix_validating_ratio, 0.0F, "Momentum value"));
+		res.push_back(float_option("momentum,M", &momentum_val, 0.9F, "Momentum value"));
+		res.push_back(float_option("momentum2,M", &momentum_val2, 0.999F, "The second momentum value (used when momentum_type is ADAM)"));
+		res.push_back(float_option("training_mix_validating_ratio", &training_mix_validating_ratio, 0.0F, "The part of training samples taken from auxiliary data reader"));
 
 		return res;
 	}
@@ -771,6 +772,16 @@ namespace nnforge
 				}
 			}
 
+			{
+				std::string momentum2_folder_name = (boost::format("momentum2_%|1$03d|") % new_item.index).str();
+				boost::filesystem::path momentum2_folder_path = snapshot_ann_folder_path / momentum2_folder_name;
+				if (boost::filesystem::exists(momentum2_folder_path))
+				{
+					new_item.momentum_data2 = network_data::ptr(new network_data());
+					new_item.momentum_data2->read(momentum2_folder_path);
+				}
+			}
+
 			res.push_back(new_item);
 		}
 
@@ -884,7 +895,7 @@ namespace nnforge
 		res->learning_rate_rise_rate = learning_rate_rise_rate;
 		res->weight_decay = weight_decay;
 		res->batch_size = batch_size;
-		res->momentum = training_momentum(momentum_type_str, momentum_val);
+		res->momentum = training_momentum(momentum_type_str, momentum_val, momentum_val2);
 
 		return res;
 	}

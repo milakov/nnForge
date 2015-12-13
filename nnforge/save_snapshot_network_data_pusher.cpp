@@ -41,11 +41,21 @@ namespace nnforge
 		std::string data_folder_name = (boost::format("ann_trained_%|1$03d|_epoch_%|2$05d|") % index % task_state.get_current_epoch()).str();
 		save_data_to_file(task_state.data, data_folder_name);
 
-		std::string momentum_data_folder_name = (boost::format("momentum_%|1$03d|") % index).str();
-		if (task_state.momentum_data)
-			save_data_to_file(task_state.momentum_data, momentum_data_folder_name);
-		else
-			boost::filesystem::remove_all(folder_path / momentum_data_folder_name);
+		{
+			std::string momentum_data_folder_name = (boost::format("momentum_%|1$03d|") % index).str();
+			if (task_state.momentum_data)
+				save_data_to_file(task_state.momentum_data, momentum_data_folder_name);
+			else
+				boost::filesystem::remove_all(folder_path / momentum_data_folder_name);
+		}
+
+		{
+			std::string momentum2_data_folder_name = (boost::format("momentum2_%|1$03d|") % index).str();
+			if (task_state.momentum_data2)
+				save_data_to_file(task_state.momentum_data2, momentum2_data_folder_name);
+			else
+				boost::filesystem::remove_all(folder_path / momentum2_data_folder_name);
+		}
 	}
 
 	void save_snapshot_network_data_pusher::save_data_to_file(

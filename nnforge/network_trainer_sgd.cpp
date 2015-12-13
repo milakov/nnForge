@@ -55,10 +55,12 @@ namespace nnforge
 			writer,
 			*task.data,
 			task.momentum_data,
+			task.momentum_data2,
 			lr_and_comment.first,
 			batch_size,
 			weight_decay,
-			momentum);
+			momentum,
+			task.get_current_epoch());
 		std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<float> > > > output_data_average_results;
 		for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it = writer.layer_name_to_config_and_value_set_map.begin(); it != writer.layer_name_to_config_and_value_set_map.end(); ++it)
 			output_data_average_results.insert(std::make_pair(it->first, std::make_pair(it->second.first, it->second.second->get_average())));

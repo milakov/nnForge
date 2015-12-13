@@ -27,16 +27,23 @@ namespace nnforge
 		{
 			no_momentum,
 			vanilla_momentum,
-			nesterov_momentum
+			nesterov_momentum,
+			adam_momentum
 		};
 
 		training_momentum();
 
 		training_momentum(
 			const std::string& momentum_type_str,
-			float momentum_val);
+			float momentum_val,
+			float momentum_val2);
+
+		bool is_momentum_data() const;
+
+		bool is_momentum_data2() const;
 
 		momentum_type type;
 		float momentum_val;
+		float momentum_val2;
 	};
 }

@@ -48,10 +48,12 @@ namespace nnforge
 				structured_data_bunch_writer& writer,
 				network_data& data,
 				network_data::ptr momentum_data,
+				network_data::ptr momentum_data2,
 				const std::map<std::string, std::vector<float> >& learning_rates,
 				unsigned int batch_size,
 				float weight_decay,
-				training_momentum momentum);
+				training_momentum momentum,
+				unsigned int epoch_id);
 
 			// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 			// The layer_config_map is guaranteed to be compatible with schema
@@ -71,11 +73,13 @@ namespace nnforge
 				layer_data::ptr data,
 				layer_data::ptr gradient,
 				layer_data::ptr previous_upd,
+				layer_data::ptr previous_upd2,
 				std::vector<double>& updates_accumulated,
 				const std::vector<float>& learning_rates,
 				float normalizer,
 				float weight_decay,
-				training_momentum momentum) const;
+				training_momentum momentum,
+				unsigned int iteration_id) const;
 
 		private:
 			plain_running_configuration::const_ptr plain_config;

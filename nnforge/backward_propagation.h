@@ -60,10 +60,12 @@ namespace nnforge
 			structured_data_bunch_writer& writer,
 			network_data& data,
 			network_data::ptr momentum_data,
+			network_data::ptr momentum_data2,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
 			float weight_decay,
-			training_momentum momentum);
+			training_momentum momentum,
+			unsigned int epoch_id);
 
 	protected:
 		backward_propagation(
@@ -80,10 +82,12 @@ namespace nnforge
 			structured_data_bunch_writer& writer,
 			network_data& data,
 			network_data::ptr momentum_data,
+			network_data::ptr momentum_data2,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
 			float weight_decay,
-			training_momentum momentum) = 0;
+			training_momentum momentum,
+			unsigned int epoch_id) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 		// The layer_config_map is guaranteed to be compatible with schema

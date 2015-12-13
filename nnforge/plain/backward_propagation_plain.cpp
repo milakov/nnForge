@@ -94,10 +94,12 @@ namespace nnforge
 			structured_data_bunch_writer& writer,
 			network_data& data,
 			network_data::ptr momentum_data,
+			network_data::ptr momentum_data2,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
 			float weight_decay,
-			training_momentum momentum)
+			training_momentum momentum,
+			unsigned int epoch_id)
 		{
 			std::map<std::string, std::vector<double> > updates_accumulated;
 			std::vector<std::string> data_layer_list = data.data_list.get_data_layer_name_list();
@@ -123,8 +125,10 @@ namespace nnforge
 					{
 						buffer_configuration.add_constant_buffer(it2->size() * sizeof(float)); // data
 						buffer_configuration.add_constant_buffer(it2->size() * sizeof(float)); // gradient
-						if (momentum.type != training_momentum::no_momentum)
+						if (momentum.is_momentum_data())
 							buffer_configuration.add_constant_buffer(it2->size() * sizeof(float)); // momentum
+						if (momentum.is_momentum_data2())
+							buffer_configuration.add_constant_buffer(it2->size() * sizeof(float)); // 2nd momentum
 					}
 				}
 				std::vector<std::string> data_custom_layer_list = data.data_custom_list.get_data_custom_layer_name_list();
@@ -189,6 +193,16 @@ namespace nnforge
 			std::vector<plain_buffer::ptr> layer_buffers;
 			for(std::vector<size_t>::const_iterator it = layer_buffer_set_per_entry_size_list.begin(); it != layer_buffer_set_per_entry_size_list.end(); ++it)
 				layer_buffers.push_back(plain_buffer::ptr(new plain_buffer(*it * max_chunk_size)));
+
+			unsigned int base_iteration_count = 0;
+			if (momentum.type == training_momentum::adam_momentum)
+			{
+				int epoch_entry_count = reader.get_entry_count();
+				if (epoch_entry_count >= 0)
+					base_iteration_count = epoch_id * ((epoch_entry_count + batch_size - 1) / batch_size);
+				else
+					throw neural_network_exception("Training data reader doesn't report entry_count, which is required for ADAM momentum");
+			}
 
 			unsigned int entry_processed_count = 0;
 			unsigned int chunk_index = 0;
@@ -417,18 +431,23 @@ namespace nnforge
 							if (is_apply_gradient)
 							{
 								layer_data::ptr previous_upd;
-								if (momentum.type != training_momentum::no_momentum)
+								if (momentum.is_momentum_data())
 									previous_upd = momentum_data->data_list.find(layer_name);
+								layer_data::ptr previous_upd2;
+								if (momentum.is_momentum_data2())
+									previous_upd2 = momentum_data2->data_list.find(layer_name);
 								apply_gradient(
 									layer_name,
 									data.data_list.find(layer_name),
 									gradient->find(layer_name),
 									previous_upd,
+									previous_upd2,
 									updates_accumulated[layer_name],
 									learning_rates.find(layer_name)->second,
 									gradient_normalizer,
 									weight_decay,
-									momentum);
+									momentum,
+									base_iteration_count + gradient_applied_count);
 							}
 						}
 						break;
@@ -458,18 +477,23 @@ namespace nnforge
 				{
 					const std::string& layer_name = it->first;
 					layer_data::ptr previous_upd;
-					if (momentum.type != training_momentum::no_momentum)
+					if (momentum.is_momentum_data())
 						previous_upd = momentum_data->data_list.find(layer_name);
+					layer_data::ptr previous_upd2;
+					if (momentum.is_momentum_data2())
+						previous_upd2 = momentum_data2->data_list.find(layer_name);
 					apply_gradient(
 						layer_name,
 						data.data_list.find(layer_name),
 						gradient->find(layer_name),
 						previous_upd,
+						previous_upd2,
 						updates_accumulated[layer_name],
 						learning_rates.find(layer_name)->second,
 						gradient_normalizer,
 						weight_decay,
-						momentum);
+						momentum,
+						base_iteration_count + gradient_applied_count);
 				}
 			}
 
@@ -794,29 +818,58 @@ namespace nnforge
 			layer_data::ptr data,
 			layer_data::ptr gradient,
 			layer_data::ptr previous_upd,
+			layer_data::ptr previous_upd2,
 			std::vector<double>& updates_accumulated,
 			const std::vector<float>& learning_rates,
 			float normalizer,
 			float weight_decay,
-			training_momentum momentum) const
+			training_momentum momentum,
+			unsigned int iteration_id) const
 		{
-			if (momentum.type != training_momentum::no_momentum)
+			switch (momentum.type)
 			{
-				layer_data::iterator gradient_it = gradient->begin();
-				layer_data::iterator previous_upd_it = previous_upd->begin();
-				std::vector<double>::iterator updates_accumulated_it = updates_accumulated.begin();
-				std::vector<float>::const_iterator learning_rate_it = learning_rates.begin();
-				std::set<unsigned int> weight_decay_part_id_set = schema->get_layer(layer_name)->get_weight_decay_part_id_set();
-				unsigned int part_id = 0;
-				for(layer_data::iterator data_it = data->begin(); data_it != data->end(); ++data_it, ++gradient_it, ++previous_upd_it, ++learning_rate_it, ++part_id, ++updates_accumulated_it)
+			case training_momentum::no_momentum:
 				{
-					float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
-					std::vector<float>::iterator gradient_it2 = gradient_it->begin();
-					std::vector<float>::iterator previous_upd_it2 = previous_upd_it->begin();
-					float learning_rate = *learning_rate_it;
+					layer_data::iterator gradient_it = gradient->begin();
+					std::vector<double>::iterator updates_accumulated_it = updates_accumulated.begin();
+					std::vector<float>::const_iterator learning_rate_it = learning_rates.begin();
+					std::set<unsigned int> weight_decay_part_id_set = schema->get_layer(layer_name)->get_weight_decay_part_id_set();
+					unsigned int part_id = 0;
 					double accum = 0.0;
-					if (momentum.type == training_momentum::vanilla_momentum)
+					for(layer_data::iterator data_it = data->begin(); data_it != data->end(); ++data_it, ++gradient_it, ++learning_rate_it, ++part_id, ++updates_accumulated_it)
 					{
+						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
+						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
+						float learning_rate = *learning_rate_it;
+						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2)
+						{
+							float current_weight = *data_it2;
+							float gr = *gradient_it2;
+							float upd = learning_rate * (gr * normalizer - current_weight * actual_weight_decay);
+							accum += static_cast<double>(fabsf(upd));
+							float new_weight = current_weight + upd;
+							*data_it2 = new_weight;
+							*gradient_it2 = 0.0F;
+						}
+						*updates_accumulated_it += accum;
+					}
+				}
+				break;
+			case training_momentum::vanilla_momentum:
+				{
+					layer_data::iterator gradient_it = gradient->begin();
+					layer_data::iterator previous_upd_it = previous_upd->begin();
+					std::vector<double>::iterator updates_accumulated_it = updates_accumulated.begin();
+					std::vector<float>::const_iterator learning_rate_it = learning_rates.begin();
+					std::set<unsigned int> weight_decay_part_id_set = schema->get_layer(layer_name)->get_weight_decay_part_id_set();
+					unsigned int part_id = 0;
+					for(layer_data::iterator data_it = data->begin(); data_it != data->end(); ++data_it, ++gradient_it, ++previous_upd_it, ++learning_rate_it, ++part_id, ++updates_accumulated_it)
+					{
+						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
+						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
+						std::vector<float>::iterator previous_upd_it2 = previous_upd_it->begin();
+						float learning_rate = *learning_rate_it;
+						double accum = 0.0;
 						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2)
 						{
 							float current_weight = *data_it2;
@@ -829,9 +882,25 @@ namespace nnforge
 							*gradient_it2 = 0.0F;
 							*previous_upd_it2 = upd;
 						}
+						*updates_accumulated_it += accum;
 					}
-					else if (momentum.type == training_momentum::nesterov_momentum)
+				}
+				break;
+			case training_momentum::nesterov_momentum:
+				{
+					layer_data::iterator gradient_it = gradient->begin();
+					layer_data::iterator previous_upd_it = previous_upd->begin();
+					std::vector<double>::iterator updates_accumulated_it = updates_accumulated.begin();
+					std::vector<float>::const_iterator learning_rate_it = learning_rates.begin();
+					std::set<unsigned int> weight_decay_part_id_set = schema->get_layer(layer_name)->get_weight_decay_part_id_set();
+					unsigned int part_id = 0;
+					for(layer_data::iterator data_it = data->begin(); data_it != data->end(); ++data_it, ++gradient_it, ++previous_upd_it, ++learning_rate_it, ++part_id, ++updates_accumulated_it)
 					{
+						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
+						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
+						std::vector<float>::iterator previous_upd_it2 = previous_upd_it->begin();
+						float learning_rate = *learning_rate_it;
+						double accum = 0.0;
 						float mp1 = momentum.momentum_val + 1.0F;
 						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2)
 						{
@@ -846,35 +915,53 @@ namespace nnforge
 							*gradient_it2 = 0.0F;
 							*previous_upd_it2 = new_upd;
 						}
+						*updates_accumulated_it += accum;
 					}
-					*updates_accumulated_it += accum;
 				}
-			}
-			else
-			{
-				layer_data::iterator gradient_it = gradient->begin();
-				std::vector<double>::iterator updates_accumulated_it = updates_accumulated.begin();
-				std::vector<float>::const_iterator learning_rate_it = learning_rates.begin();
-				std::set<unsigned int> weight_decay_part_id_set = schema->get_layer(layer_name)->get_weight_decay_part_id_set();
-				unsigned int part_id = 0;
-				double accum = 0.0;
-				for(layer_data::iterator data_it = data->begin(); data_it != data->end(); ++data_it, ++gradient_it, ++learning_rate_it, ++part_id, ++updates_accumulated_it)
+				break;
+			case training_momentum::adam_momentum:
 				{
-					float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
-					std::vector<float>::iterator gradient_it2 = gradient_it->begin();
-					float learning_rate = *learning_rate_it;
-					for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2)
+					layer_data::iterator gradient_it = gradient->begin();
+					layer_data::iterator previous_upd_it = previous_upd->begin();
+					layer_data::iterator previous_upd2_it = previous_upd2->begin();
+					std::vector<double>::iterator updates_accumulated_it = updates_accumulated.begin();
+					std::vector<float>::const_iterator learning_rate_it = learning_rates.begin();
+					std::set<unsigned int> weight_decay_part_id_set = schema->get_layer(layer_name)->get_weight_decay_part_id_set();
+					unsigned int part_id = 0;
+					float one_minus_beta1t_inverted = 1.0F / (1.0F - powf(momentum.momentum_val, static_cast<float>(iteration_id)));
+					float one_minus_beta2t_inverted = 1.0F / (1.0F - powf(momentum.momentum_val2, static_cast<float>(iteration_id)));
+					float epsilon = 1.0e-8F;
+					for(layer_data::iterator data_it = data->begin(); data_it != data->end(); ++data_it, ++gradient_it, ++previous_upd_it, ++previous_upd2_it, ++learning_rate_it, ++part_id, ++updates_accumulated_it)
 					{
-						float current_weight = *data_it2;
-						float gr = *gradient_it2;
-						float upd = learning_rate * (gr * normalizer - current_weight * actual_weight_decay);
-						accum += static_cast<double>(fabsf(upd));
-						float new_weight = current_weight + upd;
-						*data_it2 = new_weight;
-						*gradient_it2 = 0.0F;
+						float actual_weight_decay = (weight_decay_part_id_set.find(part_id) == weight_decay_part_id_set.end()) ? 0.0F : weight_decay;
+						std::vector<float>::iterator gradient_it2 = gradient_it->begin();
+						std::vector<float>::iterator previous_upd_it2 = previous_upd_it->begin();
+						std::vector<float>::iterator previous_upd2_it2 = previous_upd2_it->begin();
+						float learning_rate = *learning_rate_it;
+						double accum = 0.0;
+						for(std::vector<float>::iterator data_it2 = data_it->begin(); data_it2 != data_it->end(); ++data_it2, ++gradient_it2, ++previous_upd_it2, ++previous_upd2_it2)
+						{
+							float current_weight = *data_it2;
+							float gr = *gradient_it2;
+							float previous_biased_first_momentum = *previous_upd_it2;
+							float previous_biased_second_momentum = *previous_upd2_it2;
+							float total_gradient = gr * normalizer - current_weight * weight_decay;
+							float new_biased_first_momentum = momentum.momentum_val * previous_biased_first_momentum + (1.0F - momentum.momentum_val) * total_gradient;
+							float new_biased_second_momentum = momentum.momentum_val2 * previous_biased_second_momentum + (1.0F - momentum.momentum_val2) * total_gradient * total_gradient;
+							float unbiased_first_momentum = new_biased_first_momentum * one_minus_beta1t_inverted;
+							float unbiased_second_momentum = new_biased_second_momentum * one_minus_beta2t_inverted;
+							float upd = (learning_rate * unbiased_first_momentum) / (sqrtf(unbiased_second_momentum) + epsilon);
+							float new_weight = current_weight + upd;
+							accum += static_cast<double>(fabsf(upd));
+							*data_it2 = new_weight;
+							*gradient_it2 = 0.0F;
+							*previous_upd_it2 = new_biased_first_momentum;
+							*previous_upd2_it2 = new_biased_second_momentum;
+						}
+						*updates_accumulated_it += accum;
 					}
-					*updates_accumulated_it += accum;
 				}
+				break;
 			}
 		}
 	}

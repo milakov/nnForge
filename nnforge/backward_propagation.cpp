@@ -157,10 +157,12 @@ namespace nnforge
 		structured_data_bunch_writer& writer,
 		network_data& data,
 		network_data::ptr momentum_data,
+		network_data::ptr momentum_data2,
 		const std::map<std::string, std::vector<float> >& learning_rates,
 		unsigned int batch_size,
 		float weight_decay,
-		training_momentum momentum)
+		training_momentum momentum,
+		unsigned int epoch_id)
 	{
 		backward_propagation::stat res;
 
@@ -183,20 +185,24 @@ namespace nnforge
 				writer,
 				data,
 				momentum_data,
+				momentum_data2,
 				learning_rates,
 				batch_size,
 				weight_decay,
-				momentum);
+				momentum,
+				epoch_id);
 		else
 			p = actual_run(
 				reader,
 				writer,
 				data,
 				momentum_data,
+				momentum_data2,
 				learning_rates,
 				batch_size,
 				weight_decay,
-				momentum);
+				momentum,
+				epoch_id);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		res.entry_processed_count = p.first;
 		res.average_absolute_updates = p.second;

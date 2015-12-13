@@ -81,10 +81,12 @@ namespace nnforge
 			structured_data_bunch_writer& writer,
 			network_data& data,
 			network_data::ptr momentum_data,
+			network_data::ptr momentum_data2,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
 			float weight_decay,
-			training_momentum momentum)
+			training_momentum momentum,
+			unsigned int epoch_id)
 		{
 			cuda_config->set_device();
 
@@ -99,13 +101,23 @@ namespace nnforge
 					net_data_custom.insert(std::make_pair(it->first, it->second->set_get_data_custom(dt_custom)));
 				persistent_working_data.insert(std::make_pair(it->first, it->second->get_persistent_working_data()));
 			}
+
 			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> > previous_upd;
-			if (momentum.type != training_momentum::no_momentum)
+			if (momentum.is_momentum_data())
 				previous_upd = get_data(momentum_data->data_list);
 			else
 			{
 				for(std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >::const_iterator it = net_data.begin(); it != net_data.end(); ++it)
 					previous_upd.insert(std::make_pair(it->first, std::vector<cuda_linear_buffer_device::ptr>()));
+			}
+
+			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> > previous_upd2;
+			if (momentum.is_momentum_data2())
+				previous_upd2 = get_data(momentum_data2->data_list);
+			else
+			{
+				for(std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >::const_iterator it = net_data.begin(); it != net_data.end(); ++it)
+					previous_upd2.insert(std::make_pair(it->first, std::vector<cuda_linear_buffer_device::ptr>()));
 			}
 
 			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> > update_accum_buffers;
@@ -129,6 +141,9 @@ namespace nnforge
 				for(std::vector<cuda_linear_buffer_device::ptr>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 					buffer_configuration.add_constant_buffer((*it2)->get_size());
 			for(std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >::const_iterator it = previous_upd.begin(); it != previous_upd.end(); ++it)
+				for(std::vector<cuda_linear_buffer_device::ptr>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+					buffer_configuration.add_constant_buffer((*it2)->get_size());
+			for(std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >::const_iterator it = previous_upd2.begin(); it != previous_upd2.end(); ++it)
 				for(std::vector<cuda_linear_buffer_device::ptr>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 					buffer_configuration.add_constant_buffer((*it2)->get_size());
 			for(std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >::const_iterator it = gradient.begin(); it != gradient.end(); ++it)
@@ -207,6 +222,16 @@ namespace nnforge
 
 			cuda_safe_call(cudaStreamSynchronize(*copy_data_stream));
 
+			unsigned int base_iteration_count = 0;
+			if (momentum.type == training_momentum::adam_momentum)
+			{
+				int epoch_entry_count = reader.get_entry_count();
+				if (epoch_entry_count >= 0)
+					base_iteration_count = epoch_id * ((epoch_entry_count + batch_size - 1) / batch_size);
+				else
+					throw neural_network_exception("Training data reader doesn't report entry_count, which is required for ADAM momentum");
+			}
+
 			run_kernels_params params(
 				dedicated_buffers,
 				net_data,
@@ -214,12 +239,14 @@ namespace nnforge
 				persistent_working_data,
 				gradient,
 				previous_upd,
+				previous_upd2,
 				update_accum_buffers,
 				learning_rates,
 				batch_size,
 				weight_decay,
 				momentum,
-				max_chunk_size);
+				max_chunk_size,
+				base_iteration_count);
 			boost::thread run_kernels_thread(run_kernels_static, this, &params);
 			try
 			{
@@ -396,8 +423,10 @@ namespace nnforge
 
 			read_data(net_data, data.data_list);
 
-			if (momentum.type != training_momentum::no_momentum)
+			if (momentum.is_momentum_data())
 				read_data(previous_upd, momentum_data->data_list);
+			if (momentum.is_momentum_data2())
+				read_data(previous_upd2, momentum_data2->data_list);
 
 			std::pair<unsigned int, std::map<std::string, std::vector<float> > > res;
 			res.first = entry_processed_count;
@@ -468,11 +497,13 @@ namespace nnforge
 									params.net_data[layer_name],
 									params.gradient[layer_name],
 									params.previous_upd[layer_name],
+									params.previous_upd2[layer_name],
 									params.learning_rates.find(layer_name)->second,
 									params.update_accum_buffers[layer_name],
 									gradient_normalizer,
 									params.weight_decay,
-									params.momentum);
+									params.momentum,
+									params.base_iteration_count + params.gradient_applied_count);
 							}
 						}
 						break;
@@ -704,11 +735,13 @@ namespace nnforge
 											params.net_data[layer_name],
 											params.gradient[layer_name],
 											params.previous_upd[layer_name],
+											params.previous_upd2[layer_name],
 											params.learning_rates.find(layer_name)->second,
 											params.update_accum_buffers[layer_name],
 											gradient_normalizer,
 											params.weight_decay,
-											params.momentum);
+											params.momentum,
+											params.base_iteration_count + params.gradient_applied_count);
 								}
 								break;
 							}
@@ -793,24 +826,28 @@ namespace nnforge
 			std::map<std::string, std::vector<cuda_linear_buffer_device::const_ptr> >& persistent_working_data,
 			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& gradient,
 			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& previous_upd,
+			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& previous_upd2,
 			std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& update_accum_buffers,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
 			float weight_decay,
 			training_momentum momentum,
-			unsigned int max_chunk_size)
+			unsigned int max_chunk_size,
+			unsigned int base_iteration_count)
 			: dedicated_buffers(dedicated_buffers)
 			, net_data(net_data)
 			, net_data_custom(net_data_custom)
 			, persistent_working_data(persistent_working_data)
 			, gradient(gradient)
 			, previous_upd(previous_upd)
+			, previous_upd2(previous_upd2)
 			, update_accum_buffers(update_accum_buffers)
 			, learning_rates(learning_rates)
 			, batch_size(batch_size)
 			, weight_decay(weight_decay)
 			, momentum(momentum)
 			, max_chunk_size(max_chunk_size)
+			, base_iteration_count(base_iteration_count)
 			, gradient_applied_count(0)
 		{
 		}
@@ -1449,11 +1486,13 @@ namespace nnforge
 			std::vector<cuda_linear_buffer_device::ptr>& data,
 			std::vector<cuda_linear_buffer_device::ptr>& gradient,
 			std::vector<cuda_linear_buffer_device::ptr>& prev_upd,
+			std::vector<cuda_linear_buffer_device::ptr>& prev_upd2,
 			const std::vector<float>& learning_rates,
 			std::vector<cuda_linear_buffer_device::ptr>& update_accum_buffers,
 			float gradient_normalizer,
 			float weight_decay,
-			training_momentum momentum)
+			training_momentum momentum,
+			unsigned int iteration_id)
 		{
 			std::set<unsigned int> weight_decay_part_id_set = schema->get_layer(layer_name)->get_weight_decay_part_id_set();
 			for(unsigned int part_id = 0; part_id < static_cast<unsigned int>(data.size()); ++part_id)
@@ -1504,6 +1543,24 @@ namespace nnforge
 						momentum.momentum_val,
 						elem_count,
 						elem_count_update_accum_per_part - 1,
+						stream_id);
+					break;
+				case training_momentum::adam_momentum:
+					cuda_util::apply_gradient_with_adam_momentum(
+						*cuda_config,
+						*data[part_id],
+						*gradient[part_id],
+						*prev_upd[part_id],
+						*prev_upd2[part_id],
+						*update_accum_buffers[part_id],
+						learning_rates[part_id],
+						gradient_normalizer,
+						actual_weight_decay,
+						momentum.momentum_val,
+						momentum.momentum_val2,
+						elem_count,
+						elem_count_update_accum_per_part - 1,
+						iteration_id,
 						stream_id);
 					break;
 				}

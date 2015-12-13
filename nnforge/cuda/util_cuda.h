@@ -266,6 +266,23 @@ namespace nnforge
 				unsigned int update_accum_mask,
 				cudaStream_t cuda_stream);
 
+			static void apply_gradient_with_adam_momentum(
+				const cuda_running_configuration& cuda_config,
+				float * data,
+				float * gradient,
+				float * prev_upd,
+				float * prev_upd2,
+				double * update_accum,
+				float learning_rate,
+				float normalizer,
+				float weight_decay,
+				float momentum,
+				float momentum2,
+				int elem_count,
+				unsigned int update_accum_mask,
+				unsigned int iteration_id,
+				cudaStream_t cuda_stream);
+
 		private:
 			cuda_util();
 			cuda_util(const cuda_util&);

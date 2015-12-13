@@ -24,6 +24,7 @@
 #include <boost/format.hpp>
 
 #include <utility>
+#include <algorithm>
 
 namespace nnforge
 {
@@ -454,6 +455,73 @@ namespace nnforge
 				data[elem_id] = new_weight;
 				gradient[elem_id] = 0.0F;
 				previous_upd[elem_id] = new_upd;
+				upd_acc = fabs(upd);
+			}
+
+			int thread_id = threadIdx.x;
+			int lane_id = thread_id & 31;
+			#pragma unroll
+			for(int tx = 16; tx > 0; tx >>= 1)
+			{
+				upd_acc += __shfl_down(upd_acc, tx);
+			}
+
+			if (blockDim.x > 32)
+			{
+				if (lane_id == 0)
+					arr_sh[thread_id >> 5] = upd_acc;
+				__syncthreads();
+			}
+
+			if (thread_id == 0)
+			{
+				for(int i = 1; i < (blockDim.x >> 5); ++i)
+					upd_acc += arr_sh[i];
+				double upd_acc_d = (double)upd_acc;
+
+				int accum_bucket_id = block_id & update_accum_mask;
+
+				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+			}
+		}
+
+		__global__ void apply_gradient_with_adam_momentum_kernel(
+			float * __restrict data,
+			float * __restrict gradient,
+			float * __restrict biased_first_momentum,
+			float * __restrict biased_second_momentum,
+			double * __restrict update_accum,
+			float alpha,
+			float normalizer,
+			float weight_decay,
+			float beta1,
+			float beta2,
+			float one_minus_beta1t_inverted,
+			float one_minus_beta2t_inverted,
+			float epsilon,
+			int elem_count,
+			unsigned int update_accum_mask)
+		{
+			int block_id = blockIdx.y * gridDim.x + blockIdx.x;
+			int elem_id = blockDim.x * block_id + threadIdx.x;
+			float upd_acc = 0.0F;
+			if (elem_id < elem_count)
+			{
+				float current_weight = __load_nc(data + elem_id);
+				float gr = __load_nc(gradient + elem_id);
+				float previous_biased_first_momentum = __load_nc(biased_first_momentum + elem_id);
+				float previous_biased_second_momentum = __load_nc(biased_second_momentum + elem_id);
+				float total_gradient = gr * normalizer - current_weight * weight_decay;
+				float new_biased_first_momentum = beta1 * previous_biased_first_momentum + (1.0F - beta1) * total_gradient;
+				float new_biased_second_momentum = beta2 * previous_biased_second_momentum + (1.0F - beta2) * total_gradient * total_gradient;
+				float unbiased_first_momentum = new_biased_first_momentum * one_minus_beta1t_inverted;
+				float unbiased_second_momentum = new_biased_second_momentum * one_minus_beta2t_inverted;
+				float upd = __fdividef(alpha * unbiased_first_momentum, sqrtf(unbiased_second_momentum) + epsilon);
+				float new_weight = current_weight + upd;
+				data[elem_id] = new_weight;
+				gradient[elem_id] = 0.0F;
+				biased_first_momentum[elem_id] = new_biased_first_momentum;
+				biased_second_momentum[elem_id] = new_biased_second_momentum;
 				upd_acc = fabs(upd);
 			}
 
@@ -1034,6 +1102,51 @@ namespace nnforge
 				weight_decay,
 				momentum,
 				momentum + 1.0F,
+				elem_count,
+				update_accum_mask);
+		}
+
+		void cuda_util::apply_gradient_with_adam_momentum(
+			const cuda_running_configuration& cuda_config,
+			float * data,
+			float * gradient,
+			float * prev_upd,
+			float * prev_upd2,
+			double * update_accum,
+			float learning_rate,
+			float normalizer,
+			float weight_decay,
+			float momentum,
+			float momentum2,
+			int elem_count,
+			unsigned int update_accum_mask,
+			unsigned int iteration_id,
+			cudaStream_t cuda_stream)
+		{
+			iteration_id = std::max(iteration_id, 1U);
+
+			std::pair<dim3, dim3> kernel_dims = get_grid_and_threadblock_sizes_sequential_access(
+				cuda_config,
+				elem_count,
+				1,
+				1,
+				32);
+			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+			int smem_size = threadblock_size * sizeof(float);
+			apply_gradient_with_adam_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
+				data,
+				gradient,
+				prev_upd,
+				prev_upd2,
+				update_accum,
+				learning_rate,
+				normalizer,
+				weight_decay,
+				momentum,
+				momentum2,
+				1.0F / (1.0F - powf(momentum, static_cast<float>(iteration_id))),
+				1.0F / (1.0F - powf(momentum2, static_cast<float>(iteration_id))),
+				1.0e-8F,
 				elem_count,
 				update_accum_mask);
 		}

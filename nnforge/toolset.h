@@ -188,6 +188,7 @@ namespace nnforge
 		int batch_size;
 		std::string momentum_type_str;
 		float momentum_val;
+		float momentum_val2;
 		bool resume_from_snapshot;
 		bool dump_snapshot;
 		int ann_count;

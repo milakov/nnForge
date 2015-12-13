@@ -50,10 +50,12 @@ namespace nnforge
 				structured_data_bunch_writer& writer,
 				network_data& data,
 				network_data::ptr momentum_data,
+				network_data::ptr momentum_data2,
 				const std::map<std::string, std::vector<float> >& learning_rates,
 				unsigned int batch_size,
 				float weight_decay,
-				training_momentum momentum);
+				training_momentum momentum,
+				unsigned int epoch_id);
 
 			// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 			// The layer_config_map is guaranteed to be compatible with schema
@@ -95,11 +97,13 @@ namespace nnforge
 			std::vector<cuda_linear_buffer_device::ptr>& data,
 			std::vector<cuda_linear_buffer_device::ptr>& gradient,
 			std::vector<cuda_linear_buffer_device::ptr>& prev_upd,
+			std::vector<cuda_linear_buffer_device::ptr>& prev_upd2,
 			const std::vector<float>& learning_rates,
 			std::vector<cuda_linear_buffer_device::ptr>& update_accum_buffers,
 			float gradient_normalizer,
 			float weight_decay,
-			training_momentum momentum);
+			training_momentum momentum,
+			unsigned int iteration_id);
 
 		private:
 			class run_kernels_params
@@ -112,12 +116,14 @@ namespace nnforge
 					std::map<std::string, std::vector<cuda_linear_buffer_device::const_ptr> >& persistent_working_data,
 					std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& gradient,
 					std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& previous_upd,
+					std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& previous_upd2,
 					std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& update_accum_buffers,
 					const std::map<std::string, std::vector<float> >& learning_rates,
 					unsigned int batch_size,
 					float weight_decay,
 					training_momentum momentum,
-					unsigned int max_chunk_size);
+					unsigned int max_chunk_size,
+					unsigned int base_iteration_count);
 
 				std::map<std::string, nnforge_array<cuda_linear_buffer_device::ptr, 2> >& dedicated_buffers;
 				std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& net_data;
@@ -125,12 +131,14 @@ namespace nnforge
 				std::map<std::string, std::vector<cuda_linear_buffer_device::const_ptr> >& persistent_working_data;
 				std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& gradient;
 				std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& previous_upd;
+				std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& previous_upd2;
 				std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >& update_accum_buffers;
 				const std::map<std::string, std::vector<float> >& learning_rates;
 				unsigned int batch_size;
 				float weight_decay;
 				training_momentum momentum;
 				unsigned int max_chunk_size;
+				unsigned int base_iteration_count;
 
 				unsigned int gradient_applied_count;
 
