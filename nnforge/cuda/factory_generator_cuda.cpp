@@ -78,7 +78,7 @@ namespace nnforge
 			std::vector<float_option> res;
 
 			res.push_back(float_option("cuda_max_global_memory_usage_ratio,G", &cuda_max_global_memory_usage_ratio, 0.9F, "Part of the global memory to be used by a single CUDA configuration. Set to smaller value if the device is used for graphics as well"));
-			res.push_back(float_option("cuda_fixed_working_buffers_ratio", &cuda_fixed_working_buffers_ratio, 0.1F, "Part of memory use dby app, which is allocated to working buffers (independent of batch size)"));
+			res.push_back(float_option("cuda_fixed_working_buffers_ratio", &cuda_fixed_working_buffers_ratio, 0.4F, "Part of memory used by app, which is allocated to working buffers (independent of batch size). This parameter affects the performance, you might also need to reduce it when running large models on GPU with small RAM"));
 
 			return res;
 		}
