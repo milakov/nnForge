@@ -358,7 +358,7 @@ namespace nnforge
 		res.push_back(float_option("learning_rate_rise_rate", &learning_rate_rise_rate, 0.1F, "Increase factor of learning rate at each head epoch (<1.0)"));
 		res.push_back(float_option("weight_decay", &weight_decay, 0.0F, "Weight decay"));
 		res.push_back(float_option("momentum,M", &momentum_val, 0.9F, "Momentum value"));
-		res.push_back(float_option("momentum2,M", &momentum_val2, 0.999F, "The second momentum value (used when momentum_type is ADAM)"));
+		res.push_back(float_option("momentum2", &momentum_val2, 0.999F, "The second momentum value (used when momentum_type is ADAM)"));
 		res.push_back(float_option("training_mix_validating_ratio", &training_mix_validating_ratio, 0.0F, "The part of training samples taken from auxiliary data reader"));
 
 		return res;
