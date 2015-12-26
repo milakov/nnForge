@@ -99,7 +99,7 @@ namespace nnforge
 			float scale2,
 			int elem_count) 
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
 				if (add_update_to_destination)

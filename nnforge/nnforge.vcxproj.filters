@@ -446,6 +446,9 @@
     <ClInclude Include="gradient_modifier_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="concat_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -761,6 +764,9 @@
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="gradient_modifier_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="concat_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>

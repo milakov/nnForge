@@ -39,6 +39,7 @@
 #include "negative_log_likelihood_layer.h"
 #include "cross_entropy_layer.h"
 #include "gradient_modifier_layer.h"
+#include "concat_layer.h"
 
 #include "rnd.h"
 

@@ -446,6 +446,18 @@
     <ClInclude Include="gradient_modifier_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
     </ClInclude>
+    <ClInclude Include="concat_layer_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="concat_layer_testing_schema.h">
+      <Filter>Header Files\testing_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="concat_layer_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="concat_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -685,6 +697,15 @@
     <ClCompile Include="gradient_modifier_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
+    <ClCompile Include="concat_layer_tester_cuda.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="concat_layer_testing_schema.cpp">
+      <Filter>Source Files\testing_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="concat_layer_updater_schema.cpp">
+      <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="absolute_layer_tester_cuda.cu">
@@ -784,6 +805,9 @@
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
     <CudaCompile Include="rectified_linear_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="concat_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
   </ItemGroup>
