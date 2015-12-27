@@ -225,11 +225,11 @@ namespace nnforge
 					if (entry_to_write_count > 0)
 					{
 						PUSH_RANGE("Writing output data", 1);
-						for(unsigned int i = 0; i < entry_to_write_count; ++i)
+						for(unsigned int i = 0; i < entry_to_write_count * output_layers_tiling_factor; ++i)
 						{
 							std::map<std::string, const float *> data_map;
 							for(std::map<std::string, size_t>::const_iterator it = output_per_entry_host_data_name_to_size_map.begin(); it != output_per_entry_host_data_name_to_size_map.end(); ++it)
-								data_map.insert(std::make_pair(it->first, (float *)(*output_host_buffers[it->first]) + i * (it->second / sizeof(float))));
+								data_map.insert(std::make_pair(it->first, (float *)(*output_host_buffers[it->first]) + i * (it->second / sizeof(float) / output_layers_tiling_factor)));
 							writer.write(data_map);
 						}
 						POP_RANGE;

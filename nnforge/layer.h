@@ -63,6 +63,7 @@ namespace nnforge
 
 		virtual layer_data_configuration_list get_layer_data_configuration_list() const;
 
+		// return flops per output entry
 		virtual float get_flops_per_entry(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_action& action) const = 0;
@@ -103,9 +104,7 @@ namespace nnforge
 
 		bool is_empty_data_custom() const;
 
-		virtual std::vector<tiling_factor> get_tiling_factor_list() const;
-
-		tiling_factor get_tiling_factor() const;
+		virtual tiling_factor get_tiling_factor() const;
 
 		virtual std::string get_string_for_average_data(
 			const layer_configuration_specific& config,

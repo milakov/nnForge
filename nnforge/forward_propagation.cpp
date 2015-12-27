@@ -49,6 +49,14 @@ namespace nnforge
 		}
 
 		cumulative_tiling_factor_map = this->schema->get_cumulative_tiling_factor_map();
+		output_layers_tiling_factor = 1;
+		for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
+		{
+			if (it == output_layer_names.begin())
+				output_layers_tiling_factor = cumulative_tiling_factor_map[*it];
+			else if (output_layers_tiling_factor != cumulative_tiling_factor_map[*it])
+				throw neural_network_exception((boost::format("Inconsistent tiling factors across output layers: %1% and %2%") % output_layers_tiling_factor % cumulative_tiling_factor_map[*it]).str());
+		}
 
 		std::vector<layer::const_ptr> data_layers = this->schema->get_data_layers();
 		for(std::vector<layer::const_ptr>::const_iterator it = data_layers.begin(); it != data_layers.end(); ++it)

@@ -179,11 +179,11 @@ namespace nnforge
 						entry_read_count * cumulative_tiling_factor_map[layer_name]);
 				}
 
-				for(int entry_id = 0; entry_id < entry_read_count; ++entry_id)
+				for(int entry_id = 0; entry_id < entry_read_count * static_cast<int>(output_layers_tiling_factor); ++entry_id)
 				{
 					std::map<std::string, const float *> data_map;
 					for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
-						data_map.insert(std::make_pair(*it, ((float *)(*dedicated_buffers[*it])) + entry_id * (dedicated_per_entry_data_name_to_size_map[*it] / sizeof(float))));
+						data_map.insert(std::make_pair(*it, ((float *)(*dedicated_buffers[*it])) + entry_id * (dedicated_per_entry_data_name_to_size_map[*it] / sizeof(float) / output_layers_tiling_factor)));
 					writer.write(data_map);
 				}
 

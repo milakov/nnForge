@@ -163,19 +163,9 @@ namespace nnforge
 		return std::set<unsigned int>();
 	}
 
-	std::vector<tiling_factor> layer::get_tiling_factor_list() const
-	{
-		return std::vector<tiling_factor>();
-	}
-
 	tiling_factor layer::get_tiling_factor() const
 	{
-		std::vector<tiling_factor> tiling_factor_list = get_tiling_factor_list();
-
-		tiling_factor res = 1;
-		std::for_each(tiling_factor_list.begin(), tiling_factor_list.end(), res *= boost::lambda::_1);
-
-		return res;
+		return 1;
 	}
 
 	std::string layer::get_string_for_average_data(

@@ -182,6 +182,16 @@ namespace nnforge
 		}
 	}
 
+	tiling_factor untile_layer::get_tiling_factor() const
+	{
+		std::vector<tiling_factor> tiling_factor_list = get_tiling_factor_list();
+
+		tiling_factor res = 1;
+		std::for_each(tiling_factor_list.begin(), tiling_factor_list.end(), res *= boost::lambda::_1);
+
+		return res;
+	}
+
 	std::vector<tiling_factor> untile_layer::get_tiling_factor_list() const
 	{
 		std::vector<tiling_factor> res(upsampling_sizes_list.front().size(), 1);

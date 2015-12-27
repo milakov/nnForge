@@ -103,6 +103,8 @@ namespace nnforge
 		std::vector<std::string> exclude_data_update_layer_names;
 		debug_state::ptr debug;
 		std::map<std::string, layer_configuration_specific> layer_config_map;
+		std::map<std::string, unsigned int> cumulative_tiling_factor_map; // multiplier for the layer output
+		unsigned int output_layers_tiling_factor;
 		float flops;
 		std::set<std::string> data_layer_names;
 

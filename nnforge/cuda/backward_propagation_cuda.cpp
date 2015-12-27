@@ -371,11 +371,11 @@ namespace nnforge
 					if (entry_to_write_count > 0)
 					{
 						PUSH_RANGE("Writing output data", 1);
-						for(unsigned int i = 0; i < entry_to_write_count; ++i)
+						for(unsigned int i = 0; i < entry_to_write_count * output_layers_tiling_factor; ++i)
 						{
 							std::map<std::string, const float *> data_map;
 							for(std::map<std::string, size_t>::const_iterator it = output_per_entry_host_data_name_to_size_map.begin(); it != output_per_entry_host_data_name_to_size_map.end(); ++it)
-								data_map.insert(std::make_pair(it->first, (float *)(*output_host_buffers[it->first]) + i * (it->second / sizeof(float))));
+								data_map.insert(std::make_pair(it->first, (float *)(*output_host_buffers[it->first]) + i * (it->second / sizeof(float) / output_layers_tiling_factor)));
 							writer.write(data_map);
 						}
 						POP_RANGE;
@@ -515,6 +515,7 @@ namespace nnforge
 						std::string layer_name = current_layer_name_with_action.get_name();;
 						layer_action action = current_layer_name_with_action.get_action();
 						layer::const_ptr current_layer = schema->find_layer(layer_name);
+						unsigned int tiling_factor = cumulative_tiling_factor_map[layer_name];
 
 						cuda_stream::ptr current_stream = command_streams[action_to_stream_set_map[current_layer_name_with_action]];
 
@@ -600,7 +601,7 @@ namespace nnforge
 										temporary_working_fixed_buffer,
 										temporary_working_per_entry_buffer,
 										temporary_per_entry_buffer,
-										run_kernels_thread_entry_to_process_count);
+										run_kernels_thread_entry_to_process_count * tiling_factor);
 								}
 								break;
 							case layer_action::backward_data:
@@ -674,7 +675,7 @@ namespace nnforge
 										temporary_working_per_entry_buffer,
 										temporary_per_entry_buffer,
 										add_output_actions.find(current_layer_name_with_action) != add_output_actions.end(),
-										run_kernels_thread_entry_to_process_count);
+										run_kernels_thread_entry_to_process_count * tiling_factor);
 								}
 								break;
 							case layer_action::backward_weights:
@@ -723,7 +724,7 @@ namespace nnforge
 										temporary_working_fixed_buffer,
 										temporary_working_per_entry_buffer,
 										temporary_per_entry_buffer,
-										run_kernels_thread_entry_to_process_count);
+										run_kernels_thread_entry_to_process_count * tiling_factor);
 								}
 								break;
 							case layer_action::update_weights:
@@ -1051,9 +1052,9 @@ namespace nnforge
 			output_per_entry_host_data_name_to_size_map.clear();
 
 			for(std::set<std::string>::const_iterator it = data_layer_names.begin(); it != data_layer_names.end(); ++it)
-				input_per_entry_host_data_name_to_size_map.insert(std::make_pair(*it, layer_config_map.find(*it)->second.get_neuron_count() * sizeof(float)));
+				input_per_entry_host_data_name_to_size_map.insert(std::make_pair(*it, layer_config_map.find(*it)->second.get_neuron_count() * cumulative_tiling_factor_map[*it] * sizeof(float)));
 			for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
-				output_per_entry_host_data_name_to_size_map.insert(std::make_pair(*it, layer_config_map.find(*it)->second.get_neuron_count() * sizeof(float)));
+				output_per_entry_host_data_name_to_size_map.insert(std::make_pair(*it, layer_config_map.find(*it)->second.get_neuron_count() * cumulative_tiling_factor_map[*it] * sizeof(float)));
 		}
 
 		void backward_propagation_cuda::setup_dedicated_buffer_sizes()
@@ -1063,7 +1064,7 @@ namespace nnforge
 			std::set<std::string> separate_buffers_layer_names(output_layer_names.begin(), output_layer_names.end());
 			separate_buffers_layer_names.insert(data_layer_names.begin(), data_layer_names.end());
 			for(std::set<std::string>::const_iterator it = separate_buffers_layer_names.begin(); it != separate_buffers_layer_names.end(); ++it)
-				dedicated_per_entry_data_name_to_size_map.insert(std::make_pair(*it, layer_config_map.find(*it)->second.get_neuron_count() * sizeof(float)));
+				dedicated_per_entry_data_name_to_size_map.insert(std::make_pair(*it, layer_config_map.find(*it)->second.get_neuron_count() * cumulative_tiling_factor_map[*it] * sizeof(float)));
 		}
 
 		void backward_propagation_cuda::setup_temporary_working_fixed_buffer_sizes()
@@ -1180,12 +1181,12 @@ namespace nnforge
 						{
 						case layer_action::forward:
 							{
-								size_t buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * sizeof(float);
+								size_t buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[layer_name] * sizeof(float);
 								if (dedicated_output_buffers.find(layer_name) == dedicated_output_buffers.end())
 									current_buffers.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), static_cast<float>(buffer_size_per_entry)));
 							}
 							{
-								size_t temporary_per_entry_buffer_size = updater->get_temporary_per_entry_buffer_size();
+								size_t temporary_per_entry_buffer_size = updater->get_temporary_per_entry_buffer_size() * cumulative_tiling_factor_map[layer_name];
 								if (temporary_per_entry_buffer_size > 0)
 									current_buffers.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::temporary_buffer), static_cast<float>(temporary_per_entry_buffer_size)));
 							}
@@ -1193,14 +1194,14 @@ namespace nnforge
 						case layer_action::backward_data:
 							{
 								const std::string& previous_layer_name = schema->get_layer(layer_name)->input_layer_instance_names[it->get_action().get_backprop_index()];
-								size_t buffer_size_per_entry = layer_config_map.find(previous_layer_name)->second.get_neuron_count() * sizeof(float);
+								size_t buffer_size_per_entry = layer_config_map.find(previous_layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[previous_layer_name] * sizeof(float);
 								current_buffers.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), static_cast<float>(buffer_size_per_entry)));
 							}
 							break;
 						}
 
 						{
-							size_t temporary_working_per_entry_buffer_size = updater->get_temporary_working_per_entry_buffer_size(it->get_action());
+							size_t temporary_working_per_entry_buffer_size = updater->get_temporary_working_per_entry_buffer_size(it->get_action()) * cumulative_tiling_factor_map[layer_name];
 							if (temporary_working_per_entry_buffer_size > 0)
 								current_buffers.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::working_buffer), static_cast<float>(temporary_working_per_entry_buffer_size)));
 						}
@@ -1314,12 +1315,12 @@ namespace nnforge
 						switch (it->first.get_action().get_action_type())
 						{
 						case layer_action::forward:
-							buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * sizeof(float);
+							buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[layer_name] * sizeof(float);
 							break;
 						case layer_action::backward_data:
 							{
 								const std::string& previous_layer_name = schema->get_layer(layer_name)->input_layer_instance_names[it->first.get_action().get_backprop_index()];
-								buffer_size_per_entry = layer_config_map.find(previous_layer_name)->second.get_neuron_count() * sizeof(float);
+								buffer_size_per_entry = layer_config_map.find(previous_layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[previous_layer_name] * sizeof(float);
 							}
 							break;
 						default:
@@ -1328,11 +1329,11 @@ namespace nnforge
 						break;
 					case buffer_lifetime::working_buffer:
 						temporary_working_per_entry_data_action_to_set_map.insert(std::make_pair(it->first, set_id));
-						buffer_size_per_entry = updaters[layer_name]->get_temporary_working_per_entry_buffer_size(it->first.get_action());
+						buffer_size_per_entry = updaters[layer_name]->get_temporary_working_per_entry_buffer_size(it->first.get_action()) * cumulative_tiling_factor_map[layer_name];
 						break;
 					case buffer_lifetime::temporary_buffer:
 						temporary_per_entry_data_action_to_set_map.insert(std::make_pair(it->first, set_id));
-						buffer_size_per_entry = updaters[layer_name]->get_temporary_per_entry_buffer_size();
+						buffer_size_per_entry = updaters[layer_name]->get_temporary_per_entry_buffer_size() * cumulative_tiling_factor_map[layer_name];
 						break;
 					default:
 						throw neural_network_exception((boost::format("Unexpected buffer lifetime %1% encountered for layer %2% action %3%") % it->second.str() % it->first.get_name() % it->first.get_action().str()).str());
@@ -1386,8 +1387,9 @@ namespace nnforge
 			for(std::map<std::string, layer_updater_cuda::ptr>::const_iterator it = updaters.begin(); it != updaters.end(); ++it)
 			{
 				std::vector<unsigned int> tex_per_entry = it->second->get_linear_addressing_through_texture_per_entry();
+				unsigned int cumulative_tiling_factor = cumulative_tiling_factor_map[it->first];
 				for(std::vector<unsigned int>::const_iterator it2 = tex_per_entry.begin(); it2 != tex_per_entry.end(); ++it2)
-					buffer_configuration.add_per_entry_linear_addressing_through_texture(*it2);
+					buffer_configuration.add_per_entry_linear_addressing_through_texture(*it2 * cumulative_tiling_factor);
 			}
 
 			buffer_config_without_data_and_momentum = buffer_configuration;

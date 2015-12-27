@@ -179,8 +179,6 @@ namespace nnforge
 				unsigned int per_item_flops = 1;
 				std::for_each(subsampling_sizes.begin(), subsampling_sizes.end(), per_item_flops *= boost::lambda::_1);
 				per_item_flops -= 1;
-				if (tiling)
-					neuron_count *= get_tiling_factor();
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 			}
 		case layer_action::backward_data:
@@ -188,6 +186,16 @@ namespace nnforge
 		default:
 			return 0.0F;
 		}
+	}
+
+	tiling_factor max_subsampling_layer::get_tiling_factor() const
+	{
+		std::vector<tiling_factor> tiling_factor_list = get_tiling_factor_list();
+
+		tiling_factor res = 1;
+		std::for_each(tiling_factor_list.begin(), tiling_factor_list.end(), res *= boost::lambda::_1);
+
+		return res;
 	}
 
 	std::vector<tiling_factor> max_subsampling_layer::get_tiling_factor_list() const

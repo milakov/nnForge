@@ -252,6 +252,7 @@ namespace nnforge
 					layer_action action = current_layer_name_with_action.get_action();
 					layer::const_ptr current_layer = schema->find_layer(layer_name);
 					const std::set<layer_action>& actions = layer_name_to_action_set_map[layer_name];
+					unsigned int tiling_factor = cumulative_tiling_factor_map[layer_name];
 
 					plain_buffer::ptr temporary_working_per_entry_buffer;
 					{
@@ -303,7 +304,7 @@ namespace nnforge
 								input_layer_configuration_specific_list,
 								output_layer_configuration_specific,
 								actions,
-								entry_read_count);
+								entry_read_count * tiling_factor);
 						}
 						break;
 					case layer_action::backward_data:
@@ -372,7 +373,7 @@ namespace nnforge
 								output_layer_configuration_specific,
 								add_output_actions.find(current_layer_name_with_action) != add_output_actions.end(),
 								actions,
-								entry_read_count);
+								entry_read_count * tiling_factor);
 						}
 						break;
 					case layer_action::backward_weights:
@@ -423,7 +424,7 @@ namespace nnforge
 								input_layer_configuration_specific_list,
 								output_layer_configuration_specific,
 								actions,
-								entry_read_count);
+								entry_read_count * tiling_factor);
 						}
 						break;
 					case layer_action::update_weights:
@@ -454,11 +455,11 @@ namespace nnforge
 					}
 				}
 
-				for(int entry_id = 0; entry_id < entry_read_count; ++entry_id)
+				for(int entry_id = 0; entry_id < entry_read_count * static_cast<int>(output_layers_tiling_factor); ++entry_id)
 				{
 					std::map<std::string, const float *> data_map;
 					for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
-						data_map.insert(std::make_pair(*it, ((float *)(*dedicated_buffers[*it])) + entry_id * (dedicated_per_entry_data_name_to_size_map[*it] / sizeof(float))));
+						data_map.insert(std::make_pair(*it, ((float *)(*dedicated_buffers[*it])) + entry_id * (dedicated_per_entry_data_name_to_size_map[*it] / sizeof(float) / output_layers_tiling_factor)));
 					writer.write(data_map);
 				}
 
@@ -530,7 +531,7 @@ namespace nnforge
 			std::set<std::string> separate_buffers_layer_names(output_layer_names.begin(), output_layer_names.end());
 			separate_buffers_layer_names.insert(data_layer_names.begin(), data_layer_names.end());
 			for(std::set<std::string>::const_iterator it = separate_buffers_layer_names.begin(); it != separate_buffers_layer_names.end(); ++it)
-				dedicated_per_entry_data_name_to_size_map.insert(std::make_pair(*it, layer_config_map.find(*it)->second.get_neuron_count() * sizeof(float)));
+				dedicated_per_entry_data_name_to_size_map.insert(std::make_pair(*it, layer_config_map.find(*it)->second.get_neuron_count() * cumulative_tiling_factor_map[*it] * sizeof(float)));
 		}
 
 		void backward_propagation_plain::setup_temporary_working_fixed_buffer_sizes()
@@ -605,7 +606,7 @@ namespace nnforge
 						{
 						case layer_action::forward:
 							{
-								size_t buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * sizeof(float);
+								size_t buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[layer_name] * sizeof(float);
 								if (dedicated_output_buffers.find(it->get_name()) == dedicated_output_buffers.end())
 										current_buffers.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), static_cast<float>(buffer_size_per_entry)));
 							}
@@ -615,7 +616,7 @@ namespace nnforge
 									plain_config,
 									l,
 									input_layer_configuration_specific_list,
-									output_layer_configuration_specific);
+									output_layer_configuration_specific) * cumulative_tiling_factor_map[layer_name];
 								if (temporary_per_entry_buffer_size > 0)
 									current_buffers.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::temporary_buffer), static_cast<float>(temporary_per_entry_buffer_size)));
 							}
@@ -623,7 +624,7 @@ namespace nnforge
 						case layer_action::backward_data:
 							{
 								const std::string& previous_layer_name = schema->get_layer(layer_name)->input_layer_instance_names[it->get_action().get_backprop_index()];
-								size_t buffer_size_per_entry = layer_config_map.find(previous_layer_name)->second.get_neuron_count() * sizeof(float);
+								size_t buffer_size_per_entry = layer_config_map.find(previous_layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[previous_layer_name] * sizeof(float);
 								current_buffers.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), static_cast<float>(buffer_size_per_entry)));
 							}
 							break;
@@ -636,7 +637,7 @@ namespace nnforge
 								plain_config,
 								l,
 								input_layer_configuration_specific_list,
-								output_layer_configuration_specific);
+								output_layer_configuration_specific) * cumulative_tiling_factor_map[layer_name];
 							if (temporary_working_per_entry_buffer_size > 0)
 								current_buffers.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::working_buffer), static_cast<float>(temporary_working_per_entry_buffer_size)));
 						}
@@ -748,12 +749,12 @@ namespace nnforge
 						switch (it->first.get_action().get_action_type())
 						{
 						case layer_action::forward:
-							buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * sizeof(float);
+							buffer_size_per_entry = layer_config_map.find(layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[layer_name] * sizeof(float);
 							break;
 						case layer_action::backward_data:
 							{
 								const std::string& previous_layer_name = schema->get_layer(layer_name)->input_layer_instance_names[it->first.get_action().get_backprop_index()];
-								buffer_size_per_entry = layer_config_map.find(previous_layer_name)->second.get_neuron_count() * sizeof(float);
+								buffer_size_per_entry = layer_config_map.find(previous_layer_name)->second.get_neuron_count() * cumulative_tiling_factor_map[previous_layer_name] * sizeof(float);
 							}
 							break;
 						default:
@@ -762,11 +763,11 @@ namespace nnforge
 						break;
 					case buffer_lifetime::working_buffer:
 						temporary_working_per_entry_data_action_to_set_map.insert(std::make_pair(it->first, set_id));
-						buffer_size_per_entry = updaters[layer_name]->get_temporary_working_per_entry_buffer_size(it->first.get_action(), layer_name_to_action_set_map[layer_name], plain_config, l, input_layer_configuration_specific_list, output_layer_configuration_specific);
+						buffer_size_per_entry = updaters[layer_name]->get_temporary_working_per_entry_buffer_size(it->first.get_action(), layer_name_to_action_set_map[layer_name], plain_config, l, input_layer_configuration_specific_list, output_layer_configuration_specific) * cumulative_tiling_factor_map[layer_name];
 						break;
 					case buffer_lifetime::temporary_buffer:
 						temporary_per_entry_data_action_to_set_map.insert(std::make_pair(it->first, set_id));
-						buffer_size_per_entry = updaters[layer_name]->get_temporary_per_entry_buffer_size(layer_name_to_action_set_map[layer_name], plain_config, l, input_layer_configuration_specific_list, output_layer_configuration_specific);
+						buffer_size_per_entry = updaters[layer_name]->get_temporary_per_entry_buffer_size(layer_name_to_action_set_map[layer_name], plain_config, l, input_layer_configuration_specific_list, output_layer_configuration_specific) * cumulative_tiling_factor_map[layer_name];
 						break;
 					default:
 						throw neural_network_exception((boost::format("Unexpected buffer lifetime %1% encountered for layer %2% action %3%") % it->second.str() % it->first.get_name() % it->first.get_action().str()).str());
