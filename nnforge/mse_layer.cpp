@@ -127,4 +127,14 @@ namespace nnforge
 			return 0.0F;
 		}
 	}
+
+	std::vector<std::string> mse_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		if (scale != 1.0F)
+			res.push_back((boost::format("scale %|1$.5f|") % scale).str());
+
+		return res;
+	}
 }

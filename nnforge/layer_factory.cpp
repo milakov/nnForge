@@ -26,12 +26,16 @@ namespace nnforge
 	{
 		std::string type_name = sample_layer->get_type_name();
 		std::transform(type_name.begin(), type_name.end(), type_name.begin(), ::tolower);
-		return sample_name_layer_map.insert(sample_name_map::value_type(type_name, sample_layer)).second;
+		sample_name_id_map.insert(std::make_pair(type_name, static_cast<unsigned int>(sample_name_id_map.size())));
+		return sample_name_layer_map.insert(std::make_pair(type_name, sample_layer)).second;
 	}
 
 	bool layer_factory::unregister_layer(const std::string& layer_type_name)
 	{
-		return sample_name_layer_map.erase(layer_type_name) == 1;
+		std::string type_name = layer_type_name;
+		std::transform(type_name.begin(), type_name.end(), type_name.begin(), ::tolower);
+		sample_name_id_map.erase(type_name);
+		return sample_name_layer_map.erase(type_name) == 1;
 	}
 
 	layer::ptr layer_factory::create_layer(const std::string& layer_type_name) const
@@ -39,11 +43,24 @@ namespace nnforge
 		std::string type_name = layer_type_name;
 		std::transform(type_name.begin(), type_name.end(), type_name.begin(), ::tolower);
 
-		sample_name_map::const_iterator i = sample_name_layer_map.find(type_name);
+		std::map<std::string, layer::const_ptr>::const_iterator it = sample_name_layer_map.find(type_name);
 
-		if (i == sample_name_layer_map.end())
+		if (it == sample_name_layer_map.end())
 			throw neural_network_exception((boost::format("No layer is registered with name %1%") % layer_type_name).str());
 
-		return i->second->clone();
+		return it->second->clone();
+	}
+
+	unsigned int layer_factory::get_layer_type_id(const std::string& layer_type_name) const
+	{
+		std::string type_name = layer_type_name;
+		std::transform(type_name.begin(), type_name.end(), type_name.begin(), ::tolower);
+
+		std::map<std::string, unsigned int>::const_iterator it = sample_name_id_map.find(type_name);
+
+		if (it == sample_name_id_map.end())
+			throw neural_network_exception((boost::format("No layer is registered with name %1%") % layer_type_name).str());
+
+		return it->second;
 	}
 }

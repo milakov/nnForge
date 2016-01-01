@@ -20,6 +20,7 @@
 #include "proto/nnforge.pb.h"
 
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace nnforge
 {
@@ -123,5 +124,17 @@ namespace nnforge
 	std::set<unsigned int> parametric_rectified_linear_layer::get_weight_decay_part_id_set() const
 	{
 		return std::set<unsigned int>();
+	}
+
+	std::vector<std::string> parametric_rectified_linear_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		std::stringstream ss;
+		ss << "fm " << feature_map_count;
+
+		res.push_back(ss.str());
+
+		return res;
 	}
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ namespace nnforge
 		virtual layer_data_configuration_list get_layer_data_configuration_list() const;
 
 		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;
+
+		virtual std::vector<std::string> get_parameter_strings() const;
 
 		static const std::string layer_type_name;
 

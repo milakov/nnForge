@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace nnforge
 {
@@ -207,6 +208,26 @@ namespace nnforge
 			for(std::vector<unsigned int>::const_iterator it = subsampling_sizes.begin(); it != subsampling_sizes.end(); ++it)
 				res.push_back(*it);
 		}
+
+		return res;
+	}
+
+	std::vector<std::string> max_subsampling_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		std::stringstream ss;
+		for(int i = 0; i < subsampling_sizes.size(); ++i)
+		{
+			if (i != 0)
+				ss << "x";
+			ss << subsampling_sizes[i];
+		}
+
+		if (tiling)
+			ss << ", tiling";
+
+		res.push_back(ss.str());
 
 		return res;
 	}

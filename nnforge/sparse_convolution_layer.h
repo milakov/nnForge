@@ -75,6 +75,8 @@ namespace nnforge
 
 		virtual std::set<unsigned int> get_weight_decay_part_id_set() const;
 
+		virtual std::vector<std::string> get_parameter_strings() const;
+
 		static const std::string layer_type_name;
 
 	protected:

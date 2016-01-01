@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -48,17 +48,6 @@ namespace nnforge
 		detect_cycles();
 	}
 	
-	/*
-	std::vector<layer_data_configuration_list> network_schema::get_layer_data_configuration_list_list() const
-	{
-		std::vector<layer_data_configuration_list> res;
-
-		for(const_layer_list::const_iterator it = layers.begin(); it != layers.end(); ++it)
-			res.push_back((*it)->get_layer_data_configuration_list());
-
-		return res;
-	}
-*/
 	void network_schema::write_proto(std::ostream& stream_to_write_to) const
 	{
 		protobuf::NetworkSchema schema;
@@ -581,23 +570,26 @@ namespace nnforge
 		return res;
 	}
 
-	network_schema::gv_vertex_writer::gv_vertex_writer(
-		const schema_graph& g,
-		const std::map<std::string, unsigned int>& layer_name_color_map)
+	network_schema::gv_vertex_writer::gv_vertex_writer(const schema_graph& g)
 		: g(g)
-		, layer_name_color_map(layer_name_color_map)
 	{
 	}
 
 	void network_schema::gv_vertex_writer::operator()(std::ostream& out, const network_schema::schema_graph::vertex_descriptor& v) const
 	{
 		out << " [";
-		out << " label=\"" << g[v].l->instance_name << "\"";
+		
+		out << " label=<<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR><TD><B>" << g[v].l->instance_name << "</B></TD></TR>";
+		out << "<TR><TD>" << g[v].l->get_type_name() << "</TD></TR>";
+		std::vector<std::string> params = g[v].l->get_parameter_strings();
+		for(std::vector<std::string>::const_iterator it2 = params.begin(); it2 != params.end(); ++it2)
+			out << "<TR><TD>" << *it2 << "</TD></TR>";
+		out << "</TABLE>>";
+		
 		out << " shape=" << ((g[v].l->get_type_name() == data_layer::layer_type_name) ? "parallelogram" : "box") << "";
 		
-		std::map<std::string, unsigned int>::const_iterator color_it = layer_name_color_map.find(g[v].l->instance_name);
-		if (color_it != layer_name_color_map.end())
-			out << " style=filled fillcolor=\"" << single_color_palette::get_const_instance().get_color_name(color_it->second) << "\"";
+		unsigned int layer_type_id = single_layer_factory::get_mutable_instance().get_layer_type_id(g[v].l->get_type_name());
+		out << " style=filled fillcolor=\"" << single_color_palette::get_const_instance().get_color_name(layer_type_id) << "\"";
 
 		out << " ]";
 	}
@@ -611,13 +603,12 @@ namespace nnforge
 	{
 	}
 
-	void network_schema::write_gv(
-		std::ostream& stream_to_write_to,
-		const std::map<std::string, unsigned int>& layer_name_color_map) const
+	void network_schema::write_gv(std::ostream& stream_to_write_to) const
 	{
 		boost::write_graphviz(
-			stream_to_write_to, boost::make_reverse_graph(layers),
-			gv_vertex_writer(layers, layer_name_color_map),
+			stream_to_write_to,
+			boost::make_reverse_graph(layers),
+			gv_vertex_writer(layers),
 			boost::default_writer(),
 			gv_graph_writer(layers));
 	}
@@ -650,69 +641,5 @@ namespace nnforge
 
 		return res;
 	}
-	
-/*
-	layer_configuration_specific_list network_schema::get_layer_configuration_specific_list_reverse(const layer_configuration_specific& output_layer_configuration_specific) const
-	{
-		layer_configuration_specific_list res;
-
-		res.resize(layers.size() + 1);
-		res[layers.size()] = output_layer_configuration_specific;
-
-		for(unsigned int i = static_cast<unsigned int>(layers.size()); i > 0; --i)
-			res[i - 1] = (layers[i - 1]->get_input_layer_configuration_specific(res[i]));
-
-		return res;
-	}
-
-	std::vector<std::pair<unsigned int, unsigned int> > network_schema::get_input_rectangle_borders(
-		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
-		unsigned int output_layer_id) const
-	{
-		std::vector<std::pair<unsigned int, unsigned int> > input_rectangle_borders = output_rectangle_borders;
-
-		for(int i = static_cast<int>(output_layer_id); i >= 0; --i)
-			input_rectangle_borders = layers[i]->get_input_rectangle_borders(input_rectangle_borders);
-
-		return input_rectangle_borders;
-	}
-
-	std::vector<unsigned int> network_schema::get_output_strides() const
-	{
-		std::vector<tiling_factor> min_factors;
-		std::vector<tiling_factor> current_factors;
-		for(int i = static_cast<int>(layers.size() - 1); i >= 0; --i)
-		{
-			std::vector<tiling_factor> tf_list = layers[i]->get_tiling_factor_list();
-
-			for(int j = 0; j < tf_list.size(); ++j)
-			{
-				if (j < current_factors.size())
-					current_factors[j] *= tf_list[j];
-				else
-					current_factors.push_back(tf_list[j]) ;
-			}
-
-			for(int j = 0; j < current_factors.size(); ++j)
-			{
-				if (j < min_factors.size())
-					min_factors[j] = std::min(min_factors[j], current_factors[j]);
-				else
-					min_factors.push_back(current_factors[j]);
-			}
-		}
-
-		std::vector<unsigned int> res;
-		for(int i = 0; i < min_factors.size(); ++i)
-		{
-			if (min_factors[i] > tiling_factor(1))
-				throw neural_network_exception((boost::format("network_schema::get_output_strides - invalid minimum stride %1% encountered at dimension %2%") % min_factors[i].str() % i).str());
-
-			res.push_back(min_factors[i].get_inverse());
-		}
-
-		return res;
-	}
-	*/
 }
 

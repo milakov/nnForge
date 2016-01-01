@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-6 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 #include "gradient_modifier_layer.h"
 
 #include "proto/nnforge.pb.h"
+
+#include <boost/format.hpp>
 
 namespace nnforge
 {
@@ -75,5 +77,14 @@ namespace nnforge
 		{
 			scale = layer_proto_typed->gradient_modifier_param().scale();
 		}
+	}
+
+	std::vector<std::string> gradient_modifier_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		res.push_back((boost::format("gradient scale %|1$.3f|") % scale).str());
+
+		return res;
 	}
 }

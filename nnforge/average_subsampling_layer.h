@@ -53,6 +53,8 @@ namespace nnforge
 
 		virtual void read_proto(const void * layer_proto);
 
+		virtual std::vector<std::string> get_parameter_strings() const;
+
 		static const std::string layer_type_name;
 
 	private:

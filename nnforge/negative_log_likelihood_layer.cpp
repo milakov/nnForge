@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -126,5 +126,15 @@ namespace nnforge
 		default:
 			return 0.0F;
 		}
+	}
+
+	std::vector<std::string> negative_log_likelihood_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		if (scale != 1.0F)
+			res.push_back((boost::format("scale %|1$.5f|") % scale).str());
+
+		return res;
 	}
 }

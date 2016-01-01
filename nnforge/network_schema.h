@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -104,9 +104,7 @@ namespace nnforge
 		// Throws exception in case layer is not found
 		layer::const_ptr get_layer(const std::string& instance_name) const;
 
-		void write_gv(
-			std::ostream& stream_to_write_to,
-			const std::map<std::string, unsigned int>& layer_name_color_map = std::map<std::string, unsigned int>()) const;
+		void write_gv(std::ostream& stream_to_write_to) const;
 
 	public:
 		std::string name;
@@ -175,15 +173,12 @@ namespace nnforge
 
 		struct gv_vertex_writer
 		{
-			gv_vertex_writer(
-				const schema_graph& g,
-				const std::map<std::string, unsigned int>& layer_name_color_map);
+			gv_vertex_writer(const schema_graph& g);
 
 			void operator()(std::ostream& out, const schema_graph::vertex_descriptor& v) const;
 
 		protected:
 			const schema_graph& g;
-			const std::map<std::string, unsigned int>& layer_name_color_map;
 		};
 
 		struct gv_graph_writer

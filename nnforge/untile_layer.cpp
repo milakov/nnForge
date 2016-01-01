@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace nnforge
 {
@@ -202,6 +203,31 @@ namespace nnforge
 			for(int j = 0; j < upsampling_sizes.size(); ++j)
 				res[j] = res[j] * tiling_factor(upsampling_sizes[j], false);
 		}
+
+		return res;
+	}
+
+	std::vector<std::string> untile_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		std::stringstream ss;
+
+		ss << "upsampling ";
+		for(int i = 0; i < upsampling_sizes_list.size(); ++i)
+		{
+			if (i != 0)
+				ss << ", ";
+			const std::vector<unsigned int>& upsampling_sizes = upsampling_sizes_list[i];
+			for(int j = 0; j < upsampling_sizes.size(); ++j)
+			{
+				if (j != 0)
+					ss << "x";
+				ss << upsampling_sizes[j];
+			}
+		}
+
+		res.push_back(ss.str());
 
 		return res;
 	}

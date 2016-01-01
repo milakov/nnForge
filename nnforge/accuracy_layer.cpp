@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -141,5 +141,17 @@ namespace nnforge
 			s << (boost::format("Top-%1% %|2$.2f|%%/%|3$.2f|%%") % (top_i_index + 1) % acc_val % (100.0F - acc_val)).str();
 		}
 		return s.str();
+	}
+
+	std::vector<std::string> accuracy_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		std::stringstream ss;
+		ss << "top " << top_n;
+
+		res.push_back(ss.str());
+
+		return res;
 	}
 }

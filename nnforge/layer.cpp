@@ -163,6 +163,11 @@ namespace nnforge
 		return std::set<unsigned int>();
 	}
 
+	std::vector<std::string> layer::get_parameter_strings() const
+	{
+		return std::vector<std::string>();
+	}
+
 	tiling_factor layer::get_tiling_factor() const
 	{
 		return 1;
