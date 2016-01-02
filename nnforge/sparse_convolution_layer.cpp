@@ -455,55 +455,58 @@ namespace nnforge
 	{
 		std::vector<std::string> res;
 
-		std::stringstream ss;
-
-		if (window_sizes.empty())
 		{
-			ss << "fc";
-		}
-		else
-		{
-			for(int i = 0; i < window_sizes.size(); ++i)
+			std::stringstream ss;
+			if (window_sizes.empty())
 			{
-				if (i != 0)
-					ss << "x";
-				ss << window_sizes[i];
+				ss << "fc";
 			}
-		}
-		ss << ", fm " << input_feature_map_count << "x" << output_feature_map_count;
-
-		bool empty_padding = true;
-		for(int i = 0; i < left_zero_padding.size(); ++i)
-		{
-			if ((left_zero_padding[i] != 0) || (right_zero_padding[i] != 0))
+			else
 			{
-				empty_padding = false;
-				break;
+				for(int i = 0; i < window_sizes.size(); ++i)
+				{
+					if (i != 0)
+						ss << "x";
+					ss << window_sizes[i];
+				}
 			}
-		}
-		if (!empty_padding)
-		{
-			ss << ", pad ";
+			ss << ", fm " << input_feature_map_count << "x" << output_feature_map_count;
+
+			bool empty_padding = true;
 			for(int i = 0; i < left_zero_padding.size(); ++i)
 			{
-				if (i != 0)
-					ss << "x";
-				if (left_zero_padding[i] == right_zero_padding[i])
-					ss << left_zero_padding[i];
-				else
-					ss << left_zero_padding[i] << "_" << right_zero_padding[i];
+				if ((left_zero_padding[i] != 0) || (right_zero_padding[i] != 0))
+				{
+					empty_padding = false;
+					break;
+				}
 			}
+			if (!empty_padding)
+			{
+				ss << ", pad ";
+				for(int i = 0; i < left_zero_padding.size(); ++i)
+				{
+					if (i != 0)
+						ss << "x";
+					if (left_zero_padding[i] == right_zero_padding[i])
+						ss << left_zero_padding[i];
+					else
+						ss << left_zero_padding[i] << "_" << right_zero_padding[i];
+				}
+			}
+
+			res.push_back(ss.str());
 		}
 
-		res.push_back(ss.str());
-		ss.clear();
+		{
+			std::stringstream ss;
+			if (feature_map_connection_sparsity_ratio >= 0.0F)
+				ss << (boost::format("sparsity ratio %|1$.5f|") % feature_map_connection_sparsity_ratio).str();
+			else
+				ss << "connections " << feature_map_connection_count;
 
-		if (feature_map_connection_sparsity_ratio >= 0.0F)
-			ss << (boost::format("fm connection ratio %|1$.5f|") % feature_map_connection_sparsity_ratio).str();
-		else
-			ss << "fm connections " << feature_map_connection_count;
-
-		res.push_back(ss.str());
+			res.push_back(ss.str());
+		}
 
 		return res;
 	}

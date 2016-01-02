@@ -104,7 +104,10 @@ namespace nnforge
 		// Throws exception in case layer is not found
 		layer::const_ptr get_layer(const std::string& instance_name) const;
 
-		void write_gv(std::ostream& stream_to_write_to) const;
+		void write_gv(
+			std::ostream& stream_to_write_to,
+			const std::map<std::string, layer_configuration_specific>& layer_config_map = std::map<std::string, layer_configuration_specific>(),
+			const std::map<std::string, unsigned int>& cumulative_tiling_factor_map = std::map<std::string, unsigned int>()) const;
 
 	public:
 		std::string name;
@@ -173,12 +176,17 @@ namespace nnforge
 
 		struct gv_vertex_writer
 		{
-			gv_vertex_writer(const schema_graph& g);
+			gv_vertex_writer(
+				const schema_graph& g,
+				const std::map<std::string, layer_configuration_specific>& layer_config_map,
+				const std::map<std::string, unsigned int>& cumulative_tiling_factor_map);
 
 			void operator()(std::ostream& out, const schema_graph::vertex_descriptor& v) const;
 
 		protected:
 			const schema_graph& g;
+			const std::map<std::string, layer_configuration_specific>& layer_config_map;
+			const std::map<std::string, unsigned int>& cumulative_tiling_factor_map;
 		};
 
 		struct gv_graph_writer

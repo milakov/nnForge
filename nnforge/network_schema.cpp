@@ -32,6 +32,7 @@
 #include <boost/graph/sequential_vertex_coloring.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/reverse_graph.hpp>
+#include <sstream>
 
 namespace nnforge
 {
@@ -570,8 +571,13 @@ namespace nnforge
 		return res;
 	}
 
-	network_schema::gv_vertex_writer::gv_vertex_writer(const schema_graph& g)
+	network_schema::gv_vertex_writer::gv_vertex_writer(
+		const schema_graph& g,
+		const std::map<std::string, layer_configuration_specific>& layer_config_map,
+		const std::map<std::string, unsigned int>& cumulative_tiling_factor_map)
 		: g(g)
+		, layer_config_map(layer_config_map)
+		, cumulative_tiling_factor_map(cumulative_tiling_factor_map)
 	{
 	}
 
@@ -580,13 +586,43 @@ namespace nnforge
 		out << " [";
 		
 		out << " label=<<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR><TD><B>" << g[v].l->instance_name << "</B></TD></TR>";
+
 		out << "<TR><TD>" << g[v].l->get_type_name() << "</TD></TR>";
+
 		std::vector<std::string> params = g[v].l->get_parameter_strings();
 		for(std::vector<std::string>::const_iterator it2 = params.begin(); it2 != params.end(); ++it2)
 			out << "<TR><TD>" << *it2 << "</TD></TR>";
+
+		std::stringstream config_ss;
+		std::map<std::string, layer_configuration_specific>::const_iterator config_it = layer_config_map.find(g[v].l->instance_name);
+		if (config_it != layer_config_map.end())
+		{
+			for(int i = 0; i < config_it->second.dimension_sizes.size(); ++i)
+			{
+				if (i != 0)
+					config_ss << "x";
+				config_ss << config_it->second.dimension_sizes[i];
+			}
+			if (!config_ss.str().empty())
+				config_ss << ", ";
+			config_ss << "fm " << config_it->second.feature_map_count;
+		}
+		std::map<std::string, unsigned int>::const_iterator tiling_factor_it = cumulative_tiling_factor_map.find(g[v].l->instance_name);
+		if ((tiling_factor_it != cumulative_tiling_factor_map.end()) && (tiling_factor_it->second != 1))
+		{
+			if (!config_ss.str().empty())
+				config_ss << ", ";
+			config_ss << "samples " << tiling_factor_it->second;
+		}
+		if (!config_ss.str().empty())
+		{
+			out << "<HR/>";
+			out << "<TR><TD>" << config_ss.str() << "</TD></TR>";
+		}
+
 		out << "</TABLE>>";
 		
-		out << " shape=" << ((g[v].l->get_type_name() == data_layer::layer_type_name) ? "parallelogram" : "box") << "";
+		out << " shape=" << ((g[v].l->get_type_name() == data_layer::layer_type_name) ? "invhouse" : "box") << "";
 		
 		unsigned int layer_type_id = single_layer_factory::get_mutable_instance().get_layer_type_id(g[v].l->get_type_name());
 		out << " style=filled fillcolor=\"" << single_color_palette::get_const_instance().get_color_name(layer_type_id) << "\"";
@@ -603,12 +639,15 @@ namespace nnforge
 	{
 	}
 
-	void network_schema::write_gv(std::ostream& stream_to_write_to) const
+	void network_schema::write_gv(
+		std::ostream& stream_to_write_to,
+		const std::map<std::string, layer_configuration_specific>& layer_config_map,
+		const std::map<std::string, unsigned int>& cumulative_tiling_factor_map) const
 	{
 		boost::write_graphviz(
 			stream_to_write_to,
 			boost::make_reverse_graph(layers),
-			gv_vertex_writer(layers),
+			gv_vertex_writer(layers, layer_config_map, cumulative_tiling_factor_map),
 			boost::default_writer(),
 			gv_graph_writer(layers));
 	}

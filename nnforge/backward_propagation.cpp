@@ -48,14 +48,6 @@ namespace nnforge
 			this->schema->write_gv(out);
 		}
 
-		std::vector<layer::const_ptr> layers = this->schema->get_layers();
-		for(std::vector<layer::const_ptr>::const_iterator it = layers.begin(); it != layers.end(); ++it)
-		{
-			layer::const_ptr l = *it;
-			if (l->get_tiling_factor() != tiling_factor(1))
-				throw neural_network_exception((boost::format("Non-unit tiling factor %1% for layer %2% not supported for backward_propagation") % l->get_tiling_factor().str() % l->instance_name).str());
-		}
-
 		action_schema = this->schema->get_actions_for_backward_propagation(
 			output_layer_names,
 			error_source_layer_names,
@@ -151,6 +143,12 @@ namespace nnforge
 			return;
 
 		layer_config_map = schema->get_layer_configuration_specific_map(input_configuration_specific_map_filtered);
+
+		if (debug->is_debug())
+		{
+			boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_schema_with_feature_map_configs", "gv"), std::ios_base::out | std::ios_base::trunc);
+			this->schema->write_gv(out, layer_config_map, cumulative_tiling_factor_map);
+		}
 
 		update_flops();
 
