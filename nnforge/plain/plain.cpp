@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@
 #include "accuracy_layer_tester_plain.h"
 #include "gradient_modifier_layer_tester_plain.h"
 #include "concat_layer_tester_plain.h"
+#include "reshape_layer_tester_plain.h"
 
 #include "layer_updater_plain_factory.h"
 
@@ -63,6 +64,7 @@
 #include "accuracy_layer_updater_plain.h"
 #include "gradient_modifier_layer_updater_plain.h"
 #include "concat_layer_updater_plain.h"
+#include "reshape_layer_updater_plain.h"
 
 namespace nnforge
 {
@@ -93,6 +95,7 @@ namespace nnforge
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new accuracy_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new gradient_modifier_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new concat_layer_tester_plain()));
+			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new reshape_layer_tester_plain()));
 
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new hyperbolic_tangent_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new sigmoid_layer_updater_plain()));
@@ -113,6 +116,7 @@ namespace nnforge
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new accuracy_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new gradient_modifier_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new concat_layer_updater_plain()));
+			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new reshape_layer_updater_plain()));
 		}
 	}
 }

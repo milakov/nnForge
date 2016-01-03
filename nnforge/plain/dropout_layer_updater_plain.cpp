@@ -137,6 +137,17 @@ namespace nnforge
 			}
 		}
 
+		int dropout_layer_updater_plain::get_input_index_layer_can_write(
+			const layer_action& action,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return 0;
+		}
+
 		bool dropout_layer_updater_plain::is_backward_data_dependent_on_input_buffer(
 			unsigned int action_input_index,
 			unsigned int data_input_index,

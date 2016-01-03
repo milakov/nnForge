@@ -18,23 +18,12 @@
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
+#include "neural_network_cublas_exception.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		__global__ void concat_backprop_upd_kernel(
-			float * __restrict input_errors,
-			const float * __restrict output_errors,
-			int elem_count) 
-		{
-			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
-			if (elem_id < elem_count)
-			{
-				input_errors[elem_id] += output_errors[elem_id];
-			}
-		}
-
 		concat_layer_updater_cuda::concat_layer_updater_cuda()
 		{
 		}
@@ -107,13 +96,16 @@ namespace nnforge
 
 			if (add_update_to_destination)
 			{
-				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
-					*cuda_config,
-					elem_count);
-				concat_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-					*input_errors_buffer,
+				cublas_safe_call(cublasSetStream(cuda_config->get_cublas_handle(), stream_id));
+				float alpha = 1.0F;
+				cublas_safe_call(cublasSaxpy(
+					cuda_config->get_cublas_handle(),
+					elem_count,
+					&alpha,
 					(const float *)(*output_errors_buffer) + offset,
-					elem_count);
+					1,
+					*input_errors_buffer,
+					1));
 			}
 			else
 			{

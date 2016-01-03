@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,29 +14,29 @@
  *  limitations under the License.
  */
 
-#include "concat_layer_updater_plain.h"
+#include "reshape_layer_updater_plain.h"
 
-#include "../concat_layer.h"
+#include "../reshape_layer.h"
 #include <cstring>
 
 namespace nnforge
 {
 	namespace plain
 	{
-		concat_layer_updater_plain::concat_layer_updater_plain()
+		reshape_layer_updater_plain::reshape_layer_updater_plain()
 		{
 		}
 
-		concat_layer_updater_plain::~concat_layer_updater_plain()
+		reshape_layer_updater_plain::~reshape_layer_updater_plain()
 		{
 		}
 
-		std::string concat_layer_updater_plain::get_type_name() const
+		std::string reshape_layer_updater_plain::get_type_name() const
 		{
-			return concat_layer::layer_type_name;
+			return reshape_layer::layer_type_name;
 		}
 
-		void concat_layer_updater_plain::run_forward_propagation(
+		void reshape_layer_updater_plain::run_forward_propagation(
 			plain_buffer::ptr output_buffer,
 			const std::vector<plain_buffer::const_ptr>& input_buffers,
 			plain_buffer::ptr temporary_working_fixed_buffer,
@@ -51,19 +51,13 @@ namespace nnforge
 			const std::set<layer_action>& actions,
 			unsigned int entry_count) const
 		{
-			unsigned int offset = 0;
-			for(unsigned int i = 0; i < static_cast<unsigned int>(input_configuration_specific_list.size()); ++i)
-			{
-				unsigned int elem_count = input_configuration_specific_list[i].get_neuron_count() * entry_count;
-				memcpy(
-					(float *)(*output_buffer) + offset,
-					*input_buffers[i],
-					elem_count * sizeof(float));
-				offset += elem_count;
-			}
+			float * dst = *output_buffer;
+			const float * src = *input_buffers[0];
+			if (dst != src)
+				memcpy(dst, src, output_configuration_specific.get_neuron_count() * entry_count * sizeof(float));
 		}
 
-		void concat_layer_updater_plain::run_backward_data_propagation(
+		void reshape_layer_updater_plain::run_backward_data_propagation(
 			unsigned int input_index,
 			plain_buffer::ptr input_errors_buffer,
 			plain_buffer::const_ptr output_errors_buffer,
@@ -82,14 +76,8 @@ namespace nnforge
 			const std::set<layer_action>& actions,
 			unsigned int entry_count) const
 		{
-			unsigned int offset = 0;
-			for(unsigned int i = 0; i < input_index; ++i)
-			{
-				unsigned int elem_count = input_configuration_specific_list[i].get_neuron_count() * entry_count;
-				offset += elem_count;
-			}
-			const int elem_count = input_configuration_specific_list[input_index].get_neuron_count() * entry_count;
-			const float * const src = (const float *)(*output_errors_buffer) + offset;
+			const int elem_count = output_configuration_specific.get_neuron_count() * entry_count;
+			const float * const src = (const float *)(*output_errors_buffer);
 			float * const dst = *input_errors_buffer;
 
 			if (add_update_to_destination)
@@ -110,7 +98,18 @@ namespace nnforge
 			}
 		}
 
-		bool concat_layer_updater_plain::is_backward_data_dependent_on_input_buffer(
+		int reshape_layer_updater_plain::get_input_index_layer_can_write(
+			const layer_action& action,
+			const std::set<layer_action>& actions,
+			plain_running_configuration::const_ptr plain_config,
+			layer::const_ptr layer_schema,
+			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+			const layer_configuration_specific& output_configuration_specific) const
+		{
+			return 0;
+		}
+
+		bool reshape_layer_updater_plain::is_backward_data_dependent_on_input_buffer(
 			unsigned int action_input_index,
 			unsigned int data_input_index,
 			const std::set<layer_action>& actions,
@@ -122,7 +121,7 @@ namespace nnforge
 			return false;
 		}
 
-		bool concat_layer_updater_plain::is_backward_data_dependent_on_output_buffer(
+		bool reshape_layer_updater_plain::is_backward_data_dependent_on_output_buffer(
 			unsigned int action_input_index,
 			const std::set<layer_action>& actions,
 			plain_running_configuration::const_ptr plain_config,

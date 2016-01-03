@@ -26,6 +26,7 @@ message Layer {
 	optional NegativeLogLikelihoodParam negative_log_likelihood_param = 17;
 	optional CrossEntropyParam cross_entropy_param = 18;
 	optional GradientModifierParam gradient_modifier_param = 19;
+	optional ReshapeParam reshape_param = 20;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -131,6 +132,25 @@ message CrossEntropyParam {
 
 message GradientModifierParam {
 	optional float scale = 1 [default = 1.0];
+}
+
+message ReshapeParam {
+	message EntryParam {
+		optional uint32 upsampling_size = 1;
+		optional uint32 downsampling_size = 2;
+	}
+	message FeatureMapParam {
+		optional uint32 upsampling_size = 1;
+		optional uint32 downsampling_size = 2;
+	}
+	message DimensionParam {
+		optional uint32 upsampling_size = 1;
+		optional uint32 downsampling_size = 2;
+	}
+	optional EntryParam entry_param = 1;
+	optional FeatureMapParam feature_map_param = 2;
+	repeated DimensionParam dimension_param = 3;
+	optional uint32 collapse_to_dimensions = 4;
 }
 
 message CustomParam {

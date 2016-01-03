@@ -70,6 +70,10 @@
     <ClInclude Include="parametric_rectified_linear_layer_updater_cuda.h" />
     <ClInclude Include="parametric_rectified_linear_layer_updater_schema.h" />
     <ClInclude Include="rectified_linear_layer_updater_cuda.h" />
+    <ClInclude Include="reshape_layer_tester_cuda.h" />
+    <ClInclude Include="reshape_layer_testing_schema.h" />
+    <ClInclude Include="reshape_layer_updater_cuda.h" />
+    <ClInclude Include="reshape_layer_updater_schema.h" />
     <ClInclude Include="sparse_convolution_layer_tester_cuda_kepler.cuh" />
     <ClInclude Include="sparse_convolution_layer_testing_schema_helper_cuda_kepler.h" />
     <ClInclude Include="sparse_convolution_layer_updater_cuda_kepler.cuh" />
@@ -153,6 +157,7 @@
     <ClCompile Include="buffer_cuda_size_configuration.cpp" />
     <ClCompile Include="concat_layer_tester_cuda.cpp" />
     <ClCompile Include="concat_layer_testing_schema.cpp" />
+    <ClCompile Include="concat_layer_updater_cuda.cpp" />
     <ClCompile Include="concat_layer_updater_schema.cpp" />
     <ClCompile Include="convolution_layer_tester_cuda.cpp" />
     <ClCompile Include="convolution_layer_testing_schema.cpp" />
@@ -212,6 +217,10 @@
     <ClCompile Include="parametric_rectified_linear_layer_updater_schema.cpp" />
     <ClCompile Include="rectified_linear_layer_testing_schema.cpp" />
     <ClCompile Include="rectified_linear_layer_updater_schema.cpp" />
+    <ClCompile Include="reshape_layer_tester_cuda.cpp" />
+    <ClCompile Include="reshape_layer_testing_schema.cpp" />
+    <ClCompile Include="reshape_layer_updater_cuda.cpp" />
+    <ClCompile Include="reshape_layer_updater_schema.cpp" />
     <ClCompile Include="rgb_to_yuv_convert_layer_testing_schema.cpp" />
     <ClCompile Include="rgb_to_yuv_convert_layer_updater_schema.cpp" />
     <ClCompile Include="sigmoid_layer_testing_schema.cpp" />
@@ -228,7 +237,6 @@
     <CudaCompile Include="accuracy_layer_updater_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
-    <CudaCompile Include="concat_layer_updater_cuda.cu" />
     <CudaCompile Include="cross_entropy_layer_tester_cuda.cu" />
     <CudaCompile Include="cross_entropy_layer_updater_cuda.cu" />
     <CudaCompile Include="dropout_layer_updater_cuda.cu" />

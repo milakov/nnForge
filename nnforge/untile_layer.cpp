@@ -153,7 +153,7 @@ namespace nnforge
 	{
 		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_untile_param())
-			throw neural_network_exception((boost::format("No has_untile_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+			throw neural_network_exception((boost::format("No untile_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
 
 		upsampling_sizes_list.resize(layer_proto_typed->untile_param().level_param_size());
 		for(int i = 0; i < layer_proto_typed->untile_param().level_param_size(); ++i)
