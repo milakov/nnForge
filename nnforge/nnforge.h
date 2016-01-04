@@ -34,7 +34,7 @@
 #include "parametric_rectified_linear_layer.h"
 #include "untile_layer.h"
 #include "data_layer.h"
-#include "mse_layer.h"
+#include "lerror_layer.h"
 #include "accuracy_layer.h"
 #include "negative_log_likelihood_layer.h"
 #include "cross_entropy_layer.h"

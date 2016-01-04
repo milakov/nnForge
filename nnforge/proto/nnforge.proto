@@ -21,12 +21,12 @@ message Layer {
 	optional RGBToYUVConvertParam rgb_to_yuv_convert_param = 11;
 	optional TanHParam tanh_param = 12;
 	optional UnTileParam untile_param = 13;
-	optional MSEParam mse_param = 15;
 	optional AccuracyParam accuracy_param = 16;
 	optional NegativeLogLikelihoodParam negative_log_likelihood_param = 17;
 	optional CrossEntropyParam cross_entropy_param = 18;
 	optional GradientModifierParam gradient_modifier_param = 19;
 	optional ReshapeParam reshape_param = 20;
+	optional LErrorParam lerror_param = 21;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -114,8 +114,9 @@ message UnTileParam {
 	repeated UnTileLevelParam level_param = 1;
 }
 
-message MSEParam {
-	optional float scale = 1 [default = 1.0];
+message LErrorParam {
+	optional float n = 1 [default = 2.0];
+	optional float scale = 2 [default = 1.0];
 }
 
 message AccuracyParam {

@@ -42,7 +42,7 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new parametric_rectified_linear_layer(1)));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new untile_layer(std::vector<std::vector<unsigned int> >(1, std::vector<unsigned int>(1, 2)))));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new data_layer()));
-		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new mse_layer()));
+		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new lerror_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new accuracy_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new negative_log_likelihood_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new cross_entropy_layer()));

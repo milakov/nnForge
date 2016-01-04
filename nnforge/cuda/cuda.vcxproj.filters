@@ -374,12 +374,6 @@
     <ClInclude Include="forward_propagation_cuda.h">
       <Filter>Header Files\forward_propagation</Filter>
     </ClInclude>
-    <ClInclude Include="mse_layer_testing_schema.h">
-      <Filter>Header Files\testing_schemas</Filter>
-    </ClInclude>
-    <ClInclude Include="mse_layer_tester_cuda.h">
-      <Filter>Header Files\layer_testers</Filter>
-    </ClInclude>
     <ClInclude Include="accuracy_layer_testing_schema.h">
       <Filter>Header Files\testing_schemas</Filter>
     </ClInclude>
@@ -391,12 +385,6 @@
     </ClInclude>
     <ClInclude Include="backward_propagation_cuda_factory.h">
       <Filter>Header Files\backward_propagation</Filter>
-    </ClInclude>
-    <ClInclude Include="mse_layer_updater_cuda.h">
-      <Filter>Header Files\layer_updaters</Filter>
-    </ClInclude>
-    <ClInclude Include="mse_layer_updater_schema.h">
-      <Filter>Header Files\updater_schemas</Filter>
     </ClInclude>
     <ClInclude Include="accuracy_layer_updater_cuda.h">
       <Filter>Header Files\layer_updaters</Filter>
@@ -468,6 +456,18 @@
       <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
     <ClInclude Include="reshape_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="lerror_layer_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="lerror_layer_testing_schema.h">
+      <Filter>Header Files\testing_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="lerror_layer_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="lerror_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
     </ClInclude>
   </ItemGroup>
@@ -661,9 +661,6 @@
     <ClCompile Include="sparse_fully_connected_1x1_layer_tester_cuda.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
-    <ClCompile Include="mse_layer_testing_schema.cpp">
-      <Filter>Source Files\testing_schemas</Filter>
-    </ClCompile>
     <ClCompile Include="accuracy_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
     </ClCompile>
@@ -675,9 +672,6 @@
     </ClCompile>
     <ClCompile Include="layer_updater_cuda.cpp">
       <Filter>Source Files\backward_propagation</Filter>
-    </ClCompile>
-    <ClCompile Include="mse_layer_updater_schema.cpp">
-      <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
     <ClCompile Include="accuracy_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
@@ -731,6 +725,12 @@
       <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
     <ClCompile Include="reshape_layer_updater_schema.cpp">
+      <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="lerror_layer_testing_schema.cpp">
+      <Filter>Source Files\testing_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="lerror_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
   </ItemGroup>
@@ -804,17 +804,11 @@
     <CudaCompile Include="untile_layer_tester_cuda.cu">
       <Filter>Source Files\layer_testers</Filter>
     </CudaCompile>
-    <CudaCompile Include="mse_layer_tester_cuda.cu">
-      <Filter>Source Files\layer_testers</Filter>
-    </CudaCompile>
     <CudaCompile Include="accuracy_layer_tester_cuda.cu">
       <Filter>Source Files\layer_testers</Filter>
     </CudaCompile>
     <CudaCompile Include="util_cuda.cu">
       <Filter>Source Files\util</Filter>
-    </CudaCompile>
-    <CudaCompile Include="mse_layer_updater_cuda.cu">
-      <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
     <CudaCompile Include="accuracy_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
@@ -832,6 +826,12 @@
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
     <CudaCompile Include="rectified_linear_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="lerror_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="lerror_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
   </ItemGroup>

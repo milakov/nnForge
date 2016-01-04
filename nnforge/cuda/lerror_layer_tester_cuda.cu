@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,24 +14,26 @@
  *  limitations under the License.
  */
 
-#include "mse_layer_tester_cuda.h"
+#include "lerror_layer_tester_cuda.h"
 
 #include <cuda_runtime.h>
 
-#include "../mse_layer.h"
+#include "../lerror_layer.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
 		extern __shared__ float arr_sh[];
-		__global__ void mse_kernel(
+		template<int n_type>
+		__global__ void lerror_kernel(
 			float * __restrict output,
 			const float * __restrict input0,
 			const float * __restrict input1,
 			const float * __restrict scale_mask,
 			int input_feature_map_count,
 			int elem_count_per_feature_map,
+			float n_value,
 			float scale,
 			int entry_count)
 		{
@@ -54,7 +56,14 @@ namespace nnforge
 				while (feature_map_id < input_feature_map_count)
 				{
 					float local_err = input0[input_offset] - input1[input_offset];
-					err += local_err * local_err;
+
+					if (n_type == 1)
+						err += fabsf(local_err);
+					else if (n_type == 2)
+						err += local_err * local_err;
+					else
+						err += __powf(fabsf(local_err), n_value);
+
 					feature_map_id += threadblock_size;
 					input_offset += threadblock_size * elem_count_per_feature_map;
 				}
@@ -88,15 +97,15 @@ namespace nnforge
 				output[output_offset] = err * (mask * scale);
 		}
 
-		mse_layer_tester_cuda::mse_layer_tester_cuda()
+		lerror_layer_tester_cuda::lerror_layer_tester_cuda()
 		{
 		}
 
-		mse_layer_tester_cuda::~mse_layer_tester_cuda()
+		lerror_layer_tester_cuda::~lerror_layer_tester_cuda()
 		{
 		}
 
-		void mse_layer_tester_cuda::enqueue_forward_propagation(
+		void lerror_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
@@ -115,25 +124,50 @@ namespace nnforge
 				scale_mask = *input_buffers[2];
 
 			int smem_size = ((threadblock_size + 32 - 1) / 32) * sizeof(float);
-			mse_kernel<<<dim3(input_elem_count_per_feature_map_list[0], entry_count), threadblock_size, smem_size, stream_id>>>(
-				*output_buffer,
-				*input_buffers[0],
-				*input_buffers[1],
-				scale_mask,
-				input_configuration_specific_list[0].feature_map_count,
-				input_elem_count_per_feature_map_list[0],
-				scale,
-				entry_count);
+			if (n_value == 1.0F)
+				lerror_kernel<1><<<dim3(input_elem_count_per_feature_map_list[0], entry_count), threadblock_size, smem_size, stream_id>>>(
+					*output_buffer,
+					*input_buffers[0],
+					*input_buffers[1],
+					scale_mask,
+					input_configuration_specific_list[0].feature_map_count,
+					input_elem_count_per_feature_map_list[0],
+					n_value,
+					scale,
+					entry_count);
+			else if (n_value == 2.0F)
+				lerror_kernel<2><<<dim3(input_elem_count_per_feature_map_list[0], entry_count), threadblock_size, smem_size, stream_id>>>(
+					*output_buffer,
+					*input_buffers[0],
+					*input_buffers[1],
+					scale_mask,
+					input_configuration_specific_list[0].feature_map_count,
+					input_elem_count_per_feature_map_list[0],
+					n_value,
+					scale,
+					entry_count);
+			else
+				lerror_kernel<-1><<<dim3(input_elem_count_per_feature_map_list[0], entry_count), threadblock_size, smem_size, stream_id>>>(
+					*output_buffer,
+					*input_buffers[0],
+					*input_buffers[1],
+					scale_mask,
+					input_configuration_specific_list[0].feature_map_count,
+					input_elem_count_per_feature_map_list[0],
+					n_value,
+					scale,
+					entry_count);
 		}
 
-		void mse_layer_tester_cuda::tester_configured()
+		void lerror_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const mse_layer> layer_derived = nnforge_dynamic_pointer_cast<const mse_layer>(layer_schema);
+			nnforge_shared_ptr<const lerror_layer> layer_derived = nnforge_dynamic_pointer_cast<const lerror_layer>(layer_schema);
 
 			scale = layer_derived->scale;
+			n_value = layer_derived->n;
 		}
 
-		int mse_layer_tester_cuda::get_threadblock_size(int input_feature_map_count)
+		int lerror_layer_tester_cuda::get_threadblock_size(int input_feature_map_count)
 		{
 			int threadblock_size;
 

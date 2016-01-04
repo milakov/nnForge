@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,31 +14,32 @@
  *  limitations under the License.
  */
 
-#include "mse_layer_tester_plain.h"
+#include "lerror_layer_tester_plain.h"
 
-#include "../mse_layer.h"
+#include "../lerror_layer.h"
 #include "../nn_types.h"
 
 #include <array>
+#include <cmath>
 
 namespace nnforge
 {
 	namespace plain
 	{
-		mse_layer_tester_plain::mse_layer_tester_plain()
+		lerror_layer_tester_plain::lerror_layer_tester_plain()
 		{
 		}
 
-		mse_layer_tester_plain::~mse_layer_tester_plain()
+		lerror_layer_tester_plain::~lerror_layer_tester_plain()
 		{
 		}
 
-		std::string mse_layer_tester_plain::get_type_name() const
+		std::string lerror_layer_tester_plain::get_type_name() const
 		{
-			return mse_layer::layer_type_name;
+			return lerror_layer::layer_type_name;
 		}
 
-		void mse_layer_tester_plain::run_forward_propagation(
+		void lerror_layer_tester_plain::run_forward_propagation(
 			plain_buffer::ptr output_buffer,
 			const std::vector<plain_buffer::const_ptr>& input_buffers,
 			plain_buffer::ptr temporary_working_fixed_buffer,
@@ -62,8 +63,9 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const int input_feature_map_count = static_cast<int>(input_configuration_specific_list[0].feature_map_count);
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
-			nnforge_shared_ptr<const mse_layer> layer_derived = nnforge_dynamic_pointer_cast<const mse_layer>(layer_schema);
+			nnforge_shared_ptr<const lerror_layer> layer_derived = nnforge_dynamic_pointer_cast<const lerror_layer>(layer_schema);
 			const float scale = layer_derived->scale;
+			const float n_value = layer_derived->n;
 			const int total_workload = entry_count * output_neuron_count;
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
@@ -85,10 +87,29 @@ namespace nnforge
 					float err = 0.0F;
 					if (total_scale != 0.0F)
 					{
-						for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+						if (n_value == 1.0F)
 						{
-							float local_err = *(in_it_base0 + feature_map_id * input_neuron_count_per_feature_map) - *(in_it_base1 + feature_map_id * input_neuron_count_per_feature_map);
-							err += local_err * local_err;
+							for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+							{
+								float local_err = *(in_it_base0 + feature_map_id * input_neuron_count_per_feature_map) - *(in_it_base1 + feature_map_id * input_neuron_count_per_feature_map);
+								err += fabsf(local_err);
+							}
+						}
+						else if (n_value == 2.0F)
+						{
+							for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+							{
+								float local_err = *(in_it_base0 + feature_map_id * input_neuron_count_per_feature_map) - *(in_it_base1 + feature_map_id * input_neuron_count_per_feature_map);
+								err += local_err * local_err;
+							}
+						}
+						else
+						{
+							for(int feature_map_id = 0; feature_map_id < input_feature_map_count; ++feature_map_id)
+							{
+								float local_err = *(in_it_base0 + feature_map_id * input_neuron_count_per_feature_map) - *(in_it_base1 + feature_map_id * input_neuron_count_per_feature_map);
+								err += powf(fabsf(local_err), n_value);
+							}
 						}
 						err *= total_scale;
 					}

@@ -37,7 +37,7 @@
     <ClInclude Include="layer_data_custom_list.h" />
     <ClInclude Include="layer_name_with_action.h" />
     <ClInclude Include="min_weight_sequential_vertex_coloring.h" />
-    <ClInclude Include="mse_layer.h" />
+    <ClInclude Include="lerror_layer.h" />
     <ClInclude Include="negative_log_likelihood_layer.h" />
     <ClInclude Include="network_action_schema.h" />
     <ClInclude Include="neuron_value_set_data_bunch_writer.h" />
@@ -148,7 +148,7 @@
     <ClCompile Include="forward_propagation_factory.cpp" />
     <ClCompile Include="gradient_modifier_layer.cpp" />
     <ClCompile Include="layer_data_custom_list.cpp" />
-    <ClCompile Include="mse_layer.cpp" />
+    <ClCompile Include="lerror_layer.cpp" />
     <ClCompile Include="negative_log_likelihood_layer.cpp" />
     <ClCompile Include="network_action_schema.cpp" />
     <ClCompile Include="neuron_value_set_data_bunch_writer.cpp" />

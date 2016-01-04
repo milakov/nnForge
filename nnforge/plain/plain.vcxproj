@@ -43,8 +43,8 @@
     <ClInclude Include="maxout_layer_updater_plain.h" />
     <ClInclude Include="max_subsampling_layer_tester_plain.h" />
     <ClInclude Include="max_subsampling_layer_updater_plain.h" />
-    <ClInclude Include="mse_layer_tester_plain.h" />
-    <ClInclude Include="mse_layer_updater_plain.h" />
+    <ClInclude Include="lerror_layer_tester_plain.h" />
+    <ClInclude Include="lerror_layer_updater_plain.h" />
     <ClInclude Include="negative_log_likelihood_layer_tester_plain.h" />
     <ClInclude Include="forward_propagation_plain_factory.h" />
     <ClInclude Include="negative_log_likelihood_layer_updater_plain.h" />
@@ -100,8 +100,8 @@
     <ClCompile Include="maxout_layer_updater_plain.cpp" />
     <ClCompile Include="max_subsampling_layer_tester_plain.cpp" />
     <ClCompile Include="max_subsampling_layer_updater_plain.cpp" />
-    <ClCompile Include="mse_layer_tester_plain.cpp" />
-    <ClCompile Include="mse_layer_updater_plain.cpp" />
+    <ClCompile Include="lerror_layer_tester_plain.cpp" />
+    <ClCompile Include="lerror_layer_updater_plain.cpp" />
     <ClCompile Include="negative_log_likelihood_layer_tester_plain.cpp" />
     <ClCompile Include="forward_propagation_plain_factory.cpp" />
     <ClCompile Include="negative_log_likelihood_layer_updater_plain.cpp" />

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class mse_layer_tester_cuda : public layer_tester_cuda
+		class lerror_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			mse_layer_tester_cuda();
+			lerror_layer_tester_cuda();
 
-			virtual ~mse_layer_tester_cuda();
+			virtual ~lerror_layer_tester_cuda();
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
@@ -49,6 +49,7 @@ namespace nnforge
 
 		private:
 			float scale;
+			float n_value;
 		};
 	}
 }

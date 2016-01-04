@@ -22,10 +22,12 @@
 
 namespace nnforge
 {
-	class mse_layer : public layer
+	class lerror_layer : public layer
 	{
 	public:
-		mse_layer(float scale = 1.0F);
+		lerror_layer(
+			float n = 2.0F,
+			float scale = 1.0F);
 
 		virtual layer::ptr clone() const;
 
@@ -53,6 +55,7 @@ namespace nnforge
 		static const std::string layer_type_name;
 
 	public:
+		float n;
 		float scale;
 	};
 }

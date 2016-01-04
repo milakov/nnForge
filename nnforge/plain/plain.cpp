@@ -35,7 +35,7 @@
 #include "convolution_layer_tester_plain.h"
 #include "sparse_convolution_layer_tester_plain.h"
 #include "local_contrast_subtractive_layer_tester_plain.h"
-#include "mse_layer_tester_plain.h"
+#include "lerror_layer_tester_plain.h"
 #include "cross_entropy_layer_tester_plain.h"
 #include "negative_log_likelihood_layer_tester_plain.h"
 #include "accuracy_layer_tester_plain.h"
@@ -58,7 +58,7 @@
 #include "parametric_rectified_linear_layer_updater_plain.h"
 #include "convolution_layer_updater_plain.h"
 #include "sparse_convolution_layer_updater_plain.h"
-#include "mse_layer_updater_plain.h"
+#include "lerror_layer_updater_plain.h"
 #include "cross_entropy_layer_updater_plain.h"
 #include "negative_log_likelihood_layer_updater_plain.h"
 #include "accuracy_layer_updater_plain.h"
@@ -89,7 +89,7 @@ namespace nnforge
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new convolution_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new sparse_convolution_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new local_contrast_subtractive_layer_tester_plain()));
-			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new mse_layer_tester_plain()));
+			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new lerror_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new cross_entropy_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new negative_log_likelihood_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new accuracy_layer_tester_plain()));
@@ -110,7 +110,7 @@ namespace nnforge
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new parametric_rectified_linear_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new convolution_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new sparse_convolution_layer_updater_plain()));
-			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new mse_layer_updater_plain()));
+			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new lerror_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new cross_entropy_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new negative_log_likelihood_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new accuracy_layer_updater_plain()));

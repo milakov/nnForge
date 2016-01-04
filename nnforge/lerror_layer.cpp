@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "mse_layer.h"
+#include "lerror_layer.h"
 
 #include "neural_network_exception.h"
 #include "proto/nnforge.pb.h"
@@ -22,27 +22,31 @@
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace nnforge
 {
-	const std::string mse_layer::layer_type_name = "MSE";
+	const std::string lerror_layer::layer_type_name = "LError";
 
-	mse_layer::mse_layer(float scale)
-		: scale(scale)
+	lerror_layer::lerror_layer(
+		float n,
+		float scale)
+		: n(n)
+		, scale(scale)
 	{
 	}
 
-	std::string mse_layer::get_type_name() const
+	std::string lerror_layer::get_type_name() const
 	{
 		return layer_type_name;
 	}
 
-	layer::ptr mse_layer::clone() const
+	layer::ptr lerror_layer::clone() const
 	{
-		return layer::ptr(new mse_layer(*this));
+		return layer::ptr(new lerror_layer(*this));
 	}
 
-	layer_configuration mse_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
+	layer_configuration lerror_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
 	{
 		if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[1].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count != input_configuration_list[1].feature_map_count))
 			throw neural_network_exception((boost::format("Feature map counts in 2 input layers for mse_layer don't match: %1% and %2%") % input_configuration_list[0].feature_map_count % input_configuration_list[1].feature_map_count).str());
@@ -53,7 +57,7 @@ namespace nnforge
 		return layer_configuration(1, input_configuration_list[0].dimension_count);
 	}
 
-	layer_configuration_specific mse_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
+	layer_configuration_specific lerror_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		if (input_configuration_specific_list[0].feature_map_count != input_configuration_specific_list[1].feature_map_count)
 			throw neural_network_exception((boost::format("Feature map counts in 2 input layers for mse_layer don't match: %1% and %2%") % input_configuration_specific_list[0].feature_map_count % input_configuration_specific_list[1].feature_map_count).str());
@@ -73,7 +77,7 @@ namespace nnforge
 		return layer_configuration_specific(1, input_configuration_specific_list[0].dimension_sizes);
 	}
 
-	bool mse_layer::get_input_layer_configuration_specific(
+	bool lerror_layer::get_input_layer_configuration_specific(
 		layer_configuration_specific& input_configuration_specific,
 		const layer_configuration_specific& output_configuration_specific,
 		unsigned int input_layer_id) const
@@ -81,31 +85,36 @@ namespace nnforge
 		return false;
 	}
 
-	void mse_layer::write_proto(void * layer_proto) const
+	void lerror_layer::write_proto(void * layer_proto) const
 	{
-		if (scale != 1.0F)
+		if ((n != 2.0F) && (scale != 1.0F))
 		{
 			protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
-			protobuf::MSEParam * param = layer_proto_typed->mutable_mse_param();
+			protobuf::LErrorParam * param = layer_proto_typed->mutable_lerror_param();
 
-			param->set_scale(scale);
+			if (n != 2.0F)
+				param->set_n(n);
+			if (scale != 1.0F)
+				param->set_scale(scale);
 		}
 	}
 
-	void mse_layer::read_proto(const void * layer_proto)
+	void lerror_layer::read_proto(const void * layer_proto)
 	{
 		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
-		if (!layer_proto_typed->has_mse_param())
+		if (!layer_proto_typed->has_lerror_param())
 		{
+			n = 2.0F;
 			scale = 1.0F;
 		}
 		else
 		{
-			scale = layer_proto_typed->mse_param().scale();
+			n = layer_proto_typed->lerror_param().n();
+			scale = layer_proto_typed->lerror_param().scale();
 		}
 	}
 
-	float mse_layer::get_flops_per_entry(
+	float lerror_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 		const layer_action& action) const
 	{
@@ -128,12 +137,16 @@ namespace nnforge
 		}
 	}
 
-	std::vector<std::string> mse_layer::get_parameter_strings() const
+	std::vector<std::string> lerror_layer::get_parameter_strings() const
 	{
 		std::vector<std::string> res;
 
+		std::stringstream ss;
+		ss << "L" << n;
 		if (scale != 1.0F)
-			res.push_back((boost::format("scale %|1$.5f|") % scale).str());
+			ss << (boost::format(", scale %|1$.5f|") % scale).str();
+
+		res.push_back(ss.str());
 
 		return res;
 	}

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class mse_layer_testing_schema : public layer_testing_schema
+		class lerror_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			mse_layer_testing_schema();
+			lerror_layer_testing_schema();
 
-			virtual ~mse_layer_testing_schema();
+			virtual ~lerror_layer_testing_schema();
 
 			virtual std::string get_type_name() const;
 

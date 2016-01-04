@@ -140,11 +140,11 @@ layer {
 	}
 }
 layer {
-	type: "MSE"
-	name: "MSE"
+	type: "LError"
+	name: "L2_error"
 	input_layer_name: "tanh_3_layer"
 	input_layer_name: "labels"
-	mse_param { scale: 0.5 }
+	lerror_param { scale: 0.5 }
 }
 layer {
 	type: "Accuracy"

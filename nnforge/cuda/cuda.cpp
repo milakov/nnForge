@@ -34,7 +34,7 @@
 #include "dropout_layer_testing_schema.h"
 #include "parametric_rectified_linear_layer_testing_schema.h"
 #include "untile_layer_testing_schema.h"
-#include "mse_layer_testing_schema.h"
+#include "lerror_layer_testing_schema.h"
 #include "accuracy_layer_testing_schema.h"
 #include "negative_log_likelihood_layer_testing_schema.h"
 #include "cross_entropy_layer_testing_schema.h"
@@ -57,7 +57,7 @@
 #include "max_subsampling_layer_updater_schema.h"
 #include "convolution_layer_updater_schema.h"
 #include "sparse_convolution_layer_updater_schema.h"
-#include "mse_layer_updater_schema.h"
+#include "lerror_layer_updater_schema.h"
 #include "accuracy_layer_updater_schema.h"
 #include "negative_log_likelihood_layer_updater_schema.h"
 #include "cross_entropy_layer_updater_schema.h"
@@ -88,7 +88,7 @@ namespace nnforge
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new dropout_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new parametric_rectified_linear_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new untile_layer_testing_schema()));
-			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new mse_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new lerror_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new accuracy_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new negative_log_likelihood_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new cross_entropy_layer_testing_schema()));
@@ -110,7 +110,7 @@ namespace nnforge
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new max_subsampling_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new convolution_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new sparse_convolution_layer_updater_schema()));
-			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new mse_layer_updater_schema()));
+			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new lerror_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new accuracy_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new negative_log_likelihood_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new cross_entropy_layer_updater_schema()));

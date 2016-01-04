@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace plain
 	{
-		class mse_layer_updater_plain : public layer_updater_plain
+		class lerror_layer_updater_plain : public layer_updater_plain
 		{
 		public:
-			mse_layer_updater_plain();
+			lerror_layer_updater_plain();
 
-			virtual ~mse_layer_updater_plain();
+			virtual ~lerror_layer_updater_plain();
 
 			virtual std::string get_type_name() const;
 

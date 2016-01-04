@@ -155,9 +155,6 @@
     <ClInclude Include="untile_layer_tester_plain.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
-    <ClInclude Include="mse_layer_tester_plain.h">
-      <Filter>Header Files\layer_testers</Filter>
-    </ClInclude>
     <ClInclude Include="cross_entropy_layer_tester_plain.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
@@ -175,9 +172,6 @@
     </ClInclude>
     <ClInclude Include="forward_propagation_plain_factory.h">
       <Filter>Header Files\forward_propagation</Filter>
-    </ClInclude>
-    <ClInclude Include="mse_layer_updater_plain.h">
-      <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
     <ClInclude Include="cross_entropy_layer_updater_plain.h">
       <Filter>Header Files\layer_updaters</Filter>
@@ -210,6 +204,12 @@
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
     <ClInclude Include="reshape_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="lerror_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="lerror_layer_updater_plain.h">
       <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
   </ItemGroup>
@@ -322,9 +322,6 @@
     <ClCompile Include="untile_layer_tester_plain.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
-    <ClCompile Include="mse_layer_tester_plain.cpp">
-      <Filter>Source Files\layer_testers</Filter>
-    </ClCompile>
     <ClCompile Include="cross_entropy_layer_tester_plain.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
@@ -342,9 +339,6 @@
     </ClCompile>
     <ClCompile Include="forward_propagation_plain.cpp">
       <Filter>Source Files\forward_propagation</Filter>
-    </ClCompile>
-    <ClCompile Include="mse_layer_updater_plain.cpp">
-      <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
     <ClCompile Include="cross_entropy_layer_updater_plain.cpp">
       <Filter>Source Files\layer_updaters</Filter>
@@ -377,6 +371,12 @@
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
     <ClCompile Include="reshape_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
+    </ClCompile>
+    <ClCompile Include="lerror_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="lerror_layer_updater_plain.cpp">
       <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
   </ItemGroup>

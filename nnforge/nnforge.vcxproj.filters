@@ -359,9 +359,6 @@
     <ClInclude Include="toolset.h">
       <Filter>Header Files\toolset</Filter>
     </ClInclude>
-    <ClInclude Include="mse_layer.h">
-      <Filter>Header Files\layers</Filter>
-    </ClInclude>
     <ClInclude Include="neuron_value_set_data_bunch_writer.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
@@ -450,6 +447,9 @@
       <Filter>Header Files\layers</Filter>
     </ClInclude>
     <ClInclude Include="reshape_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="lerror_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
   </ItemGroup>
@@ -694,9 +694,6 @@
     <ClCompile Include="toolset.cpp">
       <Filter>Source Files\toolset</Filter>
     </ClCompile>
-    <ClCompile Include="mse_layer.cpp">
-      <Filter>Source Files\layers</Filter>
-    </ClCompile>
     <ClCompile Include="neuron_value_set_data_bunch_writer.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
@@ -773,6 +770,9 @@
       <Filter>Source Files\layers</Filter>
     </ClCompile>
     <ClCompile Include="reshape_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="lerror_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>

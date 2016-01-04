@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,38 +14,38 @@
  *  limitations under the License.
  */
 
-#include "mse_layer_updater_schema.h"
+#include "lerror_layer_testing_schema.h"
 
-#include "../mse_layer.h"
-#include "mse_layer_updater_cuda.h"
+#include "../lerror_layer.h"
+#include "lerror_layer_tester_cuda.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		mse_layer_updater_schema::mse_layer_updater_schema()
+		lerror_layer_testing_schema::lerror_layer_testing_schema()
 		{
 		}
 
-		mse_layer_updater_schema::~mse_layer_updater_schema()
+		lerror_layer_testing_schema::~lerror_layer_testing_schema()
 		{
 		}
 
-		layer_updater_schema::ptr mse_layer_updater_schema::create_specific() const
+		std::string lerror_layer_testing_schema::get_type_name() const
 		{
-			return layer_updater_schema::ptr(new mse_layer_updater_schema());
+			return lerror_layer::layer_type_name;
 		}
 
-		std::string mse_layer_updater_schema::get_type_name() const
+		layer_testing_schema::ptr lerror_layer_testing_schema::create_specific() const
 		{
-			return mse_layer::layer_type_name;
+			return layer_testing_schema::ptr(new lerror_layer_testing_schema());
 		}
 
-		layer_updater_cuda::ptr mse_layer_updater_schema::create_updater_specific(
+		layer_tester_cuda::ptr lerror_layer_testing_schema::create_tester_specific(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return layer_updater_cuda::ptr(new mse_layer_updater_cuda());
+			return layer_tester_cuda::ptr(new lerror_layer_tester_cuda());
 		}
 	}
 }
