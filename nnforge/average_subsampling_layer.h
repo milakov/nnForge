@@ -26,7 +26,10 @@ namespace nnforge
 	class average_subsampling_layer : public layer
 	{
 	public:
-		average_subsampling_layer(const std::vector<unsigned int>& subsampling_sizes);
+		average_subsampling_layer(
+			const std::vector<unsigned int>& subsampling_sizes,
+			unsigned int feature_map_subsampling_size = 1,
+			unsigned int entry_subsampling_size = 1);
 
 		virtual layer::ptr clone() const;
 
@@ -55,6 +58,8 @@ namespace nnforge
 
 		virtual std::vector<std::string> get_parameter_strings() const;
 
+		virtual tiling_factor get_tiling_factor() const;
+
 		static const std::string layer_type_name;
 
 	private:
@@ -62,5 +67,7 @@ namespace nnforge
 
 	public:
 		std::vector<unsigned int> subsampling_sizes;
+		unsigned int feature_map_subsampling_size;
+		unsigned int entry_subsampling_size;
 	};
 }

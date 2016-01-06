@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,25 +60,33 @@ namespace nnforge
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
-			const std::vector<unsigned int>& subsampling_sizes = layer_derived->subsampling_sizes;
-			const unsigned int dimension_count = static_cast<unsigned int>(layer_derived->subsampling_sizes.size());
-			std::vector<unsigned int> input_slices(input_configuration_specific_list[0].dimension_sizes.size());
+			std::vector<unsigned int> subsampling_sizes = layer_derived->subsampling_sizes;
+			const unsigned int feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
+			subsampling_sizes.push_back(feature_map_subsampling_size);
+			const unsigned int entry_subsampling_size = layer_derived->entry_subsampling_size;
+			subsampling_sizes.push_back(entry_subsampling_size);
+			const unsigned int subsampling_dimension_count = static_cast<unsigned int>(subsampling_sizes.size());
+			const unsigned int spatial_dimension_count = static_cast<unsigned int>(output_configuration_specific.dimension_sizes.size());
+			std::vector<unsigned int> input_slices(subsampling_sizes.size());
 			input_slices[0] = 1;
-			for(unsigned int i = 0; i < dimension_count - 1; ++i)
-				input_slices[i + 1] = input_slices[i] * input_configuration_specific_list[0].dimension_sizes[i];
+			for(unsigned int i = 0; i < subsampling_dimension_count - 1; ++i)
+			{
+				int dimension_size = (i < spatial_dimension_count) ? input_configuration_specific_list[0].dimension_sizes[i] : input_configuration_specific_list[0].feature_map_count;
+				input_slices[i + 1] = input_slices[i] * dimension_size;
+			}
 			unsigned int subsampling_elem_count = 1;
-			for(unsigned int i = 0; i < dimension_count; ++i)
+			for(unsigned int i = 0; i < subsampling_dimension_count; ++i)
 				subsampling_elem_count *= subsampling_sizes[i];
 			const unsigned int const_subsampling_elem_count = subsampling_elem_count;
 			const float mult = 1.0F / static_cast<float>(subsampling_elem_count);
-			const unsigned int feature_map_count = output_configuration_specific.feature_map_count;
+			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
 
-			std::vector<unsigned int> current_local_input_position(dimension_count, 0);
+			std::vector<unsigned int> current_local_input_position(subsampling_dimension_count, 0);
 			std::vector<unsigned int> offset_list(subsampling_elem_count);
 			for(unsigned int i = 1; i < subsampling_elem_count; ++i)
 			{
 				int offset = 0;
-				for(unsigned int j = 0; j < dimension_count; ++j)
+				for(unsigned int j = 0; j < subsampling_dimension_count; ++j)
 				{
 					offset += static_cast<int>(input_slices[j]);
 					if ((++current_local_input_position[j]) < subsampling_sizes[j])
@@ -104,19 +112,19 @@ namespace nnforge
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 				{
-					int entry_id = workload_id / feature_map_count;
-					int feature_map_id = workload_id - (entry_id * feature_map_count);
+					int output_entry_id = workload_id / output_feature_map_count;
+					int output_feature_map_id = workload_id - (output_entry_id * output_feature_map_count);
 
-					const float * in_it_base = in_it_global + (entry_id * input_neuron_count) + (feature_map_id * input_neuron_count_per_feature_map);
-					float * out_it_base = out_it_global + (entry_id * output_neuron_count) + (feature_map_id * output_neuron_count_per_feature_map);
+					const float * in_it_base = in_it_global + (output_entry_id * entry_subsampling_size * input_neuron_count) + (output_feature_map_id * feature_map_subsampling_size * input_neuron_count_per_feature_map);
+					float * out_it_base = out_it_global + (output_entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
 
-					std::fill_n(current_output_position.begin(), dimension_count, 0);
+					std::fill_n(current_output_position.begin(), spatial_dimension_count, 0);
 					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
 						// Define the starting position of the first input elem
 						int in_it_offset = 0;
 
-						for(unsigned int i = 0; i < dimension_count; ++i)
+						for(unsigned int i = 0; i < spatial_dimension_count; ++i)
 							in_it_offset += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
 
 						float sum = 0.0F;
@@ -127,7 +135,7 @@ namespace nnforge
 						*out_it = sum * mult;
 
 						// Go to the next output element
-						for(unsigned int i = 0; i < dimension_count; ++i)
+						for(unsigned int i = 0; i < spatial_dimension_count; ++i)
 						{
 							if ((++current_output_position[i]) < *( dimension_sizes_it + i))
 								break;

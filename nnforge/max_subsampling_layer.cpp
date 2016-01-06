@@ -30,8 +30,12 @@ namespace nnforge
 
 	max_subsampling_layer::max_subsampling_layer(
 		const std::vector<unsigned int>& subsampling_sizes,
+		unsigned int feature_map_subsampling_size,
+		unsigned int entry_subsampling_size,
 		bool tiling)
 		: subsampling_sizes(subsampling_sizes)
+		, feature_map_subsampling_size(feature_map_subsampling_size)
+		, entry_subsampling_size(entry_subsampling_size)
 		, tiling(tiling)
 	{
 		check();
@@ -47,6 +51,18 @@ namespace nnforge
 			if (subsampling_sizes[i] == 0)
 				throw neural_network_exception("window dimension for max subsampling layer may not be zero");
 		}
+
+		if (feature_map_subsampling_size == 0)
+			throw neural_network_exception("feature map subsampling size for max subsampling layer may not be zero");
+
+		if (entry_subsampling_size == 0)
+			throw neural_network_exception("feature map subsampling size for max subsampling layer may not be zero");
+
+		if (tiling && (entry_subsampling_size > 1))
+			throw neural_network_exception("entry_subsampling_size cannot be set with tiling at the same time for max subsampling layer");
+
+		if (tiling && (feature_map_subsampling_size > 1))
+			throw neural_network_exception("feature_map_subsampling_size cannot be set with tiling at the same time for max subsampling layer");
 	}
 
 	std::string max_subsampling_layer::get_type_name() const
@@ -64,7 +80,13 @@ namespace nnforge
 		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(subsampling_sizes.size())))
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration_list[0].dimension_count).str());
 
-		return layer_configuration(input_configuration_list[0].feature_map_count, static_cast<int>(subsampling_sizes.size()));
+		if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count < static_cast<int>(feature_map_subsampling_size)))
+			throw neural_network_exception((boost::format("Feature map count in input configuration (%1%) is smaller than feature map subsampling size (%2%)") % input_configuration_list[0].feature_map_count % feature_map_subsampling_size).str());
+		int new_feature_map_count = input_configuration_list[0].feature_map_count;
+		if (new_feature_map_count >= 0)
+			new_feature_map_count /= feature_map_subsampling_size;
+
+		return layer_configuration(new_feature_map_count, static_cast<int>(subsampling_sizes.size()));
 	}
 
 	layer_configuration_specific max_subsampling_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
@@ -72,7 +94,7 @@ namespace nnforge
 		if (input_configuration_specific_list[0].get_dimension_count() != subsampling_sizes.size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration_specific_list[0].get_dimension_count()).str());
 
-		layer_configuration_specific res(input_configuration_specific_list[0].feature_map_count);
+		layer_configuration_specific res(input_configuration_specific_list[0].feature_map_count / feature_map_subsampling_size);
 
 		if (tiling)
 		{
@@ -106,7 +128,7 @@ namespace nnforge
 		if (output_configuration_specific.get_dimension_count() != subsampling_sizes.size())
 			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output configuration (%2%) don't match") % subsampling_sizes.size() % output_configuration_specific.get_dimension_count()).str());
 
-		input_configuration_specific = layer_configuration_specific(output_configuration_specific.feature_map_count);
+		input_configuration_specific = layer_configuration_specific(output_configuration_specific.feature_map_count * feature_map_subsampling_size);
 
 		if (tiling)
 		{
@@ -147,6 +169,12 @@ namespace nnforge
 			dim_param->set_subsampling_size(subsampling_sizes[i]);
 		}
 
+		if (feature_map_subsampling_size != 1)
+			param->mutable_feature_map_param()->set_subsampling_size(feature_map_subsampling_size);
+
+		if (entry_subsampling_size != 1)
+			param->mutable_entry_param()->set_subsampling_size(entry_subsampling_size);
+
 		if (tiling)
 			param->set_tiling(true);
 	}
@@ -156,12 +184,17 @@ namespace nnforge
 		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
 		if (!layer_proto_typed->has_max_subsampling_param())
 			throw neural_network_exception((boost::format("No max_subsampling_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
+		const protobuf::MaxSubsamplingParam& param = layer_proto_typed->max_subsampling_param();
 
-		subsampling_sizes.resize(layer_proto_typed->max_subsampling_param().dimension_param_size());
-		for(int i = 0; i < layer_proto_typed->max_subsampling_param().dimension_param_size(); ++i)
+		subsampling_sizes.resize(param.dimension_param_size());
+		for(int i = 0; i < param.dimension_param_size(); ++i)
 		{
-			subsampling_sizes[i] = layer_proto_typed->max_subsampling_param().dimension_param(i).subsampling_size();
+			subsampling_sizes[i] = param.dimension_param(i).subsampling_size();
 		}
+
+		feature_map_subsampling_size = param.has_feature_map_param() ? param.feature_map_param().subsampling_size() : 1;
+
+		entry_subsampling_size = param.has_entry_param() ? param.entry_param().subsampling_size() : 1;
 
 		tiling = layer_proto_typed->max_subsampling_param().tiling();
 
@@ -177,7 +210,7 @@ namespace nnforge
 		case layer_action::forward:
 			{
 				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
-				unsigned int per_item_flops = 1;
+				unsigned int per_item_flops = feature_map_subsampling_size * entry_subsampling_size;
 				std::for_each(subsampling_sizes.begin(), subsampling_sizes.end(), per_item_flops *= boost::lambda::_1);
 				per_item_flops -= 1;
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
@@ -191,10 +224,18 @@ namespace nnforge
 
 	tiling_factor max_subsampling_layer::get_tiling_factor() const
 	{
-		std::vector<tiling_factor> tiling_factor_list = get_tiling_factor_list();
+		tiling_factor res;
+		if (tiling)
+		{
+			std::vector<tiling_factor> tiling_factor_list = get_tiling_factor_list();
 
-		tiling_factor res = 1;
-		std::for_each(tiling_factor_list.begin(), tiling_factor_list.end(), res *= boost::lambda::_1);
+			res = 1;
+			std::for_each(tiling_factor_list.begin(), tiling_factor_list.end(), res *= boost::lambda::_1);
+		}
+		else
+		{
+			res = tiling_factor(entry_subsampling_size).get_inverse();
+		}
 
 		return res;
 	}
@@ -223,6 +264,12 @@ namespace nnforge
 				ss << "x";
 			ss << subsampling_sizes[i];
 		}
+
+		if (feature_map_subsampling_size != 1)
+			ss << ", fm " << feature_map_subsampling_size;
+
+		if (entry_subsampling_size != 1)
+			ss << ", samples " << entry_subsampling_size;
 
 		if (tiling)
 			ss << ", tiling";

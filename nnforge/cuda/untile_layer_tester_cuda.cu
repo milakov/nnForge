@@ -79,9 +79,7 @@ namespace nnforge
 			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
-			if (entry_count % total_tiling_factor != 0)
-				throw neural_network_exception((boost::format("untile_layer_tester_cuda: entry_count (%1%) is not evenly divisible by total_tiling_factor (%2%)") % entry_count % (int)total_tiling_factor).str());
-			int output_entry_count = entry_count / total_tiling_factor;
+			int output_entry_count = entry_count;
 
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,

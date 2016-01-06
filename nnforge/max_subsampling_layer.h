@@ -28,6 +28,8 @@ namespace nnforge
 	public:
 		max_subsampling_layer(
 			const std::vector<unsigned int>& subsampling_sizes,
+			unsigned int feature_map_subsampling_size = 1,
+			unsigned int entry_subsampling_size = 1,
 			bool tiling = false);
 
 		virtual layer::ptr clone() const;
@@ -68,6 +70,8 @@ namespace nnforge
 
 	public:
 		std::vector<unsigned int> subsampling_sizes;
+		unsigned int feature_map_subsampling_size;
+		unsigned int entry_subsampling_size;
 		bool tiling;
 	};
 }

@@ -138,11 +138,15 @@ namespace nnforge
 				const packed_config<spatial_dimension_count> * spatial_config_list = static_cast<const packed_config<spatial_dimension_count> *>((const void *)*persistent_working_data[0]);
 				const packed_config<tiling_dimension_count> * tiling_config_list = static_cast<const packed_config<tiling_dimension_count> *>((const void *)*persistent_working_data[1]);
 
+				if (entry_count % tiling_config_count != 0)
+					throw neural_network_exception((boost::format("max_subsampling_tiling_layer_tester_cuda: entry_count (%1%) is not evenly divisible by total_tiling_factor (%2%)") % entry_count % (int)tiling_config_count).str());
+				int input_entry_count = entry_count / tiling_config_count;
+
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
 					tiling_config_count * spatial_config_count,
 					input_configuration_specific_list[0].feature_map_count,
-					entry_count);
+					input_entry_count);
 
 				max_subsampling_tiling_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					*output_buffer,
@@ -155,7 +159,7 @@ namespace nnforge
 					input_elem_count_per_feature_map_list[0],
 					output_elem_count_per_feature_map,
 					output_configuration_specific.feature_map_count,
-					entry_count,
+					input_entry_count,
 					spatial_config_count,
 					tiling_config_count);
 			}

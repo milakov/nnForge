@@ -45,15 +45,31 @@ message AverageSubsamplingParam {
 	message AverageSubsamplingDimensionParam {
 		required uint32 subsampling_size = 1;
 	}
+	message AverageSubsamplingFeatureMapParam {
+		required uint32 subsampling_size = 1;
+	}
+	message AverageSubsamplingEntryParam {
+		required uint32 subsampling_size = 1;
+	}
 	repeated AverageSubsamplingDimensionParam dimension_param = 1;
+	optional AverageSubsamplingFeatureMapParam feature_map_param = 2;
+	optional AverageSubsamplingEntryParam entry_param = 3;
 }
 
 message MaxSubsamplingParam {
 	message MaxSubsamplingDimensionParam {
 		required uint32 subsampling_size = 1;
 	}
+	message MaxSubsamplingFeatureMapParam {
+		required uint32 subsampling_size = 1;
+	}
+	message MaxSubsamplingEntryParam {
+		required uint32 subsampling_size = 1;
+	}
 	repeated MaxSubsamplingDimensionParam dimension_param = 1;
 	optional bool tiling = 2 [default = false];
+	optional MaxSubsamplingFeatureMapParam feature_map_param = 3;
+	optional MaxSubsamplingEntryParam entry_param = 4;
 }
 
 message SparseConvolutionalParam {

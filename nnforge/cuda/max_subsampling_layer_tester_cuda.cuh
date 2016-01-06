@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
-#include "packed_config.h"
-#include "space_filling_curve.h"
-#include "sequential_curve.h"
+#include "int_fastdiv.h"
 
 #include "../max_subsampling_layer.h"
 #include "../nn_types.h"
@@ -39,30 +37,34 @@ namespace nnforge
 
 		extern __shared__ float arr_sh[];
 
-		template<int DIMENSION_COUNT>
+		template<int DIMENSION_COUNT,bool NONUNIT_WINDOW_X>
 		__global__ void max_subsampling_kernel(
 			float * __restrict output,
 			const float * __restrict input,
-			const packed_config<DIMENSION_COUNT+1> * __restrict packed_config_list,
 			array_by_val<int, DIMENSION_COUNT> subsampling_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> strides,
+			int feature_map_subsampling_size,
+			int entry_subsampling_size,
+			int input_neuron_count_per_entry,
 			int input_neuron_count_per_feature_map,
 			int output_neuron_count_per_feature_map,
-			int feature_map_count,
-			int entry_count,
+			int input_feature_map_count,
+			int output_feature_map_count,
+			int output_entry_count,
 			int packed_config_count)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int base_feature_map_id = (blockIdx.y * blockDim.y + threadIdx.y) * 4;
-			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
+			int base_output_feature_map_id = (blockIdx.y * blockDim.y + threadIdx.y) * FEATURE_MAP_BLOCK_SIZE;
+			int output_entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
 			int local_thread_id = (threadIdx.z * blockDim.y + threadIdx.y) * blockDim.x + threadIdx.x;
 			int threadblock_size = blockDim.z * blockDim.y * blockDim.x;
 
 			float * vals = arr_sh;
 
-			bool in_bounds = (entry_id < entry_count) && (base_feature_map_id < feature_map_count) && (packed_config_id < packed_config_count);
+			bool in_bounds = (output_entry_id < output_entry_count) && (base_output_feature_map_id < output_feature_map_count) && (packed_config_id < packed_config_count);
 
 			float res[FEATURE_MAP_BLOCK_SIZE];
 			bool item_valid[FEATURE_MAP_BLOCK_SIZE - 1];
@@ -70,77 +72,96 @@ namespace nnforge
 			int xyzw[DIMENSION_COUNT];
 			if (in_bounds)
 			{
-				packed_config<DIMENSION_COUNT+1> conf = packed_config_list[packed_config_id];
-				
-				window_x = conf.get_val(0);
-				#pragma unroll
-				for(int i = 0; i < DIMENSION_COUNT; ++i)
-					xyzw[i] = conf.get_val(i + 1);
-
-				int current_input_elem_id = entry_id * feature_map_count + base_feature_map_id;
+				int remaining_part = packed_config_id;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-					current_input_elem_id = current_input_elem_id * input_sizes[i] + xyzw[i] * subsampling_sizes[i];
-				current_input_elem_id += window_x;
+				{
+					xyzw[i] = remaining_part / strides[i];
+					remaining_part = remaining_part - strides[i] * xyzw[i];
+				}
+				window_x = remaining_part;
+
+				int base_current_input_elem_id = output_entry_id * entry_subsampling_size * input_feature_map_count + base_output_feature_map_id * feature_map_subsampling_size;
+				#pragma unroll
+				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
+					base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw[i] * subsampling_sizes[i];
+				base_current_input_elem_id += window_x;
 
 				#pragma unroll
 				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 					res[i] = -1.0e37F;
 				#pragma unroll
 				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-					item_valid[i - 1] = (base_feature_map_id + i < feature_map_count);
+					item_valid[i - 1] = (base_output_feature_map_id + i < output_feature_map_count);
 
-				for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? subsampling_sizes[3] : 1); ++input_w)
+				for(int en = 0; en < entry_subsampling_size; ++en)
 				{
-					for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? subsampling_sizes[2] : 1); ++input_z)
+					int base_current_input_elem_id2 = base_current_input_elem_id;
+					for(int fm = 0; fm < feature_map_subsampling_size; ++fm)
 					{
-						for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? subsampling_sizes[1] : 1); ++input_y)
+						int current_input_elem_id = base_current_input_elem_id2;
+						for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? subsampling_sizes[3] : 1); ++input_w)
 						{
-							float new_val[FEATURE_MAP_BLOCK_SIZE];
-							new_val[0] = input[current_input_elem_id];
-							#pragma unroll
-							for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-								if (item_valid[i - 1])
-									new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * i];
-							if (DIMENSION_COUNT > 1)
+							for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? subsampling_sizes[2] : 1); ++input_z)
 							{
-								#pragma unroll
-								for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-									res[i] = max(res[i], new_val[i]);
-								current_input_elem_id += input_sizes[0];
-							}
-							else
-							{
-								#pragma unroll
-								for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-									res[i] = new_val[i];
-							}
-						} // for input_y
-						current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
-					} // for input_z
-					current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
-				} // for input_w
+								for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? subsampling_sizes[1] : 1); ++input_y)
+								{
+									float new_val[FEATURE_MAP_BLOCK_SIZE];
+									new_val[0] = input[current_input_elem_id];
+									#pragma unroll
+									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+										if (item_valid[i - 1])
+											new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+									if (DIMENSION_COUNT > 1)
+									{
+										#pragma unroll
+										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											res[i] = max(res[i], new_val[i]);
+										current_input_elem_id += input_sizes[0];
+									}
+									else
+									{
+										#pragma unroll
+										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											res[i] = new_val[i];
+									}
+								} // for input_y
+								current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
+							} // for input_z
+							current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
+						} // for input_w
+						base_current_input_elem_id2 += input_neuron_count_per_feature_map;
+					} // for fm
+					base_current_input_elem_id += input_neuron_count_per_entry;
+				} // for en
 
-				#pragma unroll
-				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-					vals[local_thread_id + threadblock_size * i] = res[i];
+				if (NONUNIT_WINDOW_X)
+				{
+					#pragma unroll
+					for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+						vals[local_thread_id + threadblock_size * i] = res[i];
+				}
 			}
 
-			__syncthreads();
+			if (NONUNIT_WINDOW_X)
+				__syncthreads();
 
 			if (in_bounds && (window_x == 0))
 			{
-				for(int j = 1; j < subsampling_sizes[0]; ++j)
+				if (NONUNIT_WINDOW_X)
 				{
-					local_thread_id++;
-					#pragma unroll
-					for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+					for(int j = 1; j < subsampling_sizes[0]; ++j)
 					{
-						float new_val = vals[local_thread_id + threadblock_size * i];
-						res[i] = max(res[i], new_val);
+						local_thread_id++;
+						#pragma unroll
+						for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+						{
+							float new_val = vals[local_thread_id + threadblock_size * i];
+							res[i] = max(res[i], new_val);
+						}
 					}
 				}
-				int offset = entry_id * feature_map_count + base_feature_map_id;
+				int offset = output_entry_id * output_feature_map_count + base_output_feature_map_id;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					offset = offset * output_sizes[i] + xyzw[i];
@@ -179,8 +200,6 @@ namespace nnforge
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count)
 			{
-				const packed_config<forward_dimension_count> * packed_config_list = static_cast<const packed_config<forward_dimension_count> *>((const void *)*persistent_working_data[0]);
-
 				int feature_map_block_count = (output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE;
 
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
@@ -191,78 +210,78 @@ namespace nnforge
 					subsampling_sizes[0]);
 
 				int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
-				int smem_size = threadblock_size * sizeof(float) * FEATURE_MAP_BLOCK_SIZE;
+				int smem_size = (nonunit_window_x ? threadblock_size * sizeof(float) * FEATURE_MAP_BLOCK_SIZE : 0);
 
-				max_subsampling_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-					*output_buffer,
-					*input_buffers[0],
-					packed_config_list,
-					subsampling_sizes,
-					input_sizes,
-					output_sizes,
-					input_elem_count_per_feature_map_list[0],
-					output_elem_count_per_feature_map,
-					output_configuration_specific.feature_map_count,
-					entry_count,
-					forward_packed_config_count);
+				if (nonunit_window_x)
+					max_subsampling_kernel<dimension_count,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+						*output_buffer,
+						*input_buffers[0],
+						subsampling_sizes,
+						input_sizes,
+						output_sizes,
+						strides,
+						feature_map_subsampling_size,
+						entry_subsampling_size,
+						input_elem_count_per_entry_list[0],
+						input_elem_count_per_feature_map_list[0],
+						output_elem_count_per_feature_map,
+						input_configuration_specific_list[0].feature_map_count,
+						output_configuration_specific.feature_map_count,
+						entry_count,
+						forward_packed_config_count);
+				else
+					max_subsampling_kernel<dimension_count,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+						*output_buffer,
+						*input_buffers[0],
+						subsampling_sizes,
+						input_sizes,
+						output_sizes,
+						strides,
+						feature_map_subsampling_size,
+						entry_subsampling_size,
+						input_elem_count_per_entry_list[0],
+						input_elem_count_per_feature_map_list[0],
+						output_elem_count_per_feature_map,
+						input_configuration_specific_list[0].feature_map_count,
+						output_configuration_specific.feature_map_count,
+						entry_count,
+						forward_packed_config_count);
 			}
 
 		protected:
-			static const int forward_dimension_count = (dimension_count + 1);
-
 			virtual void tester_configured()
 			{
 				nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
+				feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
+				entry_subsampling_size = layer_derived->entry_subsampling_size;
+
+				int_fastdiv current_stride(layer_derived->subsampling_sizes[0]);
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = layer_derived->subsampling_sizes[i];
 					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
+					strides[i] = current_stride;
+					current_stride = current_stride * static_cast<int>(output_configuration_specific.dimension_sizes[i]);
 				}
 
 				forward_packed_config_count = subsampling_sizes[0];
 				for(int i = 0; i < dimension_count; ++i)
 					forward_packed_config_count *= output_sizes[i];
-			}
 
-			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_persistent_working_data() const
-			{
-				std::vector<cuda_linear_buffer_device::const_ptr> res;
-
-				{
-					std::vector<packed_config<forward_dimension_count> > task_list;
-					{
-						nnforge_array<int, dimension_count> size_list;
-						for(int i = 0; i < dimension_count; ++i)
-							size_list[i] = output_sizes[i];
-						std::vector<nnforge_array<int, dimension_count> > ordered_list;
-						sequential_curve<dimension_count>::fill_pattern(size_list, ordered_list);
-						packed_config<forward_dimension_count> new_elem;
-						for(int j = 0; j < ordered_list.size(); ++j)
-						{
-							const nnforge_array<int, dimension_count>& spatial_dimensions = ordered_list[j];
-							for(int i = 0; i < dimension_count; ++i)
-								new_elem.set_val(i + 1, spatial_dimensions[i]);
-							for(int k = 0; k < subsampling_sizes[0]; ++k)
-							{
-								new_elem.set_val(0, k);
-								task_list.push_back(new_elem);
-							}
-						}
-					}
-					res.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(&task_list[0], sizeof(packed_config<forward_dimension_count>) * task_list.size())));
-				}
-
-				return res;
+				nonunit_window_x = (layer_derived->subsampling_sizes[0] > 1);
 			}
 
 		private:
+			int feature_map_subsampling_size;
+			int entry_subsampling_size;
 			array_by_val<int, dimension_count> output_sizes;
 			array_by_val<int, dimension_count> input_sizes;
 			array_by_val<int, dimension_count> subsampling_sizes;
-
+			array_by_val<int_fastdiv, dimension_count> strides;
 			unsigned int forward_packed_config_count;
+			bool nonunit_window_x;
 		};
 	}
 }
