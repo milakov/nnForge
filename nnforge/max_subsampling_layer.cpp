@@ -32,10 +32,12 @@ namespace nnforge
 		const std::vector<unsigned int>& subsampling_sizes,
 		unsigned int feature_map_subsampling_size,
 		unsigned int entry_subsampling_size,
+		bool is_min,
 		bool tiling)
 		: subsampling_sizes(subsampling_sizes)
 		, feature_map_subsampling_size(feature_map_subsampling_size)
 		, entry_subsampling_size(entry_subsampling_size)
+		, is_min(is_min)
 		, tiling(tiling)
 	{
 		check();
@@ -177,6 +179,9 @@ namespace nnforge
 
 		if (tiling)
 			param->set_tiling(true);
+
+		if (is_min)
+			param->set_function(nnforge::protobuf::MaxSubsamplingParam_MaxFunction_MIN);
 	}
 
 	void max_subsampling_layer::read_proto(const void * layer_proto)
@@ -196,7 +201,9 @@ namespace nnforge
 
 		entry_subsampling_size = param.has_entry_param() ? param.entry_param().subsampling_size() : 1;
 
-		tiling = layer_proto_typed->max_subsampling_param().tiling();
+		tiling = param.tiling();
+
+		is_min = (param.function() == nnforge::protobuf::MaxSubsamplingParam_MaxFunction_MIN);
 
 		check();
 	}
@@ -258,6 +265,10 @@ namespace nnforge
 		std::vector<std::string> res;
 
 		std::stringstream ss;
+
+		if (is_min)
+			ss << "MIN, ";
+
 		for(int i = 0; i < subsampling_sizes.size(); ++i)
 		{
 			if (i != 0)

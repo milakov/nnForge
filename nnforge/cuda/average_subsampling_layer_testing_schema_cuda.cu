@@ -19,7 +19,6 @@
 #include "../neural_network_exception.h"
 #include "../average_subsampling_layer.h"
 #include "average_subsampling_layer_tester_cuda.cuh"
-#include "average_subsampling_layer_cudnn_tester_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -58,7 +57,6 @@ namespace nnforge
 					break;
 				case 2:
 					res = layer_tester_cuda::ptr(new average_subsampling_layer_tester_cuda<2>());
-//					res = layer_tester_cuda_smart_ptr(new average_subsampling_layer_cudnn_tester());
 					break;
 				case 3:
 					res = layer_tester_cuda::ptr(new average_subsampling_layer_tester_cuda<3>());

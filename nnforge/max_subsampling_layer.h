@@ -30,6 +30,7 @@ namespace nnforge
 			const std::vector<unsigned int>& subsampling_sizes,
 			unsigned int feature_map_subsampling_size = 1,
 			unsigned int entry_subsampling_size = 1,
+			bool is_min = false,
 			bool tiling = false);
 
 		virtual layer::ptr clone() const;
@@ -72,6 +73,7 @@ namespace nnforge
 		std::vector<unsigned int> subsampling_sizes;
 		unsigned int feature_map_subsampling_size;
 		unsigned int entry_subsampling_size;
+		bool is_min;
 		bool tiling;
 	};
 }

@@ -66,10 +66,15 @@ message MaxSubsamplingParam {
 	message MaxSubsamplingEntryParam {
 		required uint32 subsampling_size = 1;
 	}
+	enum MaxFunction {
+		MAX = 0;
+		MIN = 1;
+	}
 	repeated MaxSubsamplingDimensionParam dimension_param = 1;
 	optional bool tiling = 2 [default = false];
 	optional MaxSubsamplingFeatureMapParam feature_map_param = 3;
 	optional MaxSubsamplingEntryParam entry_param = 4;
+	optional MaxFunction function = 5 [default = MAX];
 }
 
 message SparseConvolutionalParam {

@@ -19,7 +19,6 @@
 #include "../neural_network_exception.h"
 #include "../max_subsampling_layer.h"
 #include "max_subsampling_layer_tester_cuda.cuh"
-#include "max_subsampling_layer_cudnn_tester_cuda.h"
 #include "max_subsampling_tiling_layer_tester_cuda.cuh"
 
 #include <boost/format.hpp>
@@ -83,7 +82,6 @@ namespace nnforge
 						break;
 					case 2:
 						res = layer_tester_cuda::ptr(new max_subsampling_layer_tester_cuda<2>());
-//						res = layer_tester_cuda_smart_ptr(new max_subsampling_layer_cudnn_tester());
 						break;
 					case 3:
 						res = layer_tester_cuda::ptr(new max_subsampling_layer_tester_cuda<3>());

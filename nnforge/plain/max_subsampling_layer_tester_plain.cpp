@@ -103,6 +103,7 @@ namespace nnforge
 				subsampling_elem_count *= subsampling_sizes[i];
 			const unsigned int const_subsampling_elem_count = subsampling_elem_count;
 			const unsigned int feature_map_count = output_configuration_specific.feature_map_count;
+			const bool is_min = layer_derived->is_min;
 
 			std::vector<unsigned int> current_local_input_position(dimension_count, 0);
 			std::vector<unsigned int> offset_list(subsampling_elem_count);
@@ -157,7 +158,7 @@ namespace nnforge
 							for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
 							{
 								float new_val = *(in_it2 + (*(offset_list_it + i)));
-								current_max = std::max<float>(current_max, new_val);
+								current_max = is_min ? std::min<float>(current_max, new_val) : std::max<float>(current_max, new_val);
 							}
 							*(out_it + j * output_neuron_count) = current_max;
 						}
@@ -211,6 +212,7 @@ namespace nnforge
 			const unsigned int const_subsampling_elem_count = subsampling_elem_count;
 			const float mult = 1.0F / static_cast<float>(subsampling_elem_count);
 			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
+			const bool is_min = layer_derived->is_min;
 
 			std::vector<unsigned int> current_local_input_position(subsampling_dimension_count, 0);
 			std::vector<unsigned int> offset_list(subsampling_elem_count);
@@ -261,7 +263,7 @@ namespace nnforge
 						for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
 						{
 							float new_val = *(in_it + (*(offset_list_it + i)));
-							current_max = std::max<float>(current_max, new_val);
+							current_max = is_min ? std::min<float>(current_max, new_val) : std::max<float>(current_max, new_val);
 						}
 						*out_it = current_max;
 

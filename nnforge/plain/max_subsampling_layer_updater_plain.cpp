@@ -88,6 +88,7 @@ namespace nnforge
 			const unsigned int const_subsampling_elem_count = subsampling_elem_count;
 			const float mult = 1.0F / static_cast<float>(subsampling_elem_count);
 			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
+			const bool is_min = layer_derived->is_min;
 
 			std::vector<unsigned int> current_local_input_position(subsampling_dimension_count, 0);
 			std::vector<unsigned int> offset_list(subsampling_elem_count);
@@ -142,7 +143,7 @@ namespace nnforge
 						{
 							int current_offset = in_offset + *(offset_list_it + i);
 							float new_val = *(in_it_global + current_offset);
-							if ((i == 0) || (new_val > best_val))
+							if ((i == 0) || (((new_val > best_val) && !is_min) || ((new_val < best_val) && is_min)))
 							{
 								best_val = new_val;
 								max_index = current_offset;

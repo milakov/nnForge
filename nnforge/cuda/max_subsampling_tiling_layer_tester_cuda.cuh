@@ -36,7 +36,7 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		template<int DIMENSION_COUNT>
+		template<int DIMENSION_COUNT,bool IS_MIN>
 		__global__ void max_subsampling_tiling_kernel(
 			float * __restrict output,
 			const float * __restrict input,
@@ -89,7 +89,7 @@ namespace nnforge
 							for(int input_x = 0; input_x < subsampling_sizes[0]; ++input_x)
 							{
 								float new_val = input[current_input_elem_id];
-								res = max(res, new_val);
+								res = IS_MIN ? min(res, new_val) : max(res, new_val);
 								++current_input_elem_id;
 							} // for input_x
 							if (DIMENSION_COUNT > 1)
@@ -148,20 +148,36 @@ namespace nnforge
 					input_configuration_specific_list[0].feature_map_count,
 					input_entry_count);
 
-				max_subsampling_tiling_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-					*output_buffer,
-					*input_buffers[0],
-					spatial_config_list,
-					tiling_config_list,
-					subsampling_sizes,
-					input_sizes,
-					output_sizes,
-					input_elem_count_per_feature_map_list[0],
-					output_elem_count_per_feature_map,
-					output_configuration_specific.feature_map_count,
-					input_entry_count,
-					spatial_config_count,
-					tiling_config_count);
+				if (is_min)
+					max_subsampling_tiling_kernel<dimension_count,true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+						*output_buffer,
+						*input_buffers[0],
+						spatial_config_list,
+						tiling_config_list,
+						subsampling_sizes,
+						input_sizes,
+						output_sizes,
+						input_elem_count_per_feature_map_list[0],
+						output_elem_count_per_feature_map,
+						output_configuration_specific.feature_map_count,
+						input_entry_count,
+						spatial_config_count,
+						tiling_config_count);
+				else
+					max_subsampling_tiling_kernel<dimension_count,false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+						*output_buffer,
+						*input_buffers[0],
+						spatial_config_list,
+						tiling_config_list,
+						subsampling_sizes,
+						input_sizes,
+						output_sizes,
+						input_elem_count_per_feature_map_list[0],
+						output_elem_count_per_feature_map,
+						output_configuration_specific.feature_map_count,
+						input_entry_count,
+						spatial_config_count,
+						tiling_config_count);
 			}
 
 		protected:
@@ -171,6 +187,8 @@ namespace nnforge
 			virtual void tester_configured()
 			{
 				nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+				is_min = layer_derived->is_min;
 
 				for(int i = 0; i < dimension_count; ++i)
 				{
@@ -237,6 +255,7 @@ namespace nnforge
 			}
 
 		private:
+			bool is_min;
 			array_by_val<int, dimension_count> output_sizes;
 			array_by_val<int, dimension_count> input_sizes;
 			array_by_val<int, dimension_count> subsampling_sizes;

@@ -20,7 +20,6 @@
 #include "../max_subsampling_layer.h"
 
 #include "max_subsampling_layer_updater_cuda.cuh"
-#include "max_subsampling_layer_cudnn_updater_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -64,7 +63,6 @@ namespace nnforge
 					break;
 				case 2:
 					res = layer_updater_cuda::ptr(new max_subsampling_layer_updater_cuda<2>());
-					//res = layer_updater_cuda::ptr(new max_subsampling_layer_cudnn_updater_cuda());
 					break;
 				case 3:
 					res = layer_updater_cuda::ptr(new max_subsampling_layer_updater_cuda<3>());

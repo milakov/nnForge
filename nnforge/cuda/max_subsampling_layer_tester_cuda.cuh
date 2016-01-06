@@ -37,7 +37,7 @@ namespace nnforge
 
 		extern __shared__ float arr_sh[];
 
-		template<int DIMENSION_COUNT,bool NONUNIT_WINDOW_X>
+		template<int DIMENSION_COUNT,bool NONUNIT_WINDOW_X,bool IS_MIN>
 		__global__ void max_subsampling_kernel(
 			float * __restrict output,
 			const float * __restrict input,
@@ -116,7 +116,7 @@ namespace nnforge
 									{
 										#pragma unroll
 										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-											res[i] = max(res[i], new_val[i]);
+											res[i] = IS_MIN ? min(res[i], new_val[i]) : max(res[i], new_val[i]);
 										current_input_elem_id += input_sizes[0];
 									}
 									else
@@ -157,7 +157,7 @@ namespace nnforge
 						for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 						{
 							float new_val = vals[local_thread_id + threadblock_size * i];
-							res[i] = max(res[i], new_val);
+							res[i] = IS_MIN ? min(res[i], new_val) : max(res[i], new_val);
 						}
 					}
 				}
@@ -212,46 +212,88 @@ namespace nnforge
 				int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
 				int smem_size = (nonunit_window_x ? threadblock_size * sizeof(float) * FEATURE_MAP_BLOCK_SIZE : 0);
 
-				if (nonunit_window_x)
-					max_subsampling_kernel<dimension_count,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-						*output_buffer,
-						*input_buffers[0],
-						subsampling_sizes,
-						input_sizes,
-						output_sizes,
-						strides,
-						feature_map_subsampling_size,
-						entry_subsampling_size,
-						input_elem_count_per_entry_list[0],
-						input_elem_count_per_feature_map_list[0],
-						output_elem_count_per_feature_map,
-						input_configuration_specific_list[0].feature_map_count,
-						output_configuration_specific.feature_map_count,
-						entry_count,
-						forward_packed_config_count);
+				if (is_min)
+				{
+					if (nonunit_window_x)
+						max_subsampling_kernel<dimension_count,true,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+							*output_buffer,
+							*input_buffers[0],
+							subsampling_sizes,
+							input_sizes,
+							output_sizes,
+							strides,
+							feature_map_subsampling_size,
+							entry_subsampling_size,
+							input_elem_count_per_entry_list[0],
+							input_elem_count_per_feature_map_list[0],
+							output_elem_count_per_feature_map,
+							input_configuration_specific_list[0].feature_map_count,
+							output_configuration_specific.feature_map_count,
+							entry_count,
+							forward_packed_config_count);
+					else
+						max_subsampling_kernel<dimension_count,false,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+							*output_buffer,
+							*input_buffers[0],
+							subsampling_sizes,
+							input_sizes,
+							output_sizes,
+							strides,
+							feature_map_subsampling_size,
+							entry_subsampling_size,
+							input_elem_count_per_entry_list[0],
+							input_elem_count_per_feature_map_list[0],
+							output_elem_count_per_feature_map,
+							input_configuration_specific_list[0].feature_map_count,
+							output_configuration_specific.feature_map_count,
+							entry_count,
+							forward_packed_config_count);
+				}
 				else
-					max_subsampling_kernel<dimension_count,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-						*output_buffer,
-						*input_buffers[0],
-						subsampling_sizes,
-						input_sizes,
-						output_sizes,
-						strides,
-						feature_map_subsampling_size,
-						entry_subsampling_size,
-						input_elem_count_per_entry_list[0],
-						input_elem_count_per_feature_map_list[0],
-						output_elem_count_per_feature_map,
-						input_configuration_specific_list[0].feature_map_count,
-						output_configuration_specific.feature_map_count,
-						entry_count,
-						forward_packed_config_count);
+				{
+					if (nonunit_window_x)
+						max_subsampling_kernel<dimension_count,true,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+							*output_buffer,
+							*input_buffers[0],
+							subsampling_sizes,
+							input_sizes,
+							output_sizes,
+							strides,
+							feature_map_subsampling_size,
+							entry_subsampling_size,
+							input_elem_count_per_entry_list[0],
+							input_elem_count_per_feature_map_list[0],
+							output_elem_count_per_feature_map,
+							input_configuration_specific_list[0].feature_map_count,
+							output_configuration_specific.feature_map_count,
+							entry_count,
+							forward_packed_config_count);
+					else
+						max_subsampling_kernel<dimension_count,false,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+							*output_buffer,
+							*input_buffers[0],
+							subsampling_sizes,
+							input_sizes,
+							output_sizes,
+							strides,
+							feature_map_subsampling_size,
+							entry_subsampling_size,
+							input_elem_count_per_entry_list[0],
+							input_elem_count_per_feature_map_list[0],
+							output_elem_count_per_feature_map,
+							input_configuration_specific_list[0].feature_map_count,
+							output_configuration_specific.feature_map_count,
+							entry_count,
+							forward_packed_config_count);
+				}
 			}
 
 		protected:
 			virtual void tester_configured()
 			{
 				nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+				is_min = layer_derived->is_min;
 
 				feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
 				entry_subsampling_size = layer_derived->entry_subsampling_size;
@@ -274,6 +316,7 @@ namespace nnforge
 			}
 
 		private:
+			bool is_min;
 			int feature_map_subsampling_size;
 			int entry_subsampling_size;
 			array_by_val<int, dimension_count> output_sizes;
