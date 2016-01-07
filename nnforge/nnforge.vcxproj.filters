@@ -452,6 +452,9 @@
     <ClInclude Include="lerror_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="cdf_max_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -773,6 +776,9 @@
       <Filter>Source Files\layers</Filter>
     </ClCompile>
     <ClCompile Include="lerror_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="cdf_max_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>

@@ -49,5 +49,6 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new gradient_modifier_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new concat_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new reshape_layer()));
+		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new cdf_max_layer(2)));
 	}
 }

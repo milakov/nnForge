@@ -41,6 +41,7 @@
 #include "gradient_modifier_layer.h"
 #include "concat_layer.h"
 #include "reshape_layer.h"
+#include "cdf_max_layer.h"
 
 #include "rnd.h"
 

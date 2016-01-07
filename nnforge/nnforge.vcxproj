@@ -27,6 +27,7 @@
     <ClInclude Include="data_layer.h" />
     <ClInclude Include="debug_state.h" />
     <ClInclude Include="debug_util.h" />
+    <ClInclude Include="cdf_max_layer.h" />
     <ClInclude Include="dropout_layer.h" />
     <ClInclude Include="elastic_deformation_2d_data_transformer.h" />
     <ClInclude Include="embed_data_transformer.h" />
@@ -141,6 +142,7 @@
     <ClCompile Include="data_layer.cpp" />
     <ClCompile Include="debug_state.cpp" />
     <ClCompile Include="debug_util.cpp" />
+    <ClCompile Include="cdf_max_layer.cpp" />
     <ClCompile Include="dropout_layer.cpp" />
     <ClCompile Include="elastic_deformation_2d_data_transformer.cpp" />
     <ClCompile Include="embed_data_transformer.cpp" />

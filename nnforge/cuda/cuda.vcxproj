@@ -26,6 +26,10 @@
     <ClInclude Include="average_subsampling_layer_updater_schema.h" />
     <ClInclude Include="backward_propagation_cuda.h" />
     <ClInclude Include="buffer_cuda_size_configuration.h" />
+    <ClInclude Include="cdf_max_layer_tester_cuda.h" />
+    <ClInclude Include="cdf_max_layer_testing_schema.h" />
+    <ClInclude Include="cdf_max_layer_updater_cuda.h" />
+    <ClInclude Include="cdf_max_layer_updater_schema.h" />
     <ClInclude Include="concat_layer_tester_cuda.h" />
     <ClInclude Include="concat_layer_testing_schema.h" />
     <ClInclude Include="concat_layer_updater_cuda.h" />
@@ -149,6 +153,8 @@
     <ClCompile Include="activation_layer_cudnn_updater_cuda.cpp" />
     <ClCompile Include="backward_propagation_cuda.cpp" />
     <ClCompile Include="buffer_cuda_size_configuration.cpp" />
+    <ClCompile Include="cdf_max_layer_testing_schema.cpp" />
+    <ClCompile Include="cdf_max_layer_updater_schema.cpp" />
     <ClCompile Include="concat_layer_tester_cuda.cpp" />
     <ClCompile Include="concat_layer_testing_schema.cpp" />
     <ClCompile Include="concat_layer_updater_cuda.cpp" />
@@ -229,6 +235,8 @@
     <CudaCompile Include="accuracy_layer_updater_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
+    <CudaCompile Include="cdf_max_layer_tester_cuda.cu" />
+    <CudaCompile Include="cdf_max_layer_updater_cuda.cu" />
     <CudaCompile Include="cross_entropy_layer_tester_cuda.cu" />
     <CudaCompile Include="cross_entropy_layer_updater_cuda.cu" />
     <CudaCompile Include="dropout_layer_updater_cuda.cu" />

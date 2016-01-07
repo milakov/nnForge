@@ -27,6 +27,7 @@ message Layer {
 	optional GradientModifierParam gradient_modifier_param = 19;
 	optional ReshapeParam reshape_param = 20;
 	optional LErrorParam lerror_param = 21;
+	optional CDFMaxParam cdf_max_param = 22;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -75,6 +76,18 @@ message MaxSubsamplingParam {
 	optional MaxSubsamplingFeatureMapParam feature_map_param = 3;
 	optional MaxSubsamplingEntryParam entry_param = 4;
 	optional MaxFunction function = 5 [default = MAX];
+}
+
+message CDFMaxParam {
+	message CDFMaxEntryParam {
+		required uint32 subsampling_size = 1;
+	}
+	enum MaxFunction {
+		MAX = 0;
+		MIN = 1;
+	}
+	optional CDFMaxEntryParam entry_param = 1;
+	optional MaxFunction function = 2 [default = MAX];
 }
 
 message SparseConvolutionalParam {
