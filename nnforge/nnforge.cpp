@@ -50,5 +50,7 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new concat_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new reshape_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new cdf_max_layer(2)));
+		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new prefix_sum_layer(2)));
+		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new upsampling_layer(std::vector<unsigned int>(1, 1))));
 	}
 }

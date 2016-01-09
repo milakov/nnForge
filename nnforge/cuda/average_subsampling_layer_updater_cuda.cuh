@@ -111,23 +111,17 @@ namespace nnforge
 									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										if (item_valid[i - 1])
 											new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+									#pragma unroll
+									for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+										res[i] += new_val[i];
 									if (DIMENSION_COUNT > 1)
-									{
-										#pragma unroll
-										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-											res[i] += new_val[i];
 										current_input_elem_id += input_sizes[0];
-									}
-									else
-									{
-										#pragma unroll
-										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-											res[i] = new_val[i];
-									}
 								} // for input_y
-								current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
+								if (DIMENSION_COUNT > 2)
+									current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
 							} // for input_z
-							current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
+							if (DIMENSION_COUNT > 3)
+								current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
 						} // for input_w
 						base_current_input_elem_id2 += input_neuron_count_per_feature_map;
 					} // for fm
@@ -175,7 +169,7 @@ namespace nnforge
 			}
 		}
 
-		template<int DIMENSION_COUNT>
+		template<int DIMENSION_COUNT,bool add_update_to_destination>
 		__global__ void average_subsampling_backprop_upd_kernel(
 			float * __restrict input_errors,
 			const float * __restrict output_errors,
@@ -192,8 +186,7 @@ namespace nnforge
 			int output_feature_map_count,
 			int output_entry_count,
 			int packed_config_count,
-			float mult,
-			bool add_update_to_destination)
+			float mult)
 		{
 			int packed_config_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int base_output_feature_map_id = (blockIdx.y * blockDim.y + threadIdx.y) * FEATURE_MAP_BLOCK_SIZE;
@@ -260,15 +253,11 @@ namespace nnforge
 									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										if (item_valid[i - 1])
 											dst[i] = input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
-									input_errors[current_input_elem_id] = err[0];
+									input_errors[current_input_elem_id] = err[0] + dst[0];
 									#pragma unroll
 									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										if (item_valid[i - 1])
 											input_errors[current_input_elem_id + input_neuron_count_per_feature_map * i] = err[i] + dst[i];
-									if (DIMENSION_COUNT > 1)
-									{
-										current_input_elem_id += input_sizes[0];
-									}
 								}
 								else
 								{
@@ -277,15 +266,15 @@ namespace nnforge
 									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										if (item_valid[i - 1])
 											input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = err[i];
-									if (DIMENSION_COUNT > 1)
-									{
-										current_input_elem_id += input_sizes[0];
-									}
 								}
+								if (DIMENSION_COUNT > 1)
+									current_input_elem_id += input_sizes[0];
 							} // for input_y
-							current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
+							if (DIMENSION_COUNT > 2)
+								current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
 						} // for input_z
-						current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
+						if (DIMENSION_COUNT > 3)
+							current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
 					} // for input_w
 					base_current_input_elem_id2 += input_neuron_count_per_feature_map;
 				} // for fm
@@ -404,24 +393,42 @@ namespace nnforge
 					entry_count,
 					subsampling_sizes[0]);
 
-				average_subsampling_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-					*input_errors_buffer,
-					*output_errors_buffer,
-					subsampling_sizes,
-					input_sizes,
-					output_sizes,
-					strides,
-					feature_map_subsampling_size,
-					entry_subsampling_size,
-					input_elem_count_per_entry_list[0],
-					input_elem_count_per_feature_map_list[0],
-					output_elem_count_per_feature_map,
-					input_configuration_specific_list[0].feature_map_count,
-					output_configuration_specific.feature_map_count,
-					entry_count,
-					forward_packed_config_count,
-					mult,
-					add_update_to_destination);
+				if (add_update_to_destination)
+					average_subsampling_backprop_upd_kernel<dimension_count,true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+						*input_errors_buffer,
+						*output_errors_buffer,
+						subsampling_sizes,
+						input_sizes,
+						output_sizes,
+						strides,
+						feature_map_subsampling_size,
+						entry_subsampling_size,
+						input_elem_count_per_entry_list[0],
+						input_elem_count_per_feature_map_list[0],
+						output_elem_count_per_feature_map,
+						input_configuration_specific_list[0].feature_map_count,
+						output_configuration_specific.feature_map_count,
+						entry_count,
+						forward_packed_config_count,
+						mult);
+				else
+					average_subsampling_backprop_upd_kernel<dimension_count,false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+						*input_errors_buffer,
+						*output_errors_buffer,
+						subsampling_sizes,
+						input_sizes,
+						output_sizes,
+						strides,
+						feature_map_subsampling_size,
+						entry_subsampling_size,
+						input_elem_count_per_entry_list[0],
+						input_elem_count_per_feature_map_list[0],
+						output_elem_count_per_feature_map,
+						input_configuration_specific_list[0].feature_map_count,
+						output_configuration_specific.feature_map_count,
+						entry_count,
+						forward_packed_config_count,
+						mult);
 			}
 
 		protected:

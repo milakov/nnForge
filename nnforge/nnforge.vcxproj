@@ -42,6 +42,7 @@
     <ClInclude Include="negative_log_likelihood_layer.h" />
     <ClInclude Include="network_action_schema.h" />
     <ClInclude Include="neuron_value_set_data_bunch_writer.h" />
+    <ClInclude Include="prefix_sum_layer.h" />
     <ClInclude Include="raw_data_reader.h" />
     <ClInclude Include="raw_data_writer.h" />
     <ClInclude Include="raw_to_structured_data_transformer.h" />
@@ -116,6 +117,7 @@
     <ClInclude Include="supervised_data_stream_schema.h" />
     <ClInclude Include="uniform_intensity_data_transformer.h" />
     <ClInclude Include="untile_layer.h" />
+    <ClInclude Include="upsampling_layer.h" />
     <ClInclude Include="varying_data_stream_reader.h" />
     <ClInclude Include="varying_data_stream_schema.h" />
     <ClInclude Include="varying_data_stream_writer.h" />
@@ -154,6 +156,7 @@
     <ClCompile Include="negative_log_likelihood_layer.cpp" />
     <ClCompile Include="network_action_schema.cpp" />
     <ClCompile Include="neuron_value_set_data_bunch_writer.cpp" />
+    <ClCompile Include="prefix_sum_layer.cpp" />
     <ClCompile Include="raw_data_reader.cpp" />
     <ClCompile Include="raw_data_writer.cpp" />
     <ClCompile Include="raw_to_structured_data_transformer.cpp" />
@@ -226,6 +229,7 @@
     <ClCompile Include="supervised_data_stream_schema.cpp" />
     <ClCompile Include="uniform_intensity_data_transformer.cpp" />
     <ClCompile Include="untile_layer.cpp" />
+    <ClCompile Include="upsampling_layer.cpp" />
     <ClCompile Include="varying_data_stream_reader.cpp" />
     <ClCompile Include="varying_data_stream_schema.cpp" />
     <ClCompile Include="varying_data_stream_writer.cpp" />

@@ -116,45 +116,36 @@ namespace nnforge
 									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										if (item_valid[i - 1])
 											new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+									#pragma unroll
+									for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+									{
+										if (IS_MIN)
+										{
+											if (init_required || (new_val[i] < res[i]))
+											{
+												res[i] = new_val[i];
+												max_pos[i] = current_pos;
+											}
+										}
+										else
+										{
+											if (init_required || (new_val[i] > res[i]))
+											{
+												res[i] = new_val[i];
+												max_pos[i] = current_pos;
+											}
+										}
+									}
+									++current_pos;
+									init_required = false;
 									if (DIMENSION_COUNT > 1)
-									{
-										#pragma unroll
-										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										{
-											if (IS_MIN)
-											{
-												if (init_required || (new_val[i] < res[i]))
-												{
-													res[i] = new_val[i];
-													max_pos[i] = current_pos;
-												}
-											}
-											else
-											{
-												if (init_required || (new_val[i] > res[i]))
-												{
-													res[i] = new_val[i];
-													max_pos[i] = current_pos;
-												}
-											}
-										}
 										current_input_elem_id += input_sizes[0];
-										++current_pos;
-										init_required = false;
-									}
-									else
-									{
-										#pragma unroll
-										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										{
-											res[i] = new_val[i];
-											max_pos[i] = current_pos;
-										}
-									}
 								} // for input_y
-								current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
+								if (DIMENSION_COUNT > 2)
+									current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
 							} // for input_z
-							current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
+							if (DIMENSION_COUNT > 3)
+								current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
 						} // for input_w
 						base_current_input_elem_id2 += input_neuron_count_per_feature_map;
 					} // for fm
@@ -301,23 +292,17 @@ namespace nnforge
 									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										if (item_valid[i - 1])
 											new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+									#pragma unroll
+									for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+										res[i] = IS_MIN ? min(res[i], new_val[i]) : max(res[i], new_val[i]);
 									if (DIMENSION_COUNT > 1)
-									{
-										#pragma unroll
-										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-											res[i] = IS_MIN ? min(res[i], new_val[i]) : max(res[i], new_val[i]);
 										current_input_elem_id += input_sizes[0];
-									}
-									else
-									{
-										#pragma unroll
-										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-											res[i] = new_val[i];
-									}
 								} // for input_y
-								current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
+								if (DIMENSION_COUNT > 2)
+									current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
 							} // for input_z
-							current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
+							if (DIMENSION_COUNT > 3)
+								current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
 						} // for input_w
 						base_current_input_elem_id2 += input_neuron_count_per_feature_map;
 					} // for fm
@@ -452,27 +437,36 @@ namespace nnforge
 							for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? subsampling_sizes[1] : 1); ++input_y)
 							{
 								if (add_update_to_destination)
-									input_errors[current_input_elem_id] += ((current_pos == max_pos[0]) ? errors[0] : 0.0F);
-								else
-									input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F);
-								#pragma unroll
-								for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-									if (item_valid[i - 1])
-									{
-										if (add_update_to_destination)
-											input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] += ((current_pos == max_pos[i]) ? errors[i] : 0.0F);
-										else
-											input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F);
-									}
-								if (DIMENSION_COUNT > 1)
 								{
-									current_input_elem_id += input_sizes[0];
-									++current_pos;
+									float dst[FEATURE_MAP_BLOCK_SIZE];
+									dst[0] = input_errors[current_input_elem_id];
+									#pragma unroll
+									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+										if (item_valid[i - 1])
+											dst[i] = input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+									input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F) + dst[0];
+									#pragma unroll
+									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+										if (item_valid[i - 1])
+											input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F) + dst[i];
 								}
+								else
+								{
+									input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F);
+									#pragma unroll
+									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+										if (item_valid[i - 1])
+											input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F);
+								}
+								++current_pos;
+								if (DIMENSION_COUNT > 1)
+									current_input_elem_id += input_sizes[0];
 							} // for input_y
-							current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
+							if (DIMENSION_COUNT > 2)
+								current_input_elem_id += input_sizes[0] * (input_sizes[1] - subsampling_sizes[1]);
 						} // for input_z
-						current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
+						if (DIMENSION_COUNT > 3)
+							current_input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - subsampling_sizes[2]);
 					} // for input_w
 					base_current_input_elem_id2 += input_neuron_count_per_feature_map;
 				} // for fm

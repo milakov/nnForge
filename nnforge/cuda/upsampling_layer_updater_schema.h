@@ -16,33 +16,27 @@
 
 #pragma once
 
-#include "layer_tester_plain.h"
+#include "layer_updater_schema.h"
 
 namespace nnforge
 {
-	namespace plain
+	namespace cuda
 	{
-		class cdf_max_layer_tester_plain : public layer_tester_plain
+		class upsampling_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			cdf_max_layer_tester_plain();
+			upsampling_layer_updater_schema();
 
-			virtual ~cdf_max_layer_tester_plain();
+			virtual ~upsampling_layer_updater_schema();
 
 			virtual std::string get_type_name() const;
 
-			virtual void run_forward_propagation(
-				plain_buffer::ptr output_buffer,
-				const std::vector<plain_buffer::const_ptr>& input_buffers,
-				plain_buffer::ptr temporary_working_fixed_buffer,
-				plain_buffer::ptr temporary_working_per_entry_buffer,
-				plain_running_configuration::const_ptr plain_config,
-				layer::const_ptr layer_schema,
-				layer_data::const_ptr data,
-				layer_data_custom::const_ptr data_custom,
+		protected:
+			virtual layer_updater_schema::ptr create_specific() const;
+
+			virtual layer_updater_cuda::ptr create_updater_specific(
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-				const layer_configuration_specific& output_configuration_specific,
-				unsigned int entry_count) const;
+				const layer_configuration_specific& output_configuration_specific) const;
 		};
 	}
 }

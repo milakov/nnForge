@@ -470,6 +470,30 @@
     <ClInclude Include="cdf_max_layer_updater_schema.h">
       <Filter>Header Files\updater_schemas</Filter>
     </ClInclude>
+    <ClInclude Include="prefix_sum_layer_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="prefix_sum_layer_updater_cuda.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="prefix_sum_layer_testing_schema.h">
+      <Filter>Header Files\testing_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="prefix_sum_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="upsampling_layer_tester_cuda.cuh">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="upsampling_layer_testing_schema.h">
+      <Filter>Header Files\testing_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="upsampling_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="upsampling_layer_updater_cuda.cuh">
+      <Filter>Source Files\layer_updaters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -727,6 +751,12 @@
     <ClCompile Include="cdf_max_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
+    <ClCompile Include="prefix_sum_layer_testing_schema.cpp">
+      <Filter>Source Files\testing_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="prefix_sum_layer_updater_schema.cpp">
+      <Filter>Source Files\updater_schemas</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="absolute_layer_tester_cuda.cu">
@@ -833,6 +863,18 @@
     </CudaCompile>
     <CudaCompile Include="cdf_max_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="prefix_sum_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="prefix_sum_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="upsampling_layer_testing_schema.cu">
+      <Filter>Source Files\testing_schemas</Filter>
+    </CudaCompile>
+    <CudaCompile Include="upsampling_layer_updater_schema.cu">
+      <Filter>Source Files\updater_schemas</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

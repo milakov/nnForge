@@ -218,6 +218,18 @@
     <ClInclude Include="cdf_max_layer_updater_plain.h">
       <Filter>Header Files\layer_updaters</Filter>
     </ClInclude>
+    <ClInclude Include="prefix_sum_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="prefix_sum_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="upsampling_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="upsampling_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_plain_size_configuration.cpp">
@@ -389,6 +401,18 @@
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
     <ClCompile Include="cdf_max_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
+    </ClCompile>
+    <ClCompile Include="prefix_sum_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="prefix_sum_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
+    </ClCompile>
+    <ClCompile Include="upsampling_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="upsampling_layer_updater_plain.cpp">
       <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
   </ItemGroup>

@@ -28,6 +28,8 @@ message Layer {
 	optional ReshapeParam reshape_param = 20;
 	optional LErrorParam lerror_param = 21;
 	optional CDFMaxParam cdf_max_param = 22;
+	optional PrefixSumParam prefix_sum_param = 23;
+	optional UpsamplingParam upsampling_param = 24;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -55,6 +57,21 @@ message AverageSubsamplingParam {
 	repeated AverageSubsamplingDimensionParam dimension_param = 1;
 	optional AverageSubsamplingFeatureMapParam feature_map_param = 2;
 	optional AverageSubsamplingEntryParam entry_param = 3;
+}
+
+message UpsamplingParam {
+	message UpsamplingDimensionParam {
+		required uint32 upsampling_size = 1;
+	}
+	message UpsamplingFeatureMapParam {
+		required uint32 upsampling_size = 1;
+	}
+	message UpsamplingEntryParam {
+		required uint32 upsampling_size = 1;
+	}
+	repeated UpsamplingDimensionParam dimension_param = 1;
+	optional UpsamplingFeatureMapParam feature_map_param = 2;
+	optional UpsamplingEntryParam entry_param = 3;
 }
 
 message MaxSubsamplingParam {
@@ -88,6 +105,15 @@ message CDFMaxParam {
 	}
 	optional CDFMaxEntryParam entry_param = 1;
 	optional MaxFunction function = 2 [default = MAX];
+}
+
+message PrefixSumParam {
+	message PrefixSumFeatureMapParam {
+		required uint32 segment_length = 1;
+	}
+	optional PrefixSumFeatureMapParam feature_map_param = 1;
+	optional float clamp_min = 2;
+	optional float clamp_max = 3;
 }
 
 message SparseConvolutionalParam {

@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace plain
 	{
-		class cdf_max_layer_tester_plain : public layer_tester_plain
+		class upsampling_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			cdf_max_layer_tester_plain();
+			upsampling_layer_tester_plain();
 
-			virtual ~cdf_max_layer_tester_plain();
+			virtual ~upsampling_layer_tester_plain();
 
 			virtual std::string get_type_name() const;
 
@@ -43,6 +43,9 @@ namespace nnforge
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific,
 				unsigned int entry_count) const;
+
+		private:
+			static const int max_dimension_count;
 		};
 	}
 }

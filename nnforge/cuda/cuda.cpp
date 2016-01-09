@@ -42,6 +42,8 @@
 #include "concat_layer_testing_schema.h"
 #include "reshape_layer_testing_schema.h"
 #include "cdf_max_layer_testing_schema.h"
+#include "prefix_sum_layer_testing_schema.h"
+#include "upsampling_layer_testing_schema.h"
 
 #include "layer_updater_schema_factory.h"
 #include "rectified_linear_layer_updater_schema.h"
@@ -66,6 +68,8 @@
 #include "concat_layer_updater_schema.h"
 #include "reshape_layer_updater_schema.h"
 #include "cdf_max_layer_updater_schema.h"
+#include "prefix_sum_layer_updater_schema.h"
+#include "upsampling_layer_updater_schema.h"
 
 namespace nnforge
 {
@@ -98,6 +102,8 @@ namespace nnforge
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new concat_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new reshape_layer_testing_schema()));
 			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new cdf_max_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new prefix_sum_layer_testing_schema()));
+			layer_testing_schema_factory::singleton::get_mutable_instance().register_layer_testing_schema(layer_testing_schema::ptr(new upsampling_layer_testing_schema()));
 
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new rectified_linear_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new sigmoid_layer_updater_schema()));
@@ -121,6 +127,8 @@ namespace nnforge
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new concat_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new reshape_layer_updater_schema()));
 			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new cdf_max_layer_updater_schema()));
+			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new prefix_sum_layer_updater_schema()));
+			layer_updater_schema_factory::singleton::get_mutable_instance().register_layer_updater_schema(layer_updater_schema::ptr(new upsampling_layer_updater_schema()));
 		}
 	}
 }

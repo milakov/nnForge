@@ -56,6 +56,8 @@
     <ClInclude Include="plain.h" />
     <ClInclude Include="plain_buffer.h" />
     <ClInclude Include="plain_running_configuration.h" />
+    <ClInclude Include="prefix_sum_layer_tester_plain.h" />
+    <ClInclude Include="prefix_sum_layer_updater_plain.h" />
     <ClInclude Include="rectified_linear_layer_tester_plain.h" />
     <ClInclude Include="rectified_linear_layer_updater_plain.h" />
     <ClInclude Include="reshape_layer_tester_plain.h" />
@@ -68,6 +70,8 @@
     <ClInclude Include="sparse_convolution_layer_tester_plain.h" />
     <ClInclude Include="sparse_convolution_layer_updater_plain.h" />
     <ClInclude Include="untile_layer_tester_plain.h" />
+    <ClInclude Include="upsampling_layer_tester_plain.h" />
+    <ClInclude Include="upsampling_layer_updater_plain.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="absolute_layer_tester_plain.cpp" />
@@ -115,6 +119,8 @@
     <ClCompile Include="plain.cpp" />
     <ClCompile Include="plain_buffer.cpp" />
     <ClCompile Include="plain_running_configuration.cpp" />
+    <ClCompile Include="prefix_sum_layer_tester_plain.cpp" />
+    <ClCompile Include="prefix_sum_layer_updater_plain.cpp" />
     <ClCompile Include="rectified_linear_layer_tester_plain.cpp" />
     <ClCompile Include="rectified_linear_layer_updater_plain.cpp" />
     <ClCompile Include="reshape_layer_tester_plain.cpp" />
@@ -127,6 +133,8 @@
     <ClCompile Include="sparse_convolution_layer_tester_plain.cpp" />
     <ClCompile Include="sparse_convolution_layer_updater_plain.cpp" />
     <ClCompile Include="untile_layer_tester_plain.cpp" />
+    <ClCompile Include="upsampling_layer_tester_plain.cpp" />
+    <ClCompile Include="upsampling_layer_updater_plain.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1E4C82DC-0C7F-43C1-8C1F-1F1B5FD54487}</ProjectGuid>

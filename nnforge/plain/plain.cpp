@@ -43,6 +43,8 @@
 #include "concat_layer_tester_plain.h"
 #include "reshape_layer_tester_plain.h"
 #include "cdf_max_layer_tester_plain.h"
+#include "prefix_sum_layer_tester_plain.h"
+#include "upsampling_layer_tester_plain.h"
 
 #include "layer_updater_plain_factory.h"
 
@@ -66,6 +68,8 @@
 #include "gradient_modifier_layer_updater_plain.h"
 #include "concat_layer_updater_plain.h"
 #include "reshape_layer_updater_plain.h"
+#include "prefix_sum_layer_updater_plain.h"
+#include "upsampling_layer_updater_plain.h"
 
 namespace nnforge
 {
@@ -98,6 +102,8 @@ namespace nnforge
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new concat_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new reshape_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new cdf_max_layer_tester_plain()));
+			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new prefix_sum_layer_tester_plain()));
+			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new upsampling_layer_tester_plain()));
 
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new hyperbolic_tangent_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new sigmoid_layer_updater_plain()));
@@ -119,6 +125,8 @@ namespace nnforge
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new gradient_modifier_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new concat_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new reshape_layer_updater_plain()));
+			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new prefix_sum_layer_updater_plain()));
+			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new upsampling_layer_updater_plain()));
 		}
 	}
 }
