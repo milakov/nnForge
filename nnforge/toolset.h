@@ -98,9 +98,9 @@ namespace nnforge
 
 		virtual void dump_data();
 
-		virtual void dump_data_visual(structured_data_reader::ptr dr);
+		virtual void dump_data_visual(structured_data_bunch_reader::ptr dr);
 
-		virtual void dump_data_csv(structured_data_reader::ptr dr);
+		virtual void dump_data_csv(structured_data_bunch_reader::ptr dr);
 
 		virtual void create_normalizer();
 

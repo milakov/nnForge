@@ -1018,18 +1018,20 @@ namespace nnforge
 		return res;
 	}
 
-	void toolset::dump_data_visual(structured_data_reader::ptr dr)
+	void toolset::dump_data_visual(structured_data_bunch_reader::ptr dr)
 	{
 		boost::filesystem::path dump_data_folder = get_working_data_folder() / dump_data_subfolder_name;
 		std::cout << "Dumping up to " << dump_data_sample_count << " samples to " << dump_data_folder.string() << std::endl;
 		boost::filesystem::create_directories(dump_data_folder);
 
-		layer_configuration_specific config = dr->get_configuration();
+		layer_configuration_specific config = dr->get_config_map().find(dump_layer_name)->second;
 		std::vector<unsigned int> dump_data_dimension_list = get_dump_data_dimension_list(static_cast<unsigned int>(config.dimension_sizes.size()));
 		std::vector<float> dt(config.get_neuron_count());
+		std::map<std::string, float *> data_map;
+		data_map.insert(std::make_pair(dump_layer_name, &dt[0]));
 		for(int sample_id = 0; sample_id < dump_data_sample_count; ++sample_id)
 		{
-			if (!dr->read(sample_id, &dt[0]))
+			if (!dr->read(sample_id, data_map))
 				break;
 
 			if (config.dimension_sizes.size() == 2)
@@ -1062,7 +1064,7 @@ namespace nnforge
 		}
 	}
 
-	void toolset::dump_data_csv(structured_data_reader::ptr dr)
+	void toolset::dump_data_csv(structured_data_bunch_reader::ptr dr)
 	{
 		std::string file_name = (boost::format("%1%_%2%.csv") % dump_dataset_name % dump_layer_name).str();
 		boost::filesystem::path dump_data_folder = get_working_data_folder() / dump_data_subfolder_name;
@@ -1072,12 +1074,14 @@ namespace nnforge
 
 		boost::filesystem::ofstream out(dump_data_filepath, std::ios_base::out | std::ios_base::trunc);
 
-		layer_configuration_specific config = dr->get_configuration();
+		layer_configuration_specific config = dr->get_config_map().find(dump_layer_name)->second;
 		std::vector<unsigned int> dump_data_dimension_list = get_dump_data_dimension_list(static_cast<unsigned int>(config.dimension_sizes.size()));
 		std::vector<float> dt(config.get_neuron_count());
+		std::map<std::string, float *> data_map;
+		data_map.insert(std::make_pair(dump_layer_name, &dt[0]));
 		for(int sample_id = 0; sample_id < dump_data_sample_count; ++sample_id)
 		{
-			if (!dr->read(sample_id, &dt[0]))
+			if (!dr->read(sample_id, data_map))
 				break;
 
 			out << sample_id;
@@ -1089,18 +1093,17 @@ namespace nnforge
 
 	void toolset::dump_data()
 	{
-		std::string file_name = (boost::format("%1%_%2%.dt") % dump_dataset_name % dump_layer_name).str();
-		boost::filesystem::path file_path = get_working_data_folder() / file_name;
-		std::cout << "Dumping data from " << file_path.string() << std::endl;
-		if (!boost::filesystem::exists(file_path))
-			throw neural_network_exception((boost::format("File %1% doesn't exist") % file_path.string()).str());
-		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(file_path, std::ios_base::in | std::ios_base::binary));
-		structured_data_reader::ptr dr = apply_transformers(get_structured_reader(dump_dataset_name, dump_layer_name, in), get_data_transformer_list(dump_dataset_name, dump_layer_name, dataset_usage_dump_data));
+		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(dump_dataset_name, dataset_usage_dump_data, 1);
+		std::set<std::string> layer_names;
+		layer_names.insert(dump_layer_name);
+		structured_data_bunch_reader::ptr narrow_reader = reader->get_narrow_reader(layer_names);
+		if (narrow_reader)
+			reader = narrow_reader;
 
 		if (dump_format == "visual")
-			dump_data_visual(dr);
+			dump_data_visual(reader);
 		else if (dump_format == "csv")
-			dump_data_csv(dr);
+			dump_data_csv(reader);
 		else
 			throw neural_network_exception((boost::format("Invalid dump format: %1%") % dump_format).str());
 	}
