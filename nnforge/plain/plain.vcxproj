@@ -15,6 +15,8 @@
     <ClInclude Include="absolute_layer_updater_plain.h" />
     <ClInclude Include="accuracy_layer_tester_plain.h" />
     <ClInclude Include="accuracy_layer_updater_plain.h" />
+    <ClInclude Include="add_layer_tester_plain.h" />
+    <ClInclude Include="add_layer_updater_plain.h" />
     <ClInclude Include="average_subsampling_layer_tester_plain.h" />
     <ClInclude Include="average_subsampling_layer_updater_plain.h" />
     <ClInclude Include="backward_propagation_plain.h" />
@@ -78,6 +80,8 @@
     <ClCompile Include="absolute_layer_updater_plain.cpp" />
     <ClCompile Include="accuracy_layer_tester_plain.cpp" />
     <ClCompile Include="accuracy_layer_updater_plain.cpp" />
+    <ClCompile Include="add_layer_tester_plain.cpp" />
+    <ClCompile Include="add_layer_updater_plain.cpp" />
     <ClCompile Include="average_subsampling_layer_tester_plain.cpp" />
     <ClCompile Include="average_subsampling_layer_updater_plain.cpp" />
     <ClCompile Include="backward_propagation_plain.cpp" />

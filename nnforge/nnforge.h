@@ -44,6 +44,7 @@
 #include "cdf_max_layer.h"
 #include "prefix_sum_layer.h"
 #include "upsampling_layer.h"
+#include "add_layer.h"
 
 #include "rnd.h"
 

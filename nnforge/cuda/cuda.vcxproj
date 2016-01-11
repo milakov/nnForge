@@ -20,6 +20,10 @@
     <ClInclude Include="accuracy_layer_updater_cuda.h" />
     <ClInclude Include="accuracy_layer_updater_schema.h" />
     <ClInclude Include="activation_layer_cudnn_updater_cuda.h" />
+    <ClInclude Include="add_layer_tester_cuda.h" />
+    <ClInclude Include="add_layer_testing_schema.h" />
+    <ClInclude Include="add_layer_updater_cuda.h" />
+    <ClInclude Include="add_layer_updater_schema.h" />
     <ClInclude Include="average_subsampling_layer_tester_cuda.cuh" />
     <ClInclude Include="average_subsampling_layer_testing_schema.h" />
     <ClInclude Include="average_subsampling_layer_updater_cuda.cuh" />
@@ -159,6 +163,10 @@
     <ClCompile Include="accuracy_layer_testing_schema.cpp" />
     <ClCompile Include="accuracy_layer_updater_schema.cpp" />
     <ClCompile Include="activation_layer_cudnn_updater_cuda.cpp" />
+    <ClCompile Include="add_layer_tester_cuda.cpp" />
+    <ClCompile Include="add_layer_testing_schema.cpp" />
+    <ClCompile Include="add_layer_updater_cuda.cpp" />
+    <ClCompile Include="add_layer_updater_schema.cpp" />
     <ClCompile Include="backward_propagation_cuda.cpp" />
     <ClCompile Include="buffer_cuda_size_configuration.cpp" />
     <ClCompile Include="cdf_max_layer_testing_schema.cpp" />
