@@ -92,7 +92,7 @@ namespace nnforge
 				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 					item_valid[i - 1] = (base_output_feature_map_id + i < output_feature_map_count);
 
-				int current_pos = window_x;
+				int current_pos = window_x * entry_subsampling_size * feature_map_subsampling_size;
 				#pragma unroll
 				for(int i = 1; i < DIMENSION_COUNT; ++i)
 					current_pos *= subsampling_sizes[i];
@@ -402,7 +402,7 @@ namespace nnforge
 			for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 				item_valid[i - 1] = (base_output_feature_map_id + i < output_feature_map_count);
 
-			int current_pos = window_x;
+			int current_pos = window_x * entry_subsampling_size * feature_map_subsampling_size;
 			#pragma unroll
 			for(int i = 1; i < DIMENSION_COUNT; ++i)
 				current_pos *= subsampling_sizes[i];
@@ -881,6 +881,7 @@ namespace nnforge
 				entry_subsampling_size = layer_derived->entry_subsampling_size;
 
 				int_fastdiv current_stride(layer_derived->subsampling_sizes[0]);
+				total_subsampling_size = entry_subsampling_size * feature_map_subsampling_size;
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = layer_derived->subsampling_sizes[i];
@@ -888,16 +889,13 @@ namespace nnforge
 					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
 					strides[i] = current_stride;
 
+					total_subsampling_size *= subsampling_sizes[i];
 					current_stride = current_stride * static_cast<int>(output_configuration_specific.dimension_sizes[i]);
 				}
 
 				forward_packed_config_count = subsampling_sizes[0];
 				for(int i = 0; i < dimension_count; ++i)
 					forward_packed_config_count *= output_sizes[i];
-
-				total_subsampling_size = 1;
-				for(int i = 0; i < dimension_count; ++i)
-					total_subsampling_size *= subsampling_sizes[i];
 
 				exact_subsampling = (output_configuration_specific.feature_map_count * feature_map_subsampling_size == input_configuration_specific_list[0].feature_map_count);
 				for(int i = 0; i < dimension_count; ++i)
