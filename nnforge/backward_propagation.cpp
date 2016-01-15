@@ -146,7 +146,7 @@ namespace nnforge
 
 		if (debug->is_debug())
 		{
-			boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_schema_with_feature_map_configs", "gv"), std::ios_base::out | std::ios_base::trunc);
+			boost::filesystem::ofstream out(debug->get_path_to_unique_file("backward_prop_schema_with_feature_map_configs", "gv"), std::ios_base::out | std::ios_base::trunc);
 			this->schema->write_gv(out, layer_config_map, cumulative_tiling_factor_map);
 		}
 

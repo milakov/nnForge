@@ -62,7 +62,7 @@ namespace nnforge
 			boost::unique_lock<boost::mutex> lock(index_mutex);
 			old_val = index++;
 		}
-		boost::filesystem::path file_path = debug_folder / (boost::format("%1%_%|2$05d|.%3%") % file_prefix % old_val % file_extension).str();
+		boost::filesystem::path file_path = debug_folder / (boost::format("%|1$05d|_%2%.%3%") % old_val % file_prefix % file_extension).str();
 		return file_path;
 	}
 
