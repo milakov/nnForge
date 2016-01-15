@@ -577,11 +577,15 @@ namespace nnforge
 		// incompatible_output_layers is filled with edges
 
 		std::vector<float> weights_vec(boost::num_vertices(incompatible_output_actions_with_lifetime));
+		if (weights_vec.empty())
+			weights_vec.resize(1); // So that weights_vec.front() would not fail
 		boost::iterator_property_map<float*, typename boost::property_map<undirected_action_schema_graph2, boost::vertex_index_t>::const_type> weights(&weights_vec.front(), boost::get(boost::vertex_index, incompatible_output_actions_with_lifetime));
 		for(std::pair<undirected_action_schema_graph2::vertex_iterator, undirected_action_schema_graph2::vertex_iterator> vp = boost::vertices(incompatible_output_actions_with_lifetime); vp.first != vp.second; ++vp.first)
 			boost::put(weights, *vp.first, incompatible_output_actions_with_lifetime[*vp.first].buffer_size);
 
 		std::vector<typename boost::graph_traits<undirected_action_schema_graph2>::vertices_size_type> colors_vec(boost::num_vertices(incompatible_output_actions_with_lifetime));
+		if (colors_vec.empty())
+			colors_vec.resize(1); // So that colors_vec.front() would not fail
 		boost::iterator_property_map<typename boost::graph_traits<undirected_action_schema_graph2>::vertices_size_type*, typename boost::property_map<undirected_action_schema_graph2, boost::vertex_index_t>::const_type> colors(&colors_vec.front(), boost::get(boost::vertex_index, incompatible_output_actions_with_lifetime));
 		int color_count = get_graph_coloring(incompatible_output_actions_with_lifetime, colors, weights);
 
