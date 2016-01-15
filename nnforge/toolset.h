@@ -76,7 +76,7 @@ namespace nnforge
 
 		virtual network_schema::ptr load_schema() const;
 
-		virtual void run_inference();
+		virtual std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > run_inference();
 
 		virtual void dump_schema_gv();
 

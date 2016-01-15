@@ -476,8 +476,10 @@ namespace nnforge
 		return schema;
 	}
 
-	void toolset::run_inference()
+	std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > toolset::run_inference()
 	{
+		std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > res;
+
 		network_schema::ptr schema = load_schema();
 		forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
 		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, epoch_count_in_validating_dataset);
@@ -500,10 +502,15 @@ namespace nnforge
 				forward_propagation::stat st = forward_prop->run(*reader, writer);
 				std::cout << "NN # " << it->first << " - " << st << std::endl;
 
+				std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > res_layer_map;
+
 				for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::iterator it2 = writer.layer_name_to_config_and_value_set_map.begin(); it2 != writer.layer_name_to_config_and_value_set_map.end(); ++it2)
 				{
+					std::vector<float> average_list = *it2->second.second->get_average();
+					res_layer_map.insert(std::make_pair(it2->first, std::make_pair(it2->second.first, average_list)));
+
 					if (inference_mode == "report_average_per_entry")
-						std::cout << schema->get_layer(it2->first)->get_string_for_average_data(it2->second.first, *it2->second.second->get_average()) << std::endl;
+						std::cout << schema->get_layer(it2->first)->get_string_for_average_data(it2->second.first, average_list) << std::endl;
 					else if (inference_mode == "dump_average_across_nets")
 					{
 						it2->second.second->compact(dump_compact_samples);
@@ -519,6 +526,8 @@ namespace nnforge
 					}
 					else
 						throw neural_network_exception((boost::format("Unknown inference_mode specified: %1%") % inference_mode).str());
+
+					res.insert(std::make_pair(it->first, res_layer_map));
 				}
 
 				++accumulated_count;
@@ -568,6 +577,8 @@ namespace nnforge
 				}
 			}
 		}
+
+		return res;
 	}
 
 	structured_data_bunch_reader::ptr toolset::get_structured_data_bunch_reader(
