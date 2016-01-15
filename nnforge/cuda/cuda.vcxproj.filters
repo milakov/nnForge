@@ -727,9 +727,6 @@
     <ClCompile Include="gradient_modifier_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
-    <ClCompile Include="concat_layer_tester_cuda.cpp">
-      <Filter>Source Files\layer_testers</Filter>
-    </ClCompile>
     <ClCompile Include="concat_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
     </ClCompile>
@@ -741,9 +738,6 @@
     </ClCompile>
     <ClCompile Include="reshape_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
-    </ClCompile>
-    <ClCompile Include="concat_layer_updater_cuda.cpp">
-      <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
     <ClCompile Include="reshape_layer_updater_cuda.cpp">
       <Filter>Source Files\layer_updaters</Filter>
@@ -899,6 +893,12 @@
     </CudaCompile>
     <CudaCompile Include="upsampling_layer_updater_schema.cu">
       <Filter>Source Files\updater_schemas</Filter>
+    </CudaCompile>
+    <CudaCompile Include="concat_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="concat_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

@@ -17,7 +17,6 @@
 #include "concat_layer_tester_plain.h"
 
 #include "../concat_layer.h"
-#include "../nn_types.h"
 
 #include <cstring>
 
@@ -51,15 +50,18 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
-			unsigned int offset = 0;
-			for(unsigned int i = 0; i < static_cast<unsigned int>(input_configuration_specific_list.size()); ++i)
+			for(unsigned int entry_id = 0; entry_id < entry_count; ++entry_id)
 			{
-				unsigned int elem_count = input_configuration_specific_list[i].get_neuron_count() * entry_count;
-				memcpy(
-					(float *)(*output_buffer) + offset,
-					*input_buffers[i],
-					elem_count * sizeof(float));
-				offset += elem_count;
+				float *dst = (float *)*output_buffer + entry_id * output_configuration_specific.get_neuron_count();
+				for(unsigned int i = 0; i < static_cast<unsigned int>(input_configuration_specific_list.size()); ++i)
+				{
+					unsigned int input_neuron_count = input_configuration_specific_list[i].get_neuron_count();
+					memcpy(
+						dst,
+						(const float *)(*input_buffers[i]) + entry_id * input_neuron_count,
+						input_neuron_count * sizeof(float));
+					dst += input_neuron_count;
+				}
 			}
 		}
 	}

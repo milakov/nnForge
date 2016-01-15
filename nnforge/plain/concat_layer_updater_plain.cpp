@@ -51,15 +51,18 @@ namespace nnforge
 			const std::set<layer_action>& actions,
 			unsigned int entry_count) const
 		{
-			unsigned int offset = 0;
-			for(unsigned int i = 0; i < static_cast<unsigned int>(input_configuration_specific_list.size()); ++i)
+			for(unsigned int entry_id = 0; entry_id < entry_count; ++entry_id)
 			{
-				unsigned int elem_count = input_configuration_specific_list[i].get_neuron_count() * entry_count;
-				memcpy(
-					(float *)(*output_buffer) + offset,
-					*input_buffers[i],
-					elem_count * sizeof(float));
-				offset += elem_count;
+				float *dst = (float *)*output_buffer + entry_id * output_configuration_specific.get_neuron_count();
+				for(unsigned int i = 0; i < static_cast<unsigned int>(input_configuration_specific_list.size()); ++i)
+				{
+					unsigned int input_neuron_count = input_configuration_specific_list[i].get_neuron_count();
+					memcpy(
+						dst,
+						(const float *)(*input_buffers[i]) + entry_id * input_neuron_count,
+						input_neuron_count * sizeof(float));
+					dst += input_neuron_count;
+				}
 			}
 		}
 
@@ -84,29 +87,22 @@ namespace nnforge
 		{
 			unsigned int offset = 0;
 			for(unsigned int i = 0; i < input_index; ++i)
-			{
-				unsigned int elem_count = input_configuration_specific_list[i].get_neuron_count() * entry_count;
-				offset += elem_count;
-			}
-			const int elem_count = input_configuration_specific_list[input_index].get_neuron_count() * entry_count;
-			const float * const src = (const float *)(*output_errors_buffer) + offset;
-			float * const dst = *input_errors_buffer;
+				offset += input_configuration_specific_list[i].get_neuron_count();
 
-			if (add_update_to_destination)
+			for(unsigned int entry_id = 0; entry_id < entry_count; ++entry_id)
 			{
-				#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
+				unsigned int input_neuron_count = input_configuration_specific_list[input_index].get_neuron_count();
+				const float * out_err = (const float *)(*output_errors_buffer) + entry_id * output_configuration_specific.get_neuron_count() + offset;
+				float * in_err = (float *)(*input_errors_buffer) + entry_id * input_neuron_count;
+				if (add_update_to_destination)
 				{
-					#pragma omp for schedule(guided)
-					for(int workload_id = 0; workload_id < elem_count; ++workload_id)
-					{
-						int elem_id = workload_id;
-						*(dst + elem_id) += *(src + elem_id);
-					}
+					for(unsigned int i = 0; i < input_neuron_count; ++i)
+						in_err[i] += out_err[i];
 				}
-			}
-			else
-			{
-				memcpy(dst, src, elem_count * sizeof(float));
+				else
+				{
+					memcpy(in_err, out_err, input_neuron_count * sizeof(float));
+				}
 			}
 		}
 
