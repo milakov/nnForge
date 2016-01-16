@@ -49,9 +49,11 @@ namespace nnforge
 			switch (blt)
 			{
 			case action_output_buffer:
-				return "action_output_buffer";
+				return "action_output";
 			case working_buffer:
-				return "working_buffer";
+				return "working";
+			case temporary_buffer:
+				return "temporary";
 			default:
 				return "";
 			}

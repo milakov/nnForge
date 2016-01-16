@@ -351,20 +351,26 @@ namespace nnforge
 			{
 				std::stringstream debug_str;
 				debug_str << "forward prop plain per entry buffers: " << layer_buffer_set_per_entry_size_list.size();
-				if (!layer_buffer_set_per_entry_size_list.empty())
-				{
-					size_t total_buffer_size = 0;
-					debug_str << " (";
-					for(std::vector<size_t>::const_iterator it = layer_buffer_set_per_entry_size_list.begin(); it != layer_buffer_set_per_entry_size_list.end(); ++it)
-					{
-						if (it != layer_buffer_set_per_entry_size_list.begin())
-							debug_str << ", ";
-						debug_str << ((*it + 1024 - 1) / 1024) << " KB";
+				size_t total_buffer_size = 0;
+				for(std::vector<size_t>::const_iterator it = layer_buffer_set_per_entry_size_list.begin(); it != layer_buffer_set_per_entry_size_list.end(); ++it)
 						total_buffer_size += *it;
-					}
-					debug_str << "), total " << ((total_buffer_size + 1024 - 1) / 1024) << " KB";
-				}
+				debug_str << ", total size " << ((total_buffer_size + 1024 - 1) / 1024) << " KB";
 				debug->output_message(debug_str.str().c_str());
+				for(unsigned int set_id = 0; set_id < static_cast<unsigned int>(layer_buffer_set_per_entry_size_list.size()); ++set_id)
+				{
+					std::stringstream debug_str;
+					debug_str << " - " << ((layer_buffer_set_per_entry_size_list[set_id] + 1024 - 1) / 1024) << " KB: ";
+					const std::vector<std::pair<layer_name_with_action, buffer_lifetime> >& action_list = layer_buffer_set_list[set_id];
+					for(std::vector<std::pair<layer_name_with_action, buffer_lifetime> >::const_iterator it = action_list.begin(); it != action_list.end(); ++it)
+					{
+						if (it != action_list.begin())
+							debug_str << ", ";
+						debug_str << it->first.get_name();
+						if (it->second.get_buffer_lifetime_type() != buffer_lifetime::action_output_buffer)
+							debug_str << " " << it->second.str();
+					}
+					debug->output_message(debug_str.str().c_str());
+				}
 				boost::filesystem::ofstream out(debug->get_path_to_unique_file("forward_prop_plain_per_entry_buffers", "gv"), std::ios_base::out | std::ios_base::trunc);
 				action_schema->write_gv(out, layer_buffer_action_to_set_map, std::map<layer_name_with_action, unsigned int>(), temporary_working_per_entry_data_action_to_set_map);
 			}
