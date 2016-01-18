@@ -144,7 +144,7 @@ namespace nnforge
 		std::stringstream ss;
 		ss << "L" << n;
 		if (scale != 1.0F)
-			ss << (boost::format(", scale %|1$.5f|") % scale).str();
+			ss << ", scale " << scale;
 
 		res.push_back(ss.str());
 

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace nnforge
 {
@@ -132,8 +133,11 @@ namespace nnforge
 	{
 		std::vector<std::string> res;
 
+		std::stringstream ss;
 		if (scale != 1.0F)
-			res.push_back((boost::format("scale %|1$.5f|") % scale).str());
+			ss << "scale " << scale;
+
+		res.push_back(ss.str());
 
 		return res;
 	}
