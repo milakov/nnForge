@@ -118,33 +118,31 @@ namespace nnforge
 			unsigned int entry_count)
 		{
 			int offset = 0;
-			for(unsigned int i = 0; i < static_cast<unsigned int>(input_configuration_specific_list.size()); ++i)
-			{
-				int input_neuron_count = input_elem_count_per_entry_list[i];
+			for(unsigned int i = 0; i < input_index; ++i)
+				offset += input_elem_count_per_entry_list[i];
 
-				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
-					*cuda_config,
+			int input_neuron_count = input_elem_count_per_entry_list[input_index];
+
+			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+				*cuda_config,
+				input_neuron_count,
+				entry_count,
+				1);
+
+			if (add_update_to_destination)
+				concat_backprop_upd_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_errors_buffer,
+					(const float *)*output_errors_buffer + offset,
 					input_neuron_count,
-					entry_count,
-					1);
-
-				if (add_update_to_destination)
-					concat_backprop_upd_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-						*input_errors_buffer,
-						(const float *)*output_errors_buffer + offset,
-						input_neuron_count,
-						output_elem_count_per_entry,
-						entry_count);
-				else
-					concat_backprop_upd_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-						*input_errors_buffer,
-						(const float *)*output_errors_buffer + offset,
-						input_neuron_count,
-						output_elem_count_per_entry,
-						entry_count);
-
-				offset += input_neuron_count;
-			}
+					output_elem_count_per_entry,
+					entry_count);
+			else
+				concat_backprop_upd_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_errors_buffer,
+					(const float *)*output_errors_buffer + offset,
+					input_neuron_count,
+					output_elem_count_per_entry,
+					entry_count);
 		}
 
 		bool concat_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
