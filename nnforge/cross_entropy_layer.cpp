@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace nnforge
 {
@@ -126,5 +127,18 @@ namespace nnforge
 		default:
 			return 0.0F;
 		}
+	}
+
+	std::vector<std::string> cross_entropy_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		std::stringstream ss;
+		if (scale != 1.0F)
+			ss << "scale " << scale;
+
+		res.push_back(ss.str());
+
+		return res;
 	}
 }

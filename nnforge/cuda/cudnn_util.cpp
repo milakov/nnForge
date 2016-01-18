@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ namespace nnforge
 			tensor_dimensions[1] = config.feature_map_count;
 			for(int i = 0; i < config.dimension_sizes.size(); ++i)
 				tensor_dimensions[i + 2] = config.dimension_sizes[config.dimension_sizes.size() - 1 - i];
+			for(int i = static_cast<int>(tensor_dimensions.size()); i < 4; ++i)
+				tensor_dimensions.push_back(1);
 
 			std::vector<int> tensor_strides(tensor_dimensions.size());
 			tensor_strides.back() = 1;

@@ -61,9 +61,6 @@ namespace nnforge
 
 	void convolution_layer::check()
 	{
-		if (window_sizes.size() == 0)
-			throw neural_network_exception("window sizes for convolution layer may not be empty");
-
 		for(unsigned int i = 0; i < window_sizes.size(); i++)
 			if (window_sizes[i] == 0)
 				throw neural_network_exception("window dimension for convolution layer may not be zero");
