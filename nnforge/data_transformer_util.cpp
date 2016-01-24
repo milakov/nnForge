@@ -214,7 +214,8 @@ namespace nnforge
 				return;
 		}
 		
-		cv::flip(image, image, flip_code);
+		cv::Mat image_copy = image.clone();
+		cv::flip(image_copy, image, flip_code);
 	}
 
 	void data_transformer_util::flip(
