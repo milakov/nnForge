@@ -86,7 +86,6 @@ namespace nnforge
 			for(unsigned int i = 0; i < subsampling_dimension_count; ++i)
 				subsampling_elem_count *= subsampling_sizes[i];
 			const unsigned int const_subsampling_elem_count = subsampling_elem_count;
-			const float mult = 1.0F / static_cast<float>(subsampling_elem_count);
 			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
 			const bool is_min = layer_derived->is_min;
 
@@ -138,7 +137,7 @@ namespace nnforge
 							in_offset += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
 
 						unsigned int max_index = 0;
-						float best_val = -1.0e38F;
+						float best_val = is_min ? 1.0e37F : -1.0e37F;
 						for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
 						{
 							int current_offset = in_offset + *(offset_list_it + i);

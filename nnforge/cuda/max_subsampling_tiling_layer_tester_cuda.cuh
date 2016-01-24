@@ -78,7 +78,7 @@ namespace nnforge
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					current_input_elem_id = current_input_elem_id * input_sizes[i] + xyzw[i] * subsampling_sizes[i] + offset_xyzw[i];
 
-				float res = -1.0e37F;
+				float res = IS_MIN ? 1.0e37F : -1.0e37F;
 
 				for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? subsampling_sizes[3] : 1); ++input_w)
 				{

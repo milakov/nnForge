@@ -269,7 +269,7 @@ namespace nnforge
 
 				#pragma unroll
 				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-					res[i] = -1.0e37F;
+					res[i] = IS_MIN ? 1.0e37F : -1.0e37F;
 				#pragma unroll
 				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 					item_valid[i - 1] = (base_output_feature_map_id + i < output_feature_map_count);

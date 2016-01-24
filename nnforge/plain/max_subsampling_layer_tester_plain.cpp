@@ -153,7 +153,7 @@ namespace nnforge
 
 						for(unsigned int j = 0; j < const_subsampling_elem_count; ++j)
 						{
-							float current_max = -1.0e38F;
+							float current_max = is_min ? 1.0e37F : -1.0e37F;
 							const float * in_it2 = in_it + *(offset_list_it + j);
 							for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
 							{
@@ -259,7 +259,7 @@ namespace nnforge
 						for(unsigned int i = 0; i < spatial_dimension_count; ++i)
 							in_it += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
 
-						float current_max = -1.0e38F;
+						float current_max = is_min ? 1.0e37F : -1.0e37F;
 						for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)
 						{
 							float new_val = *(in_it + (*(offset_list_it + i)));
