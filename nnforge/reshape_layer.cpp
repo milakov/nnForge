@@ -163,7 +163,7 @@ namespace nnforge
 			else
 			{
 				if (param.entry_param().has_upsampling_size())
-					entry_factor = tiling_factor(param.entry_param().downsampling_size());
+					entry_factor = tiling_factor(param.entry_param().upsampling_size());
 				else
 					entry_factor = 1;
 			}
@@ -176,14 +176,14 @@ namespace nnforge
 				if (param.feature_map_param().has_upsampling_size())
 					throw neural_network_exception("feature_map_param cannot have both upsamping and downsampling sizes");
 				else
-					entry_factor = tiling_factor(param.feature_map_param().downsampling_size()).get_inverse();
+					feature_map_factor = tiling_factor(param.feature_map_param().downsampling_size()).get_inverse();
 			}
 			else
 			{
 				if (param.feature_map_param().has_upsampling_size())
-					entry_factor = tiling_factor(param.feature_map_param().downsampling_size());
+					feature_map_factor = tiling_factor(param.feature_map_param().upsampling_size());
 				else
-					entry_factor = 1;
+					feature_map_factor = 1;
 			}
 		}
 
@@ -197,14 +197,14 @@ namespace nnforge
 				if (dimension_param.has_upsampling_size())
 					throw neural_network_exception("dimension_param cannot have both upsamping and downsampling sizes");
 				else
-					entry_factor = tiling_factor(dimension_param.downsampling_size()).get_inverse();
+					dimension_factor_list[i] = tiling_factor(dimension_param.downsampling_size()).get_inverse();
 			}
 			else
 			{
 				if (dimension_param.has_upsampling_size())
-					entry_factor = tiling_factor(dimension_param.downsampling_size());
+					dimension_factor_list[i] = tiling_factor(dimension_param.upsampling_size());
 				else
-					entry_factor = 1;
+					dimension_factor_list[i] = 1;
 			}
 		}
 
