@@ -130,14 +130,14 @@ namespace nnforge
 				cdf_max_upd_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					*output_buffer,
 					*input_buffers[0],
-					output_elem_count_per_feature_map,
+					output_elem_count_per_entry,
 					entry_subsampling_size,
 					entry_count);
 			else
 				cdf_max_upd_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					*output_buffer,
 					*input_buffers[0],
-					output_elem_count_per_feature_map,
+					output_elem_count_per_entry,
 					entry_subsampling_size,
 					entry_count);
 		}
@@ -173,7 +173,7 @@ namespace nnforge
 						*output_errors_buffer,
 						*input_neurons_buffers[0],
 						*output_neurons_buffer,
-						output_elem_count_per_feature_map,
+						output_elem_count_per_entry,
 						entry_subsampling_size,
 						entry_count);
 				else
@@ -182,7 +182,7 @@ namespace nnforge
 						*output_errors_buffer,
 						*input_neurons_buffers[0],
 						*output_neurons_buffer,
-						output_elem_count_per_feature_map,
+						output_elem_count_per_entry,
 						entry_subsampling_size,
 						entry_count);
 			}
@@ -194,7 +194,7 @@ namespace nnforge
 						*output_errors_buffer,
 						*input_neurons_buffers[0],
 						*output_neurons_buffer,
-						output_elem_count_per_feature_map,
+						output_elem_count_per_entry,
 						entry_subsampling_size,
 						entry_count);
 				else
@@ -203,7 +203,7 @@ namespace nnforge
 						*output_errors_buffer,
 						*input_neurons_buffers[0],
 						*output_neurons_buffer,
-						output_elem_count_per_feature_map,
+						output_elem_count_per_entry,
 						entry_subsampling_size,
 						entry_count);
 			}

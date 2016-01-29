@@ -69,6 +69,7 @@
 #include "gradient_modifier_layer_updater_plain.h"
 #include "concat_layer_updater_plain.h"
 #include "reshape_layer_updater_plain.h"
+#include "cdf_max_layer_updater_plain.h"
 #include "prefix_sum_layer_updater_plain.h"
 #include "upsampling_layer_updater_plain.h"
 #include "add_layer_updater_plain.h"
@@ -128,6 +129,7 @@ namespace nnforge
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new gradient_modifier_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new concat_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new reshape_layer_updater_plain()));
+			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new cdf_max_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new prefix_sum_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new upsampling_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new add_layer_updater_plain()));
