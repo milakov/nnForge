@@ -1035,7 +1035,11 @@ namespace nnforge
 		std::cout << "Dumping up to " << dump_data_sample_count << " samples to " << dump_data_folder.string() << std::endl;
 		boost::filesystem::create_directories(dump_data_folder);
 
-		layer_configuration_specific config = dr->get_config_map().find(dump_layer_name)->second;
+		std::map<std::string, layer_configuration_specific> config_map = dr->get_config_map();
+		std::map<std::string, layer_configuration_specific>::const_iterator it = config_map.find(dump_layer_name);
+		if (it == config_map.end())
+			throw neural_network_exception((boost::format("Data for layer %1% not found") % dump_layer_name).str());
+		const layer_configuration_specific& config = it->second;
 		std::vector<unsigned int> dump_data_dimension_list = get_dump_data_dimension_list(static_cast<unsigned int>(config.dimension_sizes.size()));
 		std::vector<float> dt(config.get_neuron_count());
 		std::map<std::string, float *> data_map;
@@ -1085,7 +1089,11 @@ namespace nnforge
 
 		boost::filesystem::ofstream out(dump_data_filepath, std::ios_base::out | std::ios_base::trunc);
 
-		layer_configuration_specific config = dr->get_config_map().find(dump_layer_name)->second;
+		std::map<std::string, layer_configuration_specific> config_map = dr->get_config_map();
+		std::map<std::string, layer_configuration_specific>::const_iterator it = config_map.find(dump_layer_name);
+		if (it == config_map.end())
+			throw neural_network_exception((boost::format("Data for layer %1% not found") % dump_layer_name).str());
+		const layer_configuration_specific& config = it->second;
 		std::vector<unsigned int> dump_data_dimension_list = get_dump_data_dimension_list(static_cast<unsigned int>(config.dimension_sizes.size()));
 		std::vector<float> dt(config.get_neuron_count());
 		std::map<std::string, float *> data_map;
