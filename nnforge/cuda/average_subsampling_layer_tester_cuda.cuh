@@ -226,7 +226,7 @@ namespace nnforge
 						forward_packed_config_count,
 						mult);
 				else
-					average_subsampling_kernel<dimension_count,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+					average_subsampling_kernel<dimension_count,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
 						*output_buffer,
 						*input_buffers[0],
 						subsampling_sizes,
