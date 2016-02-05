@@ -114,8 +114,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="working_data\schema.txt" />
-    <Text Include="working_data\schema_large.txt" />
-    <Text Include="working_data\schema_tail.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -53,6 +53,14 @@ namespace nnforge
 			dataset_usage_create_normalizer = 4
 		};
 
+		enum schema_usage
+		{
+			schema_usage_train = 0,
+			schema_usage_validate_when_train = 1,
+			schema_usage_inference = 2,
+			schema_usage_dump_schema = 3
+		};
+
 	protected:
 		virtual std::string get_default_action() const;
 
@@ -75,6 +83,8 @@ namespace nnforge
 		virtual boost::filesystem::path get_input_data_folder() const;
 
 		virtual network_schema::ptr load_schema() const;
+
+		virtual network_schema::ptr get_schema(schema_usage usage) const;
 
 		virtual std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > run_inference();
 
@@ -172,6 +182,7 @@ namespace nnforge
 		boost::filesystem::path working_data_folder;
 		std::string schema_filename;
 		std::vector<std::string> inference_output_layer_names;
+		std::vector<std::string> inference_force_data_layer_names;
 		std::string inference_dataset_name;
 		std::string training_dataset_name;
 		std::string shuffle_dataset_name;

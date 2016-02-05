@@ -22,6 +22,7 @@
 #include <boost/format.hpp>
 #include <iostream>
 
+#include "layer_factory.h"
 #include "neural_network_exception.h"
 #include "neuron_value_set_data_bunch_writer.h"
 #include "network_trainer_sgd.h"
@@ -320,6 +321,7 @@ namespace nnforge
 		std::vector<multi_string_option> res;
 
 		res.push_back(multi_string_option("inference_output_layer_name", &inference_output_layer_names, "Names of the output layers when doing inference"));
+		res.push_back(multi_string_option("inference_force_data_layer_name", &inference_force_data_layer_names, "Names of the layers treated as data when doing inference"));
 		res.push_back(multi_string_option("training_output_layer_name", &training_output_layer_names, "Names of the output layers when doing training"));
 		res.push_back(multi_string_option("training_error_source_layer_name", &training_error_source_layer_names, "Names of the error sources for training"));
 		res.push_back(multi_string_option("training_exclude_data_update_layer_name", &training_exclude_data_update_layer_names, "Names of layers which shouldn't be trained"));
@@ -476,11 +478,40 @@ namespace nnforge
 		return schema;
 	}
 
+	network_schema::ptr toolset::get_schema(schema_usage usage) const
+	{
+		network_schema::ptr res = load_schema();
+
+		if ((usage == schema_usage_inference) && (!inference_force_data_layer_names.empty()))
+		{
+			std::vector<layer::const_ptr> all_layers = res->get_layers();
+			std::vector<layer::const_ptr> new_layers;
+			std::set<std::string> exclude_layer_names;
+			for(std::vector<std::string>::const_iterator it = inference_force_data_layer_names.begin(); it != inference_force_data_layer_names.end(); ++it)
+			{
+				layer::ptr new_data_layer = single_layer_factory::get_const_instance().create_layer("data");
+				new_data_layer->instance_name = *it;
+				new_layers.push_back(new_data_layer);
+				exclude_layer_names.insert(*it);
+			}
+
+			for(std::vector<layer::const_ptr>::const_iterator it = all_layers.begin(); it != all_layers.end(); ++it)
+			{
+				if (exclude_layer_names.find((*it)->instance_name) == exclude_layer_names.end())
+					new_layers.push_back(*it);
+			}
+
+			res = network_schema::ptr(new network_schema(new_layers));
+		}
+
+		return res;
+	}
+
 	std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > toolset::run_inference()
 	{
 		std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > res;
 
-		network_schema::ptr schema = load_schema();
+		network_schema::ptr schema = get_schema(schema_usage_inference);
 		forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
 		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, epoch_count_in_validating_dataset);
 
@@ -646,7 +677,7 @@ namespace nnforge
 
 	void toolset::dump_schema_gv()
 	{
-		network_schema::ptr schema = load_schema();
+		network_schema::ptr schema = get_schema(schema_usage_dump_schema);
 
 		boost::filesystem::path gv_filename(schema_filename);
 		gv_filename.replace_extension("gv");
@@ -658,7 +689,6 @@ namespace nnforge
 
 	void toolset::train()
 	{
-		network_schema::ptr schema = load_schema();
 		network_trainer::ptr trainer = get_network_trainer();
 
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
@@ -685,7 +715,7 @@ namespace nnforge
 
 		progress.push_back(network_data_pusher::ptr(new report_progress_network_data_pusher()));
 
-		std::vector<network_data_pusher::ptr> validators_for_training = get_validators_for_training(schema);
+		std::vector<network_data_pusher::ptr> validators_for_training = get_validators_for_training(get_schema(schema_usage_validate_when_train));
 		progress.insert(progress.end(), validators_for_training.begin(), validators_for_training.end());
 
 		summarize_network_data_pusher res(batch_folder);
@@ -758,8 +788,6 @@ namespace nnforge
 		std::set<unsigned int> trained_ann_list = get_trained_ann_list();
 
 		std::map<unsigned int, unsigned int> snapshot_ann_list = get_snapshot_ann_list(trained_ann_list);
-
-		network_schema::ptr schema = load_schema();
 
 		for(std::map<unsigned int, unsigned int>::const_iterator it = snapshot_ann_list.begin(); it != snapshot_ann_list.end(); ++it)
 		{
@@ -875,7 +903,7 @@ namespace nnforge
 	{
 		network_trainer::ptr res;
 
-		network_schema::ptr schema = load_schema();
+		network_schema::ptr schema = get_schema(schema_usage_train);
 
 		backward_propagation::ptr backprop = backward_prop_factory->create(
 			*schema,
