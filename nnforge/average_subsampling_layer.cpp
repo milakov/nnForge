@@ -31,10 +31,12 @@ namespace nnforge
 	average_subsampling_layer::average_subsampling_layer(
 		const std::vector<unsigned int>& subsampling_sizes,
 		unsigned int feature_map_subsampling_size,
-		unsigned int entry_subsampling_size)
+		unsigned int entry_subsampling_size,
+		float alpha)
 		: subsampling_sizes(subsampling_sizes)
 		, feature_map_subsampling_size(feature_map_subsampling_size)
 		, entry_subsampling_size(entry_subsampling_size)
+		, alpha(alpha)
 	{
 		check();
 	}
@@ -145,6 +147,9 @@ namespace nnforge
 
 		if (entry_subsampling_size != 1)
 			param->mutable_entry_param()->set_subsampling_size(entry_subsampling_size);
+
+		if (alpha != -std::numeric_limits<float>::max())
+			param->set_alpha(alpha);
 	}
 
 	void average_subsampling_layer::read_proto(const void * layer_proto)
@@ -163,6 +168,8 @@ namespace nnforge
 		feature_map_subsampling_size = param.has_feature_map_param() ? param.feature_map_param().subsampling_size() : 1;
 
 		entry_subsampling_size = param.has_entry_param() ? param.entry_param().subsampling_size() : 1;
+
+		alpha = param.has_alpha() ? param.alpha() : -std::numeric_limits<float>::max();
 
 		check();
 	}
@@ -213,7 +220,26 @@ namespace nnforge
 		if (entry_subsampling_size != 1)
 			ss << ", samples " << entry_subsampling_size;
 
+		if (alpha != -std::numeric_limits<float>::max())
+			ss << ", alpha " << alpha;
+
 		res.push_back(ss.str());
+
+		return res;
+	}
+
+	float average_subsampling_layer::get_effective_alpha() const
+	{
+		float res;
+		if (alpha == -std::numeric_limits<float>::max())
+		{
+			unsigned int subsampling_elem_count = feature_map_subsampling_size * entry_subsampling_size;
+			for(unsigned int i = 0; i < static_cast<int>(subsampling_sizes.size()); ++i)
+				subsampling_elem_count *= subsampling_sizes[i];
+			res = 1.0F / static_cast<float>(subsampling_elem_count);
+		}
+		else
+			res = alpha;
 
 		return res;
 	}

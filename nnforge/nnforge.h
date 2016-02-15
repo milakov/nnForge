@@ -45,6 +45,8 @@
 #include "prefix_sum_layer.h"
 #include "upsampling_layer.h"
 #include "add_layer.h"
+#include "cdf_to_pdf_layer.h"
+#include "entry_convolution_layer.h"
 
 #include "rnd.h"
 

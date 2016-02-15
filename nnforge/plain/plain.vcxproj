@@ -23,6 +23,8 @@
     <ClInclude Include="buffer_plain_size_configuration.h" />
     <ClInclude Include="cdf_max_layer_tester_plain.h" />
     <ClInclude Include="cdf_max_layer_updater_plain.h" />
+    <ClInclude Include="cdf_to_pdf_layer_tester_plain.h" />
+    <ClInclude Include="cdf_to_pdf_layer_updater_plain.h" />
     <ClInclude Include="concat_layer_tester_plain.h" />
     <ClInclude Include="concat_layer_updater_plain.h" />
     <ClInclude Include="convolution_layer_tester_plain.h" />
@@ -31,6 +33,8 @@
     <ClInclude Include="cross_entropy_layer_updater_plain.h" />
     <ClInclude Include="dropout_layer_tester_plain.h" />
     <ClInclude Include="dropout_layer_updater_plain.h" />
+    <ClInclude Include="entry_convolution_layer_tester_plain.h" />
+    <ClInclude Include="entry_convolution_layer_updater_plain.h" />
     <ClInclude Include="factory_generator_plain.h" />
     <ClInclude Include="forward_propagation_plain.h" />
     <ClInclude Include="gradient_modifier_layer_tester_plain.h" />
@@ -88,6 +92,8 @@
     <ClCompile Include="buffer_plain_size_configuration.cpp" />
     <ClCompile Include="cdf_max_layer_tester_plain.cpp" />
     <ClCompile Include="cdf_max_layer_updater_plain.cpp" />
+    <ClCompile Include="cdf_to_pdf_layer_tester_plain.cpp" />
+    <ClCompile Include="cdf_to_pdf_layer_updater_plain.cpp" />
     <ClCompile Include="concat_layer_tester_plain.cpp" />
     <ClCompile Include="concat_layer_updater_plain.cpp" />
     <ClCompile Include="convolution_layer_tester_plain.cpp" />
@@ -96,6 +102,8 @@
     <ClCompile Include="cross_entropy_layer_updater_plain.cpp" />
     <ClCompile Include="dropout_layer_tester_plain.cpp" />
     <ClCompile Include="dropout_layer_updater_plain.cpp" />
+    <ClCompile Include="entry_convolution_layer_tester_plain.cpp" />
+    <ClCompile Include="entry_convolution_layer_updater_plain.cpp" />
     <ClCompile Include="factory_generator_plain.cpp" />
     <ClCompile Include="forward_propagation_plain.cpp" />
     <ClCompile Include="gradient_modifier_layer_tester_plain.cpp" />

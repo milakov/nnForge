@@ -78,7 +78,7 @@ namespace nnforge
 			for(unsigned int i = 0; i < subsampling_dimension_count; ++i)
 				subsampling_elem_count *= subsampling_sizes[i];
 			const unsigned int const_subsampling_elem_count = subsampling_elem_count;
-			const float mult = 1.0F / static_cast<float>(subsampling_elem_count);
+			const float mult = layer_derived->get_effective_alpha();
 			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
 
 			std::vector<unsigned int> current_local_input_position(subsampling_dimension_count, 0);

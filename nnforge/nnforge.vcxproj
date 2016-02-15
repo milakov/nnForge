@@ -18,6 +18,7 @@
     <ClInclude Include="backward_propagation.h" />
     <ClInclude Include="backward_propagation_factory.h" />
     <ClInclude Include="buffer_lifetime.h" />
+    <ClInclude Include="cdf_to_pdf_layer.h" />
     <ClInclude Include="color_palette.h" />
     <ClInclude Include="complex_network_data_pusher.h" />
     <ClInclude Include="concat_layer.h" />
@@ -32,6 +33,7 @@
     <ClInclude Include="dropout_layer.h" />
     <ClInclude Include="elastic_deformation_2d_data_transformer.h" />
     <ClInclude Include="embed_data_transformer.h" />
+    <ClInclude Include="entry_convolution_layer.h" />
     <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="forward_propagation_factory.h" />
     <ClInclude Include="gradient_modifier_layer.h" />
@@ -137,6 +139,7 @@
     <ClCompile Include="average_subsampling_layer.cpp" />
     <ClCompile Include="backward_propagation.cpp" />
     <ClCompile Include="backward_propagation_factory.cpp" />
+    <ClCompile Include="cdf_to_pdf_layer.cpp" />
     <ClCompile Include="color_palette.cpp" />
     <ClCompile Include="complex_network_data_pusher.cpp" />
     <ClCompile Include="concat_layer.cpp" />
@@ -150,6 +153,7 @@
     <ClCompile Include="dropout_layer.cpp" />
     <ClCompile Include="elastic_deformation_2d_data_transformer.cpp" />
     <ClCompile Include="embed_data_transformer.cpp" />
+    <ClCompile Include="entry_convolution_layer.cpp" />
     <ClCompile Include="forward_propagation.cpp" />
     <ClCompile Include="forward_propagation_factory.cpp" />
     <ClCompile Include="gradient_modifier_layer.cpp" />

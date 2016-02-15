@@ -439,7 +439,6 @@ namespace nnforge
 				feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
 				entry_subsampling_size = layer_derived->entry_subsampling_size;
 
-				unsigned int toal_subsampling_size = feature_map_subsampling_size * entry_subsampling_size;
 				exact_subsampling = (output_configuration_specific.feature_map_count * feature_map_subsampling_size == input_configuration_specific_list[0].feature_map_count);
 				int_fastdiv current_stride(layer_derived->subsampling_sizes[0]);
 				for(int i = 0; i < dimension_count; ++i)
@@ -450,11 +449,10 @@ namespace nnforge
 					strides[i] = current_stride;
 
 					current_stride = current_stride * static_cast<int>(output_configuration_specific.dimension_sizes[i]);
-					toal_subsampling_size *= subsampling_sizes[i];
 					exact_subsampling = exact_subsampling & (input_sizes[i] == output_sizes[i] * subsampling_sizes[i]);
 				}
 
-				mult = 1.0F / static_cast<float>(toal_subsampling_size);
+				mult = layer_derived->get_effective_alpha();
 
 				forward_packed_config_count = subsampling_sizes[0];
 				for(int i = 0; i < dimension_count; ++i)

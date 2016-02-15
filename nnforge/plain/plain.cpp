@@ -46,6 +46,8 @@
 #include "prefix_sum_layer_tester_plain.h"
 #include "upsampling_layer_tester_plain.h"
 #include "add_layer_tester_plain.h"
+#include "cdf_to_pdf_layer_tester_plain.h"
+#include "entry_convolution_layer_tester_plain.h"
 
 #include "layer_updater_plain_factory.h"
 
@@ -73,6 +75,8 @@
 #include "prefix_sum_layer_updater_plain.h"
 #include "upsampling_layer_updater_plain.h"
 #include "add_layer_updater_plain.h"
+#include "cdf_to_pdf_layer_updater_plain.h"
+#include "entry_convolution_layer_updater_plain.h"
 
 namespace nnforge
 {
@@ -108,6 +112,8 @@ namespace nnforge
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new prefix_sum_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new upsampling_layer_tester_plain()));
 			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new add_layer_tester_plain()));
+			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new cdf_to_pdf_layer_tester_plain()));
+			layer_tester_plain_factory::singleton::get_mutable_instance().register_layer_tester_plain(layer_tester_plain::ptr(new entry_convolution_layer_tester_plain()));
 
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new hyperbolic_tangent_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new sigmoid_layer_updater_plain()));
@@ -133,6 +139,8 @@ namespace nnforge
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new prefix_sum_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new upsampling_layer_updater_plain()));
 			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new add_layer_updater_plain()));
+			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new cdf_to_pdf_layer_updater_plain()));
+			layer_updater_plain_factory::singleton::get_mutable_instance().register_layer_updater_plain(layer_updater_plain::ptr(new entry_convolution_layer_updater_plain()));
 		}
 	}
 }

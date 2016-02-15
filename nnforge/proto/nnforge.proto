@@ -30,6 +30,8 @@ message Layer {
 	optional CDFMaxParam cdf_max_param = 22;
 	optional PrefixSumParam prefix_sum_param = 23;
 	optional UpsamplingParam upsampling_param = 24;
+	optional CDF2PDFParam cdf_to_pdf_param = 25;
+	optional EntryConvolutionParam entry_convolution_param = 26;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -57,6 +59,7 @@ message AverageSubsamplingParam {
 	repeated AverageSubsamplingDimensionParam dimension_param = 1;
 	optional AverageSubsamplingFeatureMapParam feature_map_param = 2;
 	optional AverageSubsamplingEntryParam entry_param = 3;
+	optional float alpha = 4;
 }
 
 message UpsamplingParam {
@@ -107,11 +110,24 @@ message CDFMaxParam {
 	optional MaxFunction function = 2 [default = MAX];
 }
 
+message EntryConvolutionParam {
+	optional uint32 padding = 1 [default = 0];
+}
+
 message PrefixSumParam {
 	message PrefixSumFeatureMapParam {
 		required uint32 segment_length = 1;
 	}
 	optional PrefixSumFeatureMapParam feature_map_param = 1;
+	optional float clamp_min = 2;
+	optional float clamp_max = 3;
+}
+
+message CDF2PDFParam {
+	message CDF2PDFFeatureMapParam {
+		required uint32 segment_length = 1;
+	}
+	optional CDF2PDFFeatureMapParam feature_map_param = 1;
 	optional float clamp_min = 2;
 	optional float clamp_max = 3;
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,19 +19,13 @@
 #include "layer.h"
 
 #include <vector>
-#include <limits>
 
 namespace nnforge
 {
-	// subsampling_sizes cannot be empty
-	class average_subsampling_layer : public layer
+	class entry_convolution_layer : public layer
 	{
 	public:
-		average_subsampling_layer(
-			const std::vector<unsigned int>& subsampling_sizes,
-			unsigned int feature_map_subsampling_size = 1,
-			unsigned int entry_subsampling_size = 1,
-			float alpha = -std::numeric_limits<float>::max());
+		entry_convolution_layer(unsigned int padding = 0);
 
 		virtual layer::ptr clone() const;
 
@@ -44,10 +38,6 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int input_layer_id) const;
 
-		virtual std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(
-			const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
-			unsigned int input_layer_id) const;
-
 		virtual float get_flops_per_entry(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_action& action) const;
@@ -58,21 +48,13 @@ namespace nnforge
 
 		virtual void read_proto(const void * layer_proto);
 
-		virtual std::vector<std::string> get_parameter_strings() const;
-
 		virtual tiling_factor get_tiling_factor() const;
 
-		float get_effective_alpha() const;
+		virtual std::vector<std::string> get_parameter_strings() const;
 
 		static const std::string layer_type_name;
 
-	private:
-		void check();
-
 	public:
-		std::vector<unsigned int> subsampling_sizes;
-		unsigned int feature_map_subsampling_size;
-		unsigned int entry_subsampling_size;
-		float alpha;
+		unsigned int padding;
 	};
 }

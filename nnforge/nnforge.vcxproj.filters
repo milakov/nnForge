@@ -464,6 +464,12 @@
     <ClInclude Include="add_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="cdf_to_pdf_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="entry_convolution_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -797,6 +803,12 @@
       <Filter>Source Files\layers</Filter>
     </ClCompile>
     <ClCompile Include="add_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="cdf_to_pdf_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="entry_convolution_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>
