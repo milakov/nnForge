@@ -292,21 +292,31 @@ namespace nnforge
 				feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
 				entry_subsampling_size = layer_derived->entry_subsampling_size;
 
-				int_fastdiv current_stride(layer_derived->subsampling_sizes[0]);
+				std::vector<unsigned int> local_subsampling_sizes = layer_derived->subsampling_sizes;
+				if (local_subsampling_sizes.empty())
+					local_subsampling_sizes.push_back(1);
+				std::vector<unsigned int> local_input_dimension_sizes = input_configuration_specific_list[0].dimension_sizes;
+				if (local_input_dimension_sizes.empty())
+					local_input_dimension_sizes.push_back(1);
+				std::vector<unsigned int> local_output_dimension_sizes = output_configuration_specific.dimension_sizes;
+				if (local_output_dimension_sizes.empty())
+					local_output_dimension_sizes.push_back(1);
+
+				int_fastdiv current_stride(local_subsampling_sizes[0]);
 				for(int i = 0; i < dimension_count; ++i)
 				{
-					subsampling_sizes[i] = layer_derived->subsampling_sizes[i];
-					input_sizes[i] = input_configuration_specific_list[0].dimension_sizes[i];
-					output_sizes[i] = output_configuration_specific.dimension_sizes[i];
+					subsampling_sizes[i] = local_subsampling_sizes[i];
+					input_sizes[i] = local_input_dimension_sizes[i];
+					output_sizes[i] = local_output_dimension_sizes[i];
 					strides[i] = current_stride;
-					current_stride = current_stride * static_cast<int>(output_configuration_specific.dimension_sizes[i]);
+					current_stride = current_stride * output_sizes[i];
 				}
 
 				forward_packed_config_count = subsampling_sizes[0];
 				for(int i = 0; i < dimension_count; ++i)
 					forward_packed_config_count *= output_sizes[i];
 
-				nonunit_window_x = (layer_derived->subsampling_sizes[0] > 1);
+				nonunit_window_x = (subsampling_sizes[0] > 1);
 			}
 
 		private:

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,6 +53,9 @@ namespace nnforge
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
+				case 0:
+					res = layer_updater_cuda::ptr(new average_subsampling_layer_updater_cuda<1>());
+					break;
 				case 1:
 					res = layer_updater_cuda::ptr(new average_subsampling_layer_updater_cuda<1>());
 					break;

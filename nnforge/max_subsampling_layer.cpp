@@ -45,9 +45,6 @@ namespace nnforge
 
 	void max_subsampling_layer::check()
 	{
-		if (subsampling_sizes.size() == 0)
-			throw neural_network_exception("subsampling sizes for max subsampling layer may not be empty");
-
 		for(unsigned int i = 0; i < subsampling_sizes.size(); i++)
 		{
 			if (subsampling_sizes[i] == 0)
@@ -267,23 +264,40 @@ namespace nnforge
 		std::stringstream ss;
 
 		if (is_min)
-			ss << "MIN, ";
+			ss << "MIN";
 
-		for(int i = 0; i < subsampling_sizes.size(); ++i)
+		if (!subsampling_sizes.empty())
 		{
-			if (i != 0)
-				ss << "x";
-			ss << subsampling_sizes[i];
+			if (!ss.str().empty())
+				ss << ", ";
+			for(int i = 0; i < subsampling_sizes.size(); ++i)
+			{
+				if (i != 0)
+					ss << "x";
+				ss << subsampling_sizes[i];
+			}
 		}
 
 		if (feature_map_subsampling_size != 1)
-			ss << ", fm " << feature_map_subsampling_size;
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "fm " << feature_map_subsampling_size;
+		}
 
 		if (entry_subsampling_size != 1)
-			ss << ", samples " << entry_subsampling_size;
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "samples " << entry_subsampling_size;
+		}
 
 		if (tiling)
-			ss << ", tiling";
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "tiling";
+		}
 
 		res.push_back(ss.str());
 

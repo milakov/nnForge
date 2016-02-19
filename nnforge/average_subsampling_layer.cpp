@@ -43,9 +43,6 @@ namespace nnforge
 
 	void average_subsampling_layer::check()
 	{
-		if (subsampling_sizes.size() == 0)
-			throw neural_network_exception("subsampling sizes for average subsampling layer may not be empty");
-
 		for(unsigned int i = 0; i < subsampling_sizes.size(); i++)
 		{
 			if (subsampling_sizes[i] == 0)
@@ -215,13 +212,25 @@ namespace nnforge
 		}
 
 		if (feature_map_subsampling_size != 1)
-			ss << ", fm " << feature_map_subsampling_size;
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "fm " << feature_map_subsampling_size;
+		}
 
 		if (entry_subsampling_size != 1)
-			ss << ", samples " << entry_subsampling_size;
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "samples " << entry_subsampling_size;
+		}
 
 		if (alpha != -std::numeric_limits<float>::max())
-			ss << ", alpha " << alpha;
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "alpha " << alpha;
+		}
 
 		res.push_back(ss.str());
 

@@ -79,6 +79,7 @@ namespace nnforge
 				if (res.dimension_sizes[i] != 1)
 					throw neural_network_exception((boost::format("Cannot collapse dimension %1% of size %2%") % i % res.dimension_sizes[i]).str());
 			}
+			res.dimension_sizes.resize(collapse_to_dimensions);
 		}
 
 		return res;
