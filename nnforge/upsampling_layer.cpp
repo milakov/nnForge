@@ -41,9 +41,6 @@ namespace nnforge
 
 	void upsampling_layer::check()
 	{
-		if (upsampling_sizes.size() == 0)
-			throw neural_network_exception("upsampling sizes for average subsampling layer may not be empty");
-
 		for(unsigned int i = 0; i < upsampling_sizes.size(); i++)
 		{
 			if (upsampling_sizes[i] == 0)
@@ -204,10 +201,18 @@ namespace nnforge
 		}
 
 		if (feature_map_upsampling_size != 1)
-			ss << ", fm " << feature_map_upsampling_size;
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "fm " << feature_map_upsampling_size;
+		}
 
 		if (entry_upsampling_size != 1)
-			ss << ", samples " << entry_upsampling_size;
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "samples " << entry_upsampling_size;
+		}
 
 		res.push_back(ss.str());
 

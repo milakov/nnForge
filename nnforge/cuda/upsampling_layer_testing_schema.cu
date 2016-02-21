@@ -52,7 +52,10 @@ namespace nnforge
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
-				case 1: 
+				case 0:
+					res = layer_tester_cuda::ptr(new upsampling_layer_tester_cuda<1>());
+					break;
+				case 1:
 					res = layer_tester_cuda::ptr(new upsampling_layer_tester_cuda<1>());
 					break;
 				case 2:

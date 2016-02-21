@@ -53,6 +53,12 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
+			std::vector<unsigned int> input_dimension_sizes = input_configuration_specific_list[0].dimension_sizes;
+			if (input_dimension_sizes.empty())
+				input_dimension_sizes.push_back(1);
+			std::vector<unsigned int> output_dimension_sizes = output_configuration_specific.dimension_sizes;
+			if (output_dimension_sizes.empty())
+				output_dimension_sizes.push_back(1);
 			const float * const in_it_global = *input_buffers[0];
 			float * const out_it_global = *output_buffer;
 			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
@@ -61,17 +67,19 @@ namespace nnforge
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			nnforge_shared_ptr<const upsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const upsampling_layer>(layer_schema);
 			std::vector<unsigned int> upsampling_sizes = layer_derived->upsampling_sizes;
+			if (upsampling_sizes.empty())
+				upsampling_sizes.push_back(1);
 			const unsigned int feature_map_upsampling_size = layer_derived->feature_map_upsampling_size;
 			upsampling_sizes.push_back(feature_map_upsampling_size);
 			const unsigned int entry_upsampling_size = layer_derived->entry_upsampling_size;
 			upsampling_sizes.push_back(entry_upsampling_size);
 			const unsigned int upsampling_dimension_count = static_cast<unsigned int>(upsampling_sizes.size());
-			const unsigned int spatial_dimension_count = static_cast<unsigned int>(output_configuration_specific.dimension_sizes.size());
+			const unsigned int spatial_dimension_count = static_cast<unsigned int>(output_dimension_sizes.size());
 			std::vector<unsigned int> output_slices(upsampling_sizes.size());
 			output_slices[0] = 1;
 			for(unsigned int i = 0; i < upsampling_dimension_count - 1; ++i)
 			{
-				int dimension_size = (i < spatial_dimension_count) ? output_configuration_specific.dimension_sizes[i] : output_configuration_specific.feature_map_count;
+				int dimension_size = (i < spatial_dimension_count) ? output_dimension_sizes[i] : output_configuration_specific.feature_map_count;
 				output_slices[i + 1] = output_slices[i] * dimension_size;
 			}
 			unsigned int upsampling_elem_count = 1;
@@ -99,7 +107,7 @@ namespace nnforge
 			}
 
 			const int total_workload = (entry_count / entry_upsampling_size) * input_configuration_specific_list[0].feature_map_count;
-			const std::vector<unsigned int>::const_iterator dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
+			const std::vector<unsigned int>::const_iterator dimension_sizes_it = input_dimension_sizes.begin();
 			const std::vector<unsigned int>::const_iterator upsampling_sizes_it = upsampling_sizes.begin();
 			const std::vector<unsigned int>::const_iterator output_slices_it = output_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();

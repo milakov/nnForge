@@ -53,6 +53,9 @@ namespace nnforge
 
 			switch (output_configuration_specific.dimension_sizes.size())
 			{
+				case 0:
+					res = layer_updater_cuda::ptr(new upsampling_layer_updater_cuda<1>());
+					break;
 				case 1:
 					res = layer_updater_cuda::ptr(new upsampling_layer_updater_cuda<1>());
 					break;
