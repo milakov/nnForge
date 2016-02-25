@@ -62,10 +62,11 @@ namespace nnforge
 
 		void cudnn_util::set_convolution_descriptor(
 			cudnnConvolutionDescriptor_t convolution_desc,
-			const std::vector<unsigned int> zero_padding)
+			const std::vector<unsigned int>& zero_padding,
+			const std::vector<unsigned int>& strides)
 		{
 			std::vector<int> conv_padding(zero_padding.rbegin(), zero_padding.rend());
-			std::vector<int> filter_stride(zero_padding.size(), 1);
+			std::vector<int> filter_stride(strides.rbegin(), strides.rend());
 			std::vector<int> upscale(zero_padding.size(), 1);
 			cudnn_safe_call(cudnnSetConvolutionNdDescriptor_v3(
 				convolution_desc,

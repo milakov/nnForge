@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@
 #include "sigmoid_layer.h"
 #include "hyperbolic_tangent_layer.h"
 #include "convolution_layer.h"
+#include "sparse_convolution_layer.h"
 #include "rectified_linear_layer.h"
 #include "parametric_rectified_linear_layer.h"
+#include "add_layer.h"
 #include "nn_types.h"
 
 #include <cmath>
@@ -50,17 +52,25 @@ namespace nnforge
 				float a = std::accumulate(data->at(0).begin(), data->at(0).end(), 0.0F) / static_cast<float>(data->at(0).size());
 				weight_multiplier *= sqrtf(2.0F / (1.0F + a * a));
 			}
+			if (layer_list[i]->get_type_name() == add_layer::layer_type_name)
+			{
+				nnforge_shared_ptr<const add_layer> layer_derived = nnforge_dynamic_pointer_cast<const add_layer>(layer_list[i]);
+				weight_multiplier *= 1.0F / std::max(static_cast<int>(layer_list[i]->input_layer_instance_names.size()), 1) / layer_derived->alpha;
+			}
 
 			if ((weight_multiplier != 1.0F) && (!layer_list[i]->input_layer_instance_names.empty()))
 			{
-				layer::const_ptr previous_layer = schema.get_layer(layer_list[i]->input_layer_instance_names.front());
-				if (previous_layer->get_type_name() == convolution_layer::layer_type_name)
+				for(std::vector<std::string>::const_iterator it = layer_list[i]->input_layer_instance_names.begin(); it != layer_list[i]->input_layer_instance_names.end(); ++it)
 				{
-					layer_data::ptr data = data_list.find(previous_layer->instance_name);
-					std::vector<float>::iterator it_start = data->at(0).begin();
-					std::vector<float>::iterator it_end = data->at(0).end();
-					for(std::vector<float>::iterator it = it_start; it != it_end; ++it)
-						*it *= weight_multiplier;
+					layer::const_ptr previous_layer = schema.get_layer(*it);
+					if ((previous_layer->get_type_name() == convolution_layer::layer_type_name) || (previous_layer->get_type_name() == sparse_convolution_layer::layer_type_name))
+					{
+						layer_data::ptr data = data_list.find(previous_layer->instance_name);
+						std::vector<float>::iterator it_start = data->at(0).begin();
+						std::vector<float>::iterator it_end = data->at(0).end();
+						for(std::vector<float>::iterator it = it_start; it != it_end; ++it)
+							*it *= weight_multiplier;
+					}
 				}
 			}
 		}

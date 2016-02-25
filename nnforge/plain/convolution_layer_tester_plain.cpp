@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -65,6 +65,10 @@ namespace nnforge
 			window_sizes_extended.resize(max_dimension_count, 1);
 			const std::vector<unsigned int>& window_sizes = window_sizes_extended;
 
+			std::vector<unsigned int> strides_extended = layer_derived->strides;
+			strides_extended.resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& strides = strides_extended;
+
 			std::vector<unsigned int> left_zero_padding_extended = layer_derived->left_zero_padding;
 			left_zero_padding_extended.resize(max_dimension_count, 0);
 			const std::vector<unsigned int>& left_zero_padding = left_zero_padding_extended;
@@ -113,6 +117,7 @@ namespace nnforge
 			const std::vector<unsigned int>::const_iterator output_dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
+			const std::vector<unsigned int>::const_iterator strides_it = strides.begin();
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
@@ -138,7 +143,7 @@ namespace nnforge
 						int in_it_offset2 = 0;
 
 						for(unsigned int i = 0; i < dimension_count; ++i)
-							current_input_position[i] = static_cast<int>(current_output_position[i]) - static_cast<int>(left_zero_padding[i]);
+							current_input_position[i] = static_cast<int>(current_output_position[i] * strides_it[i]) - static_cast<int>(left_zero_padding[i]);
 
 						for(unsigned int i = 0; i < dimension_count; ++i)
 							in_it_offset2 += current_input_position[i] * (*(input_slices_it + i));

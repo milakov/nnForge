@@ -110,28 +110,6 @@ namespace nnforge
 		return true;
 	}
 
-	std::vector<std::pair<unsigned int, unsigned int> > untile_layer::get_input_rectangle_borders(
-		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
-		unsigned int input_layer_id) const
-	{
-		if (output_rectangle_borders.size() != upsampling_sizes_list.front().size())
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output borders (%2%) don't match") % upsampling_sizes_list.front().size() % output_rectangle_borders.size()).str());
-
-		std::vector<std::pair<unsigned int, unsigned int> > res = output_rectangle_borders;
-
-		for(unsigned int i = 0; i < upsampling_sizes_list.size(); ++i)
-		{
-			const std::vector<unsigned int>& upsampling_sizes = upsampling_sizes_list[i];
-			for(unsigned int j = 0; j < upsampling_sizes.size(); ++j)
-			{
-				res[j].first /= upsampling_sizes[j];
-				res[j].second /= upsampling_sizes[j];
-			}
-		}
-
-		return res;
-	}
-
 	void untile_layer::write_proto(void * layer_proto) const
 	{
 		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);

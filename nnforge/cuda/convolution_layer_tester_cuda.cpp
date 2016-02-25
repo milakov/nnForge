@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -148,7 +148,8 @@ namespace nnforge
 
 			cudnn_util::set_convolution_descriptor(
 				convolution_desc,
-				zero_padding);
+				zero_padding,
+				layer_derived->strides);
 		}
 
 		std::pair<size_t, bool> convolution_layer_tester_cuda::get_temporary_working_fixed_buffer_size() const

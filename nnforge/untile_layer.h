@@ -38,10 +38,6 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int input_layer_id) const;
 
-		virtual std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(
-			const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
-			unsigned int input_layer_id) const;
-
 		virtual float get_flops_per_entry(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_action& action) const;

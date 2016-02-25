@@ -30,7 +30,8 @@ namespace nnforge
 			unsigned int input_feature_map_count,
 			unsigned int output_feature_map_count,
 			const std::vector<unsigned int>& left_zero_padding = std::vector<unsigned int>(),
-			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>());
+			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>(),
+			const std::vector<unsigned int>& strides = std::vector<unsigned int>());
 
 		virtual layer::ptr clone() const;
 
@@ -41,10 +42,6 @@ namespace nnforge
 		virtual bool get_input_layer_configuration_specific(
 			layer_configuration_specific& input_configuration_specific,
 			const layer_configuration_specific& output_configuration_specific,
-			unsigned int input_layer_id) const;
-
-		virtual std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(
-			const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
 			unsigned int input_layer_id) const;
 
 		virtual layer_data_configuration_list get_layer_data_configuration_list() const;
@@ -87,5 +84,6 @@ namespace nnforge
 		unsigned int output_feature_map_count;
 		std::vector<unsigned int> left_zero_padding;
 		std::vector<unsigned int> right_zero_padding;
+		std::vector<unsigned int> strides;
 	};
 }

@@ -58,6 +58,8 @@ namespace nnforge
 			for(std::vector<plain_buffer::const_ptr>::const_iterator it = input_buffers.begin(); it != input_buffers.end(); ++it)
 				in_list.push_back(**it);
 			const float ** const in_ptr_list = &in_list[0];
+			nnforge_shared_ptr<const add_layer> layer_derived = nnforge_dynamic_pointer_cast<const add_layer>(layer_schema);
+			const float alpha = layer_derived->alpha;
 			const int src_ptr_count = static_cast<int>(in_list.size());
 			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
@@ -66,7 +68,7 @@ namespace nnforge
 				float sum = 0.0F;
 				for(int j = 0; j < src_ptr_count; ++j)
 					sum += in_ptr_list[j][i];
-				out[i] = sum;
+				out[i] = sum * alpha;
 			}
 		}
 
@@ -91,19 +93,27 @@ namespace nnforge
 		{
 			float * const in_errors = *input_errors_buffer;
 			const float * const out_errors = *output_errors_buffer;
+			nnforge_shared_ptr<const add_layer> layer_derived = nnforge_dynamic_pointer_cast<const add_layer>(layer_schema);
+			const float alpha = layer_derived->alpha;
 			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
 			if (add_update_to_destination)
 			{
 				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 				for(int i = 0; i < elem_count; ++i)
 				{
-					in_errors[i] += out_errors[i];
+					in_errors[i] += out_errors[i] * alpha;
 				}
 			}
 			else
 			{
-				if (in_errors != out_errors)
-					memcpy(in_errors, out_errors, elem_count * sizeof(float));
+				if ((in_errors != out_errors) || (alpha != 1.0F))
+				{
+					#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+					for(int i = 0; i < elem_count; ++i)
+					{
+						in_errors[i] = out_errors[i] * alpha;
+					}
+				}
 			}
 		}
 

@@ -36,7 +36,8 @@ namespace nnforge
 		unsigned int input_feature_map_count,
 		unsigned int output_feature_map_count,
 		const std::vector<unsigned int>& left_zero_padding,
-		const std::vector<unsigned int>& right_zero_padding)
+		const std::vector<unsigned int>& right_zero_padding,
+		const std::vector<unsigned int>& strides)
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count)
@@ -45,6 +46,8 @@ namespace nnforge
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
 		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for right zero padding") % right_zero_padding.size()).str());
+		if ((strides.size() != 0) && (strides.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for strides") % strides.size()).str());
 
 		if (left_zero_padding.empty())
 			this->left_zero_padding.resize(window_sizes.size(), 0);
@@ -55,6 +58,11 @@ namespace nnforge
 			this->right_zero_padding.resize(window_sizes.size(), 0);
 		else
 			this->right_zero_padding = right_zero_padding;
+
+		if (strides.empty())
+			this->strides.resize(window_sizes.size(), 1);
+		else
+			this->strides = strides;
 
 		check();
 	}
@@ -72,6 +80,10 @@ namespace nnforge
 		for(unsigned int i = 0; i < window_sizes.size(); i++)
 			if (right_zero_padding[i] >= window_sizes[i])
 				throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
+
+		for(unsigned int i = 0; i < strides.size(); i++)
+			if (strides[i] == 0)
+				throw neural_network_exception((boost::format("stride dimension (%1%) is 0") % i).str());
 	}
 
 	std::string convolution_layer::get_type_name() const
@@ -108,10 +120,11 @@ namespace nnforge
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
 		{
 			unsigned int total_input_dimension_size = input_configuration_specific_list[0].dimension_sizes[i] + left_zero_padding[i] + right_zero_padding[i];
-			if (total_input_dimension_size < window_sizes[i])
-				throw neural_network_exception((boost::format("Too small total dimension size (with padding) %1% of dimension (%2%) is smaller than layer window size (%3%)") % total_input_dimension_size % i % window_sizes[i]).str());
 
-			res.dimension_sizes.push_back(total_input_dimension_size + 1 - window_sizes[i]);
+			if (total_input_dimension_size < window_sizes[i])
+				throw neural_network_exception((boost::format("Too small total dimension size (with padding) (%1%) of dimension (%2%) is smaller than layer window size (%3%)") % total_input_dimension_size % i % window_sizes[i]).str());
+
+			res.dimension_sizes.push_back((total_input_dimension_size - window_sizes[i]) / strides[i] + 1);
 		}
 
 		return res;
@@ -131,29 +144,9 @@ namespace nnforge
 		input_configuration_specific = layer_configuration_specific(input_feature_map_count);
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			input_configuration_specific.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] + window_sizes[i] - 1 - left_zero_padding[i] - right_zero_padding[i]);
+			input_configuration_specific.dimension_sizes.push_back((output_configuration_specific.dimension_sizes[i] - 1) * strides[i] + window_sizes[i] - left_zero_padding[i] - right_zero_padding[i]);
 
 		return true;
-	}
-
-	std::vector<std::pair<unsigned int, unsigned int> > convolution_layer::get_input_rectangle_borders(
-		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
-		unsigned int input_layer_id) const
-	{
-		if (output_rectangle_borders.size() != window_sizes.size())
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output borders (%2%) don't match") % window_sizes.size() % output_rectangle_borders.size()).str());
-
-		std::vector<std::pair<unsigned int, unsigned int> > res;
-
-		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			res.push_back(
-				std::make_pair(
-					static_cast<unsigned int>(std::max(0, static_cast<int>(output_rectangle_borders[i].first) - static_cast<int>(left_zero_padding[i]))),
-					(output_rectangle_borders[i].second + window_sizes[i] - 1) - left_zero_padding[i]
-				)
-			);
-
-		return res;
 	}
 
 	void convolution_layer::write_proto(void * layer_proto) const
@@ -172,6 +165,8 @@ namespace nnforge
 				dim_param->set_left_padding(left_zero_padding[i]);
 			if (right_zero_padding[i] > 0)
 				dim_param->set_right_padding(right_zero_padding[i]);
+			if (strides[i] > 1)
+				dim_param->set_stride(strides[i]);
 		}
 	}
 
@@ -187,12 +182,14 @@ namespace nnforge
 		window_sizes.resize(layer_proto_typed->convolution_param().dimension_param_size());
 		left_zero_padding.resize(layer_proto_typed->convolution_param().dimension_param_size());
 		right_zero_padding.resize(layer_proto_typed->convolution_param().dimension_param_size());
+		strides.resize(layer_proto_typed->convolution_param().dimension_param_size());
 
 		for(int i = 0; i < layer_proto_typed->convolution_param().dimension_param_size(); ++i)
 		{
 			window_sizes[i] = layer_proto_typed->convolution_param().dimension_param(i).kernel_size();
 			left_zero_padding[i] = layer_proto_typed->convolution_param().dimension_param(i).left_padding();
 			right_zero_padding[i] = layer_proto_typed->convolution_param().dimension_param(i).right_padding();
+			strides[i] = layer_proto_typed->convolution_param().dimension_param(i).stride();
 		}
 
 		check();
@@ -351,6 +348,26 @@ namespace nnforge
 					ss << left_zero_padding[i];
 				else
 					ss << left_zero_padding[i] << "_" << right_zero_padding[i];
+			}
+		}
+
+		bool empty_stride = true;
+		for(int i = 0; i < strides.size(); ++i)
+		{
+			if (strides[i] != 1)
+			{
+				empty_stride = false;
+				break;
+			}
+		}
+		if (!empty_stride)
+		{
+			ss << ", stride ";
+			for(int i = 0; i < strides.size(); ++i)
+			{
+				if (i != 0)
+					ss << "x";
+				ss << strides[i];
 			}
 		}
 

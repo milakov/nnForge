@@ -42,6 +42,11 @@ namespace nnforge
 				unsigned int entry_count);
 
 			virtual int get_input_index_layer_can_write() const;
+
+			virtual void tester_configured();
+
+		private:
+			float alpha;
 		};
 	}
 }

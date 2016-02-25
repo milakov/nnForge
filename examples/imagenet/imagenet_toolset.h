@@ -50,6 +50,8 @@ protected:
 		const std::string& layer_name,
 		dataset_usage usage) const;
 
+	virtual void do_custom_action();
+
 private:
 	void prepare_true_randomized_training_data();
 
@@ -68,6 +70,17 @@ private:
 		nnforge::varying_data_stream_writer& image_writer,
 		unsigned int class_id,
 		nnforge::structured_data_writer& label_writer);
+
+	void create_resnet_schema() const;
+
+	void add_resnet_bottleneck_block(
+		std::vector<nnforge::layer::const_ptr>& layer_list,
+		unsigned int& last_layer_feature_map_count,
+		std::string& last_layer_name,
+		unsigned int& bottleneck_major_block_id,
+		char& bottleneck_minor_block_id,
+		unsigned int& restored_feature_map_count,
+		bool spatial_size_reduction) const;
 
 private:
 	std::map<unsigned int, std::string> wnid_to_ilsvrc2014id_map;
@@ -97,4 +110,6 @@ private:
 	bool rich_inference;
 	int samples_x;
 	int samples_y;
+
+	static const unsigned int resnet10_blocks[4];
 };

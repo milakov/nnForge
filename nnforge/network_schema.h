@@ -87,13 +87,6 @@ namespace nnforge
 		// The result includes output configuration
 		std::map<std::string, layer_configuration_specific> get_layer_configuration_specific_map_reverse(const std::map<std::string, layer_configuration_specific>& output_configuration_specific_map) const;
 
-		// Returns minimal input rectangle which is quasi-transformed into output one covering the rectangle supplied
-		//std::vector<std::pair<unsigned int, unsigned int> > get_input_rectangle_borders(
-		//	const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
-		//	unsigned int output_layer_id) const;
-
-		//std::vector<layer_data_configuration_list> get_layer_data_configuration_list_list() const;
-
 		std::map<std::string, unsigned int> get_cumulative_tiling_factor_map() const;
 
 		//std::vector<unsigned int> get_output_strides() const;

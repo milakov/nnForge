@@ -46,6 +46,8 @@ const unsigned int imagenet_toolset::training_target_image_width = 224;
 const unsigned int imagenet_toolset::training_target_image_height = 224;
 const unsigned int imagenet_toolset::validating_image_size = 256; // 256
 
+const unsigned int imagenet_toolset::resnet10_blocks[4] = {3, 4, 6, 3};
+
 imagenet_toolset::imagenet_toolset(nnforge::factory_generator::ptr factory)
 	: nnforge::toolset(factory)
 {
@@ -405,4 +407,168 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 	}
 
 	return res;
+}
+
+void imagenet_toolset::do_custom_action()
+{
+	if (action == "create_resnet_schema")
+	{
+		create_resnet_schema();
+	}
+	else
+		toolset::do_custom_action();
+}
+
+void imagenet_toolset::create_resnet_schema() const
+{
+	std::vector<nnforge::layer::const_ptr> layer_list;
+
+	nnforge::layer::ptr images_data_layer(new nnforge::data_layer());
+	images_data_layer->instance_name = "images";
+	layer_list.push_back(images_data_layer);
+
+	nnforge::layer::ptr labels_data_layer(new nnforge::data_layer());
+	labels_data_layer->instance_name = "labels";
+	layer_list.push_back(labels_data_layer);
+
+	nnforge::layer::ptr conv1_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 7), 3, 64, std::vector<unsigned int>(2, 3), std::vector<unsigned int>(2, 3), std::vector<unsigned int>(2, 2)));
+	conv1_layer->instance_name = "conv1";
+	conv1_layer->input_layer_instance_names.push_back("images");
+	layer_list.push_back(conv1_layer);
+
+	nnforge::layer::ptr relu1_layer(new nnforge::rectified_linear_layer());
+	relu1_layer->instance_name = "relu1";
+	relu1_layer->input_layer_instance_names.push_back("conv1");
+	layer_list.push_back(relu1_layer);
+
+	nnforge::layer::ptr pool1_layer(new nnforge::max_subsampling_layer(std::vector<unsigned int>(2, 2)));
+	pool1_layer->instance_name = "pool1";
+	pool1_layer->input_layer_instance_names.push_back("relu1");
+	layer_list.push_back(pool1_layer);
+
+	unsigned int last_layer_feature_map_count = 64;
+	std::string last_layer_name = "pool1";
+	unsigned int bottleneck_major_block_id = 2;
+	char bottleneck_minor_block_id = 'a';
+	unsigned int restored_feature_map_count = 256;
+
+	for(unsigned int resnet_spatial_block_id = 0; resnet_spatial_block_id < sizeof(resnet10_blocks) / sizeof(resnet10_blocks[0]); ++resnet_spatial_block_id)
+		for(unsigned int resnet_block_id = 0; resnet_block_id < resnet10_blocks[resnet_spatial_block_id]; ++resnet_block_id)
+			add_resnet_bottleneck_block(layer_list, last_layer_feature_map_count, last_layer_name, bottleneck_major_block_id, bottleneck_minor_block_id, restored_feature_map_count, (resnet_block_id == 0) && (resnet_spatial_block_id != 0));
+
+	std::string avg_pool_layer_name = (boost::format("pool%1%") % bottleneck_major_block_id).str(); 
+	nnforge::layer::ptr avg_pool_layer(new nnforge::average_subsampling_layer(std::vector<unsigned int>(2, 7)));
+	avg_pool_layer->instance_name = avg_pool_layer_name;
+	avg_pool_layer->input_layer_instance_names.push_back(last_layer_name);
+	layer_list.push_back(avg_pool_layer);
+
+	nnforge::layer::ptr logits_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 1), last_layer_feature_map_count, 1000));
+	logits_layer->instance_name = "logits";
+	logits_layer->input_layer_instance_names.push_back(avg_pool_layer_name);
+	layer_list.push_back(logits_layer);
+
+	nnforge::layer::ptr prob_layer(new nnforge::softmax_layer());
+	prob_layer->instance_name = "prob";
+	prob_layer->input_layer_instance_names.push_back("logits");
+	layer_list.push_back(prob_layer);
+
+	nnforge::layer::ptr nll_layer(new nnforge::negative_log_likelihood_layer());
+	nll_layer->instance_name = "NLL";
+	nll_layer->input_layer_instance_names.push_back("prob");
+	nll_layer->input_layer_instance_names.push_back("labels");
+	layer_list.push_back(nll_layer);
+
+	nnforge::layer::ptr accuracy_layer(new nnforge::accuracy_layer(5));
+	accuracy_layer->instance_name = "Accuracy";
+	accuracy_layer->input_layer_instance_names.push_back("prob");
+	accuracy_layer->input_layer_instance_names.push_back("labels");
+	layer_list.push_back(accuracy_layer);
+
+	nnforge::network_schema schema(layer_list);
+	schema.name = "ResNet-50";
+	boost::filesystem::ofstream out(get_working_data_folder() / "schema_resnet10.txt");
+	schema.write_proto(out);
+}
+
+void imagenet_toolset::add_resnet_bottleneck_block(
+	std::vector<nnforge::layer::const_ptr>& layer_list,
+	unsigned int& last_layer_feature_map_count,
+	std::string& last_layer_name,
+	unsigned int& bottleneck_major_block_id,
+	char& bottleneck_minor_block_id,
+	unsigned int& restored_feature_map_count,
+	bool spatial_size_reduction) const
+{
+	if (spatial_size_reduction)
+	{
+		restored_feature_map_count *= 2;
+		++bottleneck_major_block_id;
+		bottleneck_minor_block_id = 'a';
+	}
+
+	unsigned int bottleneck_feature_map_count = restored_feature_map_count / 4;
+
+	std::string block_name = (boost::format("res%1%%2%") % bottleneck_major_block_id % bottleneck_minor_block_id).str();
+
+	std::string shortcut_layer_name = last_layer_name;
+	if (spatial_size_reduction || (last_layer_feature_map_count != restored_feature_map_count))
+	{
+		shortcut_layer_name = block_name + "_shortcut";
+		nnforge::layer::ptr shortcut_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 1), last_layer_feature_map_count, restored_feature_map_count, std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, spatial_size_reduction ? 2 : 1)));
+		shortcut_layer->instance_name = shortcut_layer_name;
+		shortcut_layer->input_layer_instance_names.push_back(last_layer_name);
+		layer_list.push_back(shortcut_layer);
+	}
+
+	std::string reduce_fm_layer_name = block_name + "_reduce_fm";
+	std::string reduce_fm_relu_layer_name = reduce_fm_layer_name + "_relu";
+	{
+		nnforge::layer::ptr reduce_fm_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 1), last_layer_feature_map_count, bottleneck_feature_map_count, std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, spatial_size_reduction ? 2 : 1)));
+		reduce_fm_layer->instance_name = reduce_fm_layer_name;
+		reduce_fm_layer->input_layer_instance_names.push_back(last_layer_name);
+		layer_list.push_back(reduce_fm_layer);
+		nnforge::layer::ptr reduce_fm_relu_layer(new nnforge::rectified_linear_layer());
+		reduce_fm_relu_layer->instance_name = reduce_fm_relu_layer_name;
+		reduce_fm_relu_layer->input_layer_instance_names.push_back(reduce_fm_layer_name);
+		layer_list.push_back(reduce_fm_relu_layer);
+	}
+
+	std::string bottleneck_layer_name = block_name + "_bottleneck";
+	std::string bottleneck_relu_layer_name = bottleneck_layer_name + "_relu";
+	{
+		nnforge::layer::ptr bottleneck_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 3), bottleneck_feature_map_count, bottleneck_feature_map_count, std::vector<unsigned int>(2, 1), std::vector<unsigned int>(2, 1), std::vector<unsigned int>(2, 1)));
+		bottleneck_layer->instance_name = bottleneck_layer_name;
+		bottleneck_layer->input_layer_instance_names.push_back(reduce_fm_relu_layer_name);
+		layer_list.push_back(bottleneck_layer);
+		nnforge::layer::ptr bottleneck_relu_layer(new nnforge::rectified_linear_layer());
+		bottleneck_relu_layer->instance_name = bottleneck_relu_layer_name;
+		bottleneck_relu_layer->input_layer_instance_names.push_back(bottleneck_layer_name);
+		layer_list.push_back(bottleneck_relu_layer);
+	}
+
+	std::string restore_fm_layer_name = block_name + "_restore_fm";
+	{
+		nnforge::layer::ptr restore_fm_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 1), bottleneck_feature_map_count, restored_feature_map_count, std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, 1)));
+		restore_fm_layer->instance_name = restore_fm_layer_name;
+		restore_fm_layer->input_layer_instance_names.push_back(bottleneck_relu_layer_name);
+		layer_list.push_back(restore_fm_layer);
+	}
+
+	std::string add_layer_name = block_name;
+	std::string add_relu_layer_name = add_layer_name + "_relu";
+	{
+		nnforge::layer::ptr add_layer(new nnforge::add_layer());
+		add_layer->instance_name = add_layer_name;
+		add_layer->input_layer_instance_names.push_back(shortcut_layer_name);
+		add_layer->input_layer_instance_names.push_back(restore_fm_layer_name);
+		layer_list.push_back(add_layer);
+		nnforge::layer::ptr add_relu_layer(new nnforge::rectified_linear_layer());
+		add_relu_layer->instance_name = add_relu_layer_name;
+		add_relu_layer->input_layer_instance_names.push_back(add_layer_name);
+		layer_list.push_back(add_relu_layer);
+	}
+
+	last_layer_feature_map_count = restored_feature_map_count;
+	last_layer_name = add_relu_layer_name;
+	++bottleneck_minor_block_id;
 }

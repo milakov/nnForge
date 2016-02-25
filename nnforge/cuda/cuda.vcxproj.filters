@@ -787,12 +787,6 @@
     <ClCompile Include="prefix_sum_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
-    <ClCompile Include="add_layer_tester_cuda.cpp">
-      <Filter>Source Files\layer_testers</Filter>
-    </ClCompile>
-    <ClCompile Include="add_layer_updater_cuda.cpp">
-      <Filter>Source Files\layer_updaters</Filter>
-    </ClCompile>
     <ClCompile Include="add_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
     </ClCompile>
@@ -946,6 +940,12 @@
       <Filter>Source Files\layer_testers</Filter>
     </CudaCompile>
     <CudaCompile Include="entry_convolution_layer_updater_cuda.cu">
+      <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="add_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
+    </CudaCompile>
+    <CudaCompile Include="add_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
   </ItemGroup>

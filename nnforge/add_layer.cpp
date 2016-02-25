@@ -17,14 +17,17 @@
 #include "add_layer.h"
 
 #include "neural_network_exception.h"
+#include "proto/nnforge.pb.h"
 
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace nnforge
 {
 	const std::string add_layer::layer_type_name = "Add";
 
-	add_layer::add_layer()
+	add_layer::add_layer(float alpha)
+		: alpha(alpha)
 	{
 	}
 
@@ -51,6 +54,31 @@ namespace nnforge
 		return input_configuration_specific_list[0];
 	}
 
+	void add_layer::write_proto(void * layer_proto) const
+	{
+		protobuf::Layer * layer_proto_typed = reinterpret_cast<nnforge::protobuf::Layer *>(layer_proto);
+
+		if (alpha != 1.0F)
+		{
+			nnforge::protobuf::AddParam * param = layer_proto_typed->mutable_add_param();
+			param->set_alpha(alpha);
+		}
+	}
+
+	void add_layer::read_proto(const void * layer_proto)
+	{
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const nnforge::protobuf::Layer *>(layer_proto);
+		if (layer_proto_typed->has_add_param())
+		{
+			const protobuf::AddParam& param = layer_proto_typed->add_param();
+			alpha = param.alpha();
+		}
+		else
+		{
+			alpha = 1.0F;
+		}
+	}
+
 	float add_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 		const layer_action& action) const
@@ -60,13 +88,33 @@ namespace nnforge
 		case layer_action::forward:
 			{
 				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
-				unsigned int per_item_flops = static_cast<unsigned int>(input_configuration_specific_list.size() - 1);
+				unsigned int per_item_flops = static_cast<unsigned int>(input_configuration_specific_list.size());
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 			}
 		case layer_action::backward_data:
-			return 0.0F;
+			{
+				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
+				unsigned int per_item_flops = static_cast<unsigned int>(input_configuration_specific_list.size());
+				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
+			}
 		default:
 			return 0.0F;
 		}
+	}
+
+	std::vector<std::string> add_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		std::stringstream ss;
+		if (alpha != 1.0F)
+		{
+			ss << "alpha " << alpha;
+		}
+
+		if (!ss.str().empty())
+			res.push_back(ss.str());
+
+		return res;
 	}
 }

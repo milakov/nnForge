@@ -24,7 +24,7 @@ namespace nnforge
 	class add_layer : public layer
 	{
 	public:
-		add_layer();
+		add_layer(float alpha = 1.0F);
 
 		virtual layer::ptr clone() const;
 
@@ -36,6 +36,15 @@ namespace nnforge
 
 		virtual std::string get_type_name() const;
 
+		virtual void write_proto(void * layer_proto) const;
+
+		virtual void read_proto(const void * layer_proto);
+
+		virtual std::vector<std::string> get_parameter_strings() const;
+
 		static const std::string layer_type_name;
+
+	public:
+		float alpha;
 	};
 }

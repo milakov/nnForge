@@ -64,6 +64,11 @@ namespace nnforge
 			virtual bool is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const;
 
 			virtual bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const;
+
+			virtual void updater_configured();
+
+		private:
+			float alpha;
 		};
 	}
 }

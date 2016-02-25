@@ -39,7 +39,8 @@ namespace nnforge
 
 			static void set_convolution_descriptor(
 				cudnnConvolutionDescriptor_t convolution_desc,
-				const std::vector<unsigned int> zero_padding);
+				const std::vector<unsigned int>& zero_padding,
+				const std::vector<unsigned int>& strides);
 
 			static void set_pooling_descriptor(
 				cudnnPoolingDescriptor_t pooling_desc,

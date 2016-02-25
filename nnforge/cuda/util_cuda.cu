@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -796,7 +796,12 @@ namespace nnforge
 			if (add_to_destination)
 				multiply_by_value_util_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, v, new_elem_count);
 			else
-				multiply_by_value_util_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, v, new_elem_count);
+			{
+				if ((v != 1.0F) || (output_buf_with_aligned_size != input_buf_with_aligned_size))
+				{
+					multiply_by_value_util_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>((float4 *)input_buf_with_aligned_size, (float4 *)output_buf_with_aligned_size, v, new_elem_count);
+				}
+			}
 		}
 
 		void cuda_util::multiply_by_itself(

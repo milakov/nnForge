@@ -151,13 +151,6 @@ namespace nnforge
 		return true;
 	}
 
-	std::vector<std::pair<unsigned int, unsigned int> > layer::get_input_rectangle_borders(
-		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
-		unsigned int input_layer_id) const
-	{
-		return output_rectangle_borders;
-	}
-
 	std::set<unsigned int> layer::get_weight_decay_part_id_set() const
 	{
 		return std::set<unsigned int>();

@@ -183,26 +183,6 @@ namespace nnforge
 		return true;
 	}
 
-	std::vector<std::pair<unsigned int, unsigned int> > sparse_convolution_layer::get_input_rectangle_borders(
-		const std::vector<std::pair<unsigned int, unsigned int> >& output_rectangle_borders,
-		unsigned int input_layer_id) const
-	{
-		if (output_rectangle_borders.size() != window_sizes.size())
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and output borders (%2%) don't match") % window_sizes.size() % output_rectangle_borders.size()).str());
-
-		std::vector<std::pair<unsigned int, unsigned int> > res;
-
-		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			res.push_back(
-				std::make_pair(
-					static_cast<unsigned int>(std::max(0, static_cast<int>(output_rectangle_borders[i].first) - static_cast<int>(left_zero_padding[i]))),
-					(output_rectangle_borders[i].second + window_sizes[i] - 1) - left_zero_padding[i]
-				)
-			);
-
-		return res;
-	}
-
 	void sparse_convolution_layer::write_proto(void * layer_proto) const
 	{
 		protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);

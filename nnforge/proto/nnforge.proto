@@ -32,14 +32,16 @@ message Layer {
 	optional UpsamplingParam upsampling_param = 24;
 	optional CDF2PDFParam cdf_to_pdf_param = 25;
 	optional EntryConvolutionParam entry_convolution_param = 26;
+	optional AddParam add_param = 27;
 	optional CustomParam custom_param = 1000;
 }
 
 message ConvolutionalParam {
 	message ConvolutionalDimensionParam {
 		required uint32 kernel_size = 1;
-		optional uint32 left_padding = 2;
-		optional uint32 right_padding = 3;
+		optional uint32 left_padding = 2 [default = 0];
+		optional uint32 right_padding = 3 [default = 0];
+		optional uint32 stride = 4 [default = 1];
 	}
 	required uint32 input_feature_map_count = 1;
 	required uint32 output_feature_map_count = 2;
@@ -228,6 +230,10 @@ message ReshapeParam {
 	optional FeatureMapParam feature_map_param = 2;
 	repeated DimensionParam dimension_param = 3;
 	optional uint32 collapse_to_dimensions = 4;
+}
+
+message AddParam {
+	optional float alpha = 1 [default = 1.0];
 }
 
 message CustomParam {
