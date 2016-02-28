@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,18 +17,24 @@
 #include "structured_data_bunch_stream_reader.h"
 
 #include <boost/format.hpp>
+#include <limits>
 
 #include "neural_network_exception.h"
+#include "rnd.h"
 
 namespace nnforge
 {
 	structured_data_bunch_stream_reader::structured_data_bunch_stream_reader(
 		const std::map<std::string, structured_data_reader::ptr>& data_reader_map,
-		unsigned int multiple_epoch_count)
+		unsigned int multiple_epoch_count,
+		unsigned int shuffle_block_size)
 		: data_reader_map(data_reader_map)
 		, entry_count_list(multiple_epoch_count)
 		, base_entry_count_list(multiple_epoch_count)
+		, shuffle_block_size(shuffle_block_size)
 		, current_epoch(0)
+		, current_chunk(0)
+		, current_big_epoch(0)
 	{
 		total_entry_count = -1;
 		for(std::map<std::string, structured_data_reader::ptr>::const_iterator it = data_reader_map.begin(); it != data_reader_map.end(); ++it)
@@ -43,6 +49,20 @@ namespace nnforge
 					invalid_config_message = (boost::format("Entry count mismatch: %1% and %2%") % total_entry_count % new_entry_count).str();
 					return;
 				}
+			}
+		}
+
+		if (shuffle_block_size > 0)
+		{
+			if (total_entry_count < 0)
+			{
+				invalid_config_message = "Shuffling specified for structured_data_bunch_stream_reader while entry count cannot be determined";
+				return;
+			}
+			else
+			{
+				blocks_shuffled.resize(total_entry_count / shuffle_block_size);
+				update_shuffle_list();
 			}
 		}
 
@@ -78,8 +98,8 @@ namespace nnforge
 			if (layer_names.find(it->first) != layer_names.end())
 				narrow_data_reader_map.insert(*it);
 
-		structured_data_bunch_stream_reader::ptr res(new structured_data_bunch_stream_reader(narrow_data_reader_map, static_cast<unsigned int>(entry_count_list.size())));
-		res->current_epoch = current_epoch;
+		structured_data_bunch_stream_reader::ptr res(new structured_data_bunch_stream_reader(narrow_data_reader_map, static_cast<unsigned int>(entry_count_list.size()), shuffle_block_size));
+		res->set_epoch(current_epoch);
 		return res;
 	}
 
@@ -94,9 +114,18 @@ namespace nnforge
 	void structured_data_bunch_stream_reader::set_epoch(unsigned int epoch_id)
 	{
 		if (!invalid_config_message.empty())
-			throw neural_network_exception(invalid_config_message);
+			return;
 
-		current_epoch = epoch_id % entry_count_list.size();
+		unsigned int new_current_big_epoch = epoch_id / static_cast<unsigned int>(entry_count_list.size());
+		if (new_current_big_epoch != current_big_epoch)
+		{
+			current_big_epoch = new_current_big_epoch;
+			if (shuffle_block_size > 0)
+				update_shuffle_list();
+		}
+
+		current_chunk = epoch_id % entry_count_list.size();
+		current_epoch = epoch_id;
 	}
 
 	bool structured_data_bunch_stream_reader::read(
@@ -106,10 +135,20 @@ namespace nnforge
 		if (!invalid_config_message.empty())
 			throw neural_network_exception(invalid_config_message);
 
-		if ((entry_count_list[current_epoch] >= 0) && (entry_id >= static_cast<unsigned int>(entry_count_list[current_epoch])))
+		if ((entry_count_list[current_chunk] >= 0) && (entry_id >= static_cast<unsigned int>(entry_count_list[current_chunk])))
 			return false;
 
-		unsigned int global_entry_id = entry_id + base_entry_count_list[current_epoch];
+		unsigned int global_entry_id = entry_id + base_entry_count_list[current_chunk];
+		if (shuffle_block_size > 0)
+		{
+			unsigned int shuffle_block_id = global_entry_id / shuffle_block_size;
+			if (shuffle_block_id < static_cast<unsigned int>(blocks_shuffled.size()))
+			{
+				unsigned int internal_block_id = global_entry_id - shuffle_block_id * shuffle_block_size;
+				global_entry_id = blocks_shuffled[shuffle_block_id] * shuffle_block_size + internal_block_id;
+			}
+		}
+
 		bool res = true;
 		for(std::map<std::string, float *>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
 		{
@@ -123,6 +162,20 @@ namespace nnforge
 
 	int structured_data_bunch_stream_reader::get_entry_count() const
 	{
-		return entry_count_list[current_epoch];
+		return entry_count_list[current_chunk];
+	}
+
+	void structured_data_bunch_stream_reader::update_shuffle_list()
+	{
+		random_generator gen = rnd::get_random_generator(current_big_epoch);
+		unsigned int block_count = static_cast<unsigned int>(blocks_shuffled.size());
+		for(unsigned int i = 0; i < block_count; ++i)
+			blocks_shuffled[i] = i;
+		for(int i = static_cast<int>(block_count) - 1; i > 0; --i)
+		{
+			nnforge_uniform_int_distribution<int> dist(0, i);
+			int elem_id = dist(gen);
+			std::swap(blocks_shuffled[elem_id], blocks_shuffled[i]);
+		}
 	}
 }

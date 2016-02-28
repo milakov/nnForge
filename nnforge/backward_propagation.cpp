@@ -48,6 +48,8 @@ namespace nnforge
 			this->schema->write_gv(out);
 		}
 
+		cumulative_tiling_factor_map = this->schema->get_cumulative_tiling_factor_map();
+
 		action_schema = this->schema->get_actions_for_backward_propagation(
 			output_layer_names,
 			error_source_layer_names,
@@ -103,7 +105,6 @@ namespace nnforge
 			this->action_schema->write_gv(out, layer_name_with_action_color_map);
 		}
 
-		cumulative_tiling_factor_map = this->schema->get_cumulative_tiling_factor_map();
 		output_layers_tiling_factor = 1;
 		for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
 		{

@@ -275,6 +275,7 @@ namespace nnforge
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			window_sizes = layer_derived->window_sizes;
+			strides = layer_derived->strides;
 
 			zero_padding = layer_derived->left_zero_padding;
 			for(int i = 0; i < window_sizes.size(); ++i)
@@ -297,11 +298,12 @@ namespace nnforge
 			cudnn_util::set_convolution_descriptor(
 				convolution_desc,
 				zero_padding,
-				layer_derived->strides);
+				strides);
 		}
 
 		std::pair<size_t, bool> convolution_layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
 		{
+			bool is_over_sol_algos_available = cudnn_util::is_over_sol_algos_available(window_sizes, strides);
 			switch (action.get_action_type())
 			{
 			case layer_action::forward:
@@ -309,21 +311,21 @@ namespace nnforge
 					unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
 					for(int i = 0; i < window_sizes.size(); ++i)
 						working_buffer_elem_count *= window_sizes[i];
-					return std::make_pair(working_buffer_elem_count * sizeof(int), true);
+					return std::make_pair(working_buffer_elem_count * sizeof(int), is_over_sol_algos_available);
 				}
 			case layer_action::backward_data:
 				{
 					unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 					for(int i = 0; i < window_sizes.size(); ++i)
 						working_buffer_elem_count *= window_sizes[i];
-					return std::make_pair(working_buffer_elem_count * sizeof(int), true);
+					return std::make_pair(working_buffer_elem_count * sizeof(int), is_over_sol_algos_available);
 				}
 			case layer_action::backward_weights:
 				{
 					unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 					for(int i = 0; i < window_sizes.size(); ++i)
 						working_buffer_elem_count *= window_sizes[i];
-					return std::make_pair(working_buffer_elem_count * sizeof(int), true);
+					return std::make_pair(working_buffer_elem_count * sizeof(int), is_over_sol_algos_available);
 				}
 			default:
 				return std::make_pair(0, false);

@@ -88,6 +88,7 @@ namespace nnforge
 		protected:
 			std::vector<unsigned int> window_sizes;
 			std::vector<unsigned int> zero_padding;
+			std::vector<unsigned int> strides;
 
 			cudnnTensorDescriptor_t input_data_desc;
 			cudnnTensorDescriptor_t output_data_desc;

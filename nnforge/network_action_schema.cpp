@@ -650,14 +650,13 @@ namespace nnforge
 		return (t1.second < t2.second);
 	}
 
-	void network_action_schema::add_dependencies_for_distant_otherwise_inependent_actions(
+	std::vector<std::pair<network_action_schema::action_schema_graph::vertex_descriptor, double> > network_action_schema::get_vertex_with_distance_list(
 		const std::map<std::string, layer_configuration_specific>& layer_config_map,
-		const std::map<std::string, unsigned int>& tiling_factor_map,
-		float saturation_flops)
+		const std::map<std::string, unsigned int>& tiling_factor_map) const
 	{
 		std::vector<std::pair<action_schema_graph::vertex_descriptor, double> > vertex_distance_list;
 		{
-			std::map<action_schema_graph::vertex_descriptor, double> distance_map;
+			std::map<action_schema_graph::vertex_descriptor, double> distance_map; // Max distance to reach this node
 			std::list<action_schema_graph::vertex_descriptor> vertex_list;
 			boost::topological_sort(actions, std::back_inserter(vertex_list));
 			for(std::list<action_schema_graph::vertex_descriptor>::const_iterator it = vertex_list.begin(); it != vertex_list.end(); ++it)
@@ -687,7 +686,18 @@ namespace nnforge
 				vertex_distance_list.push_back(std::make_pair(*it, max_distance));
 			}
 			std::stable_sort(vertex_distance_list.begin(), vertex_distance_list.end(), compare_distances);
+			// vertex_distance_list is now vertecices in execution order AND with non-decreasing distance to reach each of them
 		}
+
+		return vertex_distance_list;
+	}
+
+	void network_action_schema::add_dependencies_for_distant_otherwise_inependent_actions(
+		const std::map<std::string, layer_configuration_specific>& layer_config_map,
+		const std::map<std::string, unsigned int>& tiling_factor_map,
+		float saturation_flops)
+	{
+		std::vector<std::pair<action_schema_graph::vertex_descriptor, double> > vertex_distance_list = get_vertex_with_distance_list(layer_config_map, tiling_factor_map);
 
 		for(std::vector<std::pair<action_schema_graph::vertex_descriptor, double> >::const_iterator it = vertex_distance_list.begin(); it != vertex_distance_list.end(); ++it)
 		{
@@ -716,20 +726,20 @@ namespace nnforge
 				{
 					if (dependent_vertices.find(candidate_it->first) == dependent_vertices.end())
 					{
-						// To reduce the number of dependencies we better remove all the from candidate, where target is prior to current 
+						// To reduce the number of dependencies we better remove all the vertices to the target, where spource is the descendent to the candidate vertex
 						{
 							std::set<action_schema_graph::vertex_descriptor> dependent_vertices;
 							record_all_edges<action_schema_graph::vertex_descriptor> vis(dependent_vertices);
 							std::vector<boost::default_color_type> color_map(boost::num_vertices(actions));
 							boost::depth_first_visit(
-								actions,
-								it->first,
+								boost::make_reverse_graph(actions),
+								candidate_it->first,
 								vis,
 								boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
 							for(std::set<action_schema_graph::vertex_descriptor>::const_iterator dep_it = dependent_vertices.begin(); dep_it != dependent_vertices.end(); ++dep_it)
 							{
-								if (boost::edge(candidate_it->first, *dep_it, actions).second)
-									boost::remove_edge(candidate_it->first, *dep_it, actions);
+								if (boost::edge(*dep_it, it->first, actions).second)
+									boost::remove_edge(*dep_it, it->first, actions);
 							}
 						}
 

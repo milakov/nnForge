@@ -53,6 +53,10 @@ namespace nnforge
 				unsigned int input_feature_map_count,
 				const std::vector<unsigned int>& windows_sizes);
 
+			static bool is_over_sol_algos_available(
+				const std::vector<unsigned int>& window_sizes,
+				const std::vector<unsigned int>& strides);
+
 		private:
 			cudnn_util();
 			cudnn_util(const cudnn_util&);

@@ -117,7 +117,8 @@ namespace nnforge
 		virtual structured_data_bunch_reader::ptr get_structured_data_bunch_reader(
 			const std::string& dataset_name,
 			dataset_usage usage,
-			unsigned int multiple_epoch_count) const;
+			unsigned int multiple_epoch_count,
+			unsigned int shuffle_block_size) const;
 
 		virtual raw_data_reader::ptr get_raw_reader(
 			const std::string& dataset_name,
@@ -225,6 +226,7 @@ namespace nnforge
 		std::string log_mode;
 		float training_mix_validating_ratio;
 		std::string dump_format;
+		int shuffle_block_size;
 
 		debug_state::ptr debug;
 

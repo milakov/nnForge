@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ namespace nnforge
 
 		structured_data_bunch_stream_reader(
 			const std::map<std::string, structured_data_reader::ptr>& data_reader_map,
-			unsigned int multiple_epoch_count = 1);
+			unsigned int multiple_epoch_count,
+			unsigned int shuffle_block_size);
 
 		virtual ~structured_data_bunch_stream_reader();
 
@@ -48,12 +49,19 @@ namespace nnforge
 
 		virtual void set_epoch(unsigned int epoch_id);
 
+	private:
+		void update_shuffle_list();
+
 	protected:
 		std::map<std::string, structured_data_reader::ptr> data_reader_map;
 		int total_entry_count;
 		std::vector<int> entry_count_list;
 		std::vector<int> base_entry_count_list;
+		unsigned int shuffle_block_size;
 		unsigned int current_epoch;
+		unsigned int current_chunk;
+		unsigned int current_big_epoch;
 		std::string invalid_config_message;
+		std::vector<unsigned int> blocks_shuffled;
 	};
 }

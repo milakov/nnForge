@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -964,7 +964,7 @@ namespace nnforge
 				float saturation_flops = cuda_config->get_flops() * cuda_config->get_device_saturation_time() / static_cast<float>(cuda_config->optimize_action_graph_assumed_chunk_size);
 				optimized_action_schema_tmp->add_dependencies_for_distant_otherwise_inependent_actions(
 					layer_config_map,
-					std::map<std::string, unsigned int>(),
+					cumulative_tiling_factor_map,
 					saturation_flops);
 				optimized_action_schema = optimized_action_schema_tmp;
 			}
@@ -1137,7 +1137,7 @@ namespace nnforge
 			if (debug->is_debug())
 			{
 				std::stringstream debug_str;
-				debug_str << "forward prop cuda per fixed buffers: " << temporary_working_fixed_set_size_list.size();
+				debug_str << "backward prop cuda per fixed buffers: " << temporary_working_fixed_set_size_list.size();
 				size_t total_buffer_size = 0;
 				for(std::vector<size_t>::const_iterator it = temporary_working_fixed_set_size_list.begin(); it != temporary_working_fixed_set_size_list.end(); ++it)
 						total_buffer_size += *it;

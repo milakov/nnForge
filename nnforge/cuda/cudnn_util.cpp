@@ -112,6 +112,20 @@ namespace nnforge
 				static_cast<int>(filter_dimensions.size()),
 				&filter_dimensions[0]));
 		}
+
+		bool cudnn_util::is_over_sol_algos_available(
+			const std::vector<unsigned int>& window_sizes,
+			const std::vector<unsigned int>& strides)
+		{
+			bool unit_stride = true;
+			for(int i = 0; i < strides.size(); ++i)
+				unit_stride = unit_stride && (strides[i] == 1);
+			bool non_unit_window_size = false;
+			for(int i = 0; i < window_sizes.size(); ++i)
+				non_unit_window_size = non_unit_window_size || (window_sizes[i] > 1);
+
+			return (unit_stride && non_unit_window_size);
+		}
 	}
 }
 	

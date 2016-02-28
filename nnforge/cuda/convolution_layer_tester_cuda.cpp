@@ -127,6 +127,7 @@ namespace nnforge
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			window_sizes = layer_derived->window_sizes;
+			strides = layer_derived->strides;
 
 			std::vector<unsigned int> zero_padding = layer_derived->left_zero_padding;
 			for(int i = 0; i < window_sizes.size(); ++i)
@@ -154,10 +155,11 @@ namespace nnforge
 
 		std::pair<size_t, bool> convolution_layer_tester_cuda::get_temporary_working_fixed_buffer_size() const
 		{
+			bool is_over_sol_algos_available = cudnn_util::is_over_sol_algos_available(window_sizes, strides);
 			unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
 			for(int i = 0; i < window_sizes.size(); ++i)
 				working_buffer_elem_count *= window_sizes[i];
-			return std::make_pair(working_buffer_elem_count * sizeof(int), true);
+			return std::make_pair(working_buffer_elem_count * sizeof(int), is_over_sol_algos_available);
 		}
 	}
 }

@@ -486,7 +486,7 @@ void imagenet_toolset::create_resnet_schema() const
 
 	nnforge::network_schema schema(layer_list);
 	schema.name = "ResNet-50";
-	boost::filesystem::ofstream out(get_working_data_folder() / "schema_resnet10.txt");
+	boost::filesystem::ofstream out(get_working_data_folder() / "schema_resnet50.txt");
 	schema.write_proto(out);
 }
 

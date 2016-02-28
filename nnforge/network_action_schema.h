@@ -123,6 +123,10 @@ namespace nnforge
 	private:
 		action_schema_graph::vertex_descriptor get_vertex_descriptor(const layer_name_with_action& layer_and_action) const;
 
+		std::vector<std::pair<action_schema_graph::vertex_descriptor, double> > get_vertex_with_distance_list(
+			const std::map<std::string, layer_configuration_specific>& layer_config_map,
+			const std::map<std::string, unsigned int>& tiling_factor_map) const;
+
 	private:
 		// Returns empty smart pointer in case layer is not found
 		layer::const_ptr find_layer(const std::string& instance_name) const;

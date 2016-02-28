@@ -384,6 +384,7 @@ namespace nnforge
 		res.push_back(int_option("epoch_count_in_training_dataset", &epoch_count_in_training_dataset, 1, "The whole training dataset should be split in this amount of epochs"));
 		res.push_back(int_option("epoch_count_in_validating_dataset", &epoch_count_in_validating_dataset, 1, "Splitting validating dataset in multiple chunks, effectively the first chunk only will be used for inference"));
 		res.push_back(int_option("dump_compact_samples", &dump_compact_samples, 1, "Compact (average) results acrioss samples for inference of type dump_average_across_nets"));
+		res.push_back(int_option("shuffle_block_size", &shuffle_block_size, 0, "The size of contiguous blocks when shuffling training data, 0 indicates no shuffling"));
 
 		return res;
 	}
@@ -513,7 +514,7 @@ namespace nnforge
 
 		network_schema::ptr schema = get_schema(schema_usage_inference);
 		forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
-		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, epoch_count_in_validating_dataset);
+		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, epoch_count_in_validating_dataset, 0);
 
 		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
 		std::cout << "Running inference for " << ann_data_name_and_folderpath_list.size() << " networks..." << std::endl;
@@ -615,7 +616,8 @@ namespace nnforge
 	structured_data_bunch_reader::ptr toolset::get_structured_data_bunch_reader(
 		const std::string& dataset_name,
 		dataset_usage usage,
-		unsigned int multiple_epoch_count) const
+		unsigned int multiple_epoch_count,
+		unsigned int shuffle_block_size) const
 	{
 		std::map<std::string, boost::filesystem::path> data_filenames = get_data_filenames(dataset_name);
 
@@ -631,7 +633,7 @@ namespace nnforge
 			std::string(dataset_value_data_layer_name),
 			structured_data_reader::ptr(new structured_data_constant_reader(get_dataset_value_data_value(dataset_name, usage), layer_configuration_specific(1)))));
 
-		structured_data_bunch_reader::ptr res(new structured_data_bunch_stream_reader(data_reader_map, multiple_epoch_count));
+		structured_data_bunch_reader::ptr res(new structured_data_bunch_stream_reader(data_reader_map, multiple_epoch_count, shuffle_block_size));
 		return res;
 	}
 
@@ -720,11 +722,11 @@ namespace nnforge
 
 		summarize_network_data_pusher res(batch_folder);
 
-		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(training_dataset_name, dataset_usage_train, epoch_count_in_training_dataset);
+		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(training_dataset_name, dataset_usage_train, epoch_count_in_training_dataset, shuffle_block_size);
 
 		if (training_mix_validating_ratio > 0.0F)
 		{
-			structured_data_bunch_reader::ptr validating_reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_train, 1);
+			structured_data_bunch_reader::ptr validating_reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_train, 1, 0);
 			reader = structured_data_bunch_reader::ptr(new structured_data_bunch_mix_reader(reader, validating_reader, training_mix_validating_ratio));
 		}
 
@@ -743,7 +745,7 @@ namespace nnforge
 		{
 			res.push_back(network_data_pusher::ptr(new validate_progress_network_data_pusher(
 				forward_prop_factory->create(*schema, inference_output_layer_names, debug),
-				get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_validate_when_train, epoch_count_in_validating_dataset))));
+				get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_validate_when_train, epoch_count_in_validating_dataset, 0))));
 		}
 
 		return res;
@@ -1140,7 +1142,7 @@ namespace nnforge
 
 	void toolset::dump_data()
 	{
-		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(dump_dataset_name, dataset_usage_dump_data, 1);
+		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(dump_dataset_name, dataset_usage_dump_data, 1, 0);
 		std::set<std::string> layer_names;
 		layer_names.insert(dump_layer_name);
 		structured_data_bunch_reader::ptr narrow_reader = reader->get_narrow_reader(layer_names);
