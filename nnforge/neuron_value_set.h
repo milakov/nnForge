@@ -51,7 +51,7 @@ namespace nnforge
 
 		void add_entry(const float * new_data);
 
-		nnforge_shared_ptr<std::vector<float> > get_average() const;
+		nnforge_shared_ptr<std::vector<double> > get_average() const;
 
 		void add(
 			const neuron_value_set& other,

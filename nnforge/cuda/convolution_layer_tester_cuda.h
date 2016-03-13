@@ -50,6 +50,7 @@ namespace nnforge
 
 			std::vector<unsigned int> window_sizes;
 			std::vector<unsigned int> strides;
+			bool bias;
 
 			cudnnTensorDescriptor_t input_data_desc;
 			cudnnTensorDescriptor_t output_data_desc;

@@ -551,6 +551,9 @@ namespace nnforge
 								case layer_action::backward_data:
 									can_overwrite_input = true;
 									break;
+								case layer_action::backward_data_and_weights:
+									can_overwrite_input = true;
+									break;
 								}
 							}
 						}
@@ -726,7 +729,24 @@ namespace nnforge
 				{
 					if (dependent_vertices.find(candidate_it->first) == dependent_vertices.end())
 					{
-						// To reduce the number of dependencies we better remove all the vertices to the target, where spource is the descendent to the candidate vertex
+						// To reduce the number of dependencies we better remove all the from candidate, where target is prior to current 
+						{
+							std::set<action_schema_graph::vertex_descriptor> dependent_vertices;
+							record_all_edges<action_schema_graph::vertex_descriptor> vis(dependent_vertices);
+							std::vector<boost::default_color_type> color_map(boost::num_vertices(actions));
+							boost::depth_first_visit(
+								actions,
+								it->first,
+								vis,
+								boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
+							for(std::set<action_schema_graph::vertex_descriptor>::const_iterator dep_it = dependent_vertices.begin(); dep_it != dependent_vertices.end(); ++dep_it)
+							{
+								if (boost::edge(candidate_it->first, *dep_it, actions).second)
+									boost::remove_edge(candidate_it->first, *dep_it, actions);
+							}
+						}
+
+						// To reduce the number of dependencies we better remove all the vertices to the target, where source is the descendent to the candidate vertex
 						{
 							std::set<action_schema_graph::vertex_descriptor> dependent_vertices;
 							record_all_edges<action_schema_graph::vertex_descriptor> vis(dependent_vertices);

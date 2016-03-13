@@ -182,7 +182,7 @@ std::vector<nnforge::data_transformer::ptr> gtsrb_toolset::get_data_transformer_
 {
 	std::vector<nnforge::data_transformer::ptr> res;
 
-	if ((layer_name == "images") && (dataset_name == "training"))
+	if ((layer_name == "images") && (dataset_name == "training") && (usage != dataset_usage_check_gradient))
 	{
 		res.push_back(nnforge::data_transformer::ptr(new nnforge::distort_2d_data_transformer(
 			max_rotation_angle_in_degrees,

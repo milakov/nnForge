@@ -88,7 +88,7 @@ namespace nnforge
 					entry_count);
 				float alpha = 1.0F;
 				float beta = 1.0F;
-				cudnn_safe_call(cudnnAddTensor_v3(
+				cudnn_safe_call(cudnnAddTensor(
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					bias_desc,

@@ -470,6 +470,12 @@
     <ClInclude Include="entry_convolution_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="batch_norm_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
+    <ClInclude Include="neuron_value_set_data_bunch_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -810,6 +816,12 @@
     </ClCompile>
     <ClCompile Include="entry_convolution_layer.cpp">
       <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="batch_norm_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="neuron_value_set_data_bunch_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

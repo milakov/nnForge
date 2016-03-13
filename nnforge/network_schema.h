@@ -132,6 +132,9 @@ namespace nnforge
 		std::map<std::string, schema_graph::vertex_descriptor> layer_instance_name_to_vertex_decriptor_map;
 
 	private:
+		static bool compare_entry(std::pair<schema_graph::vertex_descriptor, size_t> i, std::pair<schema_graph::vertex_descriptor, size_t> j);
+
+	private:
 		struct cycle_detector : public boost::default_dfs_visitor
 		{
 			cycle_detector(bool& has_cycle) 

@@ -134,6 +134,14 @@ namespace nnforge
 			return 0;
 		}
 
+		size_t layer_updater_cuda::get_temporary_fixed_buffer_size() const
+		{
+			if (actions.find(layer_action(layer_action::forward)) == actions.end())
+				throw neural_network_exception((boost::format("get_temporary_fixed_buffer_size called for layer %1% for action %2% while it is not configured to run such an action") % layer_schema->instance_name % layer_action(layer_action::forward).str()).str());
+
+			return 0;
+		}
+
 		size_t layer_updater_cuda::get_temporary_per_entry_buffer_size() const
 		{
 			if (actions.find(layer_action(layer_action::forward)) == actions.end())
@@ -166,10 +174,50 @@ namespace nnforge
 			return true;
 		}
 
+		bool layer_updater_cuda::is_backward_data_dependent_on_temporary_fixed_buffer(unsigned int action_input_index) const
+		{
+			if (actions.find(layer_action(layer_action::backward_data, action_input_index)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_data_dependent_on_temporary_fixed_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data, action_input_index).str()).str());
+
+			return (get_temporary_fixed_buffer_size() != 0);
+		}
+
 		bool layer_updater_cuda::is_backward_data_dependent_on_temporary_per_entry_buffer(unsigned int action_input_index) const
 		{
 			if (actions.find(layer_action(layer_action::backward_data, action_input_index)) == actions.end())
 				throw neural_network_exception((boost::format("is_backward_data_dependent_on_temporary_per_entry_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data, action_input_index).str()).str());
+
+			return (get_temporary_per_entry_buffer_size() != 0);
+		}
+
+		bool layer_updater_cuda::is_backward_data_and_weights_dependent_on_input_buffer(unsigned int data_input_index) const
+		{
+			if (actions.find(layer_action(layer_action::backward_data_and_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_data_and_weights_dependent_on_input_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data_and_weights).str()).str());
+
+			return true;
+		}
+
+		bool layer_updater_cuda::is_backward_data_and_weights_dependent_on_output_buffer() const
+		{
+			if (actions.find(layer_action(layer_action::backward_data_and_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_data_and_weights_dependent_on_output_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data_and_weights).str()).str());
+
+			return true;
+		}
+
+		bool layer_updater_cuda::is_backward_data_and_weights_dependent_on_temporary_fixed_buffer() const
+		{
+			if (actions.find(layer_action(layer_action::backward_data_and_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_data_and_weights_dependent_on_temporary_fixed_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data_and_weights).str()).str());
+
+			return (get_temporary_fixed_buffer_size() != 0);
+		}
+
+		bool layer_updater_cuda::is_backward_data_and_weights_dependent_on_temporary_per_entry_buffer() const
+		{
+			if (actions.find(layer_action(layer_action::backward_data_and_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_data_and_weights_dependent_on_temporary_per_entry_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_data_and_weights).str()).str());
 
 			return (get_temporary_per_entry_buffer_size() != 0);
 		}
@@ -180,6 +228,14 @@ namespace nnforge
 				throw neural_network_exception((boost::format("is_backward_weights_dependent_on_input_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_weights).str()).str());
 
 			return true;
+		}
+
+		bool layer_updater_cuda::is_backward_weights_dependent_on_temporary_fixed_buffer() const
+		{
+			if (actions.find(layer_action(layer_action::backward_weights)) == actions.end())
+				throw neural_network_exception((boost::format("is_backward_weights_dependent_on_temporary_fixed_buffer called for layer %1% while it is not configured to run action %2%") % layer_schema->instance_name % layer_action(layer_action::backward_weights).str()).str());
+
+			return (get_temporary_fixed_buffer_size() != 0);
 		}
 
 		bool layer_updater_cuda::is_backward_weights_dependent_on_temporary_per_entry_buffer() const
@@ -196,13 +252,14 @@ namespace nnforge
 			cuda_linear_buffer_device::ptr input_errors_buffer,
 			cuda_linear_buffer_device::const_ptr output_errors_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
 			cuda_linear_buffer_device::const_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
 			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
 			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
 			bool add_update_to_destination,
 			unsigned int entry_count)
@@ -220,10 +277,32 @@ namespace nnforge
 			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
 			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
 			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
 			unsigned int entry_count)
 		{
 			throw neural_network_exception((boost::format("enqueue_backward_weights_propagation is not implemented for layer %1%") % layer_schema->instance_name).str());
+		}
+
+		void layer_updater_cuda::enqueue_backward_data_and_weights_propagation(
+			cudaStream_t stream_id,
+			const std::vector<cuda_linear_buffer_device::ptr> input_errors_buffers,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& gradient,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			bool add_update_to_destination,
+			unsigned int entry_count)
+		{
+			throw neural_network_exception((boost::format("enqueue_backward_data_and_weights_propagation is not implemented for layer %1%") % layer_schema->instance_name).str());
 		}
 	}
 }

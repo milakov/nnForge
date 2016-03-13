@@ -60,6 +60,17 @@ namespace nnforge
 				1);
 		}
 
+		void cudnn_util::set_tensor_bn_weights_descriptor(
+			cudnnTensorDescriptor_t tensor_desc,
+			unsigned int feature_map_count,
+			unsigned int dimension_count)
+		{
+			cudnn_util::set_tensor_descriptor(
+				tensor_desc,
+				layer_configuration_specific(feature_map_count, std::vector<unsigned int>(dimension_count, 1)),
+				1);
+		}
+
 		void cudnn_util::set_convolution_descriptor(
 			cudnnConvolutionDescriptor_t convolution_desc,
 			const std::vector<unsigned int>& zero_padding,
@@ -68,7 +79,7 @@ namespace nnforge
 			std::vector<int> conv_padding(zero_padding.rbegin(), zero_padding.rend());
 			std::vector<int> filter_stride(strides.rbegin(), strides.rend());
 			std::vector<int> upscale(zero_padding.size(), 1);
-			cudnn_safe_call(cudnnSetConvolutionNdDescriptor_v3(
+			cudnn_safe_call(cudnnSetConvolutionNdDescriptor(
 				convolution_desc,
 				static_cast<int>(zero_padding.size()),
 				&conv_padding[0],

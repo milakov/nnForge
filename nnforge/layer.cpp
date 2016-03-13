@@ -168,16 +168,21 @@ namespace nnforge
 
 	std::string layer::get_string_for_average_data(
 		const layer_configuration_specific& config,
-		const std::vector<float>& data) const
+		const std::vector<double>& data) const
 	{
 		std::stringstream s;
 		s << instance_name << " = ";
-		for(std::vector<float>::const_iterator it = data.begin(); it != data.end(); ++it)
+		for(std::vector<double>::const_iterator it = data.begin(); it != data.end(); ++it)
 		{
 			if (it != data.begin())
 				s << ", ";
-			s << *it;
+			s << static_cast<float>(*it);
 		}
 		return s.str();
+	}
+
+	bool layer::has_fused_backward_data_and_weights() const
+	{
+		return false;
 	}
 }

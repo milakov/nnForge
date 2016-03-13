@@ -40,7 +40,7 @@ __global__ void hyperbolic_tangent_upd_kernel(
 	float hyperbolic_tangent_major_multiplier,
 	int elem_count)
 {
-	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+	int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 	if (elem_id < elem_count)
 	{
 		float4 val = input[elem_id];
@@ -70,7 +70,7 @@ __global__ void hyperbolic_tangent_deriviative_upd_kernel(
 	bool add_update_to_destination,
 	int elem_count)
 {
-	int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+	int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 	if (elem_id < elem_count)
 	{
 		float4 val = output_neurons[elem_id];
@@ -115,12 +115,13 @@ namespace nnforge
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
 			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::ptr temporary_fixed_buffer,
 			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
 			unsigned int entry_count)
 		{
@@ -142,13 +143,14 @@ namespace nnforge
 			cuda_linear_buffer_device::ptr input_errors_buffer,
 			cuda_linear_buffer_device::const_ptr output_errors_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
 			cuda_linear_buffer_device::const_ptr output_neurons_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
 			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
 			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
 			bool add_update_to_destination,
 			unsigned int entry_count)

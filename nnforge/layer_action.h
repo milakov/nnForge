@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ namespace nnforge
 			forward = 0,
 			backward_data = 1,
 			backward_weights = 2,
-			update_weights = 3
+			backward_data_and_weights = 3,
+			update_weights = 4
 		};
 
 		layer_action()
@@ -63,6 +64,10 @@ namespace nnforge
 			else if (at == backward_weights)
 			{
 				return "backward_weights";
+			}
+			else if (at == backward_data_and_weights)
+			{
+				return "backward_data_and_weights";
 			}
 			else if (at == update_weights)
 			{

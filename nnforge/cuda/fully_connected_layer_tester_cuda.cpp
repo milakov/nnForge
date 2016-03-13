@@ -20,6 +20,7 @@
 #include "cudnn_util.h"
 #include "neural_network_cublas_exception.h"
 #include "neural_network_cudnn_exception.h"
+#include "../convolution_layer.h"
 
 namespace nnforge
 {
@@ -92,6 +93,7 @@ namespace nnforge
 			}
 
 			// Add bias
+			if (bias)
 			{
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 				cudnn_util::set_tensor_descriptor(
@@ -100,7 +102,7 @@ namespace nnforge
 					entry_count);
 				float alpha = 1.0F;
 				float beta = 1.0F;
-				cudnn_safe_call(cudnnAddTensor_v3(
+				cudnn_safe_call(cudnnAddTensor(
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					bias_desc,
@@ -113,6 +115,9 @@ namespace nnforge
 
 		void fully_connected_layer_tester_cuda::tester_configured()
 		{
+			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			bias = layer_derived->bias;
+
 			cudnn_util::set_tensor_bias_descriptor(
 				bias_desc,
 				output_configuration_specific.feature_map_count,

@@ -37,6 +37,11 @@ namespace nnforge
 				unsigned int feature_map_count,
 				unsigned int dimension_count);
 
+			static void set_tensor_bn_weights_descriptor(
+				cudnnTensorDescriptor_t tensor_desc,
+				unsigned int feature_map_count,
+				unsigned int dimension_count);
+
 			static void set_convolution_descriptor(
 				cudnnConvolutionDescriptor_t convolution_desc,
 				const std::vector<unsigned int>& zero_padding,

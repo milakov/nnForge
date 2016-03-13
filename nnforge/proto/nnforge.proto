@@ -33,6 +33,7 @@ message Layer {
 	optional CDF2PDFParam cdf_to_pdf_param = 25;
 	optional EntryConvolutionParam entry_convolution_param = 26;
 	optional AddParam add_param = 27;
+	optional BatchNormParam batch_norm_param = 28;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -46,6 +47,7 @@ message ConvolutionalParam {
 	required uint32 input_feature_map_count = 1;
 	required uint32 output_feature_map_count = 2;
 	repeated ConvolutionalDimensionParam dimension_param = 3;
+	optional bool bias = 4 [default = true];
 }
 
 message AverageSubsamplingParam {
@@ -236,6 +238,11 @@ message AddParam {
 	optional float alpha = 1 [default = 1.0];
 }
 
+message BatchNormParam {
+	required uint32 feature_map_count = 1;
+	optional float epsilon = 2;
+}
+
 message CustomParam {
 	message CustomDimensionParam {
 		repeated sint32 int_param = 1;
@@ -245,3 +252,4 @@ message CustomParam {
 	repeated float float_param = 2;
 	repeated CustomDimensionParam dimension_param = 3;
 }
+

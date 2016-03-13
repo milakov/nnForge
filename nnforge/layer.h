@@ -102,9 +102,11 @@ namespace nnforge
 
 		virtual std::string get_string_for_average_data(
 			const layer_configuration_specific& config,
-			const std::vector<float>& data) const;
+			const std::vector<double>& data) const;
 
 		virtual std::vector<std::string> get_parameter_strings() const;
+
+		virtual bool has_fused_backward_data_and_weights() const;
 
 	public:
 		std::string instance_name;

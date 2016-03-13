@@ -127,20 +127,19 @@ namespace nnforge
 		memcpy(&neuron_value_list.back()->at(0), new_data, neuron_count * sizeof(float));
 	}
 
-	nnforge_shared_ptr<std::vector<float> > neuron_value_set::get_average() const
+	nnforge_shared_ptr<std::vector<double> > neuron_value_set::get_average() const
 	{
-		std::vector<double> acc(neuron_count, 0.0);
+		nnforge_shared_ptr<std::vector<double> > res(new std::vector<double>(neuron_count, 0.0));
 		for(std::vector<nnforge_shared_ptr<std::vector<float> > >::const_iterator it = neuron_value_list.begin(); it != neuron_value_list.end(); ++it)
 		{
 			nnforge_shared_ptr<std::vector<float> > current_item = *it;
 			for(unsigned int i = 0; i < neuron_count; ++i)
-				acc[i] += static_cast<double>(current_item->at(i));
+				res->at(i) += static_cast<double>(current_item->at(i));
 		}
 
 		double mult = 1.0 / static_cast<double>(neuron_value_list.size());
-		nnforge_shared_ptr<std::vector<float> > res(new std::vector<float>(neuron_count));
 		for(unsigned int i = 0; i < neuron_count; ++i)
-			res->at(i) = static_cast<float>(acc[i] * mult);
+			res->at(i) *= mult;
 
 		return res;
 	}

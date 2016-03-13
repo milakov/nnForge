@@ -127,17 +127,17 @@ namespace nnforge
 
 	std::string accuracy_layer::get_string_for_average_data(
 		const layer_configuration_specific& config,
-		const std::vector<float>& data) const
+		const std::vector<double>& data) const
 	{
 		std::stringstream s;
 		s << instance_name << " acc/err = ";
-		std::vector<float>::const_iterator it = data.begin();
-		float scale = 1.0F / data.back();
+		std::vector<double>::const_iterator it = data.begin();
+		float scale = 1.0F / static_cast<float>(data.back());
 		for(unsigned int top_i_index = 0; top_i_index < top_n; ++it, ++top_i_index)
 		{
 			if (it != data.begin())
 				s << ", ";
-			float acc_val = *it * scale * 100.0F;
+			float acc_val = static_cast<float>(*it) * scale * 100.0F;
 			s << (boost::format("Top-%1% %|2$.2f|%%/%|3$.2f|%%") % (top_i_index + 1) % acc_val % (100.0F - acc_val)).str();
 		}
 		return s.str();

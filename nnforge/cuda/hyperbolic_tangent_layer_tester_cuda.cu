@@ -43,7 +43,7 @@ namespace nnforge
 			float hyperbolic_tangent_major_multiplier,
 			int elem_count)
 		{
-			int elem_id = blockDim.x * (blockIdx.y * gridDim.x + blockIdx.x) + threadIdx.x;
+			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
 			if (elem_id < elem_count)
 			{
 				float4 val = input[elem_id];

@@ -37,10 +37,12 @@ namespace nnforge
 		unsigned int output_feature_map_count,
 		const std::vector<unsigned int>& left_zero_padding,
 		const std::vector<unsigned int>& right_zero_padding,
-		const std::vector<unsigned int>& strides)
+		const std::vector<unsigned int>& strides,
+		bool bias)
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count)
+		, bias(bias)
 	{
 		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
@@ -156,6 +158,8 @@ namespace nnforge
 
 		param->set_output_feature_map_count(output_feature_map_count);
 		param->set_input_feature_map_count(input_feature_map_count);
+		if (!bias)
+			param->set_bias(false);
 
 		for(int i = 0; i < window_sizes.size(); ++i)
 		{
@@ -176,20 +180,23 @@ namespace nnforge
 		if (!layer_proto_typed->has_convolution_param())
 			throw neural_network_exception((boost::format("No convolution_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
 
-		input_feature_map_count = layer_proto_typed->convolution_param().input_feature_map_count();
-		output_feature_map_count = layer_proto_typed->convolution_param().output_feature_map_count();
+		const nnforge::protobuf::ConvolutionalParam& param = layer_proto_typed->convolution_param();
 
-		window_sizes.resize(layer_proto_typed->convolution_param().dimension_param_size());
-		left_zero_padding.resize(layer_proto_typed->convolution_param().dimension_param_size());
-		right_zero_padding.resize(layer_proto_typed->convolution_param().dimension_param_size());
-		strides.resize(layer_proto_typed->convolution_param().dimension_param_size());
+		input_feature_map_count = param.input_feature_map_count();
+		output_feature_map_count = param.output_feature_map_count();
+		bias = param.bias();
 
-		for(int i = 0; i < layer_proto_typed->convolution_param().dimension_param_size(); ++i)
+		window_sizes.resize(param.dimension_param_size());
+		left_zero_padding.resize(param.dimension_param_size());
+		right_zero_padding.resize(param.dimension_param_size());
+		strides.resize(param.dimension_param_size());
+
+		for(int i = 0; i < param.dimension_param_size(); ++i)
 		{
-			window_sizes[i] = layer_proto_typed->convolution_param().dimension_param(i).kernel_size();
-			left_zero_padding[i] = layer_proto_typed->convolution_param().dimension_param(i).left_padding();
-			right_zero_padding[i] = layer_proto_typed->convolution_param().dimension_param(i).right_padding();
-			strides[i] = layer_proto_typed->convolution_param().dimension_param(i).stride();
+			window_sizes[i] = param.dimension_param(i).kernel_size();
+			left_zero_padding[i] = param.dimension_param(i).left_padding();
+			right_zero_padding[i] = param.dimension_param(i).right_padding();
+			strides[i] = param.dimension_param(i).stride();
 		}
 
 		check();
@@ -204,7 +211,8 @@ namespace nnforge
 
 		res.push_back(weight_count);
 
-		res.push_back(output_feature_map_count);
+		if (bias)
+			res.push_back(output_feature_map_count);
 
 		return res;
 	}
@@ -233,7 +241,8 @@ namespace nnforge
 			(*data)[0][i] = val;
 		}
 
-		std::fill((*data)[1].begin(), (*data)[1].end(), 0.0F);
+		if (bias)
+			std::fill((*data)[1].begin(), (*data)[1].end(), 0.0F);
 	}
 
 	void convolution_layer::randomize_orthogonal_data(
@@ -268,7 +277,8 @@ namespace nnforge
 
 		std::copy(orth.begin(), orth.end(), weights.begin());
 
-		std::fill((*data)[1].begin(), (*data)[1].end(), 0.0F);
+		if (bias)
+			std::fill((*data)[1].begin(), (*data)[1].end(), 0.0F);
 	}
 
 	float convolution_layer::get_flops_per_entry(
@@ -284,6 +294,8 @@ namespace nnforge
 				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
 				unsigned int per_item_flops = input_feature_map_count * 2;
 				std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
+				if (!bias)
+					--per_item_flops;
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 			}
 		default:
@@ -295,7 +307,8 @@ namespace nnforge
 	{
 		layer_data_configuration_list res;
 		res.push_back(layer_data_configuration(input_feature_map_count, output_feature_map_count, window_sizes));
-		res.push_back(layer_data_configuration(1, output_feature_map_count, std::vector<unsigned int>()));
+		if (bias)
+			res.push_back(layer_data_configuration(1, output_feature_map_count, std::vector<unsigned int>()));
 
 		return res;
 	}
@@ -370,6 +383,8 @@ namespace nnforge
 				ss << strides[i];
 			}
 		}
+		if (!bias)
+			ss << ", w/out bias";
 
 		res.push_back(ss.str());
 

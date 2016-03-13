@@ -91,11 +91,14 @@ namespace nnforge
 				case layer_action::backward_weights:
 					color_id = 2;
 					break;
-				case layer_action::update_weights:
+				case layer_action::backward_data_and_weights:
 					color_id = 3;
 					break;
-				default:
+				case layer_action::update_weights:
 					color_id = 4;
+					break;
+				default:
+					color_id = 5;
 					break;
 				}
 				layer_name_with_action_color_map.insert(std::make_pair(*it, color_id));
@@ -188,30 +191,17 @@ namespace nnforge
 			output_config_map[*it] = layer_config_map[*it];
 		writer.set_config_map(output_config_map);
 		std::pair<unsigned int, std::map<std::string, std::vector<float> > > p;
-		if (narrow_reader)
-			p = actual_run(
-				*narrow_reader,
-				writer,
-				data,
-				momentum_data,
-				momentum_data2,
-				learning_rates,
-				batch_size,
-				weight_decay,
-				momentum,
-				epoch_id);
-		else
-			p = actual_run(
-				reader,
-				writer,
-				data,
-				momentum_data,
-				momentum_data2,
-				learning_rates,
-				batch_size,
-				weight_decay,
-				momentum,
-				epoch_id);
+		p = actual_run(
+			narrow_reader ? *narrow_reader : reader,
+			writer,
+			data,
+			momentum_data,
+			momentum_data2,
+			learning_rates,
+			batch_size,
+			weight_decay,
+			momentum,
+			epoch_id);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
 		res.entry_processed_count = p.first;
 		res.average_absolute_updates = p.second;

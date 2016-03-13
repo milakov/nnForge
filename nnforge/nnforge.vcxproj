@@ -17,6 +17,7 @@
     <ClInclude Include="average_subsampling_layer.h" />
     <ClInclude Include="backward_propagation.h" />
     <ClInclude Include="backward_propagation_factory.h" />
+    <ClInclude Include="batch_norm_layer.h" />
     <ClInclude Include="buffer_lifetime.h" />
     <ClInclude Include="cdf_to_pdf_layer.h" />
     <ClInclude Include="color_palette.h" />
@@ -44,6 +45,7 @@
     <ClInclude Include="lerror_layer.h" />
     <ClInclude Include="negative_log_likelihood_layer.h" />
     <ClInclude Include="network_action_schema.h" />
+    <ClInclude Include="neuron_value_set_data_bunch_reader.h" />
     <ClInclude Include="neuron_value_set_data_bunch_writer.h" />
     <ClInclude Include="prefix_sum_layer.h" />
     <ClInclude Include="raw_data_reader.h" />
@@ -139,6 +141,7 @@
     <ClCompile Include="average_subsampling_layer.cpp" />
     <ClCompile Include="backward_propagation.cpp" />
     <ClCompile Include="backward_propagation_factory.cpp" />
+    <ClCompile Include="batch_norm_layer.cpp" />
     <ClCompile Include="cdf_to_pdf_layer.cpp" />
     <ClCompile Include="color_palette.cpp" />
     <ClCompile Include="complex_network_data_pusher.cpp" />
@@ -161,6 +164,7 @@
     <ClCompile Include="lerror_layer.cpp" />
     <ClCompile Include="negative_log_likelihood_layer.cpp" />
     <ClCompile Include="network_action_schema.cpp" />
+    <ClCompile Include="neuron_value_set_data_bunch_reader.cpp" />
     <ClCompile Include="neuron_value_set_data_bunch_writer.cpp" />
     <ClCompile Include="prefix_sum_layer.cpp" />
     <ClCompile Include="raw_data_reader.cpp" />

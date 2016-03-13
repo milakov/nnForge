@@ -247,12 +247,13 @@ namespace nnforge
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device::ptr>& data,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
 			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::ptr temporary_fixed_buffer,
 			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
 			unsigned int entry_count)
 		{

@@ -61,6 +61,8 @@ namespace nnforge
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
+			const bool bias = layer_derived->bias;
+
 			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
 			window_sizes_extended.resize(max_dimension_count, 1);
 			const std::vector<unsigned int>& window_sizes = window_sizes_extended;
@@ -91,7 +93,7 @@ namespace nnforge
 				window_elem_count *= window_sizes[i];
 			const unsigned int const_window_elem_count = window_elem_count;
 			const std::vector<float>::const_iterator weights = (*data)[0].begin();
-			const std::vector<float>::const_iterator biases = (*data)[1].begin();
+			const float * const biases = bias ? &(*data)[1][0] : 0;
 
 			std::vector<unsigned int> current_local_input_position(dimension_count, 0);
 			std::vector<unsigned int> offset_list(window_elem_count);
@@ -137,7 +139,7 @@ namespace nnforge
 					std::fill_n(current_output_position.begin(), max_dimension_count, 0);
 					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
-						float sum = *(biases + output_feature_map_id);
+						float sum = bias ? *(biases + output_feature_map_id) : 0.0F;
 						std::vector<float>::const_iterator weights_it = weights + (output_feature_map_id * (const_window_elem_count * input_feature_map_count));
 
 						int in_it_offset2 = 0;

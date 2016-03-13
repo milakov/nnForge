@@ -55,5 +55,6 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new add_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new cdf_to_pdf_layer(2)));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new entry_convolution_layer()));
+		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new batch_norm_layer(1)));
 	}
 }

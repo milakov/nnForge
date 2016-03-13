@@ -51,12 +51,13 @@ namespace nnforge
 				cudaStream_t stream_id,
 				cuda_linear_buffer_device::ptr output_buffer,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& input_buffers,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
 				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::ptr temporary_fixed_buffer,
 				cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
 				unsigned int entry_count) = 0;
 
@@ -66,13 +67,14 @@ namespace nnforge
 				cuda_linear_buffer_device::ptr input_errors_buffer,
 				cuda_linear_buffer_device::const_ptr output_errors_buffer,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
-				const std::vector<cuda_linear_buffer_device::ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
 				cuda_linear_buffer_device::const_ptr output_neurons_buffer,
 				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
 				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
 				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
 				bool add_update_to_destination,
 				unsigned int entry_count);
@@ -87,7 +89,26 @@ namespace nnforge
 				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
 				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
 				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+				unsigned int entry_count);
+
+			virtual void enqueue_backward_data_and_weights_propagation(
+				cudaStream_t stream_id,
+				const std::vector<cuda_linear_buffer_device::ptr> input_errors_buffers,
+				cuda_linear_buffer_device::const_ptr output_errors_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+				const std::vector<cuda_linear_buffer_device::ptr>& gradient,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+				cuda_linear_buffer_device::const_ptr output_neurons_buffer,
+				const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
+				cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+				bool add_update_to_destination,
 				unsigned int entry_count);
 
 			virtual std::vector<cuda_linear_buffer_device::ptr> get_data(layer_data::const_ptr host_data) const;
@@ -106,6 +127,9 @@ namespace nnforge
 			virtual size_t get_temporary_working_per_entry_buffer_size(const layer_action& action) const;
 
 			// Created when doing forward prop and used for backward prop
+			virtual size_t get_temporary_fixed_buffer_size() const;
+
+			// Created when doing forward prop and used for backward prop
 			virtual size_t get_temporary_per_entry_buffer_size() const;
 
 			// Default impl returns -1
@@ -117,11 +141,29 @@ namespace nnforge
 			// Default impl returns true
 			virtual bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const;
 
+			// Default impl returns get_temporary_fixed_buffer_size() != 0
+			virtual bool is_backward_data_dependent_on_temporary_fixed_buffer(unsigned int action_input_index) const;
+
 			// Default impl returns get_temporary_per_entry_buffer_size() != 0
 			virtual bool is_backward_data_dependent_on_temporary_per_entry_buffer(unsigned int action_input_index) const;
 
 			// Default impl returns true
+			virtual bool is_backward_data_and_weights_dependent_on_input_buffer(unsigned int data_input_index) const;
+
+			// Default impl returns true
+			virtual bool is_backward_data_and_weights_dependent_on_output_buffer() const;
+
+			// Default impl returns get_temporary_fixed_buffer_size() != 0
+			virtual bool is_backward_data_and_weights_dependent_on_temporary_fixed_buffer() const;
+
+			// Default impl returns get_temporary_per_entry_buffer_size() != 0
+			virtual bool is_backward_data_and_weights_dependent_on_temporary_per_entry_buffer() const;
+
+			// Default impl returns true
 			virtual bool is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const;
+
+			// Default impl returns get_temporary_fixed_buffer_size() != 0
+			virtual bool is_backward_weights_dependent_on_temporary_fixed_buffer() const;
 
 			// Default impl returns get_temporary_per_entry_buffer_size() != 0
 			virtual bool is_backward_weights_dependent_on_temporary_per_entry_buffer() const;

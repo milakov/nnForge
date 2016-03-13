@@ -70,9 +70,9 @@ namespace nnforge
 
 			void setup_dedicated_buffer_sizes();
 
-			void setup_temporary_working_fixed_buffer_sizes();
+			void setup_fixed_buffer_sizes();
 
-			void setup_layer_buffer_sizes();
+			void setup_per_entry_buffer_sizes();
 
 			void update_buffer_config();
 
@@ -206,8 +206,9 @@ namespace nnforge
 
 			std::map<std::string, std::vector<cuda_linear_buffer_device::const_ptr> > schema_data;
 
-			std::vector<size_t> temporary_working_fixed_set_size_list;
+			std::vector<size_t> fixed_set_size_list;
 			std::map<layer_name_with_action, unsigned int> temporary_working_fixed_data_action_to_set_map;
+			std::map<layer_name_with_action, unsigned int> temporary_fixed_data_action_to_set_map;
 
 			std::vector<size_t> layer_buffer_set_per_entry_size_list;
 			std::map<layer_name_with_action, unsigned int> temporary_working_per_entry_data_action_to_set_map;

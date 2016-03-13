@@ -62,6 +62,8 @@ namespace nnforge
 			float * const out_it_global = *output_buffer;
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
+			const bool bias = layer_derived->bias;
+
 			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
 			window_sizes_extended.resize(max_dimension_count, 1);
 			const std::vector<unsigned int>& window_sizes = window_sizes_extended;
@@ -93,7 +95,7 @@ namespace nnforge
 			const unsigned int const_window_elem_count = window_elem_count;
 
 			const std::vector<float>::const_iterator weights = (*data)[0].begin();
-			const std::vector<float>::const_iterator biases = (*data)[1].begin();
+			const float * const biases = bias ? &(*data)[1][0] : 0;
 
 			std::vector<unsigned int> current_local_input_position(dimension_count, 0);
 			std::vector<unsigned int> offset_list(window_elem_count);
@@ -139,7 +141,7 @@ namespace nnforge
 					std::fill_n(current_output_position.begin(), max_dimension_count, 0);
 					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
-						float sum = *(biases + output_feature_map_id);
+						float sum = bias ? *(biases + output_feature_map_id) : 0.0F;
 						std::vector<float>::const_iterator weights_it = weights + (output_feature_map_id * (const_window_elem_count * input_feature_map_count));
 						int in_it_offset2 = 0;
 
@@ -373,6 +375,8 @@ namespace nnforge
 			const float * const out_err_it_global = *output_errors_buffer;
 			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
+			const bool bias = layer_derived->bias;
+
 			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
 			window_sizes_extended.resize(max_dimension_count, 1);
 			const std::vector<unsigned int>& window_sizes = window_sizes_extended;
@@ -404,7 +408,6 @@ namespace nnforge
 			const unsigned int const_window_elem_count = window_elem_count;
 
 			const std::vector<float>::iterator gradient_weights = (*gradient)[0].begin();
-			const std::vector<float>::iterator gradient_biases = (*gradient)[1].begin();
 
 			std::vector<unsigned int> current_local_input_position(dimension_count, 0);
 			std::vector<unsigned int> offset_list(window_elem_count);
@@ -509,24 +512,28 @@ namespace nnforge
 				}
 			}
 
-			const int total_workload_bias = output_feature_map_count;
-			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
-			for(int workload_id = 0; workload_id < total_workload_bias; ++workload_id)
+			if (bias)
 			{
-				int output_feature_map_id = workload_id;
-
-				float sum = 0.0F;
-				for(int entry_id = 0; entry_id < const_updater_count; ++entry_id)
+				const std::vector<float>::iterator gradient_biases = (*gradient)[1].begin();
+				const int total_workload_bias = output_feature_map_count;
+				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
+				for(int workload_id = 0; workload_id < total_workload_bias; ++workload_id)
 				{
-					float local_sum = 0.0F;
-					const float * out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
-					for(const float * out_err_it = out_err_it_base; out_err_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it)
-						local_sum += *out_err_it;
+					int output_feature_map_id = workload_id;
 
-					sum += local_sum;
+					float sum = 0.0F;
+					for(int entry_id = 0; entry_id < const_updater_count; ++entry_id)
+					{
+						float local_sum = 0.0F;
+						const float * out_err_it_base = out_err_it_global + (entry_id * output_neuron_count) + (output_feature_map_id * output_neuron_count_per_feature_map);
+						for(const float * out_err_it = out_err_it_base; out_err_it != out_err_it_base + output_neuron_count_per_feature_map; ++out_err_it)
+							local_sum += *out_err_it;
+
+						sum += local_sum;
+					}
+
+					*(gradient_biases + output_feature_map_id) += sum;
 				}
-
-				*(gradient_biases + output_feature_map_id) += sum;
 			}
 		}
 

@@ -50,7 +50,9 @@ namespace nnforge
 			dataset_usage_validate_when_train = 1,
 			dataset_usage_inference = 2,
 			dataset_usage_dump_data = 3,
-			dataset_usage_create_normalizer = 4
+			dataset_usage_create_normalizer = 4,
+			dataset_usage_check_gradient = 5,
+			dataset_usage_shuffle_data = 6
 		};
 
 		enum schema_usage
@@ -86,7 +88,7 @@ namespace nnforge
 
 		virtual network_schema::ptr get_schema(schema_usage usage) const;
 
-		virtual std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > run_inference();
+		virtual std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<double> > > > run_inference();
 
 		virtual void dump_schema_gv();
 
@@ -114,6 +116,10 @@ namespace nnforge
 
 		virtual void create_normalizer();
 
+		virtual void check_gradient();
+
+		virtual void save_random_weights();
+
 		virtual structured_data_bunch_reader::ptr get_structured_data_bunch_reader(
 			const std::string& dataset_name,
 			dataset_usage usage,
@@ -123,11 +129,13 @@ namespace nnforge
 		virtual raw_data_reader::ptr get_raw_reader(
 			const std::string& dataset_name,
 			const std::string& layer_name,
+			dataset_usage usage,
 			nnforge_shared_ptr<std::istream> in) const;
 
 		virtual structured_data_reader::ptr get_structured_reader(
 			const std::string& dataset_name,
 			const std::string& layer_name,
+			dataset_usage usage,
 			nnforge_shared_ptr<std::istream> in) const;
 
 		virtual std::vector<unsigned int> get_dump_data_dimension_list(unsigned int original_dimension_count) const;
@@ -227,6 +235,11 @@ namespace nnforge
 		float training_mix_validating_ratio;
 		std::string dump_format;
 		int shuffle_block_size;
+		std::string check_gradient_weights;
+		int check_gradient_max_weights_per_set;
+		float check_gradient_base_step;
+		float check_gradient_relative_threshold_warning;
+		float check_gradient_relative_threshold_error;
 
 		debug_state::ptr debug;
 

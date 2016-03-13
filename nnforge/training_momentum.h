@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,6 +37,11 @@ namespace nnforge
 			const std::string& momentum_type_str,
 			float momentum_val,
 			float momentum_val2);
+
+		training_momentum(
+			momentum_type type,
+			float momentum_val = 0.0F,
+			float momentum_val2 = 0.0F);
 
 		bool is_momentum_data() const;
 

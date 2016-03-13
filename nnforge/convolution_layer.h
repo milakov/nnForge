@@ -31,7 +31,8 @@ namespace nnforge
 			unsigned int output_feature_map_count,
 			const std::vector<unsigned int>& left_zero_padding = std::vector<unsigned int>(),
 			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>(),
-			const std::vector<unsigned int>& strides = std::vector<unsigned int>());
+			const std::vector<unsigned int>& strides = std::vector<unsigned int>(),
+			bool bias = true);
 
 		virtual layer::ptr clone() const;
 
@@ -85,5 +86,6 @@ namespace nnforge
 		std::vector<unsigned int> left_zero_padding;
 		std::vector<unsigned int> right_zero_padding;
 		std::vector<unsigned int> strides;
+		bool bias;
 	};
 }

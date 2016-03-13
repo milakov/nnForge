@@ -39,6 +39,7 @@ protected:
 	virtual nnforge::structured_data_reader::ptr get_structured_reader(
 		const std::string& dataset_name,
 		const std::string& layer_name,
+		dataset_usage usage,
 		nnforge_shared_ptr<std::istream> in) const;
 
 	virtual std::vector<nnforge::bool_option> get_bool_options();

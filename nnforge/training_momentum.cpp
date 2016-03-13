@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,6 +27,16 @@ namespace nnforge
 		: type(no_momentum)
 		, momentum_val(0.0F)
 		, momentum_val2(0.0F)
+	{
+	}
+
+	training_momentum::training_momentum(
+		momentum_type type,
+		float momentum_val,
+		float momentum_val2)
+		: type(type)
+		, momentum_val(momentum_val)
+		, momentum_val2(momentum_val2)
 	{
 	}
 

@@ -48,6 +48,7 @@ namespace nnforge
 
 			cudnnTensorDescriptor_t output_data_desc;
 			cudnnTensorDescriptor_t bias_desc;
+			bool bias;
 		};
 	}
 }

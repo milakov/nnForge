@@ -21,6 +21,8 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/format.hpp>
 #include <iostream>
+#include <boost/algorithm/string.hpp>
+#include <numeric>
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
@@ -38,6 +40,7 @@
 #include "transformed_structured_data_reader.h"
 #include "structured_data_constant_reader.h"
 #include "structured_data_bunch_mix_reader.h"
+#include "neuron_value_set_data_bunch_reader.h"
 
 namespace nnforge
 {
@@ -97,6 +100,14 @@ namespace nnforge
 		else if (!action.compare("create_normalizer"))
 		{
 			create_normalizer();
+		}
+		else if (!action.compare("check_gradient"))
+		{
+			check_gradient();
+		}
+		else if (!action.compare("save_random_weights"))
+		{
+			save_random_weights();
 		}
 		else
 		{
@@ -295,7 +306,7 @@ namespace nnforge
 	{
 		std::vector<string_option> res;
 
-		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, shuffle_data, dump_data, dump_schema, create_normalizer, inference, train)"));
+		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, shuffle_data, dump_data, dump_schema, create_normalizer, inference, train, save_random_weights)"));
 		res.push_back(string_option("schema", &schema_filename, "schema.txt", "Name of the file with schema of the network, in protobuf format"));
 		res.push_back(string_option("inference_dataset_name", &inference_dataset_name, "validating", "Name of the dataset to be used for inference"));
 		res.push_back(string_option("training_dataset_name", &training_dataset_name, "training", "Name of the dataset to be used for training"));
@@ -312,6 +323,7 @@ namespace nnforge
 		res.push_back(string_option("normalizer_dataset_name", &normalizer_dataset_name, "training", "Name of the dataset to create normalizer from"));
 		res.push_back(string_option("normalizer_layer_name", &normalizer_layer_name, "", "Name of the layer to create normalizer for"));
 		res.push_back(string_option("log_mode", &log_mode, "duplicate", "Duplicate or redirect output to log file (duplicate, redirect)"));
+		res.push_back(string_option("check_gradient_weights", &check_gradient_weights, "::", "The set of weights to check for gradient, in the form Layer:WeightSet:WeightID"));
 
 		return res;
 	}
@@ -363,6 +375,9 @@ namespace nnforge
 		res.push_back(float_option("momentum,M", &momentum_val, 0.9F, "Momentum value"));
 		res.push_back(float_option("momentum2", &momentum_val2, 0.999F, "The second momentum value (used when momentum_type is ADAM)"));
 		res.push_back(float_option("training_mix_validating_ratio", &training_mix_validating_ratio, 0.0F, "The part of training samples taken from auxiliary data reader"));
+		res.push_back(float_option("check_gradient_base_step", &check_gradient_base_step, 1.0e-2F, "Base step size for gradient check"));
+		res.push_back(float_option("check_gradient_relative_threshold_warning", &check_gradient_relative_threshold_warning, 0.2F, "Threshold for gradient check"));
+		res.push_back(float_option("check_gradient_relative_threshold_error", &check_gradient_relative_threshold_error, 1.0F, "Threshold for gradient check"));
 
 		return res;
 	}
@@ -385,6 +400,7 @@ namespace nnforge
 		res.push_back(int_option("epoch_count_in_validating_dataset", &epoch_count_in_validating_dataset, 1, "Splitting validating dataset in multiple chunks, effectively the first chunk only will be used for inference"));
 		res.push_back(int_option("dump_compact_samples", &dump_compact_samples, 1, "Compact (average) results acrioss samples for inference of type dump_average_across_nets"));
 		res.push_back(int_option("shuffle_block_size", &shuffle_block_size, 0, "The size of contiguous blocks when shuffling training data, 0 indicates no shuffling"));
+		res.push_back(int_option("check_gradient_max_weights_per_set", &check_gradient_max_weights_per_set, 100, "The maximum amount of weights to check in the set"));
 
 		return res;
 	}
@@ -508,9 +524,9 @@ namespace nnforge
 		return res;
 	}
 
-	std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > toolset::run_inference()
+	std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<double> > > > toolset::run_inference()
 	{
-		std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > > res;
+		std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<double> > > > res;
 
 		network_schema::ptr schema = get_schema(schema_usage_inference);
 		forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
@@ -534,15 +550,15 @@ namespace nnforge
 				forward_propagation::stat st = forward_prop->run(*reader, writer);
 				std::cout << "NN # " << it->first << " - " << st << std::endl;
 
-				std::map<std::string, std::pair<layer_configuration_specific, std::vector<float> > > res_layer_map;
+				std::map<std::string, std::pair<layer_configuration_specific, std::vector<double> > > res_layer_map;
 
 				for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::iterator it2 = writer.layer_name_to_config_and_value_set_map.begin(); it2 != writer.layer_name_to_config_and_value_set_map.end(); ++it2)
 				{
-					std::vector<float> average_list = *it2->second.second->get_average();
-					res_layer_map.insert(std::make_pair(it2->first, std::make_pair(it2->second.first, average_list)));
+					nnforge_shared_ptr<std::vector<double> > average_list = it2->second.second->get_average();
+					res_layer_map.insert(std::make_pair(it2->first, std::make_pair(it2->second.first, *average_list)));
 
 					if (inference_mode == "report_average_per_entry")
-						std::cout << schema->get_layer(it2->first)->get_string_for_average_data(it2->second.first, average_list) << std::endl;
+						std::cout << schema->get_layer(it2->first)->get_string_for_average_data(it2->second.first, *average_list) << std::endl;
 					else if (inference_mode == "dump_average_across_nets")
 					{
 						it2->second.second->compact(dump_compact_samples);
@@ -625,7 +641,7 @@ namespace nnforge
 		for(std::map<std::string, boost::filesystem::path>::const_iterator it = data_filenames.begin(); it != data_filenames.end(); ++it)
 		{
 			nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(it->second, std::ios_base::in | std::ios_base::binary));
-			structured_data_reader::ptr dr = apply_transformers(get_structured_reader(dataset_name, it->first, in), get_data_transformer_list(dataset_name, it->first, usage));
+			structured_data_reader::ptr dr = apply_transformers(get_structured_reader(dataset_name, it->first, usage, in), get_data_transformer_list(dataset_name, it->first, usage));
 			data_reader_map.insert(std::make_pair(it->first, dr));
 		}
 
@@ -1002,7 +1018,7 @@ namespace nnforge
 				nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(file_path, std::ios_base::in | std::ios_base::binary));
 				nnforge_shared_ptr<std::ostream> out(new boost::filesystem::ofstream(temp_file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary));
 				{
-					raw_data_reader::ptr dr = get_raw_reader(shuffle_dataset_name, it->first, in);
+					raw_data_reader::ptr dr = get_raw_reader(shuffle_dataset_name, it->first, dataset_usage_shuffle_data, in);
 					raw_data_writer::ptr dw = dr->get_writer(out);
 					std::vector<unsigned char> dt;
 					for(unsigned int i = 0; i < static_cast<unsigned int>(entry_count); ++i)
@@ -1020,14 +1036,16 @@ namespace nnforge
 	raw_data_reader::ptr toolset::get_raw_reader(
 		const std::string& dataset_name,
 		const std::string& layer_name,
+		dataset_usage usage,
 		nnforge_shared_ptr<std::istream> in) const
 	{
-		return get_structured_reader(dataset_name, layer_name, in);
+		return get_structured_reader(dataset_name, layer_name, usage, in);
 	}
 
 	structured_data_reader::ptr toolset::get_structured_reader(
 		const std::string& dataset_name,
 		const std::string& layer_name,
+		dataset_usage usage,
 		nnforge_shared_ptr<std::istream> in) const
 	{
 		return structured_data_reader::ptr(new structured_data_stream_reader(in));
@@ -1201,7 +1219,7 @@ namespace nnforge
 		if (!boost::filesystem::exists(reader_file_path))
 			throw neural_network_exception((boost::format("File %1% doesn't exist") % reader_file_path.string()).str());
 		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(reader_file_path, std::ios_base::in | std::ios_base::binary));
-		structured_data_reader::ptr reader = apply_transformers(get_structured_reader(normalizer_dataset_name, normalizer_layer_name, in), get_data_transformer_list(normalizer_dataset_name, normalizer_layer_name, dataset_usage_create_normalizer));
+		structured_data_reader::ptr reader = apply_transformers(get_structured_reader(normalizer_dataset_name, normalizer_layer_name, dataset_usage_create_normalizer, in), get_data_transformer_list(normalizer_dataset_name, normalizer_layer_name, dataset_usage_create_normalizer));
 
 		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader->get_feature_map_data_stat_list();
 		unsigned int feature_map_id = 0;
@@ -1226,5 +1244,279 @@ namespace nnforge
 		res->read_proto(file_with_schema);
 
 		return res;
+	}
+
+	void toolset::check_gradient()
+	{
+		std::vector<std::string> check_gradient_weight_params;
+		boost::split(check_gradient_weight_params, check_gradient_weights, boost::is_any_of(":"));
+
+		if (check_gradient_weight_params.size() != 3)
+			throw std::runtime_error((boost::format("Invalid check_gradient_weights parameter: %1%") % check_gradient_weights).str());
+
+		std::string param_layer_name;
+		if (!check_gradient_weight_params[0].empty())
+			param_layer_name = check_gradient_weight_params[0].c_str();
+		int param_weight_set = -1;
+		if (!check_gradient_weight_params[1].empty())
+			param_weight_set = atol(check_gradient_weight_params[1].c_str());
+		int param_weight_id = -1;
+		if (!check_gradient_weight_params[2].empty())
+			param_weight_id = atol(check_gradient_weight_params[2].c_str());
+
+		network_schema::ptr schema = get_schema(schema_usage_train);
+		std::vector<layer::const_ptr> schema_data_layers = schema->get_data_layers();
+		std::set<std::string> training_data_layer_names_set;
+		for(std::vector<layer::const_ptr>::const_iterator it = schema_data_layers.begin(); it != schema_data_layers.end(); ++it)
+			training_data_layer_names_set.insert((*it)->instance_name);
+
+		std::map<std::string, layer_configuration_specific> config_map;
+		structured_data_bunch_reader::ptr reader;
+		{
+			structured_data_bunch_reader::ptr original_reader = get_structured_data_bunch_reader(training_dataset_name, dataset_usage_check_gradient, 1, -1);
+			structured_data_bunch_reader::ptr narrow_reader = original_reader->get_narrow_reader(training_data_layer_names_set);
+			if (narrow_reader)
+				original_reader = narrow_reader;
+
+			neuron_value_set_data_bunch_writer batch_writer;
+			config_map = narrow_reader->get_config_map();
+			batch_writer.set_config_map(config_map);
+			std::map<std::string, std::vector<float> > layer_name_to_data_buffer_map;
+			std::map<std::string, float *> reader_data_map;
+			std::map<std::string, const float *> writer_data_map;
+			for(std::map<std::string, layer_configuration_specific>::const_iterator it = config_map.begin(); it != config_map.end(); ++it)
+			{
+				float * data_ptr = &layer_name_to_data_buffer_map.insert(std::make_pair(it->first, std::vector<float>(it->second.get_neuron_count(), 0.0F))).first->second[0];
+				reader_data_map.insert(std::make_pair(it->first, data_ptr));
+				writer_data_map.insert(std::make_pair(it->first, data_ptr));
+			}
+			for(unsigned int entry_id = 0; entry_id < static_cast<unsigned int>(batch_size); ++entry_id)
+			{
+				bool entry_read = original_reader->read(entry_id, reader_data_map);
+				if (!entry_read)
+					throw neural_network_exception((boost::format("Cannot read entry %1%") % entry_id).str());
+				batch_writer.write(writer_data_map);
+			}
+
+			reader = structured_data_bunch_reader::ptr(new neuron_value_set_data_bunch_reader(batch_writer.layer_name_to_config_and_value_set_map));
+		}
+
+		backward_propagation::ptr backprop = backward_prop_factory->create(
+			*schema,
+			training_error_source_layer_names,
+			training_error_source_layer_names,
+			std::vector<std::string>(),
+			debug);
+
+		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
+		if (ann_data_name_and_folderpath_list.empty())
+			throw neural_network_exception("check_gradient: No trained networks found");
+
+		const boost::filesystem::path& data_path = ann_data_name_and_folderpath_list.begin()->second;
+		std::cout << "Using weights from " << data_path.string() << std::endl;
+		network_data data;
+		data.read(data_path);
+
+		std::map<std::string, std::vector<float> > learning_rates;
+		std::vector<std::string> weights_layer_names = data.data_list.get_data_layer_name_list();
+		std::set<std::string> weights_layer_names_set(weights_layer_names.begin(), weights_layer_names.end());
+		for(std::set<std::string>::const_iterator it = weights_layer_names_set.begin(); it != weights_layer_names_set.end(); ++it)
+			learning_rates.insert(std::make_pair(*it, std::vector<float>(data.data_list.get(*it)->size(), 0.0F)));
+
+		std::vector<layer::const_ptr> layers_ordered = schema->get_layers_in_forward_propagation_order();
+		std::vector<std::string> summary_messages;
+		for(std::vector<layer::const_ptr>::const_reverse_iterator layer_it = layers_ordered.rbegin(); layer_it != layers_ordered.rend(); ++layer_it)
+		{
+			const std::string& layer_name = (*layer_it)->instance_name;
+			if (weights_layer_names_set.find(layer_name) == weights_layer_names_set.end())
+				continue;
+			if (!param_layer_name.empty() && (layer_name != param_layer_name))
+				continue;
+
+			layer_data::ptr dt = data.data_list.get(layer_name);
+
+			int min_weight_set = (param_weight_set == -1) ? 0 : param_weight_set;
+			int max_weight_set = (param_weight_set == -1) ? static_cast<int>(dt->size()) : std::min<int>(static_cast<int>(dt->size()), param_weight_set + 1);
+
+			for(int weight_set = min_weight_set; weight_set < max_weight_set; ++weight_set)
+			{
+				unsigned int error_count = 0;
+				unsigned int warning_count = 0;
+				unsigned int total_weight_count = 0;
+
+				std::vector<float>& weight_list = dt->at(weight_set);
+				std::vector<int> weight_id_list;
+				if (param_weight_id != -1)
+				{
+					if (param_weight_id < weight_list.size())
+						weight_id_list.push_back(param_weight_id);
+				}
+				else
+				{
+					if (weight_list.size() > 0)
+						weight_id_list.push_back(0);
+					if (weight_list.size() > 1)
+						weight_id_list.push_back(static_cast<int>(weight_list.size()) - 1);
+					random_generator weight_gen = rnd::get_random_generator(637463);
+					std::vector<int> candidate_weight_id_list;
+					for(int i = 0; i < static_cast<int>(weight_list.size() - 2); ++i)
+						candidate_weight_id_list.push_back(i + 1);
+					for(int i = 0; i < std::min(static_cast<int>(candidate_weight_id_list.size()), check_gradient_max_weights_per_set); ++i)
+					{
+						nnforge_uniform_int_distribution<int> dist(0, static_cast<int>(candidate_weight_id_list.size()) - 1 - i);
+						int index = dist(weight_gen);
+						weight_id_list.push_back(candidate_weight_id_list[index]);
+						std::swap(candidate_weight_id_list[index], candidate_weight_id_list[candidate_weight_id_list.size() - 1 - i]);
+					}
+				}
+
+				float& learning_rate = learning_rates[layer_name][weight_set];
+				learning_rate = 1.0e+6F;
+
+				std::vector<float> original_weights = weight_list;
+				double original_error = 0.0;
+				std::vector<float> gradient_backprops(weight_id_list.size());
+				{
+					neuron_value_set_data_bunch_writer writer;
+					backprop->run(
+						*reader,
+						writer,
+						data,
+						network_data::ptr(),
+						network_data::ptr(),
+						learning_rates,
+						batch_size,
+						0.0F,
+						training_momentum(training_momentum::no_momentum),
+						0);
+					for(std::vector<std::string>::const_iterator it = training_error_source_layer_names.begin(); it != training_error_source_layer_names.end(); ++it)
+					{
+						nnforge_shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
+						original_error += std::accumulate(averages->begin(), averages->end(), 0.0);
+					}
+					for(int weight_index = 0; weight_index < static_cast<int>(weight_id_list.size()); ++weight_index)
+						gradient_backprops[weight_index] = -(weight_list[weight_id_list[weight_index]] - original_weights[weight_index]) / learning_rate;
+				}
+				std::copy(original_weights.begin(), original_weights.end(), weight_list.begin());
+
+				for(int weight_index = 0; weight_index < static_cast<int>(weight_id_list.size()); ++weight_index)
+				{
+					int weight_id = weight_id_list[weight_index];
+					std::cout << layer_name << ":" << weight_set << ":" << weight_id << " ";
+
+					double minus_error = 0.0;
+					{
+						weight_list[weight_id] -= check_gradient_base_step;
+						neuron_value_set_data_bunch_writer writer;
+						backprop->run(
+							*reader,
+							writer,
+							data,
+							network_data::ptr(),
+							network_data::ptr(),
+							learning_rates,
+							batch_size,
+							0.0F,
+							training_momentum(training_momentum::no_momentum),
+							0);
+						for(std::vector<std::string>::const_iterator it = training_error_source_layer_names.begin(); it != training_error_source_layer_names.end(); ++it)
+						{
+							nnforge_shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
+							minus_error += std::accumulate(averages->begin(), averages->end(), 0.0);
+						}
+					}
+					std::copy(original_weights.begin(), original_weights.end(), weight_list.begin());
+
+					double plus_error = 0.0;
+					{
+						weight_list[weight_id] += check_gradient_base_step;
+						neuron_value_set_data_bunch_writer writer;
+						backprop->run(
+							*reader,
+							writer,
+							data,
+							network_data::ptr(),
+							network_data::ptr(),
+							learning_rates,
+							batch_size,
+							0.0F,
+							training_momentum(training_momentum::no_momentum),
+							0);
+						for(std::vector<std::string>::const_iterator it = training_error_source_layer_names.begin(); it != training_error_source_layer_names.end(); ++it)
+						{
+							nnforge_shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
+							plus_error += std::accumulate(averages->begin(), averages->end(), 0.0);
+						}
+					}
+					std::copy(original_weights.begin(), original_weights.end(), weight_list.begin());
+
+					float gradient_checked = static_cast<float>(plus_error - minus_error) / (2.0F * check_gradient_base_step);
+
+					float error_original_relative_diff = (gradient_checked == 0.0F) ? check_gradient_relative_threshold_warning : std::max(static_cast<float>(plus_error), static_cast<float>(minus_error)) / 16777216.0F / fabsf(static_cast<float>(plus_error - minus_error));
+					float error_relative_diff = std::max(error_original_relative_diff, check_gradient_relative_threshold_warning);
+
+					float base = std::max(fabsf(gradient_checked), fabsf(gradient_backprops[weight_index]));
+					float absolute_diff = fabsf(gradient_checked - gradient_backprops[weight_index]);
+					float relative_diff;
+					if (base == 0.0F)
+						relative_diff = (absolute_diff == 0.0F) ? 0.0F : error_relative_diff;
+					else
+						relative_diff = absolute_diff / base;
+
+					if (relative_diff >= check_gradient_relative_threshold_error)
+					{
+						std::cout << "ERROR: ";
+						++error_count;
+					}
+					else if (relative_diff >= error_relative_diff)
+					{
+						std::cout << "WARNING: ";
+						++warning_count;
+					}
+					std::cout << "relative_diff=" << relative_diff << ", absolute_diff=" << absolute_diff << ", gradient_backprop=" << gradient_backprops[weight_index] << ", gradient_check=" << gradient_checked << ", error_original_error_relative_diff=" << error_original_relative_diff;
+
+					++total_weight_count;
+
+					std::cout << std::endl;
+				}
+
+				learning_rate = 0.0F;
+
+				std::stringstream ss;
+				ss << layer_name << ":" << weight_set << ": " << error_count << " errors " << (boost::format("(%|1$.2f|%%)") % (static_cast<float>(error_count) * 100.0F / static_cast<float>(std::max(total_weight_count, 0U)))).str()
+					<< " and " << warning_count << " " << (boost::format("(%|1$.2f|%%)") % (static_cast<float>(warning_count) * 100.0F / static_cast<float>(std::max(total_weight_count, 0U)))).str() << " warnings encountered in " << total_weight_count << " weights ";
+				std::cout << ss.str() << std::endl;
+				summary_messages.push_back(ss.str());
+			}
+		}
+		std::cout << "############## Summary ##############" << std::endl;
+		for(std::vector<std::string>::const_iterator it = summary_messages.begin(); it != summary_messages.end(); ++it)
+			std::cout << *it << std::endl;
+	}
+
+	void toolset::save_random_weights()
+	{
+		network_schema::ptr schema = get_schema(schema_usage_train);
+
+		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
+		boost::filesystem::create_directories(batch_folder);
+
+		unsigned int index = get_starting_index_for_batch_training();
+
+		network_data::ptr data(new network_data(schema->get_layers()));
+
+		random_generator gen = rnd::get_random_generator();
+		data->randomize(
+			schema->get_layers(),
+			gen);
+		network_data_initializer init;
+		init.initialize(
+			data->data_list,
+			*schema);
+
+		std::string data_folder_name = (boost::format("ann_trained_%|1$03d|") % index).str();
+		boost::filesystem::path weights_folder = batch_folder / data_folder_name;
+		std::cout << "Saving weights to " << weights_folder.string() << std::endl;
+		data->write(weights_folder);
 	}
 }

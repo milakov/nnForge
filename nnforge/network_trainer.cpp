@@ -144,12 +144,12 @@ namespace nnforge
 
 	bool network_trainer::is_broken(const training_task_state& state) const
 	{
-		for(std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<float> > > >::const_iterator it = state.history.back().second.begin(); it != state.history.back().second.end(); ++it)
+		for(std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<double> > > >::const_iterator it = state.history.back().second.begin(); it != state.history.back().second.end(); ++it)
 		{
-			for(std::vector<float>::const_iterator it2 = it->second.second->begin(); it2 != it->second.second->end(); ++it2)
+			for(std::vector<double>::const_iterator it2 = it->second.second->begin(); it2 != it->second.second->end(); ++it2)
 			{
-				float error = *it2;
-				bool sanity_check = (error < 1.0e+10F) && (-error > -1.0E+10F) && !(-error < -1.0E+10F);
+				double error = *it2;
+				bool sanity_check = (error < 1.0e+10) && (-error > -1.0E+10) && !(-error < -1.0E+10);
 				if (!sanity_check)
 					return true;
 			}

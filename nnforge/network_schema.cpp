@@ -247,20 +247,57 @@ namespace nnforge
 	{
 		network_action_schema::ptr res(new network_action_schema());
 
-		std::vector<layer::const_ptr> layers = get_layers_in_forward_propagation_order();
-		for(std::vector<layer::const_ptr>::const_iterator it = layers.begin(); it != layers.end(); ++it)
+		std::vector<layer::const_ptr> layer_list = get_layers_in_forward_propagation_order();
+		for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
 		{
 			layer::const_ptr l = *it;
 			if (l->get_type_name() == data_layer::layer_type_name)
 				continue;
 
-			std::vector<layer_name_with_action> dependencies;
+			std::set<schema_graph::vertex_descriptor> candidate_input_layers;
 			for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
 			{
 				layer::const_ptr dest_layer = get_layer(*it2);
 				if (dest_layer->get_type_name() == data_layer::layer_type_name)
 					continue;
-				dependencies.push_back(layer_name_with_action(*it2, layer_action(layer_action::forward)));
+				candidate_input_layers.insert(layer_instance_name_to_vertex_decriptor_map.find(dest_layer->instance_name)->second);
+			}
+
+			std::vector<layer_name_with_action> dependencies;
+			if (candidate_input_layers.size() > 1)
+			{
+				// We don't want to add redundant dependencies here
+				std::map<schema_graph::vertex_descriptor, std::set<schema_graph::vertex_descriptor> > candidate_input_layers_to_dependent_vertices_map;
+				std::vector<std::pair<schema_graph::vertex_descriptor, size_t> > layer_with_dependent_count;
+				for(std::set<schema_graph::vertex_descriptor>::const_iterator it = candidate_input_layers.begin(); it != candidate_input_layers.end(); ++it)
+				{
+					std::set<schema_graph::vertex_descriptor>& dependent_vertices = candidate_input_layers_to_dependent_vertices_map.insert(std::make_pair(*it, std::set<schema_graph::vertex_descriptor>())).first->second;
+					record_all_edges<schema_graph::vertex_descriptor> vis(dependent_vertices);
+					std::vector<boost::default_color_type> color_map(boost::num_vertices(layers));
+					boost::depth_first_visit(
+						layers,
+						*it,
+						vis,
+						boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
+					layer_with_dependent_count.push_back(std::make_pair(*it, dependent_vertices.size()));
+				}
+				std::sort(layer_with_dependent_count.begin(), layer_with_dependent_count.end(), compare_entry);
+				std::set<schema_graph::vertex_descriptor> covered_vertices;
+				for(std::vector<std::pair<schema_graph::vertex_descriptor, size_t> >::const_iterator it = layer_with_dependent_count.begin(); it != layer_with_dependent_count.end(); ++it)
+				{
+					schema_graph::vertex_descriptor candidate_layer_descriptor = it->first;
+					if (covered_vertices.find(candidate_layer_descriptor) == covered_vertices.end())
+					{
+						const std::set<schema_graph::vertex_descriptor>& new_vertices = candidate_input_layers_to_dependent_vertices_map[candidate_layer_descriptor];
+						covered_vertices.insert(new_vertices.begin(), new_vertices.end());
+						dependencies.push_back(layer_name_with_action(layers[candidate_layer_descriptor].l->instance_name, layer_action(layer_action::forward)));
+					}
+				}
+			}
+			else
+			{
+				for(std::set<schema_graph::vertex_descriptor>::const_iterator it = candidate_input_layers.begin(); it != candidate_input_layers.end(); ++it)
+					dependencies.push_back(layer_name_with_action(layers[*it].l->instance_name, layer_action(layer_action::forward)));
 			}
 
 			res->add_action(
@@ -270,6 +307,11 @@ namespace nnforge
 		}
 
 		return res;
+	}
+
+	bool network_schema::compare_entry(std::pair<schema_graph::vertex_descriptor, size_t> i, std::pair<schema_graph::vertex_descriptor, size_t> j)
+	{
+		return (i.second > j.second);
 	}
 
 	network_action_schema::ptr network_schema::get_actions_for_backward_propagation(
@@ -290,20 +332,57 @@ namespace nnforge
 
 		// Add forward prop actions
 		{
-			std::vector<layer::const_ptr> layers = get_layers_in_forward_propagation_order();
-			for(std::vector<layer::const_ptr>::const_iterator it = layers.begin(); it != layers.end(); ++it)
+			std::vector<layer::const_ptr> layer_list = get_layers_in_forward_propagation_order();
+			for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
 			{
 				layer::const_ptr l = *it;
 				if (l->get_type_name() == data_layer::layer_type_name)
 					continue;
 
-				std::vector<layer_name_with_action> dependencies;
+				std::set<schema_graph::vertex_descriptor> candidate_input_layers;
 				for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
 				{
 					layer::const_ptr dest_layer = get_layer(*it2);
 					if (dest_layer->get_type_name() == data_layer::layer_type_name)
 						continue;
-					dependencies.push_back(layer_name_with_action(*it2, layer_action(layer_action::forward)));
+					candidate_input_layers.insert(layer_instance_name_to_vertex_decriptor_map.find(dest_layer->instance_name)->second);
+				}
+
+				std::vector<layer_name_with_action> dependencies;
+				if (candidate_input_layers.size() > 1)
+				{
+					// We don't want to add redundant dependencies here
+					std::map<schema_graph::vertex_descriptor, std::set<schema_graph::vertex_descriptor> > candidate_input_layers_to_dependent_vertices_map;
+					std::vector<std::pair<schema_graph::vertex_descriptor, size_t> > layer_with_dependent_count;
+					for(std::set<schema_graph::vertex_descriptor>::const_iterator it = candidate_input_layers.begin(); it != candidate_input_layers.end(); ++it)
+					{
+						std::set<schema_graph::vertex_descriptor>& dependent_vertices = candidate_input_layers_to_dependent_vertices_map.insert(std::make_pair(*it, std::set<schema_graph::vertex_descriptor>())).first->second;
+						record_all_edges<schema_graph::vertex_descriptor> vis(dependent_vertices);
+						std::vector<boost::default_color_type> color_map(boost::num_vertices(layers));
+						boost::depth_first_visit(
+							layers,
+							*it,
+							vis,
+							boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
+						layer_with_dependent_count.push_back(std::make_pair(*it, dependent_vertices.size()));
+					}
+					std::sort(layer_with_dependent_count.begin(), layer_with_dependent_count.end(), compare_entry);
+					std::set<schema_graph::vertex_descriptor> covered_vertices;
+					for(std::vector<std::pair<schema_graph::vertex_descriptor, size_t> >::const_iterator it = layer_with_dependent_count.begin(); it != layer_with_dependent_count.end(); ++it)
+					{
+						schema_graph::vertex_descriptor candidate_layer_descriptor = it->first;
+						if (covered_vertices.find(candidate_layer_descriptor) == covered_vertices.end())
+						{
+							const std::set<schema_graph::vertex_descriptor>& new_vertices = candidate_input_layers_to_dependent_vertices_map[candidate_layer_descriptor];
+							covered_vertices.insert(new_vertices.begin(), new_vertices.end());
+							dependencies.push_back(layer_name_with_action(layers[candidate_layer_descriptor].l->instance_name, layer_action(layer_action::forward)));
+						}
+					}
+				}
+				else
+				{
+					for(std::set<schema_graph::vertex_descriptor>::const_iterator it = candidate_input_layers.begin(); it != candidate_input_layers.end(); ++it)
+						dependencies.push_back(layer_name_with_action(layers[*it].l->instance_name, layer_action(layer_action::forward)));
 				}
 
 				res->add_action(
@@ -340,20 +419,34 @@ namespace nnforge
 					if (l->get_type_name() == data_layer::layer_type_name)
 						continue;
 
-					for(int backprop_index = 0; backprop_index < l->input_layer_instance_names.size(); ++backprop_index)
+					if ((!l->is_empty_data()) && (exclude_data_update_layer_name_set.find(l->instance_name) == exclude_data_update_layer_name_set.end()) && l->has_fused_backward_data_and_weights())
 					{
-						layer_action action(layer_action::backward_data, backprop_index);
-						if (!res->action_exists(layer_name_with_action(l->instance_name, action)))
-							res->add_action(l, action);
-					}
+						if (l->input_layer_instance_names.size() != 1)
+							throw neural_network_exception((boost::format("get_actions_for_backward_propagation cannot add fused_backward_data_and_weights action for the layer %1% with non-unit input layer count") % l->instance_name).str());
 
-					if ((!l->is_empty_data()) && (exclude_data_update_layer_name_set.find(l->instance_name) == exclude_data_update_layer_name_set.end()))
-					{
-						layer_action action(layer_action::backward_weights);
+						layer_action action(layer_action::backward_data_and_weights);
 						if (!res->action_exists(layer_name_with_action(l->instance_name, action)))
 							res->add_action(l, action);
 						target_action_set.insert(layer_name_with_action(l->instance_name, action));
 						layer_weights_to_update.insert(l->instance_name);
+					}
+					else
+					{
+						for(int backprop_index = 0; backprop_index < l->input_layer_instance_names.size(); ++backprop_index)
+						{
+							layer_action action(layer_action::backward_data, backprop_index);
+							if (!res->action_exists(layer_name_with_action(l->instance_name, action)))
+								res->add_action(l, action);
+						}
+
+						if ((!l->is_empty_data()) && (exclude_data_update_layer_name_set.find(l->instance_name) == exclude_data_update_layer_name_set.end()))
+						{
+							layer_action action(layer_action::backward_weights);
+							if (!res->action_exists(layer_name_with_action(l->instance_name, action)))
+								res->add_action(l, action);
+							target_action_set.insert(layer_name_with_action(l->instance_name, action));
+							layer_weights_to_update.insert(l->instance_name);
+						}
 					}
 				}
 			}
@@ -371,9 +464,12 @@ namespace nnforge
 
 				std::vector<layer_name_with_action> src_action_list;
 				{
-					layer_name_with_action weight_update_action(layer_name, layer_action(layer_action::backward_weights));
-					if (res->action_exists(weight_update_action))
-						src_action_list.push_back(weight_update_action);
+					layer_name_with_action backward_weights_action(layer_name, layer_action(layer_action::backward_weights));
+					if (res->action_exists(backward_weights_action))
+						src_action_list.push_back(backward_weights_action);
+					layer_name_with_action backward_data_and_weights_action(layer_name, layer_action(layer_action::backward_data_and_weights));
+					if (res->action_exists(backward_data_and_weights_action))
+						src_action_list.push_back(backward_data_and_weights_action);
 					for(int backprop_index = 0; backprop_index < l->input_layer_instance_names.size(); ++backprop_index)
 					{
 						layer_name_with_action action(layer_name, layer_action(layer_action::backward_data, backprop_index));
@@ -400,9 +496,11 @@ namespace nnforge
 								layer_name_with_action action(pl->instance_name, layer_action(layer_action::backward_data, backprop_index));
 								if (res->action_exists(action))
 									dst_action_list.push_back(action);
-								break;
 							}
 						}
+						layer_name_with_action action(pl->instance_name, layer_action(layer_action::backward_data_and_weights));
+						if (res->action_exists(action))
+							dst_action_list.push_back(action);
 					}
 					if (dst_action_list.size() > 1)
 					{
@@ -434,7 +532,12 @@ namespace nnforge
 		{
 			layer_action action(layer_action::update_weights);
 			std::vector<layer_name_with_action> dependencies;
-			dependencies.push_back(layer_name_with_action(*it, layer_action(layer_action::backward_weights)));
+			layer_name_with_action backward_weights_action(*it, layer_action(layer_action::backward_weights));
+			if (res->action_exists(backward_weights_action))
+				dependencies.push_back(backward_weights_action);
+			layer_name_with_action backward_data_and_weights_action(*it, layer_action(layer_action::backward_data_and_weights));
+			if (res->action_exists(backward_data_and_weights_action))
+				dependencies.push_back(backward_data_and_weights_action);
 			layer::const_ptr l = get_layer(*it);
 			for(unsigned int backprop_index = 0; backprop_index < static_cast<unsigned int>(l->input_layer_instance_names.size()); ++backprop_index)
 			{

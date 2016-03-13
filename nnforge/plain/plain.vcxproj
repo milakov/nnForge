@@ -20,6 +20,7 @@
     <ClInclude Include="average_subsampling_layer_tester_plain.h" />
     <ClInclude Include="average_subsampling_layer_updater_plain.h" />
     <ClInclude Include="backward_propagation_plain.h" />
+    <ClInclude Include="batch_norm_layer_tester_plain.h" />
     <ClInclude Include="buffer_plain_size_configuration.h" />
     <ClInclude Include="cdf_max_layer_tester_plain.h" />
     <ClInclude Include="cdf_max_layer_updater_plain.h" />
@@ -89,6 +90,7 @@
     <ClCompile Include="average_subsampling_layer_tester_plain.cpp" />
     <ClCompile Include="average_subsampling_layer_updater_plain.cpp" />
     <ClCompile Include="backward_propagation_plain.cpp" />
+    <ClCompile Include="batch_norm_layer_tester_plain.cpp" />
     <ClCompile Include="buffer_plain_size_configuration.cpp" />
     <ClCompile Include="cdf_max_layer_tester_plain.cpp" />
     <ClCompile Include="cdf_max_layer_updater_plain.cpp" />
