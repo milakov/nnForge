@@ -200,5 +200,13 @@ namespace nnforge
 		{
 			return output_configuration_specific.feature_map_count * 2 * sizeof(float);
 		}
+
+		int batch_norm_layer_updater_cuda::get_input_index_layer_can_write(const layer_action& action) const
+		{
+			if (action.get_action_type() == layer_action::backward_data_and_weights)
+				return 0;
+			else
+				return -1;
+		}
 	}
 }

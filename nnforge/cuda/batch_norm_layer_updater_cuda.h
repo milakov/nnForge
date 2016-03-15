@@ -69,6 +69,8 @@ namespace nnforge
 
 			virtual size_t get_temporary_fixed_buffer_size() const;
 
+			virtual int get_input_index_layer_can_write(const layer_action& action) const;
+
 		protected:
 			virtual void updater_configured();
 
