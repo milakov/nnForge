@@ -820,9 +820,6 @@
     <ClCompile Include="batch_norm_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
-    <ClCompile Include="batch_norm_layer_tester_cuda.cpp">
-      <Filter>Source Files\layer_testers</Filter>
-    </ClCompile>
     <ClCompile Include="batch_norm_layer_testing_schema.cpp">
       <Filter>Source Files\testing_schemas</Filter>
     </ClCompile>
@@ -971,6 +968,9 @@
     </CudaCompile>
     <CudaCompile Include="batch_norm_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
+    </CudaCompile>
+    <CudaCompile Include="batch_norm_layer_tester_cuda.cu">
+      <Filter>Source Files\layer_testers</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

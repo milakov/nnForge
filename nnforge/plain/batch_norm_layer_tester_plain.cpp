@@ -57,7 +57,7 @@ namespace nnforge
 			const std::vector<float>::const_iterator gamma = (*data)[0].begin();
 			const std::vector<float>::const_iterator beta = (*data)[1].begin();
 			const std::vector<float>::const_iterator mean = (*data)[2].begin();
-			const std::vector<float>::const_iterator invvar = (*data)[3].begin();
+			const std::vector<float>::const_iterator inverse_sigma = (*data)[3].begin();
 
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 			for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -65,7 +65,7 @@ namespace nnforge
 				int entry_id = workload_id / feature_map_count;
 				int feature_map_id = workload_id - entry_id * feature_map_count;
 
-				float mult = gamma[feature_map_id] * invvar[feature_map_id];
+				float mult = gamma[feature_map_id] * inverse_sigma[feature_map_id];
 				float add = beta[feature_map_id] - mult * mean[feature_map_id];
 
 				const float * current_in_it = in_it + (entry_id * neuron_count) + (feature_map_id * neuron_count_per_feature_map);

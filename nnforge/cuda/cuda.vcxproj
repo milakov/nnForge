@@ -178,7 +178,6 @@
     <ClCompile Include="add_layer_testing_schema.cpp" />
     <ClCompile Include="add_layer_updater_schema.cpp" />
     <ClCompile Include="backward_propagation_cuda.cpp" />
-    <ClCompile Include="batch_norm_layer_tester_cuda.cpp" />
     <ClCompile Include="batch_norm_layer_testing_schema.cpp" />
     <ClCompile Include="batch_norm_layer_updater_schema.cpp" />
     <ClCompile Include="buffer_cuda_size_configuration.cpp" />
@@ -270,6 +269,7 @@
     <CudaCompile Include="add_layer_updater_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
+    <CudaCompile Include="batch_norm_layer_tester_cuda.cu" />
     <CudaCompile Include="batch_norm_layer_updater_cuda.cu" />
     <CudaCompile Include="cdf_max_layer_tester_cuda.cu" />
     <CudaCompile Include="cdf_max_layer_updater_cuda.cu" />

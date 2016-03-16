@@ -17,7 +17,6 @@
 #pragma once
 
 #include "layer_tester_cuda.h"
-#include <cudnn.h>
 
 namespace nnforge
 {
@@ -42,13 +41,13 @@ namespace nnforge
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count);
 
+			virtual int get_input_index_layer_can_write() const;
+
 		protected:
 			virtual void tester_configured();
 
 		private:
-			cudnnTensorDescriptor_t weights_desc;
-			cudnnTensorDescriptor_t data_desc;
-			double epsilon;
+			float epsilon;
 		};
 	}
 }

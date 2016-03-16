@@ -23,7 +23,7 @@
 
 namespace nnforge
 {
-	// The layer contains 4 chunks of weights: gamma, beta, mean, inverse variance
+	// The layer contains 4 chunks of weights: gamma, beta, mean, inverse sigma
 	class batch_norm_layer : public layer
 	{
 	public:
