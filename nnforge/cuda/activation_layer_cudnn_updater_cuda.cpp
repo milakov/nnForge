@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,15 +25,19 @@ namespace nnforge
 	namespace cuda
 	{
 		activation_layer_cudnn_updater_cuda::activation_layer_cudnn_updater_cuda(cudnnActivationMode_t af)
-			: af(af)
-			, input_data_desc(0)
+			: input_data_desc(0)
+			, activation_desc(0)
 		{
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_data_desc));
+			cudnn_safe_call(cudnnCreateActivationDescriptor(&activation_desc));
+
+			cudnnSetActivationDescriptor(activation_desc, af, CUDNN_NOT_PROPAGATE_NAN, 0.0F);
 		}
 
 		activation_layer_cudnn_updater_cuda::~activation_layer_cudnn_updater_cuda()
 		{
 			cudnnDestroyTensorDescriptor(input_data_desc);
+			cudnnDestroyActivationDescriptor(activation_desc);
 		}
 
 		void activation_layer_cudnn_updater_cuda::enqueue_forward_propagation(
@@ -59,9 +63,9 @@ namespace nnforge
 
 			float alpha = 1.0F;
 			float beta = 0.0F;
-			cudnn_safe_call(cudnnActivationForward(
+			cudnn_safe_call(cudnnActivationForward_v4(
 				cuda_config->get_cudnn_handle(),
-				af,
+				activation_desc,
 				&alpha,
 				input_data_desc,
 				*input_buffers[0],
@@ -97,9 +101,9 @@ namespace nnforge
 
 			float alpha = 1.0F;
 			float beta = add_update_to_destination ? 1.0F : 0.0F;
-			cudnn_safe_call(cudnnActivationBackward(
+			cudnn_safe_call(cudnnActivationBackward_v4(
 				cuda_config->get_cudnn_handle(),
-				af,
+				activation_desc,
 				&alpha,
 				input_data_desc,
 				*output_neurons_buffer,

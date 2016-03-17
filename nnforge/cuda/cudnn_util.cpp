@@ -89,22 +89,6 @@ namespace nnforge
 				CUDNN_DATA_FLOAT));
 		}
 
-		void cudnn_util::set_pooling_descriptor(
-			cudnnPoolingDescriptor_t pooling_desc,
-			cudnnPoolingMode_t pooling_mode,
-			const std::vector<unsigned int>& subsampling_sizes)
-		{
-			std::vector<int> padding(subsampling_sizes.size(), 0);
-			std::vector<int> dimensions(subsampling_sizes.rbegin(), subsampling_sizes.rend());
-			cudnn_safe_call(cudnnSetPoolingNdDescriptor(
-				pooling_desc,
-				pooling_mode,
-				static_cast<int>(subsampling_sizes.size()),
-				&dimensions[0],
-				&padding[0],
-				&dimensions[0]));
-		}
-
 		void cudnn_util::set_filter_descriptor(
 			cudnnFilterDescriptor_t filter_desc,
 			unsigned int output_feature_map_count,
@@ -117,9 +101,10 @@ namespace nnforge
 			for(int i = 0; i < windows_sizes.size(); ++i)
 				filter_dimensions[i + 2] = windows_sizes[windows_sizes.size() - 1 - i];
 
-			cudnn_safe_call(cudnnSetFilterNdDescriptor(
+			cudnn_safe_call(cudnnSetFilterNdDescriptor_v4(
 				filter_desc,
 				CUDNN_DATA_FLOAT,
+				CUDNN_TENSOR_NCHW,
 				static_cast<int>(filter_dimensions.size()),
 				&filter_dimensions[0]));
 		}

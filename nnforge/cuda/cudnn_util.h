@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -46,11 +46,6 @@ namespace nnforge
 				cudnnConvolutionDescriptor_t convolution_desc,
 				const std::vector<unsigned int>& zero_padding,
 				const std::vector<unsigned int>& strides);
-
-			static void set_pooling_descriptor(
-				cudnnPoolingDescriptor_t pooling_desc,
-				cudnnPoolingMode_t pooling_mode,
-				const std::vector<unsigned int>& subsampling_sizes);
 
 			static void set_filter_descriptor(
 				cudnnFilterDescriptor_t filter_desc,
