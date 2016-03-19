@@ -29,7 +29,7 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new convolution_layer(std::vector<unsigned int>(1, 1), 1, 1)));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new sparse_convolution_layer(std::vector<unsigned int>(1, 1), 1, 1, 1U)));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new hyperbolic_tangent_layer()));
-		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new average_subsampling_layer(std::vector<unsigned int>(1, 1))));
+		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new average_subsampling_layer(std::vector<average_subsampling_factor>( 1, 1))));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new max_subsampling_layer(std::vector<unsigned int>(1, 1))));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new absolute_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new local_contrast_subtractive_layer(std::vector<unsigned int>(1, 1), std::vector<unsigned int>(1, 0), 1)));

@@ -23,13 +23,36 @@
 
 namespace nnforge
 {
+	struct average_subsampling_factor
+	{
+		average_subsampling_factor(
+			unsigned int factor = 0,
+			bool is_relative = true)
+		{
+			raw_val = is_relative ? static_cast<int>(factor) : -static_cast<int>(factor);
+		}
+
+		bool is_relative() const
+		{
+			return (raw_val > 0);
+		}
+
+		unsigned int get_factor() const
+		{
+			return (raw_val > 0 ? static_cast<unsigned int>(raw_val) : static_cast<unsigned int>(-raw_val));
+		}
+
+	private:
+		int raw_val;
+	};
+
 	// subsampling_sizes cannot be empty
 	class average_subsampling_layer : public layer
 	{
 	public:
 		average_subsampling_layer(
-			const std::vector<unsigned int>& subsampling_sizes,
-			unsigned int feature_map_subsampling_size = 1,
+			const std::vector<average_subsampling_factor>& subsampling_sizes,
+			average_subsampling_factor feature_map_subsampling_size = 1,
 			unsigned int entry_subsampling_size = 1,
 			float alpha = -std::numeric_limits<float>::max());
 
@@ -58,16 +81,27 @@ namespace nnforge
 
 		virtual tiling_factor get_tiling_factor() const;
 
-		float get_effective_alpha() const;
+		float get_effective_alpha(
+			const layer_configuration_specific& input_configuration_specific,
+			const layer_configuration_specific& output_configuration_specific) const;
 
 		static const std::string layer_type_name;
+
+		unsigned int get_subsampling_size(
+			unsigned int dimension_id,
+			unsigned int input,
+			unsigned int output) const;
+
+		unsigned int get_fm_subsampling_size(
+			unsigned int input,
+			unsigned int output) const;
 
 	private:
 		void check();
 
 	public:
-		std::vector<unsigned int> subsampling_sizes;
-		unsigned int feature_map_subsampling_size;
+		std::vector<average_subsampling_factor> subsampling_sizes; 
+		average_subsampling_factor feature_map_subsampling_size;
 		unsigned int entry_subsampling_size;
 		float alpha;
 	};

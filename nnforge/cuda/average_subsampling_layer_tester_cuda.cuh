@@ -250,10 +250,12 @@ namespace nnforge
 			{
 				nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 
-				feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
+				feature_map_subsampling_size = layer_derived->get_fm_subsampling_size(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 				entry_subsampling_size = layer_derived->entry_subsampling_size;
 
-				std::vector<unsigned int> local_subsampling_sizes = layer_derived->subsampling_sizes;
+				std::vector<unsigned int> local_subsampling_sizes;
+				for(unsigned int i = 0; i < static_cast<unsigned int>(layer_derived->subsampling_sizes.size()); ++i)
+					local_subsampling_sizes.push_back(layer_derived->get_subsampling_size(i, input_configuration_specific_list[0].dimension_sizes[i], output_configuration_specific.dimension_sizes[i]));
 				if (local_subsampling_sizes.empty())
 					local_subsampling_sizes.push_back(1);
 				std::vector<unsigned int> local_input_dimension_sizes = input_configuration_specific_list[0].dimension_sizes;
@@ -274,7 +276,7 @@ namespace nnforge
 					current_stride = current_stride * output_sizes[i];
 				}
 
-				mult = layer_derived->get_effective_alpha();
+				mult = layer_derived->get_effective_alpha(input_configuration_specific_list[0], output_configuration_specific);
 
 				forward_packed_config_count = subsampling_sizes[0];
 				for(int i = 0; i < dimension_count; ++i)

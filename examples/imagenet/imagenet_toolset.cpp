@@ -488,7 +488,7 @@ void imagenet_toolset::create_resnet_schema() const
 			add_resnet_bottleneck_block(layer_list, last_layer_feature_map_count, last_layer_name, bottleneck_major_block_id, bottleneck_minor_block_id, restored_feature_map_count, (resnet_block_id == 0) && (resnet_spatial_block_id != 0));
 
 	std::string avg_pool_layer_name = (boost::format("pool%1%") % bottleneck_major_block_id).str(); 
-	nnforge::layer::ptr avg_pool_layer(new nnforge::average_subsampling_layer(std::vector<unsigned int>(2, 7)));
+	nnforge::layer::ptr avg_pool_layer(new nnforge::average_subsampling_layer(std::vector<nnforge::average_subsampling_factor>(2, 7)));
 	avg_pool_layer->instance_name = avg_pool_layer_name;
 	avg_pool_layer->input_layer_instance_names.push_back(last_layer_name);
 	layer_list.push_back(avg_pool_layer);

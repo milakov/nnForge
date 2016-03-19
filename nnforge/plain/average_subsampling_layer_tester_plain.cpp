@@ -66,10 +66,12 @@ namespace nnforge
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
-			std::vector<unsigned int> subsampling_sizes = layer_derived->subsampling_sizes;
+			std::vector<unsigned int> subsampling_sizes;
+			for(unsigned int i = 0; i < static_cast<unsigned int>(layer_derived->subsampling_sizes.size()); ++i)
+				subsampling_sizes.push_back(layer_derived->get_subsampling_size(i, input_dimension_sizes[i], output_dimension_sizes[i]));
 			if (subsampling_sizes.empty())
 				subsampling_sizes.push_back(1);
-			const unsigned int feature_map_subsampling_size = layer_derived->feature_map_subsampling_size;
+			const unsigned int feature_map_subsampling_size = layer_derived->get_fm_subsampling_size(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 			subsampling_sizes.push_back(feature_map_subsampling_size);
 			const unsigned int entry_subsampling_size = layer_derived->entry_subsampling_size;
 			subsampling_sizes.push_back(entry_subsampling_size);
@@ -86,7 +88,7 @@ namespace nnforge
 			for(unsigned int i = 0; i < subsampling_dimension_count; ++i)
 				subsampling_elem_count *= subsampling_sizes[i];
 			const unsigned int const_subsampling_elem_count = subsampling_elem_count;
-			const float mult = layer_derived->get_effective_alpha();
+			const float mult = layer_derived->get_effective_alpha(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 			const unsigned int output_feature_map_count = output_configuration_specific.feature_map_count;
 
 			std::vector<unsigned int> current_local_input_position(subsampling_dimension_count, 0);

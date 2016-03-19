@@ -52,10 +52,12 @@ message ConvolutionalParam {
 
 message AverageSubsamplingParam {
 	message AverageSubsamplingDimensionParam {
-		required uint32 subsampling_size = 1;
+		optional uint32 subsampling_size = 1;
+		optional uint32 subsampled_size = 2;
 	}
 	message AverageSubsamplingFeatureMapParam {
-		required uint32 subsampling_size = 1;
+		optional uint32 subsampling_size = 1;
+		optional uint32 subsampled_size = 2;
 	}
 	message AverageSubsamplingEntryParam {
 		required uint32 subsampling_size = 1;
