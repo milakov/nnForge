@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ training_imagenet_raw_to_structured_data_transformer::training_imagenet_raw_to_s
 	unsigned int min_image_size,
 	unsigned int max_image_size,
 	unsigned int target_image_width,
-	unsigned int target_image_height)
+	unsigned int target_image_height,
+	float max_aspect_ratio_change)
 	: target_image_width(target_image_width)
 	, target_image_height(target_image_height)
 	, gen(nnforge::rnd::get_random_generator())
-	, dist(static_cast<float>(min_image_size), static_cast<float>(max_image_size))
+	, dist_size(static_cast<float>(min_image_size), static_cast<float>(max_image_size))
+	, dist_log_aspect_ratio(-logf(max_aspect_ratio_change) * 0.5F, logf(max_aspect_ratio_change) * 0.5F)
 {
 }
 
@@ -42,36 +44,38 @@ void training_imagenet_raw_to_structured_data_transformer::transform(
 {
 	cv::Mat3b original_image = cv::imdecode(raw_data, CV_LOAD_IMAGE_COLOR);
 
-	float rescaled_image_size = dist.min();
-	if (dist.max() > dist.min())
+	float rescaled_image_size = dist_size.min();
+	float log_aspect_ratio = dist_log_aspect_ratio.min();
 	{
 		boost::lock_guard<boost::mutex> lock(gen_mutex);
-		rescaled_image_size = dist(gen);
+		if (dist_size.max() > dist_size.min())
+			rescaled_image_size = dist_size(gen);
+		if (dist_log_aspect_ratio.max() > dist_log_aspect_ratio.min())
+			log_aspect_ratio = dist_log_aspect_ratio(gen);
 	}
+	float aspect_ratio = expf(log_aspect_ratio);
 
 	float scale = static_cast<float>(std::min(original_image.rows, original_image.cols)) / rescaled_image_size;
+	float scale_x = scale * aspect_ratio;
+	float scale_y = scale / aspect_ratio;
 
-	unsigned int source_crop_image_width = std::min(static_cast<unsigned int>(static_cast<float>(target_image_width) * scale + 0.5F), static_cast<unsigned int>(original_image.cols));
-	unsigned int source_crop_image_height = std::min(static_cast<unsigned int>(static_cast<float>(target_image_height) * scale + 0.5F), static_cast<unsigned int>(original_image.rows));
+	unsigned int source_crop_image_width = std::min(static_cast<unsigned int>(static_cast<float>(target_image_width) * scale_x + 0.5F), static_cast<unsigned int>(original_image.cols));
+	unsigned int source_crop_image_height = std::min(static_cast<unsigned int>(static_cast<float>(target_image_height) * scale_y + 0.5F), static_cast<unsigned int>(original_image.rows));
 
 	nnforge_uniform_int_distribution<unsigned int> x_dist(0, original_image.cols - source_crop_image_width);
 	nnforge_uniform_int_distribution<unsigned int> y_dist(0, original_image.rows - source_crop_image_height);
 
 	unsigned int x = x_dist.min();
-	if (x_dist.max() > x_dist.min())
-	{
-		boost::lock_guard<boost::mutex> lock(gen_mutex);
-		x = x_dist(gen);
-	}
-
 	unsigned int y = y_dist.min();
-	if (y_dist.max() > y_dist.min())
 	{
 		boost::lock_guard<boost::mutex> lock(gen_mutex);
-		y = y_dist(gen);
+		if (x_dist.max() > x_dist.min())
+			x = x_dist(gen);
+		if (y_dist.max() > y_dist.min())
+			y = y_dist(gen);
 	}
 
-	cv::Mat3b source_image_crop = original_image.rowRange(y, y + source_crop_image_height).colRange(x, x + source_crop_image_height);
+	cv::Mat3b source_image_crop = original_image.rowRange(y, y + source_crop_image_height).colRange(x, x + source_crop_image_width);
 	cv::Mat3b target_image(target_image_height, target_image_width);
 	cv::resize(source_image_crop, target_image, target_image.size());
 

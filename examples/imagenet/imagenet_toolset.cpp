@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,8 +40,6 @@ const float imagenet_toolset::max_brightness_shift = 0.0F;//0.05F;
 const float imagenet_toolset::max_color_shift = 0.15F;
 
 const unsigned int imagenet_toolset::class_count = 1000;
-const unsigned int imagenet_toolset::training_min_image_size = 224; //256
-const unsigned int imagenet_toolset::training_max_image_size = 288; //256
 const unsigned int imagenet_toolset::training_target_image_width = 224;
 const unsigned int imagenet_toolset::training_target_image_height = 224;
 const unsigned int imagenet_toolset::validating_image_size = 256; // 256
@@ -303,6 +301,17 @@ std::vector<nnforge::int_option> imagenet_toolset::get_int_options()
 
 	res.push_back(nnforge::int_option("samples_x", &samples_x, 4, "Run multiple samples (in x direction) for each entry"));
 	res.push_back(nnforge::int_option("samples_y", &samples_y, 4, "Run multiple samples (in y direction) for each entry"));
+	res.push_back(nnforge::int_option("training_min_image_size", &training_min_image_size, 224, "Minimum short side of the image from which training sample is extracted"));
+	res.push_back(nnforge::int_option("training_max_image_size", &training_max_image_size, 288, "Maximum short side of the image from which training sample is extracted"));
+
+	return res;
+}
+
+std::vector<nnforge::float_option> imagenet_toolset::get_float_options()
+{
+	std::vector<nnforge::float_option> res = toolset::get_float_options();
+
+	res.push_back(nnforge::float_option("max_aspect_ratio_change", &max_aspect_ratio_change, 1.0F, "The maximum aspect ration change during training"));
 
 	return res;
 }
@@ -334,7 +343,8 @@ nnforge::structured_data_reader::ptr imagenet_toolset::get_structured_reader(
 					training_min_image_size,
 					training_max_image_size,
 					training_target_image_width,
-					training_target_image_height));
+					training_target_image_height,
+					max_aspect_ratio_change));
 			}
 		}
 		else if (dataset_name == "validating")

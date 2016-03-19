@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ protected:
 	virtual std::vector<nnforge::bool_option> get_bool_options();
 
 	virtual std::vector<nnforge::int_option> get_int_options();
+
+	virtual std::vector<nnforge::float_option> get_float_options();
 
 	virtual std::vector<nnforge::data_transformer::ptr> get_data_transformer_list(
 		const std::string& dataset_name,
@@ -102,8 +104,6 @@ private:
 	static const float max_color_shift;
 
 	static const unsigned int class_count;
-	static const unsigned int training_min_image_size;
-	static const unsigned int training_max_image_size;
 	static const unsigned int training_target_image_width;
 	static const unsigned int training_target_image_height;
 	static const unsigned int validating_image_size;
@@ -111,6 +111,9 @@ private:
 	bool rich_inference;
 	int samples_x;
 	int samples_y;
+	int training_min_image_size;
+	int training_max_image_size;
+	float max_aspect_ratio_change;
 
 	static const unsigned int resnet10_blocks[4];
 };

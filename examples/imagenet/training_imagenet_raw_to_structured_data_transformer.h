@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ public:
 		unsigned int min_image_size,
 		unsigned int max_image_size,
 		unsigned int target_image_width,
-		unsigned int target_image_height);
+		unsigned int target_image_height,
+		float max_aspect_ratio_change);
 
 	virtual ~training_imagenet_raw_to_structured_data_transformer();
 
@@ -45,5 +46,6 @@ protected:
 
 	boost::mutex gen_mutex;
 	nnforge::random_generator gen;
-	nnforge_uniform_real_distribution<float> dist;
+	nnforge_uniform_real_distribution<float> dist_size;
+	nnforge_uniform_real_distribution<float> dist_log_aspect_ratio;
 };
