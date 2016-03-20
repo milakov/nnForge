@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,6 +39,10 @@ namespace nnforge
 		virtual ~structured_data_stream_writer();
 
 		virtual void write(const float * neurons);
+
+		virtual void write(
+			unsigned int entry_id,
+			const float * neurons);
 
 	private:
 		nnforge_shared_ptr<std::ostream> out_stream;

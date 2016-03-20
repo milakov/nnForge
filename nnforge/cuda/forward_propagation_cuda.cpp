@@ -230,7 +230,7 @@ namespace nnforge
 							std::map<std::string, const float *> data_map;
 							for(std::map<std::string, size_t>::const_iterator it = output_per_entry_host_data_name_to_size_map.begin(); it != output_per_entry_host_data_name_to_size_map.end(); ++it)
 								data_map.insert(std::make_pair(it->first, (float *)(*output_host_buffers[it->first]) + i * (it->second / sizeof(float) / output_layers_tiling_factor)));
-							writer.write(data_map);
+							writer.write(entry_processed_count + i, data_map);
 						}
 						POP_RANGE;
 					}

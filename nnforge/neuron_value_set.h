@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,6 +50,10 @@ namespace nnforge
 			const std::vector<std::pair<neuron_value_set::const_ptr, float> >& source_neuron_value_set_list);
 
 		void add_entry(const float * new_data);
+
+		void set_entry(
+			unsigned int entry_id,
+			const float * new_data);
 
 		nnforge_shared_ptr<std::vector<double> > get_average() const;
 

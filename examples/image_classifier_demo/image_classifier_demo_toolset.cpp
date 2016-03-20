@@ -548,7 +548,9 @@ void image_classifier_demo_toolset::set_config_map(const std::map<std::string, n
 {
 }
 
-void image_classifier_demo_toolset::write(const std::map<std::string, const float *>& data_map)
+void image_classifier_demo_toolset::write(
+	unsigned int entry_id,
+	const std::map<std::string, const float *>& data_map)
 {
 	boost::chrono::steady_clock::time_point new_last_write = boost::chrono::high_resolution_clock::now();
 	boost::chrono::duration<float> run_duration = new_last_write - last_write;

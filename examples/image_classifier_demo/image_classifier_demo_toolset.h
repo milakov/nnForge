@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -57,7 +57,9 @@ protected:
 
 	virtual void set_config_map(const std::map<std::string, nnforge::layer_configuration_specific> config_map);
 
-	virtual void write(const std::map<std::string, const float *>& data_map);
+	virtual void write(
+		unsigned int entry_id,
+		const std::map<std::string, const float *>& data_map);
 
 private:
 	void run_demo();

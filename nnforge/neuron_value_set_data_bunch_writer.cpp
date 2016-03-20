@@ -43,4 +43,12 @@ namespace nnforge
 		for(std::map<std::string, const float *>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
 			layer_name_to_config_and_value_set_map[it->first].second->add_entry(it->second);
 	}
+
+	void neuron_value_set_data_bunch_writer::write(
+		unsigned int entry_id,
+		const std::map<std::string, const float *>& data_map)
+	{
+		for(std::map<std::string, const float *>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
+			layer_name_to_config_and_value_set_map[it->first].second->set_entry(entry_id, it->second);
+	}
 }

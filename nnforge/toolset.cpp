@@ -617,7 +617,8 @@ namespace nnforge
 				{
 					structured_data_stream_writer dw(out, it->second.first);
 					const std::vector<nnforge_shared_ptr<std::vector<float> > >& data = it->second.second->neuron_value_list;
-					for(std::vector<nnforge_shared_ptr<std::vector<float> > >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+					unsigned int entry_id = 0;
+					for(std::vector<nnforge_shared_ptr<std::vector<float> > >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++entry_id)
 					{
 						const std::vector<float>& dd = **data_it;
 						dw.write(&dd[0]);

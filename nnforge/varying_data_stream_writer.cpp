@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "varying_data_stream_writer.h"
 
 #include "varying_data_stream_schema.h"
+#include "neural_network_exception.h"
 
 #include <boost/format.hpp>
 
@@ -45,6 +46,19 @@ namespace nnforge
 		out_stream->write(reinterpret_cast<const char*>(&entry_count), sizeof(entry_count));
 
 		out_stream->flush();
+	}
+
+ 	void varying_data_stream_writer::raw_write(
+		unsigned int entry_id,
+		const void * all_entry_data,
+		size_t data_length)
+	{
+		unsigned int entry_count = static_cast<unsigned int>(entry_offsets.size()) - 1;
+		if (entry_id != entry_count)
+			throw neural_network_exception((boost::format("varying_data_stream_writer cannot write entry %1% when %2% written already") % entry_id % entry_count).str());
+
+		out_stream->write(reinterpret_cast<const char*>(all_entry_data), data_length);
+		entry_offsets.push_back(entry_offsets.back() + data_length);
 	}
 
  	void varying_data_stream_writer::raw_write(

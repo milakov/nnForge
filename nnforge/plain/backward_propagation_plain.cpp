@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -460,7 +460,7 @@ namespace nnforge
 					std::map<std::string, const float *> data_map;
 					for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
 						data_map.insert(std::make_pair(*it, ((float *)(*dedicated_buffers[*it])) + entry_id * (dedicated_per_entry_data_name_to_size_map[*it] / sizeof(float) / output_layers_tiling_factor)));
-					writer.write(data_map);
+					writer.write(entry_processed_count + entry_id, data_map);
 				}
 
 				entry_processed_count += entry_read_count;

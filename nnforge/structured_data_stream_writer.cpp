@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,6 +51,17 @@ namespace nnforge
 
 	void structured_data_stream_writer::write(const float * neurons)
 	{
+		out_stream->write(reinterpret_cast<const char*>(neurons), sizeof(float) * neuron_count);
+		entry_count++;
+	}
+
+	void structured_data_stream_writer::write(
+		unsigned int entry_id,
+		const float * neurons)
+	{
+		if (entry_id != entry_count)
+			throw neural_network_exception((boost::format("structured_data_stream_writer cannot write entry %1% when %2% written already") % entry_id % entry_count).str());
+
 		out_stream->write(reinterpret_cast<const char*>(neurons), sizeof(float) * neuron_count);
 		entry_count++;
 	}
