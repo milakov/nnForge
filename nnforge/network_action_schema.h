@@ -123,7 +123,7 @@ namespace nnforge
 	private:
 		action_schema_graph::vertex_descriptor get_vertex_descriptor(const layer_name_with_action& layer_and_action) const;
 
-		std::vector<std::pair<action_schema_graph::vertex_descriptor, double> > get_vertex_with_distance_list(
+		std::vector<std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> > > get_vertex_with_start_and_duration_list(
 			const std::map<std::string, layer_configuration_specific>& layer_config_map,
 			const std::map<std::string, unsigned int>& tiling_factor_map) const;
 
@@ -136,7 +136,9 @@ namespace nnforge
 
 	private:
 
-		static bool compare_distances(const std::pair<action_schema_graph::vertex_descriptor, double>& t1, const std::pair<action_schema_graph::vertex_descriptor, double>& t2);
+		static bool compare_start_times(
+			const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t1,
+			const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t2);
 
 		template<class vertex>
 		struct record_all_edges : public boost::default_dfs_visitor

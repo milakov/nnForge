@@ -648,47 +648,53 @@ namespace nnforge
 		}
 	}
 
-	bool network_action_schema::compare_distances(const std::pair<action_schema_graph::vertex_descriptor, double>& t1, const std::pair<action_schema_graph::vertex_descriptor, double>& t2)
+	bool network_action_schema::compare_start_times(
+		const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t1,
+		const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t2)
 	{
-		return (t1.second < t2.second);
+		return (t1.second.first < t2.second.first);
 	}
 
-	std::vector<std::pair<network_action_schema::action_schema_graph::vertex_descriptor, double> > network_action_schema::get_vertex_with_distance_list(
+	std::vector<std::pair<network_action_schema::action_schema_graph::vertex_descriptor, std::pair<double, float> > > network_action_schema::get_vertex_with_start_and_duration_list(
 		const std::map<std::string, layer_configuration_specific>& layer_config_map,
 		const std::map<std::string, unsigned int>& tiling_factor_map) const
 	{
-		std::vector<std::pair<action_schema_graph::vertex_descriptor, double> > vertex_distance_list;
+		std::vector<std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> > > vertex_distance_list;
 		{
-			std::map<action_schema_graph::vertex_descriptor, double> distance_map; // Max distance to reach this node
+			std::map<action_schema_graph::vertex_descriptor, double> start_map; // Max distance to reach this node
+			std::map<action_schema_graph::vertex_descriptor, float> duration_map; // Run time for this node
 			std::list<action_schema_graph::vertex_descriptor> vertex_list;
 			boost::topological_sort(actions, std::back_inserter(vertex_list));
 			for(std::list<action_schema_graph::vertex_descriptor>::const_iterator it = vertex_list.begin(); it != vertex_list.end(); ++it)
 			{
-				double max_distance = 0.0;
+				double max_start_time = 0.0;
 				for(std::pair<action_schema_graph::out_edge_iterator, action_schema_graph::out_edge_iterator> edge_it = boost::out_edges(*it, actions); edge_it.first != edge_it.second; ++edge_it.first)
 				{
 					action_schema_graph::vertex_descriptor previous_vertex = boost::target(*edge_it.first, actions);
-					double current_distance = distance_map[previous_vertex];
-
-					float flops;
-					{
-						layer::const_ptr l = actions[previous_vertex].l;
-						std::vector<layer_configuration_specific> input_layer_configs;
-						for(std::vector<std::string>::const_iterator it = l->input_layer_instance_names.begin(); it != l->input_layer_instance_names.end(); ++it)
-							input_layer_configs.push_back(layer_config_map.find(*it)->second);
-						unsigned int tiling_factor = 1;
-						std::map<std::string, unsigned int>::const_iterator tiling_it = tiling_factor_map.find(l->instance_name);
-						if (tiling_it != tiling_factor_map.end())
-							tiling_factor = tiling_it->second;
-						flops = l->get_flops_per_entry(input_layer_configs, actions[previous_vertex].action) * tiling_factor;
-					}
-					current_distance += static_cast<double>(flops);
-					max_distance = std::max(max_distance, current_distance);
+					double current_start_time = start_map[previous_vertex];
+					float current_duration = duration_map[previous_vertex];
+					double current_distance = current_start_time + static_cast<double>(current_duration);
+					max_start_time = std::max(max_start_time, current_distance);
 				}
-				distance_map.insert(std::make_pair(*it, max_distance));
-				vertex_distance_list.push_back(std::make_pair(*it, max_distance));
+				start_map.insert(std::make_pair(*it, max_start_time));
+
+				float flops;
+				{
+					layer::const_ptr l = actions[*it].l;
+					std::vector<layer_configuration_specific> input_layer_configs;
+					for(std::vector<std::string>::const_iterator inp_it = l->input_layer_instance_names.begin(); inp_it != l->input_layer_instance_names.end(); ++inp_it)
+						input_layer_configs.push_back(layer_config_map.find(*inp_it)->second);
+					unsigned int tiling_factor = 1;
+					std::map<std::string, unsigned int>::const_iterator tiling_it = tiling_factor_map.find(l->instance_name);
+					if (tiling_it != tiling_factor_map.end())
+						tiling_factor = tiling_it->second;
+					flops = l->get_flops_per_entry(input_layer_configs, actions[*it].action) * tiling_factor;
+				}
+				duration_map.insert(std::make_pair(*it, flops));
+
+				vertex_distance_list.push_back(std::make_pair(*it, std::make_pair(max_start_time, flops)));
 			}
-			std::stable_sort(vertex_distance_list.begin(), vertex_distance_list.end(), compare_distances);
+			std::stable_sort(vertex_distance_list.begin(), vertex_distance_list.end(), compare_start_times);
 			// vertex_distance_list is now vertecices in execution order AND with non-decreasing distance to reach each of them
 		}
 
@@ -700,16 +706,16 @@ namespace nnforge
 		const std::map<std::string, unsigned int>& tiling_factor_map,
 		float saturation_flops)
 	{
-		std::vector<std::pair<action_schema_graph::vertex_descriptor, double> > vertex_distance_list = get_vertex_with_distance_list(layer_config_map, tiling_factor_map);
+		std::vector<std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> > > vertex_with_start_and_duration_list = get_vertex_with_start_and_duration_list(layer_config_map, tiling_factor_map);
 
-		for(std::vector<std::pair<action_schema_graph::vertex_descriptor, double> >::const_iterator it = vertex_distance_list.begin(); it != vertex_distance_list.end(); ++it)
+		for(std::vector<std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> > >::const_iterator it = vertex_with_start_and_duration_list.begin(); it != vertex_with_start_and_duration_list.end(); ++it)
 		{
-			std::vector<std::pair<action_schema_graph::vertex_descriptor, double> >::const_iterator candidate_it = it + 1;
-			double min_distance = it->second + static_cast<double>(saturation_flops);
-			while ((candidate_it != vertex_distance_list.end()) && (candidate_it->second < min_distance))
+			std::vector<std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> > >::const_iterator candidate_it = it + 1;
+			double min_start = it->second.first + static_cast<double>(it->second.second) + static_cast<double>(saturation_flops);
+			while ((candidate_it != vertex_with_start_and_duration_list.end()) && (candidate_it->second.first < min_start))
 				++candidate_it;
 
-			if (candidate_it == vertex_distance_list.end())
+			if (candidate_it == vertex_with_start_and_duration_list.end())
 				continue;
 
 			bool edge_addded = true;
@@ -725,7 +731,7 @@ namespace nnforge
 					boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
 
 				edge_addded = false;
-				while (candidate_it != vertex_distance_list.end())
+				while (candidate_it != vertex_with_start_and_duration_list.end())
 				{
 					if (dependent_vertices.find(candidate_it->first) == dependent_vertices.end())
 					{

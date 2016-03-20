@@ -25,7 +25,7 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		__global__ void hyperbolic_tangent_kernel(
+		__global__ void batch_norm_update_mean_invsigma_gradient_upd_kernel(
 			float * __restrict gradient_mean,
 			const float * __restrict target_mean,
 			const float * __restrict current_mean,
@@ -160,7 +160,7 @@ namespace nnforge
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
 					elem_count);
-				hyperbolic_tangent_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+				batch_norm_update_mean_invsigma_gradient_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					*gradient[2],
 					((const float *)*temporary_fixed_buffer),
 					*data[2],
