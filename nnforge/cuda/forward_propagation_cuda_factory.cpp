@@ -34,9 +34,10 @@ namespace nnforge
 		forward_propagation::ptr forward_propagation_cuda_factory::create(
 			const network_schema& schema,
 			const std::vector<std::string>& output_layer_names,
-			debug_state::ptr debug) const
+			debug_state::ptr debug,
+			profile_state::ptr profile) const
 		{
-			return forward_propagation::ptr(new forward_propagation_cuda(schema, output_layer_names, debug, cuda_config));
+			return forward_propagation::ptr(new forward_propagation_cuda(schema, output_layer_names, debug, profile, cuda_config));
 		}
 	}
 }

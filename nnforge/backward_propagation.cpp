@@ -17,6 +17,7 @@
 #include "backward_propagation.h"
 
 #include "neural_network_exception.h"
+#include "profile_util.h"
 
 #include <boost/format.hpp>
 #include <boost/chrono.hpp>
@@ -29,11 +30,13 @@ namespace nnforge
 		const std::vector<std::string>& output_layer_names,
 		const std::vector<std::string>& error_source_layer_names,
 		const std::vector<std::string>& exclude_data_update_layer_names,
-		debug_state::ptr debug)
+		debug_state::ptr debug,
+		profile_state::ptr profile)
 		: output_layer_names(output_layer_names)
 		, error_source_layer_names(error_source_layer_names)
 		, exclude_data_update_layer_names(exclude_data_update_layer_names)
 		, debug(debug)
+		, profile(profile)
 	{
 		if (error_source_layer_names.empty())
 			throw neural_network_exception("No error source layers specified for backward_propagation");
@@ -161,6 +164,8 @@ namespace nnforge
 
 	void backward_propagation::update_flops()
 	{
+		if (profile->is_profile())
+			action_flops_per_entry = action_schema->get_flops_per_action(layer_config_map, cumulative_tiling_factor_map);
 		flops = action_schema->get_flops(layer_config_map, cumulative_tiling_factor_map);
 	}
 
@@ -190,8 +195,8 @@ namespace nnforge
 		for(std::vector<std::string>::const_iterator it = output_layer_names.begin(); it != output_layer_names.end(); ++it)
 			output_config_map[*it] = layer_config_map[*it];
 		writer.set_config_map(output_config_map);
-		std::pair<unsigned int, std::map<std::string, std::vector<float> > > p;
-		p = actual_run(
+		std::map<layer_name_with_action, float> action_seconds;
+		actual_run(
 			narrow_reader ? *narrow_reader : reader,
 			writer,
 			data,
@@ -201,13 +206,36 @@ namespace nnforge
 			batch_size,
 			weight_decay,
 			momentum,
-			epoch_id);
+			epoch_id,
+			res.average_absolute_updates,
+			res.entry_processed_count,
+			action_seconds);
 		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
-		res.entry_processed_count = p.first;
-		res.average_absolute_updates = p.second;
 		res.total_seconds = sec.count();
 
+		if (profile->is_profile() && !action_seconds.empty())
+		{
+			std::map<std::string, std::string> layer_name_to_layer_type_map;
+			std::vector<layer::const_ptr> layer_list = schema->get_layers();
+			for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
+				layer_name_to_layer_type_map.insert(std::make_pair((*it)->instance_name, (*it)->get_type_name()));
+			profile_util::dump_layer_action_performance(
+				profile,
+				get_max_flops(),
+				"backward_prop",
+				res.entry_processed_count,
+				action_flops_per_entry,
+				action_seconds,
+				layer_name_to_layer_type_map,
+				res.total_seconds);
+		}
+
 		return res;
+	}
+
+	float backward_propagation::get_max_flops() const
+	{
+		throw neural_network_exception("get_max_flops not implemented");
 	}
 
 	std::ostream& operator<< (std::ostream& out, const backward_propagation::stat& val)

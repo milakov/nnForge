@@ -476,6 +476,12 @@
     <ClInclude Include="neuron_value_set_data_bunch_reader.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
+    <ClInclude Include="profile_state.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="profile_util.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -822,6 +828,12 @@
     </ClCompile>
     <ClCompile Include="neuron_value_set_data_bunch_reader.cpp">
       <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="profile_state.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="profile_util.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

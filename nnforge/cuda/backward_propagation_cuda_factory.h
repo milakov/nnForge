@@ -35,7 +35,8 @@ namespace nnforge
 				const std::vector<std::string>& output_layer_names,
 				const std::vector<std::string>& error_source_layer_names,
 				const std::vector<std::string>& exclude_data_update_layer_names,
-				debug_state::ptr debug) const;
+				debug_state::ptr debug,
+				profile_state::ptr profile) const;
 
 		protected:
 			cuda_running_configuration::const_ptr cuda_config;

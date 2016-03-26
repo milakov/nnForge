@@ -198,6 +198,7 @@ namespace nnforge
 		std::string normalizer_dataset_name;
 		int inference_ann_data_index;
 		bool debug_mode;
+		bool profile_mode;
 		std::vector<std::string> training_output_layer_names;
 		std::vector<std::string> training_error_source_layer_names;
 		std::vector<std::string> training_exclude_data_update_layer_names;
@@ -242,11 +243,13 @@ namespace nnforge
 		float check_gradient_relative_threshold_error;
 
 		debug_state::ptr debug;
+		profile_state::ptr profile;
 
 	protected:
 		static const char * logfile_name;
 		static const char * ann_subfolder_name;
 		static const char * debug_subfolder_name;
+		static const char * profile_subfolder_name;
 		static const char * trained_ann_index_extractor_pattern;
 		static const char * snapshot_ann_index_extractor_pattern;
 		static const char * ann_snapshot_subfolder_name;

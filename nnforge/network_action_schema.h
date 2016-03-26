@@ -78,6 +78,10 @@ namespace nnforge
 			const std::map<std::string, layer_configuration_specific>& layer_config_map,
 			const std::map<std::string, unsigned int>& tiling_factor_map) const;
 
+		std::map<layer_name_with_action, float> get_flops_per_action(
+			const std::map<std::string, layer_configuration_specific>& layer_config_map,
+			const std::map<std::string, unsigned int>& tiling_factor_map) const;
+
 		std::vector<layer_name_with_action> get_dependencies(const layer_name_with_action& action) const;
 
 		// The function returns all actions in the correct execution order

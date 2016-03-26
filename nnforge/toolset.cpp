@@ -47,6 +47,7 @@ namespace nnforge
 	const char * toolset::logfile_name = "log.txt";
 	const char * toolset::ann_subfolder_name = "trained_data";
 	const char * toolset::debug_subfolder_name = "debug";
+	const char * toolset::profile_subfolder_name = "profile";
 	const char * toolset::dump_data_subfolder_name = "dump_data";
 	const char * toolset::trained_ann_index_extractor_pattern = "^ann_trained_(\\d+)$";
 	const char * toolset::snapshot_ann_index_extractor_pattern = "^ann_trained_(\\d+)_epoch_(\\d+)$";
@@ -283,6 +284,7 @@ namespace nnforge
 		std::cout << "----------------------------------------" << std::endl;
 
 		debug = debug_state::ptr(new debug_state(debug_mode, get_working_data_folder() / debug_subfolder_name));
+		profile = profile_state::ptr(new profile_state(profile_mode, get_working_data_folder() / profile_subfolder_name));
 
 		master_factory->initialize();
 
@@ -357,6 +359,7 @@ namespace nnforge
 		std::vector<bool_option> res;
 
 		res.push_back(bool_option("debug_mode", &debug_mode, false, "Debug mode"));
+		res.push_back(bool_option("profile_mode", &profile_mode, false, "Profile mode"));
 		res.push_back(bool_option("resume_from_snapshot,R", &resume_from_snapshot, false, "Continue neural network training starting from saved snapshot"));
 		res.push_back(bool_option("dump_snapshot", &dump_snapshot, true, "Dump neural network data after each epoch"));
 		res.push_back(bool_option("dump_data_rgb", &dump_data_rgb, true, "Treat 3 feature map data layer as RGB"));
@@ -400,7 +403,7 @@ namespace nnforge
 		res.push_back(int_option("epoch_count_in_validating_dataset", &epoch_count_in_validating_dataset, 1, "Splitting validating dataset in multiple chunks, effectively the first chunk only will be used for inference"));
 		res.push_back(int_option("dump_compact_samples", &dump_compact_samples, 1, "Compact (average) results acrioss samples for inference of type dump_average_across_nets"));
 		res.push_back(int_option("shuffle_block_size", &shuffle_block_size, 0, "The size of contiguous blocks when shuffling training data, 0 indicates no shuffling"));
-		res.push_back(int_option("check_gradient_max_weights_per_set", &check_gradient_max_weights_per_set, 100, "The maximum amount of weights to check in the set"));
+		res.push_back(int_option("check_gradient_max_weights_per_set", &check_gradient_max_weights_per_set, 20, "The maximum amount of weights to check in the set"));
 
 		return res;
 	}
@@ -529,7 +532,7 @@ namespace nnforge
 		std::map<unsigned int, std::map<std::string, std::pair<layer_configuration_specific, std::vector<double> > > > res;
 
 		network_schema::ptr schema = get_schema(schema_usage_inference);
-		forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
+		forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug, profile);
 		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_inference, epoch_count_in_validating_dataset, 0);
 
 		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
@@ -761,7 +764,7 @@ namespace nnforge
 		if (is_training_with_validation())
 		{
 			res.push_back(network_data_pusher::ptr(new validate_progress_network_data_pusher(
-				forward_prop_factory->create(*schema, inference_output_layer_names, debug),
+				forward_prop_factory->create(*schema, inference_output_layer_names, debug, profile),
 				get_structured_data_bunch_reader(inference_dataset_name, dataset_usage_validate_when_train, epoch_count_in_validating_dataset, 0))));
 		}
 
@@ -929,7 +932,8 @@ namespace nnforge
 			training_output_layer_names,
 			training_error_source_layer_names,
 			training_exclude_data_update_layer_names,
-			debug);
+			debug,
+			profile);
 
 		if (training_algo == "sgd")
 		{
@@ -1154,7 +1158,7 @@ namespace nnforge
 
 			out << sample_id;
 			for(std::vector<float>::const_iterator it = dt.begin(); it != dt.end(); ++it)
-				out << "," << *it;
+				out << "\t" << *it;
 			out << std::endl;
 		}
 	}
@@ -1307,7 +1311,8 @@ namespace nnforge
 			training_error_source_layer_names,
 			training_error_source_layer_names,
 			std::vector<std::string>(),
-			debug);
+			debug,
+			profile);
 
 		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
 		if (ann_data_name_and_folderpath_list.empty())

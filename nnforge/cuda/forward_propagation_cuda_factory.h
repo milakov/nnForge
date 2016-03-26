@@ -33,7 +33,8 @@ namespace nnforge
 			virtual forward_propagation::ptr create(
 				const network_schema& schema,
 				const std::vector<std::string>& output_layer_names,
-				debug_state::ptr debug) const;
+				debug_state::ptr debug,
+				profile_state::ptr profile) const;
 
 		protected:
 			cuda_running_configuration::const_ptr cuda_config;

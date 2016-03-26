@@ -34,8 +34,9 @@ namespace nnforge
 			const std::vector<std::string>& error_source_layer_names,
 			const std::vector<std::string>& exclude_data_update_layer_names,
 			debug_state::ptr debug,
+			profile_state::ptr profile,
 			plain_running_configuration::const_ptr plain_config)
-			: backward_propagation(schema, output_layer_names, error_source_layer_names, exclude_data_update_layer_names, debug)
+			: backward_propagation(schema, output_layer_names, error_source_layer_names, exclude_data_update_layer_names, debug, profile)
 			, plain_config(plain_config)
 			, temporary_working_fixed_size(0)
 		{
@@ -89,7 +90,7 @@ namespace nnforge
 		{
 		}
 
-		std::pair<unsigned int, std::map<std::string, std::vector<float> > > backward_propagation_plain::actual_run(
+		void backward_propagation_plain::actual_run(
 			structured_data_bunch_reader& reader,
 			structured_data_bunch_writer& writer,
 			network_data& data,
@@ -99,7 +100,10 @@ namespace nnforge
 			unsigned int batch_size,
 			float weight_decay,
 			training_momentum momentum,
-			unsigned int epoch_id)
+			unsigned int epoch_id,
+			std::map<std::string, std::vector<float> >& average_absolute_updates,
+			unsigned int& entries_processed,
+			std::map<layer_name_with_action, float>& action_seconds)
 		{
 			std::map<std::string, std::vector<double> > updates_accumulated;
 			std::vector<std::string> data_layer_list = data.data_list.get_data_layer_name_list();
@@ -498,19 +502,19 @@ namespace nnforge
 				}
 			}
 
-			std::map<std::string, std::vector<float> > updates_accumulated_f;
+			average_absolute_updates.clear();
 			{
 				float mult = 1.0F / static_cast<float>(gradient_applied_count);
 				for(std::map<std::string, std::vector<double> >::const_iterator it = updates_accumulated.begin(); it != updates_accumulated.end(); ++it)
 				{
-					std::vector<float>& f = updates_accumulated_f.insert(std::make_pair(it->first, std::vector<float>())).first->second;
+					std::vector<float>& f = average_absolute_updates.insert(std::make_pair(it->first, std::vector<float>())).first->second;
 					layer_data::const_iterator it_data = data.data_list.find(it->first)->begin();
 					for(std::vector<double>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2, ++it_data)
 						f.push_back(static_cast<float>(*it2) * mult / static_cast<float>(it_data->size()));
 				}
 			}
-
-			return std::make_pair(entry_processed_count, updates_accumulated_f);
+			entries_processed = entry_processed_count;
+			action_seconds.clear();
 		}
 
 		void backward_propagation_plain::layer_config_map_modified()

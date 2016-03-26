@@ -40,8 +40,9 @@ namespace nnforge
 			const std::vector<std::string>& error_source_layer_names,
 			const std::vector<std::string>& exclude_data_update_layer_names,
 			debug_state::ptr debug,
+			profile_state::ptr profile,
 			cuda_running_configuration::const_ptr cuda_config)
-			: backward_propagation(schema, output_layer_names, error_source_layer_names, exclude_data_update_layer_names, debug)
+			: backward_propagation(schema, output_layer_names, error_source_layer_names, exclude_data_update_layer_names, debug, profile)
 			, cuda_config(cuda_config)
 		{
 			cuda_config->set_device();
@@ -86,7 +87,7 @@ namespace nnforge
 		{
 		}
 
-		std::pair<unsigned int, std::map<std::string, std::vector<float> > > backward_propagation_cuda::actual_run(
+		void backward_propagation_cuda::actual_run(
 			structured_data_bunch_reader& reader,
 			structured_data_bunch_writer& writer,
 			network_data& data,
@@ -96,7 +97,10 @@ namespace nnforge
 			unsigned int batch_size,
 			float weight_decay,
 			training_momentum momentum,
-			unsigned int epoch_id)
+			unsigned int epoch_id,
+			std::map<std::string, std::vector<float> >& average_absolute_updates,
+			unsigned int& entries_processed,
+			std::map<layer_name_with_action, float>& action_seconds)
 		{
 			cuda_config->set_device();
 
@@ -308,7 +312,7 @@ namespace nnforge
 								*copy_data_stream));
 						}
 						if (cuda_config->is_flush_required())
-							cuda_safe_call(cudaStreamQuery(*copy_data_stream));
+							cuda_relaxed_safe_call(cudaStreamQuery(*copy_data_stream));
 					}
 
 					unsigned int entry_read_count = 0;
@@ -374,7 +378,7 @@ namespace nnforge
 								*copy_data_stream));
 						}
 						if (cuda_config->is_flush_required())
-							cuda_safe_call(cudaStreamQuery(*copy_data_stream));
+							cuda_relaxed_safe_call(cudaStreamQuery(*copy_data_stream));
 					}
 
 					// Write output data
@@ -438,14 +442,14 @@ namespace nnforge
 			if (momentum.is_momentum_data2())
 				read_data(previous_upd2, momentum_data2->data_list);
 
-			std::pair<unsigned int, std::map<std::string, std::vector<float> > > res;
-			res.first = entry_processed_count;
-			res.second = read_update_accum(
+			entries_processed = entry_processed_count;
+			average_absolute_updates = read_update_accum(
 				update_accum_buffers,
 				net_data,
 				params.gradient_applied_count);
-
-			return res;
+			action_seconds.clear();
+			for(std::map<layer_name_with_action, double>::const_iterator it = params.action_seconds.begin(); it != params.action_seconds.end(); ++it)
+				action_seconds.insert(std::make_pair(it->first, static_cast<float>(it->second)));
 		}
 
 		void backward_propagation_cuda::run_kernels(run_kernels_params& params)
@@ -493,6 +497,8 @@ namespace nnforge
 						params.gradient_applied_count++;
 					}
 
+					std::set<layer_name_with_action> actions_profiled;
+
 					if (run_kernels_thread_entry_to_process_count == 0)
 					{
 						// Apply remaining gradients and then exit main loop
@@ -501,6 +507,14 @@ namespace nnforge
 							for(std::map<std::string, std::vector<cuda_linear_buffer_device::ptr> >::const_iterator it = params.update_accum_buffers.begin(); it != params.update_accum_buffers.end(); ++it)
 							{
 								const std::string& layer_name = it->first;
+								layer_name_with_action current_layer_name_with_action = layer_name_with_action(layer_name, layer_action(layer_action::update_weights));
+
+								if (profile->is_profile())
+								{
+									cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].first, *command_streams[output_data_ready_stream_set_id]));
+									actions_profiled.insert(current_layer_name_with_action);
+								}
+
 								enqueue_apply_gradient(
 									*command_streams[output_data_ready_stream_set_id],
 									layer_name,
@@ -514,6 +528,9 @@ namespace nnforge
 									params.weight_decay,
 									params.momentum,
 									params.base_iteration_count + params.gradient_applied_count);
+
+								if (profile->is_profile())
+									cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[layer_name_with_action(layer_name, layer_action(layer_action::update_weights))].second, *command_streams[output_data_ready_stream_set_id]));
 							}
 						}
 						break;
@@ -607,6 +624,12 @@ namespace nnforge
 											data_list.insert(data_list.end(), data_list_it->second.begin(), data_list_it->second.end());
 									}
 
+									if (profile->is_profile())
+									{
+										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].first, *current_stream));
+										actions_profiled.insert(current_layer_name_with_action);
+									}
+
 									updaters.find(layer_name)->second->enqueue_forward_propagation(
 										*current_stream,
 										output_buffer,
@@ -620,6 +643,9 @@ namespace nnforge
 										temporary_fixed_buffer,
 										temporary_per_entry_buffer,
 										run_kernels_thread_entry_to_process_count * tiling_factor);
+
+									if (profile->is_profile())
+										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].second, *current_stream));
 								}
 								break;
 							case layer_action::backward_data:
@@ -688,6 +714,12 @@ namespace nnforge
 											data_list.insert(data_list.end(), data_list_it->second.begin(), data_list_it->second.end());
 									}
 
+									if (profile->is_profile())
+									{
+										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].first, *current_stream));
+										actions_profiled.insert(current_layer_name_with_action);
+									}
+
 									updaters.find(layer_name)->second->enqueue_backward_data_propagation(
 										*current_stream,
 										action.get_backprop_index(),
@@ -705,6 +737,9 @@ namespace nnforge
 										temporary_per_entry_buffer,
 										add_output_actions.find(current_layer_name_with_action) != add_output_actions.end(),
 										run_kernels_thread_entry_to_process_count * tiling_factor);
+
+									if (profile->is_profile())
+										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].second, *current_stream));
 								}
 								break;
 							case layer_action::backward_data_and_weights:
@@ -773,6 +808,12 @@ namespace nnforge
 											data_list.insert(data_list.end(), data_list_it->second.begin(), data_list_it->second.end());
 									}
 
+									if (profile->is_profile())
+									{
+										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].first, *current_stream));
+										actions_profiled.insert(current_layer_name_with_action);
+									}
+
 									updaters.find(layer_name)->second->enqueue_backward_data_and_weights_propagation(
 										*current_stream,
 										output_buffers,
@@ -790,6 +831,9 @@ namespace nnforge
 										temporary_per_entry_buffer,
 										add_output_actions.find(current_layer_name_with_action) != add_output_actions.end(),
 										run_kernels_thread_entry_to_process_count * tiling_factor);
+
+									if (profile->is_profile())
+										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].second, *current_stream));
 								}
 								break;
 							case layer_action::backward_weights:
@@ -837,6 +881,12 @@ namespace nnforge
 											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second]];
 									}
 
+									if (profile->is_profile())
+									{
+										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].first, *current_stream));
+										actions_profiled.insert(current_layer_name_with_action);
+									}
+
 									updaters.find(layer_name)->second->enqueue_backward_weights_propagation(
 										*current_stream,
 										schema_data[layer_name],
@@ -850,11 +900,21 @@ namespace nnforge
 										temporary_fixed_buffer,
 										temporary_per_entry_buffer,
 										run_kernels_thread_entry_to_process_count * tiling_factor);
+
+									if (profile->is_profile())
+										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].second, *current_stream));
 								}
 								break;
 							case layer_action::update_weights:
 								{
 									if (apply_gradient)
+									{
+										if (profile->is_profile())
+										{
+											cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].first, *current_stream));
+											actions_profiled.insert(current_layer_name_with_action);
+										}
+
 										enqueue_apply_gradient(
 											*current_stream,
 											layer_name,
@@ -868,6 +928,10 @@ namespace nnforge
 											params.weight_decay,
 											params.momentum,
 											params.base_iteration_count + params.gradient_applied_count);
+
+										if (profile->is_profile())
+											cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].second, *current_stream));
+									}
 								}
 								break;
 							}
@@ -881,9 +945,7 @@ namespace nnforge
 						}
 
 						if (cuda_config->is_flush_required())
-							cuda_safe_call(cudaStreamQuery(*current_stream));
-
-						//cuda_safe_call(cudaDeviceSynchronize());
+							cuda_relaxed_safe_call(cudaStreamQuery(*current_stream));
 					}
 
 					// Wait for target data to be ready
@@ -893,6 +955,17 @@ namespace nnforge
 					// Wait for all kernels to finish
 					cudaStreamSynchronize(*command_streams[output_data_ready_stream_set_id]);
 		
+					if (profile->is_profile())
+					{
+						for(std::set<layer_name_with_action>::const_iterator it_pr = actions_profiled.begin(); it_pr != actions_profiled.end(); ++it_pr)
+						{
+							std::map<layer_name_with_action, std::pair<cuda_event::ptr, cuda_event::ptr> >::const_iterator it = start_stop_profiling_events.find(*it_pr);
+							float milliseconds;
+							cuda_safe_call(cudaEventElapsedTime(&milliseconds, *it->second.first, *it->second.second));
+							params.action_seconds.insert(std::make_pair(it->first, 0.0)).first->second += static_cast<double>(milliseconds * 0.001F);
+						}
+					}
+
 					// Notify caller thread that result is ready
 					{
 						boost::lock_guard<boost::mutex> lock(run_kernels_finished_mutex);
@@ -990,6 +1063,7 @@ namespace nnforge
 			action_output_data_ready_events.clear();
 			action_previous_events.clear();
 			output_data_ready_additional_events.clear();
+			start_stop_profiling_events.clear();
 
 			std::vector<std::vector<layer_name_with_action> > layer_stream_set = optimized_action_schema->get_action_stream_set();
 
@@ -1079,6 +1153,12 @@ namespace nnforge
 				else
 					previous_event = action_output_data_ready_events.insert(std::make_pair(*it, cuda_event::ptr(new cuda_event()))).first->second;
 				output_data_ready_additional_events.push_back(previous_event);
+			}
+
+			if (profile->is_profile())
+			{
+				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
+					start_stop_profiling_events.insert(std::make_pair(*it, std::make_pair(cuda_event::ptr(new cuda_event(true)), cuda_event::ptr(new cuda_event(true)))));
 			}
 		}
 
@@ -1822,6 +1902,11 @@ namespace nnforge
 					break;
 				}
 			}
+		}
+
+		float backward_propagation_cuda::get_max_flops() const
+		{
+			return cuda_config->get_flops();
 		}
 	}
 }

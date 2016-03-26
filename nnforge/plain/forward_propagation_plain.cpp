@@ -34,8 +34,9 @@ namespace nnforge
 			const network_schema& schema,
 			const std::vector<std::string>& output_layer_names,
 			debug_state::ptr debug,
+			profile_state::ptr profile,
 			plain_running_configuration::const_ptr plain_config)
-			: forward_propagation(schema, output_layer_names, debug)
+			: forward_propagation(schema, output_layer_names, debug, profile)
 			, plain_config(plain_config)
 			, max_entry_count(0)
 			, temporary_working_fixed_size(0)
@@ -85,9 +86,11 @@ namespace nnforge
 			net_data.reset();
 		}
 
-		unsigned int forward_propagation_plain::actual_run(
+		void forward_propagation_plain::actual_run(
 			structured_data_bunch_reader& reader,
-			structured_data_bunch_writer& writer)
+			structured_data_bunch_writer& writer,
+			unsigned int& entries_processed,
+			std::map<layer_name_with_action, float>& action_seconds)
 		{
 			unsigned int current_max_entry_count = max_entry_count;
 			int reader_entry_count = reader.get_entry_count();
@@ -193,7 +196,8 @@ namespace nnforge
 					break;
 			}
 
-			return entry_processed_count;
+			entries_processed = entry_processed_count;
+			action_seconds.clear();
 		}
 
 		void forward_propagation_plain::layer_config_map_modified()

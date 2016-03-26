@@ -20,6 +20,7 @@
 #include "nn_types.h"
 #include "network_schema.h"
 #include "debug_state.h"
+#include "profile_state.h"
 
 #include <vector>
 #include <string>
@@ -37,7 +38,8 @@ namespace nnforge
 		virtual forward_propagation::ptr create(
 			const network_schema& schema,
 			const std::vector<std::string>& output_layer_names,
-			debug_state::ptr debug) const = 0;
+			debug_state::ptr debug,
+			profile_state::ptr profile) const = 0;
 
 	protected:
 		forward_propagation_factory();

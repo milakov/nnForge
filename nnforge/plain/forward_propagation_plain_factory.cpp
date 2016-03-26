@@ -34,9 +34,10 @@ namespace nnforge
 		forward_propagation::ptr forward_propagation_plain_factory::create(
 			const network_schema& schema,
 			const std::vector<std::string>& output_layer_names,
-			debug_state::ptr debug) const
+			debug_state::ptr debug,
+			profile_state::ptr profile) const
 		{
-			return forward_propagation::ptr(new forward_propagation_plain(schema, output_layer_names, debug, plain_config));
+			return forward_propagation::ptr(new forward_propagation_plain(schema, output_layer_names, debug, profile, plain_config));
 		}
 	}
 }

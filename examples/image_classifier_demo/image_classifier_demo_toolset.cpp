@@ -180,7 +180,7 @@ void image_classifier_demo_toolset::run_classifier_loop()
 	try
 	{
 		nnforge::network_schema::ptr schema = load_schema();
-		nnforge::forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug);
+		nnforge::forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, inference_output_layer_names, debug, profile);
 		{
 			nnforge::network_data data;
 			boost::filesystem::path data_path = get_working_data_folder() / ann_subfolder_name / (boost::format("ann_trained_%|1$03d|") % 0).str();

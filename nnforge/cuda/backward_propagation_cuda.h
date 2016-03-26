@@ -38,14 +38,15 @@ namespace nnforge
 				const std::vector<std::string>& error_source_layer_names,
 				const std::vector<std::string>& exclude_data_update_layer_names,
 				debug_state::ptr debug,
+				profile_state::ptr profile,
 				cuda_running_configuration::const_ptr cuda_config);
 
 			virtual ~backward_propagation_cuda();
 
 		protected:
 			// schema, network data and data are guaranteed to be compatible
-			// The function should return the number of entries processed and average absolute updates
-			virtual std::pair<unsigned int, std::map<std::string, std::vector<float> > > actual_run(
+			// The function should set average absolute updates, the number of entries processed, and optionally time it takes to run each action
+			virtual void actual_run(
 				structured_data_bunch_reader& reader,
 				structured_data_bunch_writer& writer,
 				network_data& data,
@@ -55,11 +56,16 @@ namespace nnforge
 				unsigned int batch_size,
 				float weight_decay,
 				training_momentum momentum,
-				unsigned int epoch_id);
+				unsigned int epoch_id,
+				std::map<std::string, std::vector<float> >& average_absolute_updates,
+				unsigned int& entries_processed,
+				std::map<layer_name_with_action, float>& action_seconds);
 
 			// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 			// The layer_config_map is guaranteed to be compatible with schema
 			virtual void layer_config_map_modified();
+
+			virtual float get_max_flops() const;
 
 		private:
 			void setup_network_cuda();
@@ -140,6 +146,8 @@ namespace nnforge
 				unsigned int max_chunk_size;
 				unsigned int base_iteration_count;
 
+				std::map<layer_name_with_action, double> action_seconds;
+
 				unsigned int gradient_applied_count;
 
 				std::string error_message;
@@ -190,6 +198,7 @@ namespace nnforge
 
 			network_action_schema::const_ptr optimized_action_schema;
 			std::vector<layer_name_with_action> actions_in_execution_order;
+			std::map<layer_name_with_action, std::pair<cuda_event::ptr, cuda_event::ptr> > start_stop_profiling_events;
 			std::map<std::string, layer_name_with_action> input_to_random_output_map;
 
 			std::map<std::string, layer_updater_schema::const_ptr> updater_schemas;

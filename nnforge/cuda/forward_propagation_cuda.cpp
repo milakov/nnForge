@@ -37,8 +37,9 @@ namespace nnforge
 			const network_schema& schema,
 			const std::vector<std::string>& output_layer_names,
 			debug_state::ptr debug,
+			profile_state::ptr profile,
 			cuda_running_configuration::const_ptr cuda_config)
-			: forward_propagation(schema, output_layer_names, debug)
+			: forward_propagation(schema, output_layer_names, debug, profile)
 			, cuda_config(cuda_config)
 			, max_entry_count(0)
 		{
@@ -65,9 +66,11 @@ namespace nnforge
 		{
 		}
 
-		unsigned int forward_propagation_cuda::actual_run(
+		void forward_propagation_cuda::actual_run(
 			structured_data_bunch_reader& reader,
-			structured_data_bunch_writer& writer)
+			structured_data_bunch_writer& writer,
+			unsigned int& entries_processed,
+			std::map<layer_name_with_action, float>& action_seconds)
 		{
 			cuda_config->set_device();
 
@@ -152,7 +155,7 @@ namespace nnforge
 								*copy_data_stream));
 						}
 						if (cuda_config->is_flush_required())
-							cuda_safe_call(cudaStreamQuery(*copy_data_stream));
+							cuda_relaxed_safe_call(cudaStreamQuery(*copy_data_stream));
 					}
 
 					unsigned int entry_read_count = 0;
@@ -218,7 +221,7 @@ namespace nnforge
 								*copy_data_stream));
 						}
 						if (cuda_config->is_flush_required())
-							cuda_safe_call(cudaStreamQuery(*copy_data_stream));
+							cuda_relaxed_safe_call(cudaStreamQuery(*copy_data_stream));
 					}
 
 					// Write output data
@@ -274,7 +277,11 @@ namespace nnforge
 			if (!params.error_message.empty())
 				throw neural_network_exception(params.error_message);
 
-			return entry_processed_count;
+			entries_processed = entry_processed_count;
+
+			action_seconds.clear();
+			for(std::map<layer_name_with_action, double>::const_iterator it = params.action_seconds.begin(); it != params.action_seconds.end(); ++it)
+				action_seconds.insert(std::make_pair(it->first, static_cast<float>(it->second)));
 		}
 
 		void forward_propagation_cuda::read_input_data_static(read_entry_info * params)
@@ -328,6 +335,7 @@ namespace nnforge
 					if (run_kernels_thread_entry_to_process_count == 0)
 						break;
 
+					std::set<layer_name_with_action> actions_profiled;
 					for(std::vector<layer_name_with_action>::const_iterator action_it = actions_in_execution_order.begin(); action_it  != actions_in_execution_order.end(); ++action_it)
 					{
 						const layer_name_with_action& current_layer_name_with_action = *action_it;
@@ -397,6 +405,12 @@ namespace nnforge
 									data_custom_list = data_custom_list_it->second;
 							}
 
+							if (profile->is_profile())
+							{
+								cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].first, *current_stream));
+								actions_profiled.insert(current_layer_name_with_action);
+							}
+
 							testers.find(layer_name)->second->enqueue_forward_propagation(
 								*current_stream,
 								output_buffer,
@@ -408,6 +422,9 @@ namespace nnforge
 								temporary_working_fixed_buffer,
 								temporary_working_per_entry_buffer,
 								run_kernels_thread_entry_to_process_count * cumulative_tiling_factor_map[layer_name]);
+
+							if (profile->is_profile())
+								cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].second, *current_stream));
 						}
 
 						// Enqeue event
@@ -418,14 +435,27 @@ namespace nnforge
 						}
 
 						if (cuda_config->is_flush_required())
-							cuda_safe_call(cudaStreamQuery(*current_stream));
+							cuda_relaxed_safe_call(cudaStreamQuery(*current_stream));
 					}
 
 					// Wait for output data to be ready
 					for(std::vector<cuda_event::ptr>::const_iterator event_it = output_data_ready_additional_events.begin(); event_it != output_data_ready_additional_events.end(); ++event_it)
 						cuda_safe_call(cudaStreamWaitEvent(*command_streams[output_data_ready_stream_set_id], **event_it, 0));
+
+					// Wait for all kernels to finish
 					cudaStreamSynchronize(*command_streams[output_data_ready_stream_set_id]);
 		
+					if (profile->is_profile())
+					{
+						for(std::set<layer_name_with_action>::const_iterator it_pr = actions_profiled.begin(); it_pr != actions_profiled.end(); ++it_pr)
+						{
+							std::map<layer_name_with_action, std::pair<cuda_event::ptr, cuda_event::ptr> >::const_iterator it = start_stop_profiling_events.find(*it_pr);
+							float milliseconds;
+							cuda_safe_call(cudaEventElapsedTime(&milliseconds, *it->second.first, *it->second.second));
+							params.action_seconds.insert(std::make_pair(it->first, 0.0)).first->second += static_cast<double>(milliseconds * 0.001F);
+						}
+					}
+
 					// Notify caller thread that result is ready
 					{
 						boost::lock_guard<boost::mutex> lock(run_kernels_finished_mutex);
@@ -470,6 +500,7 @@ namespace nnforge
 			action_output_data_ready_events.clear();
 			action_previous_events.clear();
 			output_data_ready_additional_events.clear();
+			start_stop_profiling_events.clear();
 
 			std::vector<std::vector<layer_name_with_action> > layer_stream_set = optimized_action_schema->get_action_stream_set();
 
@@ -550,6 +581,12 @@ namespace nnforge
 				else
 					previous_event = action_output_data_ready_events.insert(std::make_pair(layer_name_with_action(*it, layer_action::forward), cuda_event::ptr(new cuda_event()))).first->second;
 				output_data_ready_additional_events.push_back(previous_event);
+			}
+
+			if (profile->is_profile())
+			{
+				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
+					start_stop_profiling_events.insert(std::make_pair(*it, std::make_pair(cuda_event::ptr(new cuda_event(true)), cuda_event::ptr(new cuda_event(true)))));
 			}
 		}
 
@@ -939,6 +976,11 @@ namespace nnforge
 					debug_str << ", will be capped by " << max_max_entry_count;
 				debug->output_message(debug_str.str().c_str());
 			}
+		}
+
+		float forward_propagation_cuda::get_max_flops() const
+		{
+			return cuda_config->get_flops();
 		}
 	}
 }

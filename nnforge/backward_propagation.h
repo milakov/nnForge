@@ -24,6 +24,7 @@
 #include "structured_data_bunch_writer.h"
 #include "neuron_value_set.h"
 #include "debug_state.h"
+#include "profile_state.h"
 #include "training_momentum.h"
 #include "network_action_schema.h"
 
@@ -41,8 +42,8 @@ namespace nnforge
 		class stat
 		{
 		public:
-			float flops_per_entry;
 			unsigned int entry_processed_count;
+			float flops_per_entry;
 			float total_seconds;
 			std::map<std::string, std::vector<float> > average_absolute_updates;
 		};
@@ -73,11 +74,12 @@ namespace nnforge
 			const std::vector<std::string>& output_layer_names,
 			const std::vector<std::string>& error_source_layer_names,
 			const std::vector<std::string>& exclude_data_update_layer_names,
-			debug_state::ptr debug);
+			debug_state::ptr debug,
+			profile_state::ptr profile);
 
 		// schema, network data and data are guaranteed to be compatible
-		// The function should return the number of entries processed and average absolute updates
-		virtual std::pair<unsigned int, std::map<std::string, std::vector<float> > > actual_run(
+		// The function should set average absolute updates, the number of entries processed, and optionally time it takes to run each action
+		virtual void actual_run(
 			structured_data_bunch_reader& reader,
 			structured_data_bunch_writer& writer,
 			network_data& data,
@@ -87,11 +89,16 @@ namespace nnforge
 			unsigned int batch_size,
 			float weight_decay,
 			training_momentum momentum,
-			unsigned int epoch_id) = 0;
+			unsigned int epoch_id,
+			std::map<std::string, std::vector<float> >& average_absolute_updates,
+			unsigned int& entries_processed,
+			std::map<layer_name_with_action, float>& action_seconds) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 		// The layer_config_map is guaranteed to be compatible with schema
 		virtual void layer_config_map_modified() = 0;
+
+		virtual float get_max_flops() const;
 
 	protected:
 		network_schema::const_ptr schema;
@@ -102,9 +109,11 @@ namespace nnforge
 		std::vector<std::string> error_source_layer_names;
 		std::vector<std::string> exclude_data_update_layer_names;
 		debug_state::ptr debug;
+		profile_state::ptr profile;
 		std::map<std::string, layer_configuration_specific> layer_config_map;
 		std::map<std::string, unsigned int> cumulative_tiling_factor_map; // multiplier for the layer output
 		unsigned int output_layers_tiling_factor;
+		std::map<layer_name_with_action, float> action_flops_per_entry;
 		float flops;
 		std::set<std::string> data_layer_names;
 

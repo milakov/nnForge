@@ -35,4 +35,5 @@ namespace nnforge
 	}
 }
 
-#define cuda_safe_call(callstr) {cudaError_t error_code = callstr; if ((error_code != cudaSuccess) && (error_code != cudaErrorNotReady)) throw nnforge::cuda::neural_network_cuda_exception(error_code, __FILE__, __LINE__);}
+#define cuda_relaxed_safe_call(callstr) {cudaError_t error_code = callstr; if ((error_code != cudaSuccess) && (error_code != cudaErrorNotReady)) throw nnforge::cuda::neural_network_cuda_exception(error_code, __FILE__, __LINE__);}
+#define cuda_safe_call(callstr) {cudaError_t error_code = callstr; if (error_code != cudaSuccess) throw nnforge::cuda::neural_network_cuda_exception(error_code, __FILE__, __LINE__);}

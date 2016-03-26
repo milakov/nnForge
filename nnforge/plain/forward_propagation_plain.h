@@ -33,6 +33,7 @@ namespace nnforge
 				const network_schema& schema,
 				const std::vector<std::string>& output_layer_names,
 				debug_state::ptr debug,
+				profile_state::ptr profile,
 				plain_running_configuration::const_ptr plain_config);
 
 			virtual ~forward_propagation_plain();
@@ -44,9 +45,11 @@ namespace nnforge
 			virtual void actual_clear_data();
 
 			// schema, network data and data are guaranteed to be compatible
-			virtual unsigned int actual_run(
+			virtual void actual_run(
 				structured_data_bunch_reader& reader,
-				structured_data_bunch_writer& writer);
+				structured_data_bunch_writer& writer,
+				unsigned int& entries_processed,
+				std::map<layer_name_with_action, float>& action_seconds);
 
 			// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 			// The layer_config_map is guaranteed to be compatible with schema

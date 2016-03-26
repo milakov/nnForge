@@ -36,7 +36,8 @@ namespace nnforge
 			const std::vector<std::string>& output_layer_names,
 			const std::vector<std::string>& error_source_layer_names,
 			const std::vector<std::string>& exclude_data_update_layer_names,
-			debug_state::ptr debug) const
+			debug_state::ptr debug,
+			profile_state::ptr profile) const
 		{
 			return backward_propagation::ptr(new backward_propagation_plain(
 				schema,
@@ -44,6 +45,7 @@ namespace nnforge
 				error_source_layer_names,
 				exclude_data_update_layer_names,
 				debug,
+				profile,
 				plain_config));
 		}
 	}

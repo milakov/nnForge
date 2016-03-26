@@ -118,11 +118,11 @@ namespace nnforge
 		return it->second;
 	}
 
-	float network_action_schema::get_flops(
+	std::map<layer_name_with_action, float> network_action_schema::get_flops_per_action(
 		const std::map<std::string, layer_configuration_specific>& layer_config_map,
 		const std::map<std::string, unsigned int>& tiling_factor_map) const
 	{
-		float flops = 0.0F;
+		std::map<layer_name_with_action, float> res;
 		for(std::pair<action_schema_graph::vertex_iterator, action_schema_graph::vertex_iterator> vp = boost::vertices(actions); vp.first != vp.second; ++vp.first)
 		{
 			layer::const_ptr l = actions[*vp.first].l;
@@ -134,9 +134,20 @@ namespace nnforge
 			std::map<std::string, unsigned int>::const_iterator tiling_it = tiling_factor_map.find(l->instance_name);
 			if (tiling_it != tiling_factor_map.end())
 				tiling_factor = tiling_it->second;
-			flops += l->get_flops_per_entry(input_layer_configs, action) * tiling_factor;
+			res.insert(std::make_pair(layer_name_with_action(l->instance_name, action), l->get_flops_per_entry(input_layer_configs, action) * tiling_factor));
 		}
-		return flops;
+		return res;
+	}
+
+	float network_action_schema::get_flops(
+		const std::map<std::string, layer_configuration_specific>& layer_config_map,
+		const std::map<std::string, unsigned int>& tiling_factor_map) const
+	{
+		double flops = 0.0;
+		std::map<layer_name_with_action, float> flops_per_action = get_flops_per_action(layer_config_map, tiling_factor_map);
+		for(std::map<layer_name_with_action, float>::const_iterator it = flops_per_action.begin(); it != flops_per_action.end(); ++it)
+			flops += static_cast<double>(it->second);
+		return static_cast<float>(flops);
 	}
 
 	std::vector<layer_name_with_action> network_action_schema::get_actions_in_execution_order() const

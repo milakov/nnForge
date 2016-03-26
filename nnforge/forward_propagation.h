@@ -24,7 +24,9 @@
 #include "structured_data_bunch_writer.h"
 #include "neuron_value_set.h"
 #include "debug_state.h"
+#include "profile_state.h"
 #include "network_action_schema.h"
+#include "layer_name_with_action.h"
 
 #include <vector>
 #include <string>
@@ -40,8 +42,8 @@ namespace nnforge
 		class stat
 		{
 		public:
-			float flops_per_entry;
 			unsigned int entry_processed_count;
+			float flops_per_entry;
 			float total_seconds;
 		};
 
@@ -67,7 +69,8 @@ namespace nnforge
 		forward_propagation(
 			const network_schema& schema,
 			const std::vector<std::string>& output_layer_names,
-			debug_state::ptr debug);
+			debug_state::ptr debug,
+			profile_state::ptr profile);
 
 		// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
 		virtual void actual_set_data(network_data::const_ptr data) = 0;
@@ -75,23 +78,29 @@ namespace nnforge
 		virtual void actual_clear_data() = 0;
 
 		// schema, network data and data are guaranteed to be compatible
-		// The function should return the number of entries processed
-		virtual unsigned int actual_run(
+		// The function should set the number of entries processed and optionally time it takes to run each action
+		virtual void actual_run(
 			structured_data_bunch_reader& reader,
-			structured_data_bunch_writer& writer) = 0;
+			structured_data_bunch_writer& writer,
+			unsigned int& entries_processed,
+			std::map<layer_name_with_action, float>& action_seconds) = 0;
 
 		// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 		// The layer_config_map is guaranteed to be compatible with schema
 		virtual void layer_config_map_modified() = 0;
+
+		virtual float get_max_flops() const;
 
 	protected:
 		network_schema::const_ptr schema;
 		network_action_schema::ptr action_schema;
 		std::vector<std::string> output_layer_names;
 		debug_state::ptr debug;
+		profile_state::ptr profile;
 		std::map<std::string, layer_configuration_specific> layer_config_map;
 		std::map<std::string, unsigned int> cumulative_tiling_factor_map; // multiplier for the layer output
 		unsigned int output_layers_tiling_factor;
+		std::map<layer_name_with_action, float> action_flops_per_entry;
 		float flops;
 		std::set<std::string> data_layer_names;
 

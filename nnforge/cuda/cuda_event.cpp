@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		cuda_event::cuda_event()
+		cuda_event::cuda_event(bool with_timing)
 			: event(0)
 		{
-			cuda_safe_call(cudaEventCreateWithFlags(&event, cudaEventDisableTiming));
+			cuda_safe_call(cudaEventCreateWithFlags(&event, with_timing ? 0 : cudaEventDisableTiming));
 		}
 
 		cuda_event::~cuda_event()
