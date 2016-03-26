@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 #include "cuda_texture.h"
 #include "neural_network_cuda_exception.h"
 #include "neural_network_cudnn_exception.h"
+#include "int_fastdiv.h"
 
 #include "../sparse_convolution_layer.h"
 #include "../nn_types.h"
@@ -56,18 +57,17 @@ namespace nnforge
 		};
 
 		template<int DIMENSION_COUNT, int WINDOW_WIDTH, int WINDOW_HEIGHT>
-		__launch_bounds__(256, 4)
-		__global__ void sparse_convolution_tex_exact_blocked_upd_kernel_kepler(
+		__global__ void sparse_convolution_exact_blocked_upd_kernel(
 			float * __restrict output,
-			cudaTextureObject_t input_tex,
+			const float * __restrict input,
 			const float * __restrict weights,
 			const int * __restrict column_indices,
 			const int * __restrict row_ptrs,
 			const float * __restrict biases,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int, DIMENSION_COUNT> output_block_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> output_block_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
-			array_by_val<int, DIMENSION_COUNT> window_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> window_sizes,
 			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
 			int input_feature_map_count,
 			int output_feature_map_count,
@@ -77,15 +77,13 @@ namespace nnforge
 			int weight_count_per_block,
 			unsigned int dummy)
 		{
-			int neuron_output_feature_map_pair_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int output_feature_map_id = neuron_output_feature_map_pair_id / block_count_per_feature_map;
-			int entry_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int output_feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-			bool in_bounds = (entry_id < entry_count) && (output_feature_map_id < output_feature_map_count);
+			bool in_bounds = (entry_id < entry_count) && (output_feature_map_id < output_feature_map_count) && (neuron_id < block_count_per_feature_map);
 			if (in_bounds)
 			{
-				int neuron_id = neuron_output_feature_map_pair_id - block_count_per_feature_map * output_feature_map_id;
-
 				int xyzw_output[DIMENSION_COUNT];
 				int remainder = neuron_id;
 				#pragma unroll
@@ -175,7 +173,7 @@ namespace nnforge
 									int pos_total = input_yy * (WINDOW_WIDTH + BLOCK_WIDTH - 1) + input_xx;
 									bool b_fit0 = b_fit2 && ((valid_positions[pos_total / 32] & (1U << (pos_total & 31))) != 0);
 									int current_offset = input_elem_id + input_yy * input_sizes[0] + input_xx;
-									input_local_buf[input_yy][input_xx] = tex1Dfetch<float>(input_tex, b_fit0 ? current_offset : -1);
+									input_local_buf[input_yy][input_xx] = b_fit0 ? __load_nc(input + current_offset) : 0.0F;
 								}
 							}
 
@@ -235,18 +233,17 @@ namespace nnforge
 		}
 
 		template<int DIMENSION_COUNT>
-		__launch_bounds__(256, 4)
-		__global__ void sparse_convolution_tex_generic_blocked_upd_kernel_kepler(
+		__global__ void sparse_convolution_generic_blocked_upd_kernel(
 			float * __restrict output,
-			cudaTextureObject_t input_tex,
+			const float * __restrict input,
 			const float * __restrict weights,
 			const int * __restrict column_indices,
 			const int * __restrict row_ptrs,
 			const float * __restrict biases,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int, DIMENSION_COUNT> output_block_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> output_block_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
-			array_by_val<int, DIMENSION_COUNT> window_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> window_sizes,
 			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
 			int input_feature_map_count,
 			int output_feature_map_count,
@@ -255,15 +252,13 @@ namespace nnforge
 			int block_count_per_feature_map,
 			int weight_count_per_block)
 		{
-			int neuron_output_feature_map_pair_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int output_feature_map_id = neuron_output_feature_map_pair_id / block_count_per_feature_map;
-			int entry_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int output_feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-			bool in_bounds = (entry_id < entry_count) && (output_feature_map_id < output_feature_map_count);
+			bool in_bounds = (entry_id < entry_count) && (output_feature_map_id < output_feature_map_count) && (neuron_id < block_count_per_feature_map);
 			if (in_bounds)
 			{
-				int neuron_id = neuron_output_feature_map_pair_id - block_count_per_feature_map * output_feature_map_id;
-
 				int xyzw_output[DIMENSION_COUNT];
 				int remainder = neuron_id;
 				#pragma unroll
@@ -333,7 +328,7 @@ namespace nnforge
 										{
 											bool b_fit0 = (b_fit1 && ((unsigned int)(xyzw[0] + input_xx + pos_x) < (unsigned int)input_sizes[0]));
 											int current_offset = input_elem_id + (input_yy + pos_y) * input_sizes[0] + input_xx + pos_x;
-											float input_val = tex1Dfetch<float>(input_tex, b_fit0 ? current_offset : -1);
+											float input_val = b_fit0 ? __load_nc(input + current_offset) : 0.0F;
 											sums[pos_y][pos_x] += weight * input_val;
 										}
 									}
@@ -375,17 +370,16 @@ namespace nnforge
 		}
 
 		template<int DIMENSION_COUNT, int WINDOW_WIDTH, int WINDOW_HEIGHT>
-		__launch_bounds__(256, 4)
-		__global__ void sparse_convolution_backprop_tex_exact_blocked_upd_kernel_kepler(
+		__global__ void sparse_convolution_backprop_exact_blocked_upd_kernel(
 			float * __restrict input,
-			cudaTextureObject_t output_tex,
+			const float * __restrict output_errors,
 			const float * __restrict weights,
 			const row_index_weight_block_id_pair * __restrict row_index_weight_block_id_pairs,
 			const int * __restrict col_ptrs,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
-			array_by_val<int, DIMENSION_COUNT> input_block_sizes,
-			array_by_val<int, DIMENSION_COUNT> window_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> input_block_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> window_sizes,
 			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
 			int input_feature_map_count,
 			int output_feature_map_count,
@@ -395,15 +389,13 @@ namespace nnforge
 			int weight_count_per_block,
 			unsigned int dummy)
 		{
-			int neuron_input_feature_map_pair_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int input_feature_map_id = neuron_input_feature_map_pair_id / block_count_per_feature_map;
-			int entry_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int input_feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-			bool in_bounds = (entry_id < entry_count) && (input_feature_map_id < input_feature_map_count);
+			bool in_bounds = (entry_id < entry_count) && (input_feature_map_id < input_feature_map_count) && (neuron_id < block_count_per_feature_map);
 			if (in_bounds)
 			{
-				int neuron_id = neuron_input_feature_map_pair_id - block_count_per_feature_map * input_feature_map_id;
-
 				int xyzw_input[DIMENSION_COUNT];
 				int remainder = neuron_id;
 				#pragma unroll
@@ -492,7 +484,7 @@ namespace nnforge
 									int pos_total = output_yy * (WINDOW_WIDTH + BLOCK_WIDTH - 1) + output_xx;
 									bool b_fit0 = b_fit2 && ((valid_positions[pos_total / 32] & (1U << (pos_total & 31))) != 0);
 									int current_offset = output_elem_id + output_yy * output_sizes[0] + output_xx;
-									output_local_buf[output_yy][output_xx] = tex1Dfetch<float>(output_tex, b_fit0 ? current_offset : -1);
+									output_local_buf[output_yy][output_xx] = b_fit0 ? __load_nc(output_errors + current_offset) : 0.0F;
 								}
 							}
 
@@ -552,17 +544,16 @@ namespace nnforge
 		}
 
 		template<int DIMENSION_COUNT>
-		__launch_bounds__(256, 4)
-		__global__ void sparse_convolution_backprop_tex_generic_blocked_upd_kernel_kepler(
+		__global__ void sparse_convolution_backprop_generic_blocked_upd_kernel(
 			float * __restrict input,
-			cudaTextureObject_t output_tex,
+			const float * __restrict output_errors,
 			const float * __restrict weights,
 			const row_index_weight_block_id_pair * __restrict row_index_weight_block_id_pairs,
 			const int * __restrict col_ptrs,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
-			array_by_val<int, DIMENSION_COUNT> input_block_sizes,
-			array_by_val<int, DIMENSION_COUNT> window_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> input_block_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> window_sizes,
 			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
 			int input_feature_map_count,
 			int output_feature_map_count,
@@ -571,15 +562,13 @@ namespace nnforge
 			int block_count_per_feature_map,
 			int weight_count_per_block)
 		{
-			int neuron_input_feature_map_pair_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int input_feature_map_id = neuron_input_feature_map_pair_id / block_count_per_feature_map;
-			int entry_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int input_feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
 
-			bool in_bounds = (entry_id < entry_count) && (input_feature_map_id < input_feature_map_count);
+			bool in_bounds = (entry_id < entry_count) && (input_feature_map_id < input_feature_map_count) && (neuron_id < block_count_per_feature_map);
 			if (in_bounds)
 			{
-				int neuron_id = neuron_input_feature_map_pair_id - block_count_per_feature_map * input_feature_map_id;
-
 				int xyzw_input[DIMENSION_COUNT];
 				int remainder = neuron_id;
 				#pragma unroll
@@ -648,7 +637,7 @@ namespace nnforge
 										{
 											bool b_fit0 = (b_fit1 && ((unsigned int)(xyzw[0] + output_xx + pos_x) < (unsigned int)output_sizes[0]));
 											int current_offset = output_elem_id + (output_yy + pos_y) * output_sizes[0] + output_xx + pos_x;
-											float output_val = tex1Dfetch<float>(output_tex, b_fit0 ? current_offset : -1);
+											float output_val = b_fit0 ? __load_nc(output_errors + current_offset) : 0.0F;
 											sums[pos_y][pos_x] += weight * output_val;
 										}
 									}
@@ -690,23 +679,22 @@ namespace nnforge
 		}
 
 		template<int DIMENSION_COUNT, int WINDOW_WIDTH, int WINDOW_HEIGHT>
-		__launch_bounds__(256, 3)
-		__global__ void sparse_convolution_update_gradient_tex_exact_blocked_upd_kernel_kepler(
+		__global__ void sparse_convolution_update_gradient_exact_blocked_upd_kernel(
 			float * __restrict gradients,
-			cudaTextureObject_t output_tex,
-			cudaTextureObject_t input_tex,
+			const float * __restrict output_errors,
+			const float * __restrict input_neurons,
 			const row_index_col_index_pair * __restrict row_index_col_index_pairs,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int, DIMENSION_COUNT> output_block_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> output_block_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
-			array_by_val<int, DIMENSION_COUNT> window_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> window_sizes,
 			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
 			int input_feature_map_count,
 			int output_feature_map_count,
 			int entry_count,
 			int entry_group_size,
 			int block_count_per_output_feature_map,
-			int feature_map_pair_count,
+			int_fastdiv feature_map_pair_count,
 			int input_elem_count_per_entry,
 			int output_elem_count_per_entry,
 			unsigned int dummy)
@@ -863,7 +851,7 @@ namespace nnforge
 							int pos_total = input_yy * (WINDOW_WIDTH + BLOCK_WIDTH - 1) + input_xx;
 							bool b_fit0 = ((input_valid_positions[pos_total / 32] & (1U << (pos_total & 31))) != 0);
 							int current_offset = input_elem_id + input_yy * input_sizes[0] + input_xx;
-							input_local_buf[input_yy][input_xx] = tex1Dfetch<float>(input_tex, b_fit0 ? current_offset : -1);
+							input_local_buf[input_yy][input_xx] = b_fit0 ? __load_nc(input_neurons + current_offset) : 0.0F;
 						}
 					}
 					float output_local_buf[(DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1][WINDOW_WIDTH];
@@ -876,7 +864,7 @@ namespace nnforge
 							int pos_total = output_yy * BLOCK_WIDTH + output_xx;
 							bool b_fit0 = ((output_valid_positions[pos_total / 32] & (1U << (pos_total & 31))) != 0);
 							int current_offset = output_elem_id + output_yy * output_sizes[0] + output_xx;
-							output_local_buf[output_yy][output_xx] = tex1Dfetch<float>(output_tex, b_fit0 ? current_offset : -1);
+							output_local_buf[output_yy][output_xx] = b_fit0 ? __load_nc(output_errors + current_offset) : 0.0F;
 						}
 					}
 
@@ -921,23 +909,22 @@ namespace nnforge
 		}
 
 		template<int DIMENSION_COUNT>
-		__launch_bounds__(256, 3)
-		__global__ void sparse_convolution_update_gradient_tex_generic_upd_kernel_kepler(
+		__global__ void sparse_convolution_update_gradient_generic_upd_kernel(
 			float * __restrict gradients,
-			cudaTextureObject_t output_tex,
-			cudaTextureObject_t input_tex,
+			const float * __restrict output_errors,
+			const float * __restrict input_neurons,
 			const row_index_col_index_pair * __restrict row_index_col_index_pairs,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int, DIMENSION_COUNT> output_block_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> output_block_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
-			array_by_val<int, DIMENSION_COUNT> window_sizes,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> window_sizes,
 			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
 			int input_feature_map_count,
 			int output_feature_map_count,
 			int entry_count,
 			int entry_group_size,
 			int block_count_per_output_feature_map,
-			int feature_map_pair_count,
+			int_fastdiv feature_map_pair_count,
 			int input_elem_count_per_entry,
 			int output_elem_count_per_entry,
 			unsigned int dummy)
@@ -1077,7 +1064,7 @@ namespace nnforge
 							int pos_total = input_yy * BLOCK_WIDTH + input_xx;
 							bool b_fit0 = ((input_valid_positions[pos_total / 32] & (1U << (pos_total & 31))) != 0);
 							int current_offset = input_elem_id + input_yy * input_sizes[0] + input_xx;
-							input_local_buf[input_yy][input_xx] = tex1Dfetch<float>(input_tex, b_fit0 ? current_offset : -1);
+							input_local_buf[input_yy][input_xx] = b_fit0 ? __load_nc(input_neurons + current_offset) : 0.0F;
 						}
 					}
 					float output_local_buf[(DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1][BLOCK_WIDTH];
@@ -1090,7 +1077,7 @@ namespace nnforge
 							int pos_total = output_yy * BLOCK_WIDTH + output_xx;
 							bool b_fit0 = ((output_valid_positions[pos_total / 32] & (1U << (pos_total & 31))) != 0);
 							int current_offset = output_elem_id + output_yy * output_sizes[0] + output_xx;
-							output_local_buf[output_yy][output_xx] = tex1Dfetch<float>(output_tex, b_fit0 ? current_offset : -1);
+							output_local_buf[output_yy][output_xx] = b_fit0 ? __load_nc(output_errors + current_offset) : 0.0F;
 						}
 					}
 
@@ -1119,10 +1106,10 @@ namespace nnforge
 		}
 
 #define launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_output_feature_map, weight_count_per_block, 0U);
+	sparse_convolution_exact_blocked_upd_kernel<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, *input_buffers[0], *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_output_feature_map, weight_count_per_block, 0U);
 
 #define launch_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_tex_generic_blocked_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, input_tex, *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_output_feature_map, weight_count_per_block);
+	sparse_convolution_generic_blocked_upd_kernel<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, *input_buffers[0], *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_output_feature_map, weight_count_per_block);
 
 #define launch_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -1143,12 +1130,6 @@ namespace nnforge
 			break; \
 		case 5: \
 			if (window_width_const >= 5) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 5); } else { launch_generic_kernel_const(dimension_count_const); } \
-			break; \
-		case 6: \
-			if (window_width_const >= 6) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 6); } else { launch_generic_kernel_const(dimension_count_const); } \
-			break; \
-		case 7: \
-			if (window_width_const >= 7) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 7); } else { launch_generic_kernel_const(dimension_count_const); } \
 			break; \
 		default: \
 			launch_generic_kernel_const(dimension_count_const); \
@@ -1178,22 +1159,16 @@ namespace nnforge
 	case 5: \
 		launch_kernel_const_const(dimension_count_const, 5, window_height); \
 		break; \
-	case 6: \
-		launch_kernel_const_const(dimension_count_const, 6, window_height); \
-		break; \
-	case 7: \
-		launch_kernel_const_const(dimension_count_const, 7, window_height); \
-		break; \
 	default: \
 		launch_generic_kernel_const(dimension_count_const); \
 		break; \
 	};
 
 #define launch_backprop_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_backprop_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block, 0U);
+	sparse_convolution_backprop_exact_blocked_upd_kernel<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, *output_errors_buffer, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block, 0U);
 
 #define launch_backprop_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_backprop_tex_generic_blocked_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, output_tex, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block);
+	sparse_convolution_backprop_generic_blocked_upd_kernel<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, *output_errors_buffer, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block);
 
 #define launch_backprop_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -1214,12 +1189,6 @@ namespace nnforge
 			break; \
 		case 5: \
 			if (window_width_const >= 5) { launch_backprop_exact_kernel_const_const_const(dimension_count_const, window_width_const, 5); } else { launch_backprop_generic_kernel_const(dimension_count_const); } \
-			break; \
-		case 6: \
-			if (window_width_const >= 6) { launch_backprop_exact_kernel_const_const_const(dimension_count_const, window_width_const, 6); } else { launch_backprop_generic_kernel_const(dimension_count_const); } \
-			break; \
-		case 7: \
-			if (window_width_const >= 7) { launch_backprop_exact_kernel_const_const_const(dimension_count_const, window_width_const, 7); } else { launch_backprop_generic_kernel_const(dimension_count_const); } \
 			break; \
 		default: \
 			launch_backprop_generic_kernel_const(dimension_count_const); \
@@ -1249,12 +1218,6 @@ namespace nnforge
 	case 5: \
 		launch_backprop_kernel_const_const(dimension_count_const, 5, window_height); \
 		break; \
-	case 6: \
-		launch_backprop_kernel_const_const(dimension_count_const, 6, window_height); \
-		break; \
-	case 7: \
-		launch_backprop_kernel_const_const(dimension_count_const, 7, window_height); \
-		break; \
 	default: \
 		launch_backprop_generic_kernel_const(dimension_count_const); \
 		break; \
@@ -1262,10 +1225,10 @@ namespace nnforge
 
 
 #define launch_update_gradient_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_update_gradient_tex_exact_blocked_upd_kernel_kepler<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], output_tex, input_tex, row_index_col_index_pairs, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, entry_count, entry_group_size_and_count.first, block_count_per_output_feature_map, feature_map_connection_count, input_elem_count_per_entry_list[0], output_elem_count_per_entry, 0U);
+	sparse_convolution_update_gradient_exact_blocked_upd_kernel<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], *output_errors_buffer, *input_neurons_buffers[0], row_index_col_index_pairs, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, entry_count, entry_group_size_and_count.first, block_count_per_output_feature_map, feature_map_connection_count, input_elem_count_per_entry_list[0], output_elem_count_per_entry, 0U);
 
 #define launch_update_gradient_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_update_gradient_tex_generic_upd_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], output_tex, input_tex, row_index_col_index_pairs, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, entry_count, entry_group_size_and_count.first, block_count_per_output_feature_map, feature_map_connection_count, input_elem_count_per_entry_list[0], output_elem_count_per_entry, 0U);
+	sparse_convolution_update_gradient_generic_upd_kernel<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*gradient[0], *output_errors_buffer, *input_neurons_buffers[0], row_index_col_index_pairs, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, entry_count, entry_group_size_and_count.first, block_count_per_output_feature_map, feature_map_connection_count, input_elem_count_per_entry_list[0], output_elem_count_per_entry, 0U);
 
 #define launch_update_gradient_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -1286,12 +1249,6 @@ namespace nnforge
 			break; \
 		case 5: \
 			if (window_width_const >= 5) { launch_update_gradient_exact_kernel_const_const_const(dimension_count_const, window_width_const, 5); } else { launch_update_gradient_generic_kernel_const(dimension_count_const); } \
-			break; \
-		case 6: \
-			if (window_width_const >= 6) { launch_update_gradient_exact_kernel_const_const_const(dimension_count_const, window_width_const, 6); } else { launch_update_gradient_generic_kernel_const(dimension_count_const); } \
-			break; \
-		case 7: \
-			if (window_width_const >= 7) { launch_update_gradient_exact_kernel_const_const_const(dimension_count_const, window_width_const, 7); } else { launch_update_gradient_generic_kernel_const(dimension_count_const); } \
 			break; \
 		default: \
 			launch_update_gradient_generic_kernel_const(dimension_count_const); \
@@ -1320,12 +1277,6 @@ namespace nnforge
 		break; \
 	case 5: \
 		launch_update_gradient_kernel_const_const(dimension_count_const, 5, window_height); \
-		break; \
-	case 6: \
-		launch_update_gradient_kernel_const_const(dimension_count_const, 6, window_height); \
-		break; \
-	case 7: \
-		launch_update_gradient_kernel_const_const(dimension_count_const, 7, window_height); \
 		break; \
 	default: \
 		launch_update_gradient_generic_kernel_const(dimension_count_const); \
@@ -1364,13 +1315,11 @@ namespace nnforge
 				cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
 				unsigned int entry_count)
 			{
-				cuda_texture input_tex(input_buffers[0]);
-
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
-					block_count_per_output_feature_map * output_configuration_specific.feature_map_count,
-					entry_count,
-					1);
+					block_count_per_output_feature_map,
+					output_configuration_specific.feature_map_count,
+					entry_count);
 
 				launch_kernel(dimension_count, window_sizes[0], ((dimension_count > 1) ? window_sizes[1] : 1));
 			}
@@ -1395,13 +1344,11 @@ namespace nnforge
 			{
 				const row_index_weight_block_id_pair * row_index_weight_block_id_pairs = (row_index_weight_block_id_pair *)((const void *)(*data_custom[2]));
 
-				cuda_texture output_tex(output_errors_buffer);
-
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
-					block_count_per_input_feature_map * input_configuration_specific_list[0].feature_map_count,
-					entry_count,
-					1);
+					block_count_per_input_feature_map,
+					input_configuration_specific_list[0].feature_map_count,
+					entry_count);
 
 				launch_backprop_kernel(dimension_count, window_sizes[0], ((dimension_count > 1) ? window_sizes[1] : 1));
 			}
@@ -1424,13 +1371,10 @@ namespace nnforge
 				{
 					const row_index_col_index_pair * row_index_col_index_pairs = (row_index_col_index_pair *)((const void *)(*data_custom[4]));
 
-					cuda_texture input_tex(input_neurons_buffers[0]);
-					cuda_texture output_tex(output_errors_buffer);
-
 					bool exact_kernel;
 					if (dimension_count > 1)
 					{
-						exact_kernel = ((window_sizes[1] <= MAX_EXACT_GRADIENT_UPDATE_WINDOW_WIDTH_HEIGHT) && (window_sizes[0] <= window_sizes[1]));
+						exact_kernel = ((window_sizes[1] <= MAX_EXACT_GRADIENT_UPDATE_WINDOW_WIDTH_HEIGHT) && (window_sizes[0] >= window_sizes[1]));
 					}
 					else
 					{
@@ -1475,13 +1419,6 @@ namespace nnforge
 						bias_desc,
 						*gradient[1]));
 				}
-			}
-
-			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const
-			{
-				std::vector<unsigned int> res;
-				res.push_back(input_configuration_specific_list[0].get_neuron_count());
-				return res;
 			}
 
 			virtual std::vector<cuda_linear_buffer_device::const_ptr> set_get_data_custom(layer_data_custom::const_ptr host_data)
@@ -1633,15 +1570,15 @@ namespace nnforge
 
 		private:
 			array_by_val<int, dimension_count> output_sizes;
-			array_by_val<int, dimension_count> output_block_sizes;
+			array_by_val<int_fastdiv, dimension_count> output_block_sizes;
 			array_by_val<int, dimension_count> input_sizes;
-			array_by_val<int, dimension_count> input_block_sizes;
-			array_by_val<int, dimension_count> window_sizes;
+			array_by_val<int_fastdiv, dimension_count> input_block_sizes;
+			array_by_val<int_fastdiv, dimension_count> window_sizes;
 			array_by_val<int, dimension_count> left_zero_padding;
 			int block_count_per_output_feature_map;
 			int block_count_per_input_feature_map;
 			int weight_count_per_block;
-			int feature_map_connection_count;
+			int_fastdiv feature_map_connection_count;
 
 			static const int preferred_entry_group_size = 8;
 
