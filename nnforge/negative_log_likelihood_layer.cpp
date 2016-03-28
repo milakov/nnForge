@@ -121,7 +121,7 @@ namespace nnforge
 		case layer_action::backward_data:
 			{
 				unsigned int neuron_count = input_configuration_specific_list[action.get_backprop_index()].get_neuron_count();
-				unsigned int per_item_flops = input_configuration_specific_list[action.get_backprop_index()].feature_map_count * 2;
+				unsigned int per_item_flops = 2;
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 			}
 		default:
