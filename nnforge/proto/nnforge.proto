@@ -86,6 +86,7 @@ message UpsamplingParam {
 message MaxSubsamplingParam {
 	message MaxSubsamplingDimensionParam {
 		required uint32 subsampling_size = 1;
+		optional bool round_up = 2 [default = false];
 	}
 	message MaxSubsamplingFeatureMapParam {
 		required uint32 subsampling_size = 1;

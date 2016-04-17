@@ -41,14 +41,6 @@ namespace nnforge
 		return layer::ptr(new entry_convolution_layer(*this));
 	}
 
-	layer_configuration entry_convolution_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		layer_configuration res = input_configuration_list[0];
-		if (res.feature_map_count >= 0)
-			res.feature_map_count = res.feature_map_count * 2 - 1 + padding;
-		return res;
-	}
-
 	layer_configuration_specific entry_convolution_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		layer_configuration_specific res = input_configuration_specific_list[0];

@@ -33,8 +33,6 @@ namespace nnforge
 
 		virtual layer::ptr clone() const;
 
-		virtual layer_configuration get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const;
-
 		virtual float get_flops_per_entry(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_action& action) const;

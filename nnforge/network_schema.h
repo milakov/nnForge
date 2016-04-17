@@ -17,7 +17,6 @@
 #pragma once
 
 #include "layer.h"
-#include "layer_configuration.h"
 #include "layer_configuration_specific.h"
 #include "layer_data_configuration.h"
 #include "nn_types.h"

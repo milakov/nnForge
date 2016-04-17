@@ -116,9 +116,6 @@
     <ClInclude Include="neural_network_exception.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="layer_configuration.h">
-      <Filter>Header Files\network_schema</Filter>
-    </ClInclude>
     <ClInclude Include="layer_configuration_specific.h">
       <Filter>Header Files\network_schema</Filter>
     </ClInclude>
@@ -489,9 +486,6 @@
     </ClCompile>
     <ClCompile Include="neural_network_exception.cpp">
       <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="layer_configuration.cpp">
-      <Filter>Source Files\network_schema</Filter>
     </ClCompile>
     <ClCompile Include="layer_configuration_specific_snapshot.cpp">
       <Filter>Source Files\network_schema</Filter>

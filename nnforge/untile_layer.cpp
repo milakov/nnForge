@@ -60,14 +60,6 @@ namespace nnforge
 		return layer::ptr(new untile_layer(*this));
 	}
 
-	layer_configuration untile_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(upsampling_sizes_list.front().size())))
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % upsampling_sizes_list.front().size() % input_configuration_list[0].dimension_count).str());
-
-		return layer_configuration(input_configuration_list[0].feature_map_count, static_cast<int>(upsampling_sizes_list.front().size()));
-	}
-
 	layer_configuration_specific untile_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		if (input_configuration_specific_list[0].get_dimension_count() != upsampling_sizes_list.front().size())

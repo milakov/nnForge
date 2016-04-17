@@ -37,7 +37,7 @@ namespace nnforge
 
 		extern __shared__ float arr_sh[];
 
-		template<int DIMENSION_COUNT,bool NONUNIT_WINDOW_X,bool IS_MIN>
+		template<int DIMENSION_COUNT,bool NONUNIT_WINDOW_X,bool IS_MIN, bool TRUNCATION>
 		__global__ void max_subsampling_kernel(
 			float * __restrict output,
 			const float * __restrict input,
@@ -70,6 +70,7 @@ namespace nnforge
 			bool item_valid[FEATURE_MAP_BLOCK_SIZE - 1];
 			int window_x;
 			int xyzw[DIMENSION_COUNT];
+			int xyzw_input[DIMENSION_COUNT];
 			if (in_bounds)
 			{
 				int remaining_part = packed_config_id;
@@ -77,6 +78,7 @@ namespace nnforge
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 				{
 					xyzw[i] = remaining_part / strides[i];
+					xyzw_input[i] = xyzw[i] * subsampling_sizes[i];
 					remaining_part = remaining_part - strides[i] * xyzw[i];
 				}
 				window_x = remaining_part;
@@ -84,7 +86,7 @@ namespace nnforge
 				int base_current_input_elem_id = output_entry_id * entry_subsampling_size * input_feature_map_count + base_output_feature_map_id * feature_map_subsampling_size;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-					base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw[i] * subsampling_sizes[i];
+					base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw_input[i];
 				base_current_input_elem_id += window_x;
 
 				#pragma unroll
@@ -94,6 +96,7 @@ namespace nnforge
 				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 					item_valid[i - 1] = (base_output_feature_map_id + i < output_feature_map_count);
 
+				bool fit_x = TRUNCATION ? (window_x < input_sizes[0] - xyzw_input[0]) : true;
 				for(int en = 0; en < entry_subsampling_size; ++en)
 				{
 					int base_current_input_elem_id2 = base_current_input_elem_id;
@@ -102,19 +105,25 @@ namespace nnforge
 						int current_input_elem_id = base_current_input_elem_id2;
 						for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? subsampling_sizes[3] : 1); ++input_w)
 						{
+							bool fit_w = fit_x && (((DIMENSION_COUNT > 3) && TRUNCATION)? (input_w < input_sizes[3] - xyzw_input[3]) : true);
 							for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? subsampling_sizes[2] : 1); ++input_z)
 							{
+								bool fit_z = fit_w && (((DIMENSION_COUNT > 2) && TRUNCATION) ? (input_z < input_sizes[2] - xyzw_input[2]) : true);
 								for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? subsampling_sizes[1] : 1); ++input_y)
 								{
-									float new_val[FEATURE_MAP_BLOCK_SIZE];
-									new_val[0] = input[current_input_elem_id];
-									#pragma unroll
-									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										if (item_valid[i - 1])
-											new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
-									#pragma unroll
-									for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										res[i] = IS_MIN ? min(res[i], new_val[i]) : max(res[i], new_val[i]);
+									bool fit_y = fit_z && (((DIMENSION_COUNT > 1) && TRUNCATION) ? (input_y < input_sizes[1] - xyzw_input[1]) : true);
+									if (fit_y)
+									{
+										float new_val[FEATURE_MAP_BLOCK_SIZE];
+										new_val[0] = input[current_input_elem_id];
+										#pragma unroll
+										for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											if (item_valid[i - 1])
+												new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+										#pragma unroll
+										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											res[i] = IS_MIN ? min(res[i], new_val[i]) : max(res[i], new_val[i]);
+									}
 									if (DIMENSION_COUNT > 1)
 										current_input_elem_id += input_sizes[0];
 								} // for input_y
@@ -209,76 +218,156 @@ namespace nnforge
 				if (is_min)
 				{
 					if (nonunit_window_x)
-						max_subsampling_kernel<dimension_count,true,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-							*output_buffer,
-							*input_buffers[0],
-							subsampling_sizes,
-							input_sizes,
-							output_sizes,
-							strides,
-							feature_map_subsampling_size,
-							entry_subsampling_size,
-							input_elem_count_per_entry_list[0],
-							input_elem_count_per_feature_map_list[0],
-							output_elem_count_per_feature_map,
-							input_configuration_specific_list[0].feature_map_count,
-							output_configuration_specific.feature_map_count,
-							entry_count,
-							forward_packed_config_count);
+					{
+						if (truncation)
+							max_subsampling_kernel<dimension_count,true,true,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								*output_buffer,
+								*input_buffers[0],
+								subsampling_sizes,
+								input_sizes,
+								output_sizes,
+								strides,
+								feature_map_subsampling_size,
+								entry_subsampling_size,
+								input_elem_count_per_entry_list[0],
+								input_elem_count_per_feature_map_list[0],
+								output_elem_count_per_feature_map,
+								input_configuration_specific_list[0].feature_map_count,
+								output_configuration_specific.feature_map_count,
+								entry_count,
+								forward_packed_config_count);
+						else
+							max_subsampling_kernel<dimension_count,true,true,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								*output_buffer,
+								*input_buffers[0],
+								subsampling_sizes,
+								input_sizes,
+								output_sizes,
+								strides,
+								feature_map_subsampling_size,
+								entry_subsampling_size,
+								input_elem_count_per_entry_list[0],
+								input_elem_count_per_feature_map_list[0],
+								output_elem_count_per_feature_map,
+								input_configuration_specific_list[0].feature_map_count,
+								output_configuration_specific.feature_map_count,
+								entry_count,
+								forward_packed_config_count);
+					}
 					else
-						max_subsampling_kernel<dimension_count,false,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-							*output_buffer,
-							*input_buffers[0],
-							subsampling_sizes,
-							input_sizes,
-							output_sizes,
-							strides,
-							feature_map_subsampling_size,
-							entry_subsampling_size,
-							input_elem_count_per_entry_list[0],
-							input_elem_count_per_feature_map_list[0],
-							output_elem_count_per_feature_map,
-							input_configuration_specific_list[0].feature_map_count,
-							output_configuration_specific.feature_map_count,
-							entry_count,
-							forward_packed_config_count);
+					{
+						if (truncation)
+							max_subsampling_kernel<dimension_count,false,true,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								*output_buffer,
+								*input_buffers[0],
+								subsampling_sizes,
+								input_sizes,
+								output_sizes,
+								strides,
+								feature_map_subsampling_size,
+								entry_subsampling_size,
+								input_elem_count_per_entry_list[0],
+								input_elem_count_per_feature_map_list[0],
+								output_elem_count_per_feature_map,
+								input_configuration_specific_list[0].feature_map_count,
+								output_configuration_specific.feature_map_count,
+								entry_count,
+								forward_packed_config_count);
+						else
+							max_subsampling_kernel<dimension_count,false,true,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								*output_buffer,
+								*input_buffers[0],
+								subsampling_sizes,
+								input_sizes,
+								output_sizes,
+								strides,
+								feature_map_subsampling_size,
+								entry_subsampling_size,
+								input_elem_count_per_entry_list[0],
+								input_elem_count_per_feature_map_list[0],
+								output_elem_count_per_feature_map,
+								input_configuration_specific_list[0].feature_map_count,
+								output_configuration_specific.feature_map_count,
+								entry_count,
+								forward_packed_config_count);
+					}
 				}
 				else
 				{
 					if (nonunit_window_x)
-						max_subsampling_kernel<dimension_count,true,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-							*output_buffer,
-							*input_buffers[0],
-							subsampling_sizes,
-							input_sizes,
-							output_sizes,
-							strides,
-							feature_map_subsampling_size,
-							entry_subsampling_size,
-							input_elem_count_per_entry_list[0],
-							input_elem_count_per_feature_map_list[0],
-							output_elem_count_per_feature_map,
-							input_configuration_specific_list[0].feature_map_count,
-							output_configuration_specific.feature_map_count,
-							entry_count,
-							forward_packed_config_count);
+					{
+						if (truncation)
+							max_subsampling_kernel<dimension_count,true,false,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								*output_buffer,
+								*input_buffers[0],
+								subsampling_sizes,
+								input_sizes,
+								output_sizes,
+								strides,
+								feature_map_subsampling_size,
+								entry_subsampling_size,
+								input_elem_count_per_entry_list[0],
+								input_elem_count_per_feature_map_list[0],
+								output_elem_count_per_feature_map,
+								input_configuration_specific_list[0].feature_map_count,
+								output_configuration_specific.feature_map_count,
+								entry_count,
+								forward_packed_config_count);
+						else
+							max_subsampling_kernel<dimension_count,true,false,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								*output_buffer,
+								*input_buffers[0],
+								subsampling_sizes,
+								input_sizes,
+								output_sizes,
+								strides,
+								feature_map_subsampling_size,
+								entry_subsampling_size,
+								input_elem_count_per_entry_list[0],
+								input_elem_count_per_feature_map_list[0],
+								output_elem_count_per_feature_map,
+								input_configuration_specific_list[0].feature_map_count,
+								output_configuration_specific.feature_map_count,
+								entry_count,
+								forward_packed_config_count);
+					}
 					else
-						max_subsampling_kernel<dimension_count,false,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
-							*output_buffer,
-							*input_buffers[0],
-							subsampling_sizes,
-							input_sizes,
-							output_sizes,
-							strides,
-							feature_map_subsampling_size,
-							entry_subsampling_size,
-							input_elem_count_per_entry_list[0],
-							input_elem_count_per_feature_map_list[0],
-							output_elem_count_per_feature_map,
-							input_configuration_specific_list[0].feature_map_count,
-							output_configuration_specific.feature_map_count,
-							entry_count,
-							forward_packed_config_count);
+					{
+						if (truncation)
+							max_subsampling_kernel<dimension_count,false,false,true><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								*output_buffer,
+								*input_buffers[0],
+								subsampling_sizes,
+								input_sizes,
+								output_sizes,
+								strides,
+								feature_map_subsampling_size,
+								entry_subsampling_size,
+								input_elem_count_per_entry_list[0],
+								input_elem_count_per_feature_map_list[0],
+								output_elem_count_per_feature_map,
+								input_configuration_specific_list[0].feature_map_count,
+								output_configuration_specific.feature_map_count,
+								entry_count,
+								forward_packed_config_count);
+						else
+							max_subsampling_kernel<dimension_count,false,false,false><<<kernel_dims.first, kernel_dims.second, smem_size, stream_id>>>(
+								*output_buffer,
+								*input_buffers[0],
+								subsampling_sizes,
+								input_sizes,
+								output_sizes,
+								strides,
+								feature_map_subsampling_size,
+								entry_subsampling_size,
+								input_elem_count_per_entry_list[0],
+								input_elem_count_per_feature_map_list[0],
+								output_elem_count_per_feature_map,
+								input_configuration_specific_list[0].feature_map_count,
+								output_configuration_specific.feature_map_count,
+								entry_count,
+								forward_packed_config_count);
+					}
 				}
 			}
 
@@ -303,6 +392,7 @@ namespace nnforge
 					local_output_dimension_sizes.push_back(1);
 
 				int_fastdiv current_stride(local_subsampling_sizes[0]);
+				truncation = false;
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = local_subsampling_sizes[i];
@@ -310,6 +400,7 @@ namespace nnforge
 					output_sizes[i] = local_output_dimension_sizes[i];
 					strides[i] = current_stride;
 					current_stride = current_stride * output_sizes[i];
+					truncation = truncation || (output_sizes[i] * subsampling_sizes[i] > input_sizes[i]);
 				}
 
 				forward_packed_config_count = subsampling_sizes[0];
@@ -329,6 +420,7 @@ namespace nnforge
 			array_by_val<int_fastdiv, dimension_count> strides;
 			unsigned int forward_packed_config_count;
 			bool nonunit_window_x;
+			bool truncation;
 		};
 	}
 }

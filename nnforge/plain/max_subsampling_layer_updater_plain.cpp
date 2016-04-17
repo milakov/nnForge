@@ -68,6 +68,10 @@ namespace nnforge
 			if (layer_derived->tiling)
 				throw neural_network_exception("max_subsampling_layer_updater_plain is not able to run for max subsampling layer with tiling");
 
+			for(std::vector<bool>::const_iterator it = layer_derived->round_ups.begin(); it != layer_derived->round_ups.end(); ++it)
+				if (*it)
+					throw neural_network_exception("round up is not implemented for max_subsampling_layer_tester_plain");
+
 			const float * const in_it_global = *input_buffers[0];
 			float * const out_it_global = *output_buffer;
 			unsigned int * const max_indexes_it_global = *temporary_per_entry_buffer;

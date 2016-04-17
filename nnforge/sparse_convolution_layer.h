@@ -43,8 +43,6 @@ namespace nnforge
 
 		virtual layer::ptr clone() const;
 
-		virtual layer_configuration get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const;
-
 		virtual layer_configuration_specific get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const;
 
 		virtual bool get_input_layer_configuration_specific(

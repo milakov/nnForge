@@ -71,6 +71,7 @@ namespace nnforge
 			int max_pos[FEATURE_MAP_BLOCK_SIZE];
 			int window_x;
 			int xyzw[DIMENSION_COUNT];
+			int xyzw_input[DIMENSION_COUNT];
 			if (in_bounds)
 			{
 				int remaining_part = packed_config_id;
@@ -78,6 +79,7 @@ namespace nnforge
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 				{
 					xyzw[i] = remaining_part / strides[i];
+					xyzw_input[i] = xyzw[i] * subsampling_sizes[i];
 					remaining_part = remaining_part - strides[i] * xyzw[i];
 				}
 				window_x = remaining_part;
@@ -85,7 +87,7 @@ namespace nnforge
 				int base_current_input_elem_id = output_entry_id * entry_subsampling_size * input_feature_map_count + base_output_feature_map_id * feature_map_subsampling_size;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-					base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw[i] * subsampling_sizes[i];
+					base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw_input[i];
 				base_current_input_elem_id += window_x;
 
 				#pragma unroll
@@ -98,6 +100,7 @@ namespace nnforge
 					current_pos *= subsampling_sizes[i];
 
 				bool init_required = true;
+				bool fit_x = window_x < input_sizes[0] - xyzw_input[0];
 				for(int en = 0; en < entry_subsampling_size; ++en)
 				{
 					int base_current_input_elem_id2 = base_current_input_elem_id;
@@ -106,38 +109,45 @@ namespace nnforge
 						int current_input_elem_id = base_current_input_elem_id2;
 						for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? subsampling_sizes[3] : 1); ++input_w)
 						{
+							bool fit_w = fit_x && ((DIMENSION_COUNT > 3) ? (input_w < input_sizes[3] - xyzw_input[3]) : true);
 							for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? subsampling_sizes[2] : 1); ++input_z)
 							{
+								bool fit_z = fit_w && ((DIMENSION_COUNT > 2) ? (input_z < input_sizes[2] - xyzw_input[2]) : true);
 								for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? subsampling_sizes[1] : 1); ++input_y)
 								{
-									float new_val[FEATURE_MAP_BLOCK_SIZE];
-									new_val[0] = input[current_input_elem_id];
-									#pragma unroll
-									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										if (item_valid[i - 1])
-											new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
-									#pragma unroll
-									for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+									bool fit_y = fit_z && ((DIMENSION_COUNT > 1) ? (input_y < input_sizes[1] - xyzw_input[1]) : true);
+									if (fit_y)
 									{
-										if (IS_MIN)
+										float new_val[FEATURE_MAP_BLOCK_SIZE];
+										new_val[0] = input[current_input_elem_id];
+										#pragma unroll
+										for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											if (item_valid[i - 1])
+												new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+										#pragma unroll
+										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 										{
-											if (init_required || (new_val[i] < res[i]))
+											if (IS_MIN)
 											{
-												res[i] = new_val[i];
-												max_pos[i] = current_pos;
+												if (init_required || (new_val[i] < res[i]))
+												{
+													res[i] = new_val[i];
+													max_pos[i] = current_pos;
+												}
+											}
+											else
+											{
+												if (init_required || (new_val[i] > res[i]))
+												{
+													res[i] = new_val[i];
+													max_pos[i] = current_pos;
+												}
 											}
 										}
-										else
-										{
-											if (init_required || (new_val[i] > res[i]))
-											{
-												res[i] = new_val[i];
-												max_pos[i] = current_pos;
-											}
-										}
+										init_required = false;
 									}
+
 									++current_pos;
-									init_required = false;
 									if (DIMENSION_COUNT > 1)
 										current_input_elem_id += input_sizes[0];
 								} // for input_y
@@ -250,6 +260,7 @@ namespace nnforge
 			bool item_valid[FEATURE_MAP_BLOCK_SIZE - 1];
 			int window_x;
 			int xyzw[DIMENSION_COUNT];
+			int xyzw_input[DIMENSION_COUNT];
 			if (in_bounds)
 			{
 				int remaining_part = packed_config_id;
@@ -257,6 +268,7 @@ namespace nnforge
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 				{
 					xyzw[i] = remaining_part / strides[i];
+					xyzw_input[i] = xyzw[i] * subsampling_sizes[i];
 					remaining_part = remaining_part - strides[i] * xyzw[i];
 				}
 				window_x = remaining_part;
@@ -264,7 +276,7 @@ namespace nnforge
 				int base_current_input_elem_id = output_entry_id * entry_subsampling_size * input_feature_map_count + base_output_feature_map_id * feature_map_subsampling_size;
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-					base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw[i] * subsampling_sizes[i];
+					base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw_input[i];
 				base_current_input_elem_id += window_x;
 
 				#pragma unroll
@@ -274,6 +286,7 @@ namespace nnforge
 				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
 					item_valid[i - 1] = (base_output_feature_map_id + i < output_feature_map_count);
 
+				bool fit_x = window_x < input_sizes[0] - xyzw_input[0];
 				for(int en = 0; en < entry_subsampling_size; ++en)
 				{
 					int base_current_input_elem_id2 = base_current_input_elem_id;
@@ -282,19 +295,26 @@ namespace nnforge
 						int current_input_elem_id = base_current_input_elem_id2;
 						for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? subsampling_sizes[3] : 1); ++input_w)
 						{
+							bool fit_w = fit_x && ((DIMENSION_COUNT > 3) ? (input_w < input_sizes[3] - xyzw_input[3]) : true);
 							for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? subsampling_sizes[2] : 1); ++input_z)
 							{
+								bool fit_z = fit_w && ((DIMENSION_COUNT > 2) ? (input_z < input_sizes[2] - xyzw_input[2]) : true);
 								for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? subsampling_sizes[1] : 1); ++input_y)
 								{
-									float new_val[FEATURE_MAP_BLOCK_SIZE];
-									new_val[0] = input[current_input_elem_id];
-									#pragma unroll
-									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										if (item_valid[i - 1])
-											new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
-									#pragma unroll
-									for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										res[i] = IS_MIN ? min(res[i], new_val[i]) : max(res[i], new_val[i]);
+									bool fit_y = fit_z && ((DIMENSION_COUNT > 1) ? (input_y < input_sizes[1] - xyzw_input[1]) : true);
+									if (fit_y)
+									{
+										float new_val[FEATURE_MAP_BLOCK_SIZE];
+										new_val[0] = input[current_input_elem_id];
+										#pragma unroll
+										for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											if (item_valid[i - 1])
+												new_val[i] = input[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+										#pragma unroll
+										for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											res[i] = IS_MIN ? min(res[i], new_val[i]) : max(res[i], new_val[i]);
+									}
+
 									if (DIMENSION_COUNT > 1)
 										current_input_elem_id += input_sizes[0];
 								} // for input_y
@@ -383,11 +403,13 @@ namespace nnforge
 
 			int window_x;
 			int xyzw[DIMENSION_COUNT];
+			int xyzw_input[DIMENSION_COUNT];
 			int remaining_part = packed_config_id;
 			#pragma unroll
 			for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 			{
 				xyzw[i] = remaining_part / strides[i];
+				xyzw_input[i] = xyzw[i] * subsampling_sizes[i];
 				remaining_part = remaining_part - strides[i] * xyzw[i];
 			}
 			window_x = remaining_part;
@@ -395,7 +417,7 @@ namespace nnforge
 			int base_current_input_elem_id = output_entry_id * entry_subsampling_size * input_feature_map_count + base_output_feature_map_id * feature_map_subsampling_size;
 			#pragma unroll
 			for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-				base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw[i] * subsampling_sizes[i];
+				base_current_input_elem_id = base_current_input_elem_id * input_sizes[i] + xyzw_input[i];
 			base_current_input_elem_id += window_x;
 
 			#pragma unroll
@@ -424,6 +446,7 @@ namespace nnforge
 				}
 			}
 
+			bool fit_x = window_x < input_sizes[0] - xyzw_input[0];
 			for(int en = 0; en < entry_subsampling_size; ++en)
 			{
 				int base_current_input_elem_id2 = base_current_input_elem_id;
@@ -432,32 +455,39 @@ namespace nnforge
 					int current_input_elem_id = base_current_input_elem_id2;
 					for(int input_w = 0; input_w < (DIMENSION_COUNT > 3 ? subsampling_sizes[3] : 1); ++input_w)
 					{
+						bool fit_w = fit_x && ((DIMENSION_COUNT > 3) ? (input_w < input_sizes[3] - xyzw_input[3]) : true);
 						for(int input_z = 0; input_z < (DIMENSION_COUNT > 2 ? subsampling_sizes[2] : 1); ++input_z)
 						{
+							bool fit_z = fit_w && ((DIMENSION_COUNT > 2) ? (input_z < input_sizes[2] - xyzw_input[2]) : true);
 							for(int input_y = 0; input_y < (DIMENSION_COUNT > 1 ? subsampling_sizes[1] : 1); ++input_y)
 							{
-								if (add_update_to_destination)
+								bool fit_y = fit_z && ((DIMENSION_COUNT > 1) ? (input_y < input_sizes[1] - xyzw_input[1]) : true);
+								if (fit_y)
 								{
-									float dst[FEATURE_MAP_BLOCK_SIZE];
-									dst[0] = input_errors[current_input_elem_id];
-									#pragma unroll
-									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										if (item_valid[i - 1])
-											dst[i] = input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
-									input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F) + dst[0];
-									#pragma unroll
-									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										if (item_valid[i - 1])
-											input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F) + dst[i];
+									if (add_update_to_destination)
+									{
+										float dst[FEATURE_MAP_BLOCK_SIZE];
+										dst[0] = input_errors[current_input_elem_id];
+										#pragma unroll
+										for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											if (item_valid[i - 1])
+												dst[i] = input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+										input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F) + dst[0];
+										#pragma unroll
+										for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											if (item_valid[i - 1])
+												input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F) + dst[i];
+									}
+									else
+									{
+										input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F);
+										#pragma unroll
+										for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+											if (item_valid[i - 1])
+												input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F);
+									}
 								}
-								else
-								{
-									input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F);
-									#pragma unroll
-									for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-										if (item_valid[i - 1])
-											input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F);
-								}
+
 								++current_pos;
 								if (DIMENSION_COUNT > 1)
 									current_input_elem_id += input_sizes[0];
@@ -773,7 +803,7 @@ namespace nnforge
 				bool add_update_to_destination,
 				unsigned int entry_count)
 			{
-				if ((!add_update_to_destination) && (!exact_subsampling))
+				if ((!add_update_to_destination) && (!fully_covered_input))
 				{
 					cuda_util::set_with_value(
 						*cuda_config,
@@ -909,9 +939,9 @@ namespace nnforge
 				for(int i = 0; i < dimension_count; ++i)
 					forward_packed_config_count *= output_sizes[i];
 
-				exact_subsampling = (output_configuration_specific.feature_map_count * feature_map_subsampling_size == input_configuration_specific_list[0].feature_map_count);
+				fully_covered_input = (output_configuration_specific.feature_map_count * feature_map_subsampling_size == input_configuration_specific_list[0].feature_map_count);
 				for(int i = 0; i < dimension_count; ++i)
-					exact_subsampling = exact_subsampling && (output_sizes[i] * subsampling_sizes[i] == input_sizes[i]);
+					fully_covered_input = fully_covered_input && (output_sizes[i] * subsampling_sizes[i] >= input_sizes[i]);
 
 				nonunit_window_x = (subsampling_sizes[0] > 1);
 			}
@@ -951,7 +981,7 @@ namespace nnforge
 			unsigned int forward_packed_config_count;
 			bool nonunit_window_x;
 			unsigned int total_subsampling_size;
-			bool exact_subsampling;
+			bool fully_covered_input;
 		};
 	}
 }

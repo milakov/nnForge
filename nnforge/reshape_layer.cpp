@@ -43,24 +43,6 @@ namespace nnforge
 		return layer::ptr(new reshape_layer(*this));
 	}
 
-	layer_configuration reshape_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		if (input_configuration_list[0].dimension_count != dimension_factor_list.size())
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % dimension_factor_list.size() % input_configuration_list[0].dimension_count).str());
-
-		layer_configuration res;
-
-		res.dimension_count = input_configuration_list[0].dimension_count;
-		if ((res.dimension_count >= 0) && (collapse_to_dimensions >= 0))
-			res.dimension_count = std::min(input_configuration_list[0].dimension_count, collapse_to_dimensions);
-
-		res.feature_map_count = input_configuration_list[0].feature_map_count;
-		if (res.feature_map_count >= 0)
-			res.feature_map_count = tiling_factor(res.feature_map_count) * feature_map_factor;
-
-		return res;
-	}
-
 	layer_configuration_specific reshape_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		if (input_configuration_specific_list[0].get_dimension_count() != dimension_factor_list.size())

@@ -131,11 +131,6 @@ namespace nnforge
 		return layer_data_configuration_list();
 	}
 
-	layer_configuration layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		return input_configuration_list.front();
-	}
-
 	layer_configuration_specific layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		return input_configuration_specific_list.front();

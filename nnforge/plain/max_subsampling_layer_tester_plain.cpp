@@ -18,6 +18,7 @@
 
 #include "../max_subsampling_layer.h"
 #include "../nn_types.h"
+#include "../neural_network_exception.h"
 
 #include <array>
 
@@ -192,6 +193,10 @@ namespace nnforge
 				output_dimension_sizes.push_back(1);
 
 			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+
+			for(std::vector<bool>::const_iterator it = layer_derived->round_ups.begin(); it != layer_derived->round_ups.end(); ++it)
+				if (*it)
+					throw neural_network_exception("round up is not implemented for max_subsampling_layer_tester_plain");
 
 			const float * const in_it_global = *input_buffer;
 			float * const out_it_global = *output_buffer;

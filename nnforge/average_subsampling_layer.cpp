@@ -66,31 +66,6 @@ namespace nnforge
 		return layer::ptr(new average_subsampling_layer(*this));
 	}
 
-	layer_configuration average_subsampling_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(subsampling_sizes.size())))
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration_list[0].dimension_count).str());
-
-		int new_feature_map_count;
-		if (feature_map_subsampling_size.is_relative())
-		{
-			if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count < static_cast<int>(feature_map_subsampling_size.get_factor())))
-				throw neural_network_exception((boost::format("Feature map count in input configuration (%1%) is smaller than feature map subsampling size (%2%)") % input_configuration_list[0].feature_map_count % feature_map_subsampling_size.get_factor()).str());
-			new_feature_map_count = input_configuration_list[0].feature_map_count;
-			if (new_feature_map_count >= 0)
-				new_feature_map_count /= feature_map_subsampling_size.get_factor();
-		}
-		else
-		{
-			if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count < static_cast<int>(feature_map_subsampling_size.get_factor())))
-				throw neural_network_exception((boost::format("Feature map count in input configuration (%1%) is smaller than feature map subsampled size (%2%)") % input_configuration_list[0].feature_map_count % feature_map_subsampling_size.get_factor()).str());
-			new_feature_map_count = feature_map_subsampling_size.get_factor();
-			get_fm_subsampling_size(input_configuration_list[0].feature_map_count, new_feature_map_count);
-		}
-
-		return layer_configuration(new_feature_map_count, static_cast<int>(subsampling_sizes.size()));
-	}
-
 	layer_configuration_specific average_subsampling_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		if (input_configuration_specific_list[0].get_dimension_count() != subsampling_sizes.size())

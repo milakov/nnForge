@@ -64,18 +64,6 @@ namespace nnforge
 		return layer::ptr(new upsampling_layer(*this));
 	}
 
-	layer_configuration upsampling_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(upsampling_sizes.size())))
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % upsampling_sizes.size() % input_configuration_list[0].dimension_count).str());
-
-		int new_feature_map_count = input_configuration_list[0].feature_map_count;
-		if (new_feature_map_count >= 0)
-			new_feature_map_count *= feature_map_upsampling_size;
-
-		return layer_configuration(new_feature_map_count, static_cast<int>(upsampling_sizes.size()));
-	}
-
 	layer_configuration_specific upsampling_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		if (input_configuration_specific_list[0].get_dimension_count() != upsampling_sizes.size())

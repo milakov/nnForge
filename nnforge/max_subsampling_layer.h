@@ -31,11 +31,10 @@ namespace nnforge
 			unsigned int feature_map_subsampling_size = 1,
 			unsigned int entry_subsampling_size = 1,
 			bool is_min = false,
-			bool tiling = false);
+			bool tiling = false,
+			const std::vector<bool>& round_ups = std::vector<bool>());
 
 		virtual layer::ptr clone() const;
-
-		virtual layer_configuration get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const;
 
 		virtual layer_configuration_specific get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const;
 
@@ -67,6 +66,7 @@ namespace nnforge
 
 	public:
 		std::vector<unsigned int> subsampling_sizes;
+		std::vector<bool> round_ups;
 		unsigned int feature_map_subsampling_size;
 		unsigned int entry_subsampling_size;
 		bool is_min;

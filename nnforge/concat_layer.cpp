@@ -45,15 +45,6 @@ namespace nnforge
 		return 0.0F;
 	}
 
-	layer_configuration concat_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		unsigned int feature_map_count = input_configuration_list[0].feature_map_count;
-		for(std::vector<layer_configuration>::const_iterator it = input_configuration_list.begin() + 1; it != input_configuration_list.end(); ++it)
-			feature_map_count += it->feature_map_count;
-
-		return layer_configuration(feature_map_count, input_configuration_list[0].dimension_count);
-	}
-
 	layer_configuration_specific concat_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		unsigned int feature_map_count = input_configuration_specific_list[0].feature_map_count;

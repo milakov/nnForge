@@ -48,17 +48,6 @@ namespace nnforge
 		return layer::ptr(new parametric_rectified_linear_layer(*this));
 	}
 
-	layer_configuration parametric_rectified_linear_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		if (input_configuration_list[0].feature_map_count >= 0)
-		{
-			if (input_configuration_list[0].feature_map_count != feature_map_count)
-				throw neural_network_exception((boost::format("Feature map count in layer (%1%) is not equal to feature map count (%2%) in perametric_rectified_linear_layer") % input_configuration_list[0].feature_map_count % feature_map_count).str());
-		}
-
-		return input_configuration_list[0];
-	}
-
 	float parametric_rectified_linear_layer::get_flops_per_entry(
 		const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 		const layer_action& action) const

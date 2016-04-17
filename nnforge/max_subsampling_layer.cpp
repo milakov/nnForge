@@ -33,13 +33,22 @@ namespace nnforge
 		unsigned int feature_map_subsampling_size,
 		unsigned int entry_subsampling_size,
 		bool is_min,
-		bool tiling)
+		bool tiling,
+		const std::vector<bool>& round_ups)
 		: subsampling_sizes(subsampling_sizes)
 		, feature_map_subsampling_size(feature_map_subsampling_size)
 		, entry_subsampling_size(entry_subsampling_size)
 		, is_min(is_min)
 		, tiling(tiling)
 	{
+		if ((round_ups.size() != 0) && (round_ups.size() != subsampling_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for round ups") % round_ups.size()).str());
+
+		if (round_ups.empty())
+			this->round_ups.resize(subsampling_sizes.size(), false);
+		else
+			this->round_ups = round_ups;
+
 		check();
 	}
 
@@ -62,6 +71,15 @@ namespace nnforge
 
 		if (tiling && (feature_map_subsampling_size > 1))
 			throw neural_network_exception("feature_map_subsampling_size cannot be set with tiling at the same time for max subsampling layer");
+
+		if (tiling)
+		{
+			for(unsigned int i = 0; i < round_ups.size(); i++)
+			{
+				if (round_ups[i])
+					throw neural_network_exception("round up cannot be set with tiling at the same time for max subsampling layer");
+			}
+		}
 	}
 
 	std::string max_subsampling_layer::get_type_name() const
@@ -72,20 +90,6 @@ namespace nnforge
 	layer::ptr max_subsampling_layer::clone() const
 	{
 		return layer::ptr(new max_subsampling_layer(*this));
-	}
-
-	layer_configuration max_subsampling_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		if ((input_configuration_list[0].dimension_count >= 0) && (input_configuration_list[0].dimension_count != static_cast<int>(subsampling_sizes.size())))
-			throw neural_network_exception((boost::format("Dimension count in layer (%1%) and input configuration (%2%) don't match") % subsampling_sizes.size() % input_configuration_list[0].dimension_count).str());
-
-		if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count < static_cast<int>(feature_map_subsampling_size)))
-			throw neural_network_exception((boost::format("Feature map count in input configuration (%1%) is smaller than feature map subsampling size (%2%)") % input_configuration_list[0].feature_map_count % feature_map_subsampling_size).str());
-		int new_feature_map_count = input_configuration_list[0].feature_map_count;
-		if (new_feature_map_count >= 0)
-			new_feature_map_count /= feature_map_subsampling_size;
-
-		return layer_configuration(new_feature_map_count, static_cast<int>(subsampling_sizes.size()));
 	}
 
 	layer_configuration_specific max_subsampling_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
@@ -109,10 +113,11 @@ namespace nnforge
 		{
 			for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
 			{
-				if (input_configuration_specific_list[0].dimension_sizes[i] < subsampling_sizes[i])
-					throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) is smaller than subsampling size (%3%)") % input_configuration_specific_list[0].dimension_sizes[i] % i % subsampling_sizes[i]).str());
+				unsigned int new_size = (input_configuration_specific_list[0].dimension_sizes[i] + (round_ups[i] ? subsampling_sizes[i] - 1 : 0)) / subsampling_sizes[i];
+				if (new_size == 0)
+					throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) produces 0 output size") % input_configuration_specific_list[0].dimension_sizes[i] % i).str());
 
-				res.dimension_sizes.push_back(input_configuration_specific_list[0].dimension_sizes[i] / subsampling_sizes[i]);
+				res.dimension_sizes.push_back(new_size);
 			}
 		}
 
@@ -151,6 +156,8 @@ namespace nnforge
 		{
 			protobuf::MaxSubsamplingParam_MaxSubsamplingDimensionParam * dim_param = param->add_dimension_param();
 			dim_param->set_subsampling_size(subsampling_sizes[i]);
+			if (round_ups[i])
+				dim_param->set_round_up(true);
 		}
 
 		if (feature_map_subsampling_size != 1)
@@ -174,9 +181,11 @@ namespace nnforge
 		const protobuf::MaxSubsamplingParam& param = layer_proto_typed->max_subsampling_param();
 
 		subsampling_sizes.resize(param.dimension_param_size());
+		round_ups.resize(param.dimension_param_size());
 		for(int i = 0; i < param.dimension_param_size(); ++i)
 		{
 			subsampling_sizes[i] = param.dimension_param(i).subsampling_size();
+			round_ups[i] = param.dimension_param(i).round_up();
 		}
 
 		feature_map_subsampling_size = param.has_feature_map_param() ? param.feature_map_param().subsampling_size() : 1;
@@ -260,6 +269,8 @@ namespace nnforge
 				if (i != 0)
 					ss << "x";
 				ss << subsampling_sizes[i];
+				if (round_ups[i])
+					ss << "_roundup_";
 			}
 		}
 

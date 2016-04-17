@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "layer_configuration.h"
 #include "layer_configuration_specific.h"
 #include "layer_data.h"
 #include "layer_data_custom.h"
@@ -44,8 +43,6 @@ namespace nnforge
 		virtual ~layer();
 
 		virtual layer::ptr clone() const = 0;
-
-		virtual layer_configuration get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const;
 
 		virtual layer_configuration_specific get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const;
 

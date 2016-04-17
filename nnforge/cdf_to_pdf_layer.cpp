@@ -56,14 +56,6 @@ namespace nnforge
 		return layer::ptr(new cdf_to_pdf_layer(*this));
 	}
 
-	layer_configuration cdf_to_pdf_layer::get_layer_configuration(const std::vector<layer_configuration>& input_configuration_list) const
-	{
-		if ((input_configuration_list[0].feature_map_count >= 0) && (input_configuration_list[0].feature_map_count % feature_map_segment_length != 0))
-			throw neural_network_exception((boost::format("Feature map count in input configuration (%1%) is not evenly divisible by feature map segment length (%2%)") % input_configuration_list[0].feature_map_count % feature_map_segment_length).str());
-
-		return input_configuration_list[0];
-	}
-
 	layer_configuration_specific cdf_to_pdf_layer::get_output_layer_configuration_specific(const std::vector<layer_configuration_specific>& input_configuration_specific_list) const
 	{
 		if (input_configuration_specific_list[0].feature_map_count % feature_map_segment_length != 0)

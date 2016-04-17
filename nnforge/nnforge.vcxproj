@@ -82,7 +82,6 @@
     <ClInclude Include="hyperbolic_tangent_layer.h" />
     <ClInclude Include="intensity_2d_data_transformer.h" />
     <ClInclude Include="layer.h" />
-    <ClInclude Include="layer_configuration.h" />
     <ClInclude Include="layer_configuration_specific.h" />
     <ClInclude Include="layer_configuration_specific_snapshot.h" />
     <ClInclude Include="layer_data.h" />
@@ -203,7 +202,6 @@
     <ClCompile Include="hyperbolic_tangent_layer.cpp" />
     <ClCompile Include="intensity_2d_data_transformer.cpp" />
     <ClCompile Include="layer.cpp" />
-    <ClCompile Include="layer_configuration.cpp" />
     <ClCompile Include="layer_configuration_specific.cpp" />
     <ClCompile Include="layer_configuration_specific_snapshot.cpp" />
     <ClCompile Include="layer_data.cpp" />
