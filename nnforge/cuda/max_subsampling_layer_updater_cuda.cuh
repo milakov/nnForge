@@ -41,9 +41,10 @@ namespace nnforge
 			position_type * __restrict max_positions,
 			const float * __restrict input,
 			array_by_val<int, DIMENSION_COUNT> subsampling_sizes,
+			array_by_val<int, DIMENSION_COUNT> strides,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int_fastdiv, DIMENSION_COUNT> strides,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> output_strides,
 			int feature_map_subsampling_size,
 			int entry_subsampling_size,
 			int input_neuron_count_per_entry,
@@ -78,9 +79,9 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 				{
-					xyzw[i] = remaining_part / strides[i];
-					xyzw_input[i] = xyzw[i] * subsampling_sizes[i];
-					remaining_part = remaining_part - strides[i] * xyzw[i];
+					xyzw[i] = remaining_part / output_strides[i];
+					xyzw_input[i] = xyzw[i] * strides[i];
+					remaining_part = remaining_part - output_strides[i] * xyzw[i];
 				}
 				window_x = remaining_part;
 
@@ -98,6 +99,10 @@ namespace nnforge
 				#pragma unroll
 				for(int i = 1; i < DIMENSION_COUNT; ++i)
 					current_pos *= subsampling_sizes[i];
+
+				#pragma unroll
+				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+					res[i] = IS_MIN ? 1.0e37F : -1.0e37F;
 
 				bool init_required = true;
 				bool fit_x = window_x < input_sizes[0] - xyzw_input[0];
@@ -232,9 +237,10 @@ namespace nnforge
 			float * __restrict output,
 			const float * __restrict input,
 			array_by_val<int, DIMENSION_COUNT> subsampling_sizes,
+			array_by_val<int, DIMENSION_COUNT> strides,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int_fastdiv, DIMENSION_COUNT> strides,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> output_strides,
 			int feature_map_subsampling_size,
 			int entry_subsampling_size,
 			int input_neuron_count_per_entry,
@@ -267,9 +273,9 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 				{
-					xyzw[i] = remaining_part / strides[i];
-					xyzw_input[i] = xyzw[i] * subsampling_sizes[i];
-					remaining_part = remaining_part - strides[i] * xyzw[i];
+					xyzw[i] = remaining_part / output_strides[i];
+					xyzw_input[i] = xyzw[i] * strides[i];
+					remaining_part = remaining_part - output_strides[i] * xyzw[i];
 				}
 				window_x = remaining_part;
 
@@ -370,15 +376,16 @@ namespace nnforge
 			}
 		}
 
-		template<int DIMENSION_COUNT, typename position_type, bool add_update_to_destination>
+		template<int DIMENSION_COUNT, typename position_type, bool add_update_to_destination, bool atomic_add>
 		__global__ void max_subsampling_backprop_upd_kernel(
 			float * __restrict input_errors,
 			const position_type * __restrict max_positions,
 			const float * __restrict output_errors,
 			array_by_val<int, DIMENSION_COUNT> subsampling_sizes,
+			array_by_val<int, DIMENSION_COUNT> strides,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int_fastdiv, DIMENSION_COUNT> strides,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> output_strides,
 			int feature_map_subsampling_size,
 			int entry_subsampling_size,
 			int input_neuron_count_per_entry,
@@ -408,9 +415,9 @@ namespace nnforge
 			#pragma unroll
 			for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 			{
-				xyzw[i] = remaining_part / strides[i];
-				xyzw_input[i] = xyzw[i] * subsampling_sizes[i];
-				remaining_part = remaining_part - strides[i] * xyzw[i];
+				xyzw[i] = remaining_part / output_strides[i];
+				xyzw_input[i] = xyzw[i] * strides[i];
+				remaining_part = remaining_part - output_strides[i] * xyzw[i];
 			}
 			window_x = remaining_part;
 
@@ -466,17 +473,30 @@ namespace nnforge
 								{
 									if (add_update_to_destination)
 									{
-										float dst[FEATURE_MAP_BLOCK_SIZE];
-										dst[0] = input_errors[current_input_elem_id];
-										#pragma unroll
-										for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-											if (item_valid[i - 1])
-												dst[i] = input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
-										input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F) + dst[0];
-										#pragma unroll
-										for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
-											if (item_valid[i - 1])
-												input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F) + dst[i];
+										if (atomic_add)
+										{
+											if ((current_pos == max_pos[0]) && (errors[0] != 0.0F))
+												atomicAdd(input_errors + current_input_elem_id, errors[0]);
+											#pragma unroll
+											for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+												if (item_valid[i - 1])
+													if ((current_pos == max_pos[i]) && (errors[i] != 0.0F))
+														atomicAdd(input_errors + current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i, errors[i]);
+										}
+										else
+										{
+											float dst[FEATURE_MAP_BLOCK_SIZE];
+											dst[0] = input_errors[current_input_elem_id];
+											#pragma unroll
+											for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+												if (item_valid[i - 1])
+													dst[i] = input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i];
+											input_errors[current_input_elem_id] = ((current_pos == max_pos[0]) ? errors[0] : 0.0F) + dst[0];
+											#pragma unroll
+											for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+												if (item_valid[i - 1])
+													input_errors[current_input_elem_id + input_neuron_count_per_feature_map * feature_map_subsampling_size * i] = ((current_pos == max_pos[i]) ? errors[i] : 0.0F) + dst[i];
+										}
 									}
 									else
 									{
@@ -551,9 +571,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -568,9 +589,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -588,9 +610,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -605,9 +628,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -630,9 +654,10 @@ namespace nnforge
 								*temporary_per_entry_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -648,9 +673,10 @@ namespace nnforge
 								*temporary_per_entry_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -669,9 +695,10 @@ namespace nnforge
 								*temporary_per_entry_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -687,9 +714,10 @@ namespace nnforge
 								*temporary_per_entry_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -712,9 +740,10 @@ namespace nnforge
 								*temporary_per_entry_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -730,9 +759,10 @@ namespace nnforge
 								*temporary_per_entry_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -751,9 +781,10 @@ namespace nnforge
 								*temporary_per_entry_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -769,9 +800,10 @@ namespace nnforge
 								*temporary_per_entry_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -803,7 +835,7 @@ namespace nnforge
 				bool add_update_to_destination,
 				unsigned int entry_count)
 			{
-				if ((!add_update_to_destination) && (!fully_covered_input))
+				if ((!add_update_to_destination) && ((!fully_covered_input) || overlapping_input_windows))
 				{
 					cuda_util::set_with_value(
 						*cuda_config,
@@ -824,15 +856,35 @@ namespace nnforge
 
 				if (total_subsampling_size <= 256)
 				{
-					if (add_update_to_destination)
-						max_subsampling_backprop_upd_kernel<dimension_count, unsigned char, true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					if (overlapping_input_windows)
+						max_subsampling_backprop_upd_kernel<dimension_count, unsigned char, true, true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 							*input_errors_buffer,
 							*temporary_per_entry_buffer,
 							*output_errors_buffer,
 							subsampling_sizes,
+							strides,
 							input_sizes,
 							output_sizes,
+							output_strides,
+							feature_map_subsampling_size,
+							entry_subsampling_size,
+							input_elem_count_per_entry_list[0],
+							input_elem_count_per_feature_map_list[0],
+							output_elem_count_per_feature_map,
+							input_configuration_specific_list[0].feature_map_count,
+							output_configuration_specific.feature_map_count,
+							entry_count,
+							forward_packed_config_count);
+					else if (add_update_to_destination)
+						max_subsampling_backprop_upd_kernel<dimension_count, unsigned char, true, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+							*input_errors_buffer,
+							*temporary_per_entry_buffer,
+							*output_errors_buffer,
+							subsampling_sizes,
 							strides,
+							input_sizes,
+							output_sizes,
+							output_strides,
 							feature_map_subsampling_size,
 							entry_subsampling_size,
 							input_elem_count_per_entry_list[0],
@@ -843,14 +895,15 @@ namespace nnforge
 							entry_count,
 							forward_packed_config_count);
 					else
-						max_subsampling_backprop_upd_kernel<dimension_count, unsigned char, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+						max_subsampling_backprop_upd_kernel<dimension_count, unsigned char, false, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 							*input_errors_buffer,
 							*temporary_per_entry_buffer,
 							*output_errors_buffer,
 							subsampling_sizes,
+							strides,
 							input_sizes,
 							output_sizes,
-							strides,
+							output_strides,
 							feature_map_subsampling_size,
 							entry_subsampling_size,
 							input_elem_count_per_entry_list[0],
@@ -863,15 +916,35 @@ namespace nnforge
 				}
 				else
 				{
-					if (add_update_to_destination)
-						max_subsampling_backprop_upd_kernel<dimension_count, int, true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					if (overlapping_input_windows)
+						max_subsampling_backprop_upd_kernel<dimension_count, int, true, true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 							*input_errors_buffer,
 							*temporary_per_entry_buffer,
 							*output_errors_buffer,
 							subsampling_sizes,
+							strides,
 							input_sizes,
 							output_sizes,
+							output_strides,
+							feature_map_subsampling_size,
+							entry_subsampling_size,
+							input_elem_count_per_entry_list[0],
+							input_elem_count_per_feature_map_list[0],
+							output_elem_count_per_feature_map,
+							input_configuration_specific_list[0].feature_map_count,
+							output_configuration_specific.feature_map_count,
+							entry_count,
+							forward_packed_config_count);
+					else if (add_update_to_destination)
+						max_subsampling_backprop_upd_kernel<dimension_count, int, true, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+							*input_errors_buffer,
+							*temporary_per_entry_buffer,
+							*output_errors_buffer,
+							subsampling_sizes,
 							strides,
+							input_sizes,
+							output_sizes,
+							output_strides,
 							feature_map_subsampling_size,
 							entry_subsampling_size,
 							input_elem_count_per_entry_list[0],
@@ -882,14 +955,15 @@ namespace nnforge
 							entry_count,
 							forward_packed_config_count);
 					else
-						max_subsampling_backprop_upd_kernel<dimension_count, int, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+						max_subsampling_backprop_upd_kernel<dimension_count, int, false, false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 							*input_errors_buffer,
 							*temporary_per_entry_buffer,
 							*output_errors_buffer,
 							subsampling_sizes,
+							strides,
 							input_sizes,
 							output_sizes,
-							strides,
+							output_strides,
 							feature_map_subsampling_size,
 							entry_subsampling_size,
 							input_elem_count_per_entry_list[0],
@@ -915,6 +989,9 @@ namespace nnforge
 				std::vector<unsigned int> local_subsampling_sizes = layer_derived->subsampling_sizes;
 				if (local_subsampling_sizes.empty())
 					local_subsampling_sizes.push_back(1);
+				std::vector<unsigned int> local_strides = layer_derived->strides;
+				if (local_strides.empty())
+					local_strides.push_back(1);
 				std::vector<unsigned int> local_input_dimension_sizes = input_configuration_specific_list[0].dimension_sizes;
 				if (local_input_dimension_sizes.empty())
 					local_input_dimension_sizes.push_back(1);
@@ -922,17 +999,18 @@ namespace nnforge
 				if (local_output_dimension_sizes.empty())
 					local_output_dimension_sizes.push_back(1);
 
-				int_fastdiv current_stride(local_subsampling_sizes[0]);
+				int_fastdiv current_output_stride(local_subsampling_sizes[0]);
 				total_subsampling_size = entry_subsampling_size * feature_map_subsampling_size;
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = local_subsampling_sizes[i];
+					strides[i] = local_strides[i];
 					input_sizes[i] = local_input_dimension_sizes[i];
 					output_sizes[i] = local_output_dimension_sizes[i];
-					strides[i] = current_stride;
+					output_strides[i] = current_output_stride;
 
 					total_subsampling_size *= subsampling_sizes[i];
-					current_stride = current_stride * output_sizes[i];
+					current_output_stride = current_output_stride * output_sizes[i];
 				}
 
 				forward_packed_config_count = subsampling_sizes[0];
@@ -941,7 +1019,11 @@ namespace nnforge
 
 				fully_covered_input = (output_configuration_specific.feature_map_count * feature_map_subsampling_size == input_configuration_specific_list[0].feature_map_count);
 				for(int i = 0; i < dimension_count; ++i)
-					fully_covered_input = fully_covered_input && (output_sizes[i] * subsampling_sizes[i] >= input_sizes[i]);
+					fully_covered_input = fully_covered_input && (((output_sizes[i] - 1) * strides[i] + subsampling_sizes[i]) >= input_sizes[i]);
+
+				overlapping_input_windows = false;
+				for(int i = 0; i < dimension_count; ++i)
+					overlapping_input_windows = overlapping_input_windows || ((strides[i] < subsampling_sizes[i]) && (output_sizes[i] > 1));
 
 				nonunit_window_x = (subsampling_sizes[0] > 1);
 			}
@@ -977,11 +1059,13 @@ namespace nnforge
 			array_by_val<int, dimension_count> output_sizes;
 			array_by_val<int, dimension_count> input_sizes;
 			array_by_val<int, dimension_count> subsampling_sizes;
-			array_by_val<int_fastdiv, dimension_count> strides;
+			array_by_val<int, dimension_count> strides;
+			array_by_val<int_fastdiv, dimension_count> output_strides;
 			unsigned int forward_packed_config_count;
 			bool nonunit_window_x;
 			unsigned int total_subsampling_size;
 			bool fully_covered_input;
+			bool overlapping_input_windows;
 		};
 	}
 }

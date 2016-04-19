@@ -42,9 +42,10 @@ namespace nnforge
 			float * __restrict output,
 			const float * __restrict input,
 			array_by_val<int, DIMENSION_COUNT> subsampling_sizes,
+			array_by_val<int, DIMENSION_COUNT> strides,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int_fastdiv, DIMENSION_COUNT> strides,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> output_strides,
 			int feature_map_subsampling_size,
 			int entry_subsampling_size,
 			int input_neuron_count_per_entry,
@@ -77,9 +78,9 @@ namespace nnforge
 				#pragma unroll
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 				{
-					xyzw[i] = remaining_part / strides[i];
-					xyzw_input[i] = xyzw[i] * subsampling_sizes[i];
-					remaining_part = remaining_part - strides[i] * xyzw[i];
+					xyzw[i] = remaining_part / output_strides[i];
+					xyzw_input[i] = xyzw[i] * strides[i];
+					remaining_part = remaining_part - output_strides[i] * xyzw[i];
 				}
 				window_x = remaining_part;
 
@@ -224,9 +225,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -241,9 +243,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -261,9 +264,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -278,9 +282,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -301,9 +306,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -318,9 +324,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -338,9 +345,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -355,9 +363,10 @@ namespace nnforge
 								*output_buffer,
 								*input_buffers[0],
 								subsampling_sizes,
+								strides,
 								input_sizes,
 								output_sizes,
-								strides,
+								output_strides,
 								feature_map_subsampling_size,
 								entry_subsampling_size,
 								input_elem_count_per_entry_list[0],
@@ -384,6 +393,9 @@ namespace nnforge
 				std::vector<unsigned int> local_subsampling_sizes = layer_derived->subsampling_sizes;
 				if (local_subsampling_sizes.empty())
 					local_subsampling_sizes.push_back(1);
+				std::vector<unsigned int> local_strides = layer_derived->strides;
+				if (local_strides.empty())
+					local_strides.push_back(1);
 				std::vector<unsigned int> local_input_dimension_sizes = input_configuration_specific_list[0].dimension_sizes;
 				if (local_input_dimension_sizes.empty())
 					local_input_dimension_sizes.push_back(1);
@@ -391,16 +403,17 @@ namespace nnforge
 				if (local_output_dimension_sizes.empty())
 					local_output_dimension_sizes.push_back(1);
 
-				int_fastdiv current_stride(local_subsampling_sizes[0]);
+				int_fastdiv current_output_stride(local_subsampling_sizes[0]);
 				truncation = false;
 				for(int i = 0; i < dimension_count; ++i)
 				{
 					subsampling_sizes[i] = local_subsampling_sizes[i];
+					strides[i] = local_strides[i];
 					input_sizes[i] = local_input_dimension_sizes[i];
 					output_sizes[i] = local_output_dimension_sizes[i];
-					strides[i] = current_stride;
-					current_stride = current_stride * output_sizes[i];
-					truncation = truncation || (output_sizes[i] * subsampling_sizes[i] > input_sizes[i]);
+					output_strides[i] = current_output_stride;
+					current_output_stride = current_output_stride * output_sizes[i];
+					truncation = truncation || (((output_sizes[i] - 1) * strides[i] + subsampling_sizes[i]) > input_sizes[i]);
 				}
 
 				forward_packed_config_count = subsampling_sizes[0];
@@ -417,7 +430,8 @@ namespace nnforge
 			array_by_val<int, dimension_count> output_sizes;
 			array_by_val<int, dimension_count> input_sizes;
 			array_by_val<int, dimension_count> subsampling_sizes;
-			array_by_val<int_fastdiv, dimension_count> strides;
+			array_by_val<int, dimension_count> strides;
+			array_by_val<int_fastdiv, dimension_count> output_strides;
 			unsigned int forward_packed_config_count;
 			bool nonunit_window_x;
 			bool truncation;

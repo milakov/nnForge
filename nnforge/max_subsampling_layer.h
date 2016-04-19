@@ -32,7 +32,8 @@ namespace nnforge
 			unsigned int entry_subsampling_size = 1,
 			bool is_min = false,
 			bool tiling = false,
-			const std::vector<bool>& round_ups = std::vector<bool>());
+			const std::vector<bool>& round_ups = std::vector<bool>(),
+			const std::vector<unsigned int>& strides = std::vector<unsigned int>());
 
 		virtual layer::ptr clone() const;
 
@@ -67,6 +68,7 @@ namespace nnforge
 	public:
 		std::vector<unsigned int> subsampling_sizes;
 		std::vector<bool> round_ups;
+		std::vector<unsigned int> strides;
 		unsigned int feature_map_subsampling_size;
 		unsigned int entry_subsampling_size;
 		bool is_min;

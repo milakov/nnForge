@@ -204,6 +204,9 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific.get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
+			std::vector<unsigned int> strides = layer_derived->strides;
+			if (strides.empty())
+				strides.push_back(1);
 			std::vector<unsigned int> subsampling_sizes = layer_derived->subsampling_sizes;
 			if (subsampling_sizes.empty())
 				subsampling_sizes.push_back(1);
@@ -248,7 +251,7 @@ namespace nnforge
 
 			const int total_workload = entry_count * output_configuration_specific.feature_map_count;
 			const std::vector<unsigned int>::const_iterator dimension_sizes_it = output_dimension_sizes.begin();
-			const std::vector<unsigned int>::const_iterator subsampling_sizes_it = subsampling_sizes.begin();
+			const std::vector<unsigned int>::const_iterator strides_it = strides.begin();
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
 
@@ -271,7 +274,7 @@ namespace nnforge
 						// Define the starting position of the first input elem
 						const float * in_it = in_it_base;
 						for(unsigned int i = 0; i < spatial_dimension_count; ++i)
-							in_it += current_output_position[i] * (*(subsampling_sizes_it + i)) * (*(input_slices_it + i));
+							in_it += current_output_position[i] * (*(strides_it + i)) * (*(input_slices_it + i));
 
 						float current_max = is_min ? 1.0e37F : -1.0e37F;
 						for(unsigned int i = 0; i < const_subsampling_elem_count; ++i)

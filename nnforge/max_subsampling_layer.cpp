@@ -34,7 +34,8 @@ namespace nnforge
 		unsigned int entry_subsampling_size,
 		bool is_min,
 		bool tiling,
-		const std::vector<bool>& round_ups)
+		const std::vector<bool>& round_ups,
+		const std::vector<unsigned int>& strides)
 		: subsampling_sizes(subsampling_sizes)
 		, feature_map_subsampling_size(feature_map_subsampling_size)
 		, entry_subsampling_size(entry_subsampling_size)
@@ -43,11 +44,18 @@ namespace nnforge
 	{
 		if ((round_ups.size() != 0) && (round_ups.size() != subsampling_sizes.size()))
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for round ups") % round_ups.size()).str());
+		if ((strides.size() != 0) && (strides.size() != subsampling_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for strides") % strides.size()).str());
 
 		if (round_ups.empty())
 			this->round_ups.resize(subsampling_sizes.size(), false);
 		else
 			this->round_ups = round_ups;
+
+		if (strides.empty())
+			this->strides = subsampling_sizes;
+		else
+			this->strides = strides;
 
 		check();
 	}
@@ -71,6 +79,10 @@ namespace nnforge
 
 		if (tiling && (feature_map_subsampling_size > 1))
 			throw neural_network_exception("feature_map_subsampling_size cannot be set with tiling at the same time for max subsampling layer");
+
+		for(unsigned int i = 0; i < strides.size(); i++)
+			if (strides[i] == 0)
+				throw neural_network_exception((boost::format("stride dimension (%1%) is 0") % i).str());
 
 		if (tiling)
 		{
@@ -113,11 +125,12 @@ namespace nnforge
 		{
 			for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
 			{
-				unsigned int new_size = (input_configuration_specific_list[0].dimension_sizes[i] + (round_ups[i] ? subsampling_sizes[i] - 1 : 0)) / subsampling_sizes[i];
-				if (new_size == 0)
+				int new_size = (static_cast<int>(input_configuration_specific_list[0].dimension_sizes[i]) + static_cast<int>(strides[i]) - static_cast<int>(subsampling_sizes[i]) + (round_ups[i] ? static_cast<int>(subsampling_sizes[i]) - 1 : 0)) / static_cast<int>(strides[i]);
+
+				if (new_size <= 0)
 					throw neural_network_exception((boost::format("Input configuration size (%1%) of dimension (%2%) produces 0 output size") % input_configuration_specific_list[0].dimension_sizes[i] % i).str());
 
-				res.dimension_sizes.push_back(new_size);
+				res.dimension_sizes.push_back(static_cast<unsigned int>(new_size));
 			}
 		}
 
@@ -142,7 +155,7 @@ namespace nnforge
 		else
 		{
 			for(unsigned int i = 0; i < subsampling_sizes.size(); ++i)
-				input_configuration_specific.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] * subsampling_sizes[i]);
+				input_configuration_specific.dimension_sizes.push_back((output_configuration_specific.dimension_sizes[i] - 1) * strides[i] + subsampling_sizes[i]);
 		}
 
 		return true;
@@ -158,6 +171,8 @@ namespace nnforge
 			dim_param->set_subsampling_size(subsampling_sizes[i]);
 			if (round_ups[i])
 				dim_param->set_round_up(true);
+			if (strides[i] != subsampling_sizes[i])
+				dim_param->set_stride(strides[i]);
 		}
 
 		if (feature_map_subsampling_size != 1)
@@ -182,10 +197,12 @@ namespace nnforge
 
 		subsampling_sizes.resize(param.dimension_param_size());
 		round_ups.resize(param.dimension_param_size());
+		strides.resize(param.dimension_param_size());
 		for(int i = 0; i < param.dimension_param_size(); ++i)
 		{
 			subsampling_sizes[i] = param.dimension_param(i).subsampling_size();
 			round_ups[i] = param.dimension_param(i).round_up();
+			strides[i] = param.dimension_param(i).has_stride() ? param.dimension_param(i).stride() : subsampling_sizes[i];
 		}
 
 		feature_map_subsampling_size = param.has_feature_map_param() ? param.feature_map_param().subsampling_size() : 1;
@@ -271,6 +288,26 @@ namespace nnforge
 				ss << subsampling_sizes[i];
 				if (round_ups[i])
 					ss << "_roundup_";
+			}
+		}
+
+		bool nontrivial_stride = true;
+		for(int i = 0; i < strides.size(); ++i)
+		{
+			if (strides[i] != subsampling_sizes[i])
+			{
+				nontrivial_stride = false;
+				break;
+			}
+		}
+		if (!nontrivial_stride)
+		{
+			ss << ", stride ";
+			for(int i = 0; i < strides.size(); ++i)
+			{
+				if (i != 0)
+					ss << "x";
+				ss << strides[i];
 			}
 		}
 
