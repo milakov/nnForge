@@ -23,6 +23,7 @@
 #include "structured_data_bunch_reader.h"
 #include "nn_types.h"
 #include "training_momentum.h"
+#include "learning_rate_decay_policy.h"
 
 #include <map>
 
@@ -44,10 +45,7 @@ namespace nnforge
 		unsigned int epoch_count;
 		unsigned int batch_size;
 		float learning_rate;
-		unsigned int learning_rate_decay_tail_epoch_count;
-		float learning_rate_decay_rate;
-		unsigned int learning_rate_rise_head_epoch_count;
-		float learning_rate_rise_rate;
+		learning_rate_decay_policy::const_ptr lr_policy;
 		float weight_decay;
 		training_momentum momentum;
 

@@ -108,6 +108,12 @@
     <Filter Include="Source Files\visualize">
       <UniqueIdentifier>{b746f866-9151-4d0a-abb5-5e38c9c02b36}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\training\learning_rate_decay_policies">
+      <UniqueIdentifier>{e39f787a-c890-4e11-9c3a-0a09ea9bf00b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\training\learning_rate_decay_policies">
+      <UniqueIdentifier>{39f3ed2e-49ec-4425-9c44-9583c9321aed}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="rnd.h">
@@ -479,6 +485,12 @@
     <ClInclude Include="profile_util.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
+    <ClInclude Include="learning_rate_decay_policy.h">
+      <Filter>Header Files\training\trainer</Filter>
+    </ClInclude>
+    <ClInclude Include="exponential_learning_rate_decay_policy.h">
+      <Filter>Header Files\training\learning_rate_decay_policies</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -828,6 +840,12 @@
     </ClCompile>
     <ClCompile Include="profile_util.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="learning_rate_decay_policy.cpp">
+      <Filter>Source Files\training\trainer</Filter>
+    </ClCompile>
+    <ClCompile Include="exponential_learning_rate_decay_policy.cpp">
+      <Filter>Source Files\training\learning_rate_decay_policies</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

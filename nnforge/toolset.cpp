@@ -41,6 +41,7 @@
 #include "structured_data_constant_reader.h"
 #include "structured_data_bunch_mix_reader.h"
 #include "neuron_value_set_data_bunch_reader.h"
+#include "exponential_learning_rate_decay_policy.h"
 
 namespace nnforge
 {
@@ -291,6 +292,13 @@ namespace nnforge
 		forward_prop_factory = master_factory->create_forward_propagation_factory();
 		backward_prop_factory = master_factory->create_backward_propagation_factory();
 
+		if (learning_rate_policy == "exponential")
+		{
+			lr_policy = learning_rate_decay_policy::ptr(new exponential_learning_rate_decay_policy(learning_rate_decay_rate, learning_rate_decay_start_epoch));
+		}
+		else
+			throw neural_network_exception((boost::format("Invalid learning_rate_policy: %1%") % learning_rate_policy).str());
+
 		return (action.size() > 0);
 	}
 
@@ -326,6 +334,7 @@ namespace nnforge
 		res.push_back(string_option("normalizer_layer_name", &normalizer_layer_name, "", "Name of the layer to create normalizer for"));
 		res.push_back(string_option("log_mode", &log_mode, "duplicate", "Duplicate or redirect output to log file (duplicate, redirect)"));
 		res.push_back(string_option("check_gradient_weights", &check_gradient_weights, "::", "The set of weights to check for gradient, in the form Layer:WeightSet:WeightID"));
+		res.push_back(string_option("learning_rate_policy", &learning_rate_policy, "exponential", "Learning rate decay policy (exponential)"));
 
 		return res;
 	}
@@ -372,8 +381,7 @@ namespace nnforge
 		std::vector<float_option> res;
 
 		res.push_back(float_option("learning_rate,L", &learning_rate, 0.01F, "Global learning rate"));
-		res.push_back(float_option("learning_rate_decay_rate", &learning_rate_decay_rate, 0.5F, "Degradation of learning rate at each tail epoch"));
-		res.push_back(float_option("learning_rate_rise_rate", &learning_rate_rise_rate, 0.1F, "Increase factor of learning rate at each head epoch (<1.0)"));
+		res.push_back(float_option("learning_rate_decay_rate", &learning_rate_decay_rate, 0.95F, "Learning rate decay rate"));
 		res.push_back(float_option("weight_decay", &weight_decay, 0.0F, "Weight decay"));
 		res.push_back(float_option("momentum,M", &momentum_val, 0.9F, "Momentum value"));
 		res.push_back(float_option("momentum2", &momentum_val2, 0.999F, "The second momentum value (used when momentum_type is ADAM)"));
@@ -390,8 +398,7 @@ namespace nnforge
 		std::vector<int_option> res;
 
 		res.push_back(int_option("training_epoch_count,E", &training_epoch_count, 50, "Epochs to train"));
-		res.push_back(int_option("learning_rate_decay_tail", &learning_rate_decay_tail_epoch_count, 0, "Number of tail iterations with gradually lowering learning rates"));
-		res.push_back(int_option("learning_rate_rise_head", &learning_rate_rise_head_epoch_count, 0, "Number of head iterations with gradually increasing learning rates"));
+		res.push_back(int_option("learning_rate_decay_start_epoch", &learning_rate_decay_start_epoch, 0, "Exponential learning rate decay starts at this epoch"));
 		res.push_back(int_option("batch_size,B", &batch_size, 1, "Training mini-batch size"));
 		res.push_back(int_option("ann_count,N", &ann_count, 1, "Amount of networks to train"));
 		res.push_back(int_option("inference_ann_data_index", &inference_ann_data_index, -1, "Index of the dataset to be used for inference"));
@@ -952,10 +959,7 @@ namespace nnforge
 
 		res->epoch_count = training_epoch_count;
 		res->learning_rate = learning_rate;
-		res->learning_rate_decay_tail_epoch_count = learning_rate_decay_tail_epoch_count;
-		res->learning_rate_decay_rate = learning_rate_decay_rate;
-		res->learning_rate_rise_head_epoch_count = learning_rate_rise_head_epoch_count;
-		res->learning_rate_rise_rate = learning_rate_rise_rate;
+		res->lr_policy = lr_policy;
 		res->weight_decay = weight_decay;
 		res->batch_size = batch_size;
 		res->momentum = training_momentum(momentum_type_str, momentum_val, momentum_val2);

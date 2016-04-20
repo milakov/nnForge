@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "neural_network_exception.h"
+#include "exponential_learning_rate_decay_policy.h"
 
 namespace nnforge
 {
@@ -32,9 +33,8 @@ namespace nnforge
 		, error_source_layer_names(error_source_layer_names)
 		, exclude_data_update_layer_names(exclude_data_update_layer_names)
 		, epoch_count(50)
-		, learning_rate_decay_tail_epoch_count(0)
-		, learning_rate_decay_rate(0.5F)
 		, learning_rate(0.02F)
+		, lr_policy(new exponential_learning_rate_decay_policy())
 		, batch_size(1)
 	{
 	}
@@ -159,21 +159,6 @@ namespace nnforge
 
 	float network_trainer::get_global_learning_rate(unsigned int epoch) const
 	{
-		float tail_degradation_factor = 1.0F;
-		{
-			int first_iteration_with_decay = std::max(static_cast<int>(epoch_count) - static_cast<int>(learning_rate_decay_tail_epoch_count), 1);
-			int tail_degradation_epoch = static_cast<int>(epoch) - first_iteration_with_decay + 1;
-			if (tail_degradation_epoch > 0)
-				tail_degradation_factor = powf(learning_rate_decay_rate, static_cast<float>(tail_degradation_epoch));
-		}
-
-		float head_degradation_factor = 1.0F;
-		{
-			int head_rise_epoch = static_cast<int>(learning_rate_rise_head_epoch_count) - static_cast<int>(epoch);
-			if (head_rise_epoch > 0)
-				head_degradation_factor = powf(learning_rate_rise_rate, static_cast<float>(head_rise_epoch));
-		}
-
-		return tail_degradation_factor * head_degradation_factor * learning_rate;
+		return lr_policy->get_learning_rate_decay(epoch) * learning_rate;
 	}
 }

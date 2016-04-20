@@ -205,10 +205,9 @@ namespace nnforge
 		std::string training_algo;
 		int training_epoch_count;
 		float learning_rate;
-		int learning_rate_decay_tail_epoch_count;
-		int learning_rate_rise_head_epoch_count;
+		std::string learning_rate_policy;
 		float learning_rate_decay_rate;
-		float learning_rate_rise_rate;
+		int learning_rate_decay_start_epoch;
 		float weight_decay;
 		int batch_size;
 		std::string momentum_type_str;
@@ -244,6 +243,7 @@ namespace nnforge
 
 		debug_state::ptr debug;
 		profile_state::ptr profile;
+		learning_rate_decay_policy::ptr lr_policy;
 
 	protected:
 		static const char * logfile_name;

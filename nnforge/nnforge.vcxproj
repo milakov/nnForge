@@ -35,12 +35,14 @@
     <ClInclude Include="elastic_deformation_2d_data_transformer.h" />
     <ClInclude Include="embed_data_transformer.h" />
     <ClInclude Include="entry_convolution_layer.h" />
+    <ClInclude Include="exponential_learning_rate_decay_policy.h" />
     <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="forward_propagation_factory.h" />
     <ClInclude Include="gradient_modifier_layer.h" />
     <ClInclude Include="layer_action.h" />
     <ClInclude Include="layer_data_custom_list.h" />
     <ClInclude Include="layer_name_with_action.h" />
+    <ClInclude Include="learning_rate_decay_policy.h" />
     <ClInclude Include="min_weight_sequential_vertex_coloring.h" />
     <ClInclude Include="lerror_layer.h" />
     <ClInclude Include="negative_log_likelihood_layer.h" />
@@ -158,10 +160,12 @@
     <ClCompile Include="elastic_deformation_2d_data_transformer.cpp" />
     <ClCompile Include="embed_data_transformer.cpp" />
     <ClCompile Include="entry_convolution_layer.cpp" />
+    <ClCompile Include="exponential_learning_rate_decay_policy.cpp" />
     <ClCompile Include="forward_propagation.cpp" />
     <ClCompile Include="forward_propagation_factory.cpp" />
     <ClCompile Include="gradient_modifier_layer.cpp" />
     <ClCompile Include="layer_data_custom_list.cpp" />
+    <ClCompile Include="learning_rate_decay_policy.cpp" />
     <ClCompile Include="lerror_layer.cpp" />
     <ClCompile Include="negative_log_likelihood_layer.cpp" />
     <ClCompile Include="network_action_schema.cpp" />
