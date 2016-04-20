@@ -491,6 +491,9 @@
     <ClInclude Include="exponential_learning_rate_decay_policy.h">
       <Filter>Header Files\training\learning_rate_decay_policies</Filter>
     </ClInclude>
+    <ClInclude Include="step_learning_rate_decay_policy.h">
+      <Filter>Header Files\training\learning_rate_decay_policies</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -845,6 +848,9 @@
       <Filter>Source Files\training\trainer</Filter>
     </ClCompile>
     <ClCompile Include="exponential_learning_rate_decay_policy.cpp">
+      <Filter>Source Files\training\learning_rate_decay_policies</Filter>
+    </ClCompile>
+    <ClCompile Include="step_learning_rate_decay_policy.cpp">
       <Filter>Source Files\training\learning_rate_decay_policies</Filter>
     </ClCompile>
   </ItemGroup>

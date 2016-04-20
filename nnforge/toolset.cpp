@@ -42,6 +42,7 @@
 #include "structured_data_bunch_mix_reader.h"
 #include "neuron_value_set_data_bunch_reader.h"
 #include "exponential_learning_rate_decay_policy.h"
+#include "step_learning_rate_decay_policy.h"
 
 namespace nnforge
 {
@@ -296,6 +297,10 @@ namespace nnforge
 		{
 			lr_policy = learning_rate_decay_policy::ptr(new exponential_learning_rate_decay_policy(learning_rate_decay_rate, learning_rate_decay_start_epoch));
 		}
+		else if (learning_rate_policy == "step")
+		{
+			lr_policy = learning_rate_decay_policy::ptr(new step_learning_rate_decay_policy(step_learning_rate_epochs_and_rates));
+		}
 		else
 			throw neural_network_exception((boost::format("Invalid learning_rate_policy: %1%") % learning_rate_policy).str());
 
@@ -334,7 +339,8 @@ namespace nnforge
 		res.push_back(string_option("normalizer_layer_name", &normalizer_layer_name, "", "Name of the layer to create normalizer for"));
 		res.push_back(string_option("log_mode", &log_mode, "duplicate", "Duplicate or redirect output to log file (duplicate, redirect)"));
 		res.push_back(string_option("check_gradient_weights", &check_gradient_weights, "::", "The set of weights to check for gradient, in the form Layer:WeightSet:WeightID"));
-		res.push_back(string_option("learning_rate_policy", &learning_rate_policy, "exponential", "Learning rate decay policy (exponential)"));
+		res.push_back(string_option("learning_rate_policy", &learning_rate_policy, "exponential", "Learning rate decay policy (exponential, step)"));
+		res.push_back(string_option("step_learning_rate_epochs_and_rates", &step_learning_rate_epochs_and_rates, "", "List of start epoch and decay for step learining rate policy, for example 30:0.1:60:0.01"));
 
 		return res;
 	}

@@ -56,6 +56,7 @@
     <ClInclude Include="raw_data_writer.h" />
     <ClInclude Include="raw_to_structured_data_transformer.h" />
     <ClInclude Include="reshape_layer.h" />
+    <ClInclude Include="step_learning_rate_decay_policy.h" />
     <ClInclude Include="stream_redirector.h" />
     <ClInclude Include="structured_data_bunch_mix_reader.h" />
     <ClInclude Include="structured_data_bunch_reader.h" />
@@ -178,6 +179,7 @@
     <ClCompile Include="raw_data_writer.cpp" />
     <ClCompile Include="raw_to_structured_data_transformer.cpp" />
     <ClCompile Include="reshape_layer.cpp" />
+    <ClCompile Include="step_learning_rate_decay_policy.cpp" />
     <ClCompile Include="stream_redirector.cpp" />
     <ClCompile Include="structured_data_bunch_mix_reader.cpp" />
     <ClCompile Include="structured_data_bunch_reader.cpp" />

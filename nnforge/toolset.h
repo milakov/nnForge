@@ -208,6 +208,7 @@ namespace nnforge
 		std::string learning_rate_policy;
 		float learning_rate_decay_rate;
 		int learning_rate_decay_start_epoch;
+		std::string step_learning_rate_epochs_and_rates;
 		float weight_decay;
 		int batch_size;
 		std::string momentum_type_str;
