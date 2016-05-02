@@ -52,7 +52,8 @@ namespace nnforge
 			dataset_usage_dump_data = 3,
 			dataset_usage_create_normalizer = 4,
 			dataset_usage_check_gradient = 5,
-			dataset_usage_shuffle_data = 6
+			dataset_usage_shuffle_data = 6,
+			dataset_usage_update_bn_weights = 7
 		};
 
 		enum schema_usage
@@ -119,6 +120,8 @@ namespace nnforge
 		virtual void check_gradient();
 
 		virtual void save_random_weights();
+
+		virtual void update_bn_weights();
 
 		virtual structured_data_bunch_reader::ptr get_structured_data_bunch_reader(
 			const std::string& dataset_name,

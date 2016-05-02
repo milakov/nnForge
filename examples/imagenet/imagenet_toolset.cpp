@@ -328,7 +328,7 @@ nnforge::structured_data_reader::ptr imagenet_toolset::get_structured_reader(
 		nnforge::raw_to_structured_data_transformer::ptr transformer;
 		if (dataset_name == "training")
 		{
-			if (usage == dataset_usage_check_gradient)
+			if ((usage == dataset_usage_check_gradient) || (usage == dataset_usage_update_bn_weights))
 			{
 				std::vector<std::pair<float, float> > position_list(1, std::make_pair(0.5F, 0.5F));
 				transformer = nnforge::raw_to_structured_data_transformer::ptr(new validating_imagenet_raw_to_structured_data_transformer(
@@ -397,7 +397,7 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 		if (layer_name == "images")
 		{
 			res.push_back(get_normalize_data_transformer(layer_name));
-			if ((dataset_name == "training") && (usage != dataset_usage_create_normalizer))
+			if ((dataset_name == "training") && (usage != dataset_usage_create_normalizer) && (usage != dataset_usage_update_bn_weights))
 			{
 				res.push_back(nnforge::data_transformer::ptr(new nnforge::distort_2d_data_transformer(
 					0.0F,

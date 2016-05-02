@@ -43,6 +43,8 @@
 #include "neuron_value_set_data_bunch_reader.h"
 #include "exponential_learning_rate_decay_policy.h"
 #include "step_learning_rate_decay_policy.h"
+#include "batch_norm_layer.h"
+#include "stat_data_bunch_writer.h"
 
 namespace nnforge
 {
@@ -111,6 +113,10 @@ namespace nnforge
 		else if (!action.compare("save_random_weights"))
 		{
 			save_random_weights();
+		}
+		else if (!action.compare("update_bn_weights"))
+		{
+			update_bn_weights();
 		}
 		else
 		{
@@ -321,7 +327,7 @@ namespace nnforge
 	{
 		std::vector<string_option> res;
 
-		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, shuffle_data, dump_data, dump_schema, create_normalizer, inference, train, save_random_weights)"));
+		res.push_back(string_option("action", &action, get_default_action().c_str(), "run action (info, prepare_training_data, prepare_testing_data, shuffle_data, dump_data, dump_schema, create_normalizer, inference, train, save_random_weights, update_bn_weights)"));
 		res.push_back(string_option("schema", &schema_filename, "schema.txt", "Name of the file with schema of the network, in protobuf format"));
 		res.push_back(string_option("inference_dataset_name", &inference_dataset_name, "validating", "Name of the dataset to be used for inference"));
 		res.push_back(string_option("training_dataset_name", &training_dataset_name, "training", "Name of the dataset to be used for training"));
@@ -1534,5 +1540,75 @@ namespace nnforge
 		boost::filesystem::path weights_folder = batch_folder / data_folder_name;
 		std::cout << "Saving weights to " << weights_folder.string() << std::endl;
 		data->write(weights_folder);
+	}
+
+	void toolset::update_bn_weights()
+	{
+		network_schema::ptr schema = get_schema(schema_usage_inference);
+		structured_data_bunch_reader::ptr reader = get_structured_data_bunch_reader(training_dataset_name, dataset_usage_update_bn_weights, epoch_count_in_training_dataset, 0);
+		std::vector<layer::const_ptr> layers = schema->get_layers_in_forward_propagation_order();
+
+		std::vector<std::string> bn_layes;
+		std::cout << "Updating Batch Normalization weights for these layers: ";
+		for(std::vector<layer::const_ptr>::const_iterator it = layers.begin(); it != layers.end(); ++it)
+		{
+			if ((*it)->get_type_name() == batch_norm_layer::layer_type_name)
+			{
+				bn_layes.push_back((*it)->instance_name);
+				if (bn_layes.size() > 1)
+					std::cout << ", ";
+				std::cout << (*it)->instance_name;
+			}
+		}
+		std::cout << std::endl;
+
+		std::vector<std::pair<unsigned int, boost::filesystem::path> > ann_data_name_and_folderpath_list = get_ann_data_index_and_folderpath_list();
+		std::cout << "Updating Batch Normalization weights for " << ann_data_name_and_folderpath_list.size() << " networks..." << std::endl;
+		for(std::vector<std::pair<unsigned int, boost::filesystem::path> >::const_iterator it = ann_data_name_and_folderpath_list.begin(); it != ann_data_name_and_folderpath_list.end(); ++it)
+		{
+			network_data data;
+			data.read(it->second);
+
+			std::cout << "Working on network # " << it->first << std::endl;
+
+			for(std::vector<std::string>::const_iterator it2 = bn_layes.begin(); it2 != bn_layes.end(); ++it2)
+			{
+				const std::string& layer_name = *it2;
+				std::cout << layer_name << std::endl;
+
+				forward_propagation::ptr forward_prop = forward_prop_factory->create(*schema, std::vector<std::string>(1, layer_name), debug, profile);
+
+				layer_data::ptr dt = data.data_list.get(layer_name);
+				std::vector<float> gamma_saved = dt->at(0);
+				std::vector<float> beta_saved = dt->at(1);
+				std::fill_n(dt->at(0).begin(), dt->at(0).size(), 1.0F);
+				std::fill_n(dt->at(1).begin(), dt->at(1).size(), 0.0F);
+
+				forward_prop->set_data(data);
+
+				stat_data_bunch_writer writer;
+				forward_prop->run(*reader, writer);
+
+				std::map<std::string, std::vector<feature_map_data_stat> > stat_map = writer.get_stat();
+				const std::vector<feature_map_data_stat>& stat = stat_map.find(layer_name)->second;
+
+				for(unsigned int feature_map_id = 0; feature_map_id < static_cast<unsigned int>(stat.size()); ++feature_map_id)
+				{
+					std::cout << feature_map_id << ": " << stat[feature_map_id] << std::endl;
+
+					float old_mean = dt->at(2)[feature_map_id];
+					float old_invsigma = dt->at(3)[feature_map_id];
+					float new_invsigma = old_invsigma / stat[feature_map_id].std_dev;
+					float new_mean = old_mean + stat[feature_map_id].average / old_invsigma;
+					dt->at(2)[feature_map_id] = new_mean;
+					dt->at(3)[feature_map_id] = new_invsigma;
+				}
+
+				std::copy(gamma_saved.begin(), gamma_saved.end(), dt->at(0).begin());
+				std::copy(beta_saved.begin(), beta_saved.end(), dt->at(1).begin());
+			}
+
+			data.write(it->second);
+		}
 	}
 }

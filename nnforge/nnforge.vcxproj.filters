@@ -494,6 +494,9 @@
     <ClInclude Include="step_learning_rate_decay_policy.h">
       <Filter>Header Files\training\learning_rate_decay_policies</Filter>
     </ClInclude>
+    <ClInclude Include="stat_data_bunch_writer.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -852,6 +855,9 @@
     </ClCompile>
     <ClCompile Include="step_learning_rate_decay_policy.cpp">
       <Filter>Source Files\training\learning_rate_decay_policies</Filter>
+    </ClCompile>
+    <ClCompile Include="stat_data_bunch_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
