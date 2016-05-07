@@ -27,7 +27,8 @@ namespace nnforge
 	step_learning_rate_decay_policy::step_learning_rate_decay_policy(const std::string& semicolon_separated_list)
 	{
 		std::vector<std::string> strs;
-		boost::split(strs, semicolon_separated_list, boost::is_any_of(":"));
+		if (!semicolon_separated_list.empty())
+			boost::split(strs, semicolon_separated_list, boost::is_any_of(":"));
 		if (strs.size() % 2 != 0)
 			throw neural_network_exception((boost::format("Invalid initialization string for step learning rate decay policy: %1%") % semicolon_separated_list).str());
 
