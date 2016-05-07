@@ -32,11 +32,9 @@ namespace nnforge
 
 		stat_data_bunch_writer();
 
-		~stat_data_bunch_writer();
+		virtual ~stat_data_bunch_writer();
 
 		virtual void set_config_map(const std::map<std::string, layer_configuration_specific> config_map);
-
-		virtual void write(const std::map<std::string, const float *>& data_map);
 
 		virtual void write(
 			unsigned int entry_id,

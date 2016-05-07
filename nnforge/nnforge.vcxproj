@@ -69,6 +69,7 @@
     <ClInclude Include="threadpool_job_runner.h" />
     <ClInclude Include="tiling_factor.h" />
     <ClInclude Include="toolset.h" />
+    <ClInclude Include="training_data_util.h" />
     <ClInclude Include="training_momentum.h" />
     <ClInclude Include="parametric_rectified_linear_layer.h" />
     <ClInclude Include="proto\data_normalizer.pb.h" />
@@ -193,6 +194,7 @@
     <ClCompile Include="threadpool_job_runner.cpp" />
     <ClCompile Include="tiling_factor.cpp" />
     <ClCompile Include="toolset.cpp" />
+    <ClCompile Include="training_data_util.cpp" />
     <ClCompile Include="training_momentum.cpp" />
     <ClCompile Include="parametric_rectified_linear_layer.cpp" />
     <ClCompile Include="proto\data_normalizer.pb.cc" />

@@ -45,6 +45,7 @@
 #include "step_learning_rate_decay_policy.h"
 #include "batch_norm_layer.h"
 #include "stat_data_bunch_writer.h"
+#include "training_data_util.h"
 
 namespace nnforge
 {
@@ -643,7 +644,7 @@ namespace nnforge
 					for(std::vector<nnforge_shared_ptr<std::vector<float> > >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++entry_id)
 					{
 						const std::vector<float>& dd = **data_it;
-						dw.write(&dd[0]);
+						dw.write(entry_id, &dd[0]);
 					}
 				}
 			}
@@ -1045,7 +1046,7 @@ namespace nnforge
 					for(unsigned int i = 0; i < static_cast<unsigned int>(entry_count); ++i)
 					{
 						dr->raw_read(shuffled_indexes[i], dt);
-						dw->raw_write(&dt[0], dt.size());
+						dw->raw_write(i, &dt[0], dt.size());
 					}
 				}
 			}
@@ -1229,20 +1230,18 @@ namespace nnforge
 
 	void toolset::create_normalizer()
 	{
-		std::string reader_file_name = (boost::format("%1%_%2%.dt") % normalizer_dataset_name % normalizer_layer_name).str();
-		boost::filesystem::path reader_file_path = get_working_data_folder() / reader_file_name;
-
 		std::string normalizer_file_name = (boost::format("normalizer_%1%.txt") % normalizer_layer_name).str();
 		boost::filesystem::path normalizer_file_path = get_working_data_folder() / normalizer_file_name;
+		std::cout << "Generating normalizer file " << normalizer_file_path.string() << std::endl;
 
-		std::cout << "Generating normalizer file " << normalizer_file_path.string() << " from " << reader_file_path.string() << std::endl;
+		structured_data_bunch_reader::ptr bunch_reader = get_structured_data_bunch_reader(normalizer_dataset_name, dataset_usage_create_normalizer, 1, 0);
+		std::set<std::string> layers;
+		layers.insert(normalizer_layer_name);
+		structured_data_bunch_reader::ptr narrow_reader = bunch_reader->get_narrow_reader(layers);
+		stat_data_bunch_writer writer;
+		training_data_util::copy(layers, writer, narrow_reader ? *narrow_reader : *bunch_reader, -1);
+		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = writer.get_stat().find(normalizer_layer_name)->second;
 
-		if (!boost::filesystem::exists(reader_file_path))
-			throw neural_network_exception((boost::format("File %1% doesn't exist") % reader_file_path.string()).str());
-		nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(reader_file_path, std::ios_base::in | std::ios_base::binary));
-		structured_data_reader::ptr reader = apply_transformers(get_structured_reader(normalizer_dataset_name, normalizer_layer_name, dataset_usage_create_normalizer, in), get_data_transformer_list(normalizer_dataset_name, normalizer_layer_name, dataset_usage_create_normalizer));
-
-		std::vector<nnforge::feature_map_data_stat> feature_map_data_stat_list = reader->get_feature_map_data_stat_list();
 		unsigned int feature_map_id = 0;
 		for(std::vector<nnforge::feature_map_data_stat>::const_iterator it = feature_map_data_stat_list.begin(); it != feature_map_data_stat_list.end(); ++it, ++feature_map_id)
 			std::cout << "Feature map # " << feature_map_id << ": " << *it << std::endl;
@@ -1316,7 +1315,7 @@ namespace nnforge
 				bool entry_read = original_reader->read(entry_id, reader_data_map);
 				if (!entry_read)
 					throw neural_network_exception((boost::format("Cannot read entry %1%") % entry_id).str());
-				batch_writer.write(writer_data_map);
+				batch_writer.write(entry_id, writer_data_map);
 			}
 
 			reader = structured_data_bunch_reader::ptr(new neuron_value_set_data_bunch_reader(batch_writer.layer_name_to_config_and_value_set_map));

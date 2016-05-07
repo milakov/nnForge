@@ -497,6 +497,9 @@
     <ClInclude Include="stat_data_bunch_writer.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
+    <ClInclude Include="training_data_util.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -857,6 +860,9 @@
       <Filter>Source Files\training\learning_rate_decay_policies</Filter>
     </ClCompile>
     <ClCompile Include="stat_data_bunch_writer.cpp">
+      <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="training_data_util.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,29 +14,27 @@
  *  limitations under the License.
  */
 
-#include "structured_data_reader.h"
-#include "neural_network_exception.h"
+#pragma once
 
-#include <boost/format.hpp>
+#include "structured_data_bunch_writer.h"
+#include "structured_data_bunch_reader.h"
 
-#include <vector>
-#include <cmath>
+#include <set>
+#include <string>
 
 namespace nnforge
 {
-	structured_data_reader::structured_data_reader()
+	class training_data_util
 	{
-	}
+	public:
+		static void copy(
+			const std::set<std::string>& layers_to_copy,
+			structured_data_bunch_writer& writer,
+			structured_data_bunch_reader& reader,
+			int max_copy_elem_count = -1);
 
-	structured_data_reader::~structured_data_reader()
-	{
-	}
-
-	bool structured_data_reader::raw_read(
-		unsigned int entry_id,
-		std::vector<unsigned char>& all_elems)
-	{
-		all_elems.resize(get_configuration().get_neuron_count() * sizeof(float));
-		return read(entry_id, (float *)(&all_elems[0]));
-	}
+	private:
+		training_data_util();
+		~training_data_util();
+	};
 }

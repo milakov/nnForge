@@ -17,7 +17,6 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
-#include "feature_map_data_stat.h"
 #include "nn_types.h"
 #include "raw_data_reader.h"
 
@@ -39,8 +38,6 @@ namespace nnforge
 			std::vector<unsigned char>& all_elems);
 
 		virtual layer_configuration_specific get_configuration() const = 0;
-
-		std::vector<feature_map_data_stat> get_feature_map_data_stat_list();
 
 	protected:
 		structured_data_reader();

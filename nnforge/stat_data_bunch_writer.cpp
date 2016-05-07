@@ -42,7 +42,9 @@ namespace nnforge
 		}
 	}
 
-	void stat_data_bunch_writer::write(const std::map<std::string, const float *>& data_map)
+	void stat_data_bunch_writer::write(
+		unsigned int entry_id,
+		const std::map<std::string, const float *>& data_map)
 	{
 		for(std::map<std::string, const float *>::const_iterator it = data_map.begin(); it != data_map.end(); ++it)
 		{
@@ -76,13 +78,6 @@ namespace nnforge
 		}
 
 		++entry_count;
-	}
-
-	void stat_data_bunch_writer::write(
-		unsigned int entry_id,
-		const std::map<std::string, const float *>& data_map)
-	{
-		write(data_map); 
 	}
 
 	std::map<std::string, std::vector<feature_map_data_stat> > stat_data_bunch_writer::get_stat() const
