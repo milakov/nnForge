@@ -493,7 +493,7 @@ void imagenet_toolset::create_resnet_schema() const
 	avg_pool_layer->input_layer_instance_names.push_back(last_layer_name);
 	layer_list.push_back(avg_pool_layer);
 
-	nnforge::layer::ptr logits_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 1), last_layer_feature_map_count, 1000, std::vector<unsigned int>(), std::vector<unsigned int>(), std::vector<unsigned int>(), false));
+	nnforge::layer::ptr logits_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 1), last_layer_feature_map_count, 1000));
 	logits_layer->instance_name = "logits";
 	logits_layer->input_layer_instance_names.push_back(avg_pool_layer_name);
 	layer_list.push_back(logits_layer);
