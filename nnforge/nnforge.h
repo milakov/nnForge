@@ -48,6 +48,7 @@
 #include "cdf_to_pdf_layer.h"
 #include "entry_convolution_layer.h"
 #include "batch_norm_layer.h"
+#include "affine_grid_generator_layer.h"
 
 #include "rnd.h"
 

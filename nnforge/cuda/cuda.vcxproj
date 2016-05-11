@@ -24,6 +24,10 @@
     <ClInclude Include="add_layer_testing_schema.h" />
     <ClInclude Include="add_layer_updater_cuda.h" />
     <ClInclude Include="add_layer_updater_schema.h" />
+    <ClInclude Include="affine_grid_generator_layer_tester_cuda.h" />
+    <ClInclude Include="affine_grid_generator_layer_testing_schema.h" />
+    <ClInclude Include="affine_grid_generator_layer_updater_cuda.h" />
+    <ClInclude Include="affine_grid_generator_layer_updater_schema.h" />
     <ClInclude Include="average_subsampling_layer_tester_cuda.cuh" />
     <ClInclude Include="average_subsampling_layer_testing_schema.h" />
     <ClInclude Include="average_subsampling_layer_updater_cuda.cuh" />
@@ -177,6 +181,8 @@
     <ClCompile Include="activation_layer_cudnn_updater_cuda.cpp" />
     <ClCompile Include="add_layer_testing_schema.cpp" />
     <ClCompile Include="add_layer_updater_schema.cpp" />
+    <ClCompile Include="affine_grid_generator_layer_testing_schema.cpp" />
+    <ClCompile Include="affine_grid_generator_layer_updater_schema.cpp" />
     <ClCompile Include="backward_propagation_cuda.cpp" />
     <ClCompile Include="batch_norm_layer_testing_schema.cpp" />
     <ClCompile Include="batch_norm_layer_updater_schema.cpp" />
@@ -267,6 +273,8 @@
     <CudaCompile Include="accuracy_layer_updater_cuda.cu" />
     <CudaCompile Include="add_layer_tester_cuda.cu" />
     <CudaCompile Include="add_layer_updater_cuda.cu" />
+    <CudaCompile Include="affine_grid_generator_layer_tester_cuda.cu" />
+    <CudaCompile Include="affine_grid_generator_layer_updater_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
     <CudaCompile Include="batch_norm_layer_tester_cuda.cu" />

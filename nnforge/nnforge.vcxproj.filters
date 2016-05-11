@@ -500,6 +500,9 @@
     <ClInclude Include="training_data_util.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
+    <ClInclude Include="affine_grid_generator_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -864,6 +867,9 @@
     </ClCompile>
     <ClCompile Include="training_data_util.cpp">
       <Filter>Source Files\training_data</Filter>
+    </ClCompile>
+    <ClCompile Include="affine_grid_generator_layer.cpp">
+      <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

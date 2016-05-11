@@ -251,6 +251,12 @@
     <ClInclude Include="batch_norm_layer_tester_plain.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
+    <ClInclude Include="affine_grid_generator_layer_tester_plain.h">
+      <Filter>Header Files\layer_testers</Filter>
+    </ClInclude>
+    <ClInclude Include="affine_grid_generator_layer_updater_plain.h">
+      <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_plain_size_configuration.cpp">
@@ -456,6 +462,12 @@
     </ClCompile>
     <ClCompile Include="batch_norm_layer_tester_plain.cpp">
       <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="affine_grid_generator_layer_tester_plain.cpp">
+      <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="affine_grid_generator_layer_updater_plain.cpp">
+      <Filter>Source Files\layer_updaters</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

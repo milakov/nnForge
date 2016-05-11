@@ -14,6 +14,7 @@
     <ClInclude Include="absolute_layer.h" />
     <ClInclude Include="accuracy_layer.h" />
     <ClInclude Include="add_layer.h" />
+    <ClInclude Include="affine_grid_generator_layer.h" />
     <ClInclude Include="average_subsampling_layer.h" />
     <ClInclude Include="backward_propagation.h" />
     <ClInclude Include="backward_propagation_factory.h" />
@@ -144,6 +145,7 @@
     <ClCompile Include="absolute_layer.cpp" />
     <ClCompile Include="accuracy_layer.cpp" />
     <ClCompile Include="add_layer.cpp" />
+    <ClCompile Include="affine_grid_generator_layer.cpp" />
     <ClCompile Include="average_subsampling_layer.cpp" />
     <ClCompile Include="backward_propagation.cpp" />
     <ClCompile Include="backward_propagation_factory.cpp" />

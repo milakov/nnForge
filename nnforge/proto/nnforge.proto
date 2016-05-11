@@ -34,6 +34,7 @@ message Layer {
 	optional EntryConvolutionParam entry_convolution_param = 26;
 	optional AddParam add_param = 27;
 	optional BatchNormParam batch_norm_param = 28;
+	optional AffineGridGeneratorParam affine_grid_generator_param = 29;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -245,6 +246,14 @@ message AddParam {
 message BatchNormParam {
 	required uint32 feature_map_count = 1;
 	optional float epsilon = 2;
+}
+
+message AffineGridGeneratorParam {
+	message AffineGridGeneratorDimensionParam {
+		required uint32 output_size = 1;
+	}
+	optional bool adjust_for_zero_init = 1 [default = true];
+	repeated AffineGridGeneratorDimensionParam dimension_param = 2;
 }
 
 message CustomParam {

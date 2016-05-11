@@ -82,12 +82,6 @@ namespace nnforge
 				unsigned int y,
 				unsigned int z);
 
-			static std::pair<dim3, dim3> get_grid_and_threadblock_sizes_2d_access_x_aligned(
-				const cuda_running_configuration& cuda_config,
-				unsigned int x,
-				unsigned int y,
-				unsigned int z);
-
 			static std::pair<dim3, dim3> get_grid_and_threadblock_sizes_sequential_access(
 				const cuda_running_configuration& cuda_config,
 				unsigned int x,

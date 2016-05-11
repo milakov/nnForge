@@ -605,53 +605,6 @@ namespace nnforge
 			return std::make_pair(grid_size, threadblock_size);
 		}
 
-		std::pair<dim3, dim3> cuda_util::get_grid_and_threadblock_sizes_2d_access_x_aligned(
-			const cuda_running_configuration& cuda_config,
-			unsigned int x,
-			unsigned int y,
-			unsigned int z)
-		{
-			dim3 threadblock_size(1, 1, 1);
-
-			const unsigned int preferred_threadblock_size = preferred_width_2d_access_x_aligned * preferred_height_2d_access_x_aligned;
-
-			if (x < preferred_width_2d_access_x_aligned)
-			{
-				threadblock_size.x = x;
-				threadblock_size.y = std::min<unsigned int>(cuda_config.max_threads_dim[1], std::min<unsigned int>(y, preferred_threadblock_size / threadblock_size.x));
-			}
-			else
-			{
-				if (y < preferred_height_2d_access_x_aligned)
-				{
-					threadblock_size.y = y;
-					threadblock_size.x = std::min<unsigned int>(cuda_config.max_threads_dim[0], std::min<unsigned int>(x, preferred_threadblock_size / threadblock_size.y));
-				}
-				else
-				{
-					threadblock_size.x = preferred_width_2d_access_x_aligned;
-					threadblock_size.y = preferred_height_2d_access_x_aligned;
-				}
-			}
-
-
-			unsigned int threadblocks_to_cover_x = (x + threadblock_size.x - 1) / threadblock_size.x;
-			threadblock_size.x = (x + threadblocks_to_cover_x - 1) / threadblocks_to_cover_x;
-			unsigned int threadblocks_to_cover_y = (y + threadblock_size.y - 1) / threadblock_size.y;
-			threadblock_size.y = (y + threadblocks_to_cover_y - 1) / threadblocks_to_cover_y;
-
-			threadblock_size.z = std::min<unsigned int>(cuda_config.max_threads_dim[2], std::min<unsigned int>(z, preferred_threadblock_size / (threadblock_size.x * threadblock_size.y)));
-			unsigned int threadblocks_to_cover_z = (z + threadblock_size.z - 1) / threadblock_size.z;
-			threadblock_size.z = (z + threadblocks_to_cover_z - 1) / threadblocks_to_cover_z;
-
-			dim3 grid_size(
-				(x + threadblock_size.x - 1) / threadblock_size.x,
-				(y + threadblock_size.y - 1) / threadblock_size.y,
-				(z + threadblock_size.z - 1) / threadblock_size.z);
-
-			return std::make_pair(grid_size, threadblock_size);
-		}
-
 		std::pair<dim3, dim3> cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 			const cuda_running_configuration& cuda_config,
 			unsigned int x,
