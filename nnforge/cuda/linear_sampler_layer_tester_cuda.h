@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class affine_grid_generator_layer_tester_cuda : public layer_tester_cuda
+		class linear_sampler_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			affine_grid_generator_layer_tester_cuda();
+			linear_sampler_layer_tester_cuda();
 
-			virtual ~affine_grid_generator_layer_tester_cuda();
+			virtual ~linear_sampler_layer_tester_cuda();
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
@@ -40,15 +40,6 @@ namespace nnforge
 				cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count);
-
-		protected:
-			virtual void tester_configured();
-
-		private:
-			bool adjust_for_zero_init;
-
-			float x_scale;
-			float y_scale;
 		};
 	}
 }

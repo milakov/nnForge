@@ -22,12 +22,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class affine_grid_generator_layer_updater_cuda : public layer_updater_cuda
+		class linear_sampler_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			affine_grid_generator_layer_updater_cuda();
+			linear_sampler_layer_updater_cuda();
 
-			virtual ~affine_grid_generator_layer_updater_cuda();
+			virtual ~linear_sampler_layer_updater_cuda();
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
@@ -67,12 +67,6 @@ namespace nnforge
 
 		protected:
 			virtual void updater_configured();
-
-		private:
-			bool adjust_for_zero_init;
-
-			float x_scale;
-			float y_scale;
 		};
 	}
 }

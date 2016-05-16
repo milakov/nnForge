@@ -126,7 +126,8 @@ namespace nnforge
 			}
 		case layer_action::backward_data:
 			{
-				// FIXME!!!
+				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
+				return static_cast<float>((2 * neuron_count - 1) + (2 * neuron_count - 1) + (neuron_count - 1) + (2 * neuron_count - 1) + (2 * neuron_count - 1) + (neuron_count - 1));
 			}
 		case layer_action::backward_weights:
 		default:

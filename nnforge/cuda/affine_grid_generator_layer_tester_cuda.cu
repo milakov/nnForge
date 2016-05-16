@@ -90,16 +90,16 @@ namespace nnforge
 		{
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				*cuda_config,
-				output_sizes[0],
-				output_sizes[1],
+				output_configuration_specific.dimension_sizes[0],
+				output_configuration_specific.dimension_sizes[1],
 				entry_count);
 
 			if (adjust_for_zero_init)
 				affine_grid_generator_2d_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					*output_buffer,
 					*input_buffers[0],
-					output_sizes[0],
-					output_sizes[1],
+					output_configuration_specific.dimension_sizes[0],
+					output_configuration_specific.dimension_sizes[1],
 					entry_count,
 					x_scale,
 					y_scale,
@@ -108,8 +108,8 @@ namespace nnforge
 				affine_grid_generator_2d_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					*output_buffer,
 					*input_buffers[0],
-					output_sizes[0],
-					output_sizes[1],
+					output_configuration_specific.dimension_sizes[0],
+					output_configuration_specific.dimension_sizes[1],
 					entry_count,
 					x_scale,
 					y_scale,
@@ -120,11 +120,10 @@ namespace nnforge
 		{
 			nnforge_shared_ptr<const affine_grid_generator_layer> layer_derived = nnforge_dynamic_pointer_cast<const affine_grid_generator_layer>(layer_schema);
 
-			output_sizes = layer_derived->output_sizes;
 			adjust_for_zero_init = layer_derived->adjust_for_zero_init;
 
-			x_scale = output_sizes[0] > 1 ? 1.0F / static_cast<float>(output_sizes[0] - 1) : 1.0F;
-			y_scale = output_sizes[1] > 1 ? 1.0F / static_cast<float>(output_sizes[1] - 1) : 1.0F;
+			x_scale = output_configuration_specific.dimension_sizes[0] > 1 ? 1.0F / static_cast<float>(output_configuration_specific.dimension_sizes[0] - 1) : 1.0F;
+			y_scale = output_configuration_specific.dimension_sizes[1] > 1 ? 1.0F / static_cast<float>(output_configuration_specific.dimension_sizes[1] - 1) : 1.0F;
 		}
 	}
 }

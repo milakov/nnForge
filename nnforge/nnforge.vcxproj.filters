@@ -503,6 +503,9 @@
     <ClInclude Include="affine_grid_generator_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="linear_sampler_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -869,6 +872,9 @@
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="affine_grid_generator_layer.cpp">
+      <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="linear_sampler_layer.cpp">
       <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>

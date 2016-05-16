@@ -57,5 +57,6 @@ namespace nnforge
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new entry_convolution_layer()));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new batch_norm_layer(1)));
 		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new affine_grid_generator_layer(std::vector<unsigned int>(2, 1))));
+		single_layer_factory::get_mutable_instance().register_layer(layer::ptr(new linear_sampler_layer()));
 	}
 }
