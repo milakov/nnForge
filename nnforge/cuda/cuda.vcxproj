@@ -280,7 +280,9 @@
     <CudaCompile Include="add_layer_tester_cuda.cu" />
     <CudaCompile Include="add_layer_updater_cuda.cu" />
     <CudaCompile Include="affine_grid_generator_layer_tester_cuda.cu" />
-    <CudaCompile Include="affine_grid_generator_layer_updater_cuda.cu" />
+    <CudaCompile Include="affine_grid_generator_layer_updater_cuda.cu">
+      <GPUDebugInfo Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GPUDebugInfo>
+    </CudaCompile>
     <CudaCompile Include="average_subsampling_layer_testing_schema_cuda.cu" />
     <CudaCompile Include="average_subsampling_layer_updater_schema_cuda.cu" />
     <CudaCompile Include="batch_norm_layer_tester_cuda.cu" />
@@ -299,7 +301,9 @@
     <CudaCompile Include="lerror_layer_tester_cuda.cu" />
     <CudaCompile Include="lerror_layer_updater_cuda.cu" />
     <CudaCompile Include="linear_sampler_layer_tester_cuda.cu" />
-    <CudaCompile Include="linear_sampler_layer_updater_cuda.cu" />
+    <CudaCompile Include="linear_sampler_layer_updater_cuda.cu">
+      <GPUDebugInfo Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GPUDebugInfo>
+    </CudaCompile>
     <CudaCompile Include="negative_log_likelihood_layer_tester_cuda.cu" />
     <CudaCompile Include="negative_log_likelihood_layer_updater_cuda.cu" />
     <CudaCompile Include="parametric_rectified_linear_layer_tester_cuda.cu" />

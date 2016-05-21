@@ -1293,13 +1293,13 @@ namespace nnforge
 		std::map<std::string, layer_configuration_specific> config_map;
 		structured_data_bunch_reader::ptr reader;
 		{
-			structured_data_bunch_reader::ptr original_reader = get_structured_data_bunch_reader(training_dataset_name, dataset_usage_check_gradient, 1, -1);
+			structured_data_bunch_reader::ptr original_reader = get_structured_data_bunch_reader(training_dataset_name, dataset_usage_check_gradient, 1, 0);
 			structured_data_bunch_reader::ptr narrow_reader = original_reader->get_narrow_reader(training_data_layer_names_set);
 			if (narrow_reader)
 				original_reader = narrow_reader;
 
 			neuron_value_set_data_bunch_writer batch_writer;
-			config_map = narrow_reader->get_config_map();
+			config_map = original_reader->get_config_map();
 			batch_writer.set_config_map(config_map);
 			std::map<std::string, std::vector<float> > layer_name_to_data_buffer_map;
 			std::map<std::string, float *> reader_data_map;

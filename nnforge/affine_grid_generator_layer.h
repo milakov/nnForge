@@ -27,7 +27,8 @@ namespace nnforge
 	public:
 		affine_grid_generator_layer(
 			const std::vector<unsigned int>& output_sizes,
-			bool adjust_for_zero_init = true);
+			bool adjust_for_zero_init = true,
+			float weight_scale = -std::numeric_limits<float>::max());
 
 		virtual layer::ptr clone() const;
 
@@ -52,11 +53,15 @@ namespace nnforge
 
 		static const std::string layer_type_name;
 
+	public:
+		float get_weight_scale(const layer_configuration_specific& output_configuration_specific) const;
+
 	private:
 		void check();
 
 	public:
 		std::vector<unsigned int> output_sizes;
 		bool adjust_for_zero_init;
+		float weight_scale;
 	};
 }

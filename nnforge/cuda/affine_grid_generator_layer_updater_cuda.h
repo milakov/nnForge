@@ -73,6 +73,8 @@ namespace nnforge
 
 			float x_scale;
 			float y_scale;
+
+			float weight_scale;
 		};
 	}
 }

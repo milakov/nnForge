@@ -36,6 +36,7 @@ namespace nnforge
 			int entry_count,
 			float x_scale,
 			float y_scale,
+			float weight_scale,
 			int output_elem_count_per_feature_map)
 		{
 			int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -49,8 +50,13 @@ namespace nnforge
 
 				const float2 * current_input = input + entry_id * 3;
 				float2 input_vals[3];
+				#pragma unroll
 				for(int i = 0; i < 3; ++i)
+				{
 					input_vals[i] = __load_nc(current_input + i);
+					input_vals[i].x *= weight_scale;
+					input_vals[i].y *= weight_scale;
+				}
 				if (adjust_for_zero_init)
 				{
 					input_vals[0].x += 1.0F;
@@ -77,6 +83,7 @@ namespace nnforge
 			int entry_count,
 			float x_scale,
 			float y_scale,
+			float weight_scale,
 			int output_elem_count_per_feature_map)
 		{
 			int x = blockIdx.x * blockDim.x + threadIdx.x;
@@ -134,7 +141,7 @@ namespace nnforge
 				float * current_input_errors = input_errors + entry_id * 6;
 				#pragma unroll
 				for(int i = 0; i < 6; ++i)
-					atomicAdd(current_input_errors + i, in_errors[i]);
+					atomicAdd(current_input_errors + i, in_errors[i] * weight_scale);
 			}
 		}
 
@@ -175,6 +182,7 @@ namespace nnforge
 					entry_count,
 					x_scale,
 					y_scale,
+					weight_scale,
 					output_elem_count_per_feature_map);
 			else
 				affine_grid_generator_2d_upd_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
@@ -185,6 +193,7 @@ namespace nnforge
 					entry_count,
 					x_scale,
 					y_scale,
+					weight_scale,
 					output_elem_count_per_feature_map);
 		}
 
@@ -233,6 +242,7 @@ namespace nnforge
 				entry_count,
 				x_scale,
 				y_scale,
+				weight_scale,
 				output_elem_count_per_feature_map);
 		}
 
@@ -244,6 +254,7 @@ namespace nnforge
 
 			x_scale = output_configuration_specific.dimension_sizes[0] > 1 ? 1.0F / static_cast<float>(output_configuration_specific.dimension_sizes[0] - 1) : 1.0F;
 			y_scale = output_configuration_specific.dimension_sizes[1] > 1 ? 1.0F / static_cast<float>(output_configuration_specific.dimension_sizes[1] - 1) : 1.0F;
+			weight_scale = layer_derived->get_weight_scale(output_configuration_specific);
 		}
 
 		bool affine_grid_generator_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const

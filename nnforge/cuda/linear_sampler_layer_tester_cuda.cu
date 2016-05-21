@@ -89,7 +89,7 @@ namespace nnforge
 					*current_output = weighted_sum;
 
 					current_input_data += input_elem_count_per_feature_map;
-					current_output += output_elem_count_per_entry;
+					current_output += output_elem_count_per_feature_map;
 				}
 			}
 		}

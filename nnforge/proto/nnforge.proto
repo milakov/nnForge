@@ -254,6 +254,7 @@ message AffineGridGeneratorParam {
 	}
 	optional bool adjust_for_zero_init = 1 [default = true];
 	repeated AffineGridGeneratorDimensionParam dimension_param = 2;
+	optional float weight_scale = 3;
 }
 
 message CustomParam {

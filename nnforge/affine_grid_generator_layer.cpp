@@ -32,9 +32,11 @@ namespace nnforge
 
 	affine_grid_generator_layer::affine_grid_generator_layer(
 		const std::vector<unsigned int>& output_sizes,
-		bool adjust_for_zero_init)
+		bool adjust_for_zero_init,
+		float weight_scale)
 		: output_sizes(output_sizes)
 		, adjust_for_zero_init(adjust_for_zero_init)
+		, weight_scale(weight_scale)
 	{
 		check();
 	}
@@ -86,6 +88,9 @@ namespace nnforge
 		if (!adjust_for_zero_init)
 			param->set_adjust_for_zero_init(false);
 
+		if (weight_scale != -std::numeric_limits<float>::max())
+			param->set_weight_scale(weight_scale);
+
 		for(int i = 0; i < output_sizes.size(); ++i)
 		{
 			protobuf::AffineGridGeneratorParam_AffineGridGeneratorDimensionParam * dim_param = param->add_dimension_param();
@@ -109,6 +114,8 @@ namespace nnforge
 			output_sizes[i] = param.dimension_param(i).output_size();
 		}
 
+		weight_scale = param.has_weight_scale() ? param.weight_scale() : -std::numeric_limits<float>::max();
+
 		check();
 	}
 
@@ -126,8 +133,8 @@ namespace nnforge
 			}
 		case layer_action::backward_data:
 			{
-				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
-				return static_cast<float>((2 * neuron_count - 1) + (2 * neuron_count - 1) + (neuron_count - 1) + (2 * neuron_count - 1) + (2 * neuron_count - 1) + (neuron_count - 1));
+				unsigned int neuron_count_per_feature_map = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count_per_feature_map();
+				return static_cast<float>((2 * neuron_count_per_feature_map - 1) + (2 * neuron_count_per_feature_map - 1) + (neuron_count_per_feature_map - 1) + (2 * neuron_count_per_feature_map - 1) + (2 * neuron_count_per_feature_map - 1) + (neuron_count_per_feature_map - 1));
 			}
 		case layer_action::backward_weights:
 		default:
@@ -151,8 +158,30 @@ namespace nnforge
 		if (adjust_for_zero_init)
 			ss << ", adjust for zero init";
 
+		{
+			if (!ss.str().empty())
+				ss << ", ";
+			ss << "weight scale " << weight_scale;
+		}
+
 		res.push_back(ss.str());
 
 		return res;
+	}
+
+	float affine_grid_generator_layer::get_weight_scale(const layer_configuration_specific& output_configuration_specific) const
+	{
+		if (weight_scale == -std::numeric_limits<float>::max())
+		{
+			float res = 1.0F;
+			for(std::vector<unsigned int>::const_iterator it = output_configuration_specific.dimension_sizes.begin(); it != output_configuration_specific.dimension_sizes.end(); ++it)
+			{
+				if (*it > 1)
+					res *= static_cast<float>(*it - 1);
+			}
+			return 1.0F / res;
+		}
+		else
+			return weight_scale;
 	}
 }

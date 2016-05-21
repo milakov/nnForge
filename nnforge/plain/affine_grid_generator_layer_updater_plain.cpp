@@ -64,6 +64,7 @@ namespace nnforge
 			const bool adjust_for_zero_init = layer_derived->adjust_for_zero_init;
 			const float x_scale = output_width > 1 ? 1.0F / static_cast<float>(output_width - 1) : 1.0F;
 			const float y_scale = output_height > 1 ? 1.0F / static_cast<float>(output_height - 1) : 1.0F;
+			const float weight_scale = layer_derived->get_weight_scale(output_configuration_specific);
 			const int total_workload = entry_count * output_height;
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
@@ -78,7 +79,7 @@ namespace nnforge
 					const float * in_it_base = in_it_global + (entry_id * input_neuron_count);
 					float input_vals[6];
 					for(int i = 0; i < 6; ++i)
-						input_vals[i] = in_it_base[i];
+						input_vals[i] = in_it_base[i] * weight_scale;
 					if (adjust_for_zero_init)
 					{
 						input_vals[0] += 1.0F;
@@ -135,6 +136,7 @@ namespace nnforge
 			const bool adjust_for_zero_init = layer_derived->adjust_for_zero_init;
 			const float x_scale = output_width > 1 ? 1.0F / static_cast<float>(output_width - 1) : 1.0F;
 			const float y_scale = output_height > 1 ? 1.0F / static_cast<float>(output_height - 1) : 1.0F;
+			const float weight_scale = layer_derived->get_weight_scale(output_configuration_specific);
 			const int total_workload = entry_count;
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
@@ -174,8 +176,16 @@ namespace nnforge
 					}
 
 					float * in_it_base = in_err_global + (entry_id * input_neuron_count);
-					for(int i = 0; i < 6; ++i)
-						in_it_base[i] = input_errors[i];
+					if (add_update_to_destination)
+					{
+						for(int i = 0; i < 6; ++i)
+							in_it_base[i] += input_errors[i] * weight_scale;
+					}
+					else
+					{
+						for(int i = 0; i < 6; ++i)
+							in_it_base[i] = input_errors[i] * weight_scale;
+					}
 				}
 			}
 		}
