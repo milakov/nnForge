@@ -79,16 +79,16 @@ namespace nnforge
 					workspace_size = temporary_working_fixed_buffer->get_size();
 				}
 
-				cudnnConvolutionFwdAlgo_t algo;
-				cudnn_safe_call(cudnnGetConvolutionForwardAlgorithm(
-					cuda_config->get_cudnn_handle(),
+				cudnnConvolutionFwdAlgo_t algo = cuda_config->cudnn_find_convolution_forward_algo(
 					input_data_desc,
 					weights_desc,
 					convolution_desc,
 					output_data_desc,
-					workspace_size ? CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_FWD_NO_WORKSPACE,
-					workspace_size,
-					&algo));
+					*input_buffers[0],
+					*data[0],
+					*output_buffer,
+					workspace,
+					workspace_size);
 
 				float alpha = 1.0F;
 				float beta = 0.0F;

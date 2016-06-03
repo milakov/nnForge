@@ -17,6 +17,7 @@
 #include "cudnn_util.h"
 
 #include "neural_network_cudnn_exception.h"
+#include <algorithm>
 #include <vector>
 
 namespace nnforge
@@ -121,6 +122,153 @@ namespace nnforge
 				non_unit_window_size = non_unit_window_size || (window_sizes[i] > 1);
 
 			return (unit_stride && non_unit_window_size);
+		}
+
+		tensor_params cudnn_util::get_tensor_params(cudnnTensorDescriptor_t tensor_desc)
+		{
+			tensor_params res;
+			res.dims.resize(10);
+			res.strides.resize(res.dims.size());
+			int actual_dims;
+			cudnn_safe_call(cudnnGetTensorNdDescriptor(
+				tensor_desc,
+				static_cast<int>(res.dims.size()),
+				&res.data_type,
+				&actual_dims,
+				&res.dims[0],
+				&res.strides[0]));
+			res.dims.resize(actual_dims);
+			res.strides.resize(actual_dims);
+
+			return res;
+		}
+
+		filter_params cudnn_util::get_filter_params(cudnnFilterDescriptor_t filter_desc)
+		{
+			filter_params res;
+			res.dims.resize(7);
+			int actual_dims;
+			cudnn_safe_call(cudnnGetFilterNdDescriptor(
+				filter_desc,
+				static_cast<int>(res.dims.size()),
+				&res.data_type,
+				&res.format,
+				&actual_dims,
+				&res.dims[0]));
+			res.dims.resize(actual_dims);
+
+			return res;
+		}
+
+		convolution_params cudnn_util::get_convolution_params(cudnnConvolutionDescriptor_t convolution_desc)
+		{
+			convolution_params res;
+			res.padding.resize(5);
+			res.strides.resize(res.padding.size());
+			res.upscale.resize(res.padding.size());
+			int actual_dims;
+			cudnn_safe_call(cudnnGetConvolutionNdDescriptor(
+				convolution_desc,
+				static_cast<int>(res.padding.size()),
+				&actual_dims,
+				&res.padding[0],
+				&res.strides[0],
+				&res.upscale[0],
+				&res.mode,
+				&res.data_type));
+			res.padding.resize(actual_dims);
+			res.strides.resize(actual_dims);
+			res.upscale.resize(actual_dims);
+
+			return res;
+		}
+
+		bool operator<(const tensor_params&x, const tensor_params&y)
+		{
+			for(int i = 0; i < std::min(x.dims.size(), y.dims.size()); ++i)
+			{
+				if (x.dims[i] < y.dims[i])
+					return true;
+				else if (y.dims[i] < x.dims[i])
+					return false;
+			}
+
+			for(int i = 0; i < std::min(x.strides.size(), y.strides.size()); ++i)
+			{
+				if (x.strides[i] < y.strides[i])
+					return true;
+				else if (y.strides[i] < x.strides[i])
+					return false;
+			}
+
+			if (x.data_type < y.data_type)
+				return true;
+			else if (y.data_type < x.data_type)
+				return false;
+
+			return false;
+		}
+
+		bool operator<(const filter_params&x, const filter_params&y)
+		{
+			for(int i = 0; i < std::min(x.dims.size(), y.dims.size()); ++i)
+			{
+				if (x.dims[i] < y.dims[i])
+					return true;
+				else if (y.dims[i] < x.dims[i])
+					return false;
+			}
+
+			if (x.data_type < y.data_type)
+				return true;
+			else if (y.data_type < x.data_type)
+				return false;
+
+			if (x.format < y.format)
+				return true;
+			else if (y.format < x.format)
+				return false;
+
+			return false;
+		}
+
+		bool operator<(const convolution_params&x, const convolution_params&y)
+		{
+			for(int i = 0; i < std::min(x.padding.size(), y.padding.size()); ++i)
+			{
+				if (x.padding[i] < y.padding[i])
+					return true;
+				else if (y.padding[i] < x.padding[i])
+					return false;
+			}
+
+			for(int i = 0; i < std::min(x.strides.size(), y.strides.size()); ++i)
+			{
+				if (x.strides[i] < y.strides[i])
+					return true;
+				else if (y.strides[i] < x.strides[i])
+					return false;
+			}
+
+			for(int i = 0; i < std::min(x.upscale.size(), y.upscale.size()); ++i)
+			{
+				if (x.upscale[i] < y.upscale[i])
+					return true;
+				else if (y.upscale[i] < x.upscale[i])
+					return false;
+			}
+
+			if (x.data_type < y.data_type)
+				return true;
+			else if (y.data_type < x.data_type)
+				return false;
+
+			if (x.mode < y.mode)
+				return true;
+			else if (y.mode < x.mode)
+				return false;
+
+			return false;
 		}
 	}
 }

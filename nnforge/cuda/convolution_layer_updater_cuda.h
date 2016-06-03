@@ -79,6 +79,8 @@ namespace nnforge
 
 			virtual std::pair<size_t, bool> get_temporary_working_fixed_buffer_size(const layer_action& action) const;
 
+			virtual size_t get_temporary_working_per_entry_buffer_size(const layer_action& action) const;
+
 			virtual bool is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const;
 
 			virtual bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const;
@@ -98,6 +100,9 @@ namespace nnforge
 			cudnnFilterDescriptor_t weights_desc;
 			cudnnConvolutionDescriptor_t convolution_desc;
 			cudnnTensorDescriptor_t bias_desc;
+
+			size_t update_weights_working_buffer_size;
+			size_t update_weights_find_algo_working_buffer_size;
 		};
 	}
 }

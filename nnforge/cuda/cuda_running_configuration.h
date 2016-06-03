@@ -17,6 +17,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <cublas_v2.h>
 #include <cusparse_v2.h>
@@ -27,10 +28,22 @@
 #include "../nn_types.h"
 #include "../threadpool_job_runner.h"
 
+#include "cudnn_util.h"
+
 namespace nnforge
 {
 	namespace cuda
 	{
+		struct key_convolution_param
+		{
+			tensor_params input_tensor_params;
+			tensor_params output_tensor_params;
+			filter_params weights_params;
+			convolution_params conv_params;
+		};
+
+		bool operator<(const key_convolution_param&x, const key_convolution_param&y);
+
 		class cuda_running_configuration
 		{
 		public:
@@ -80,6 +93,39 @@ namespace nnforge
 			float get_flops() const;
 
 			float get_device_saturation_time() const;
+
+			cudnnConvolutionFwdAlgo_t cudnn_find_convolution_forward_algo(
+				const cudnnTensorDescriptor_t input_desc,
+				const cudnnFilterDescriptor_t weights_desc,
+				const cudnnConvolutionDescriptor_t convolution_desc,
+				const cudnnTensorDescriptor_t output_desc,
+				const void * input_buffer,
+				const void * weights,
+				void * output_buffer,
+				void * workspace,
+				size_t workspace_size) const;
+
+			cudnnConvolutionBwdFilterAlgo_t cudnn_find_convolution_backward_weights_algo(
+				const cudnnTensorDescriptor_t input_desc,
+				const cudnnFilterDescriptor_t weights_desc,
+				const cudnnConvolutionDescriptor_t convolution_desc,
+				const cudnnTensorDescriptor_t output_desc,
+				const void * input_buffer,
+				const void * output_errors_buffer,
+				void * gradients,
+				void * workspace,
+				size_t workspace_size) const;
+
+			cudnnConvolutionBwdDataAlgo_t cudnn_find_convolution_backward_data_algo(
+				const cudnnTensorDescriptor_t input_desc,
+				const cudnnFilterDescriptor_t weights_desc,
+				const cudnnConvolutionDescriptor_t convolution_desc,
+				const cudnnTensorDescriptor_t output_desc,
+				const void * output_errors_buffer,
+				const void * weights,
+				void * input_errors_buffer,
+				void * workspace,
+				size_t workspace_size) const;
 
 		public:
 			int device_id;
@@ -133,6 +179,10 @@ namespace nnforge
 			curandGenerator_t curand_gen;
 
 			threadpool_job_runner::ptr job_runner;
+
+			mutable std::map<key_convolution_param, std::pair<bool, cudnnConvolutionFwdAlgo_t> > forward_param_to_best_algo_map;
+			mutable std::map<key_convolution_param, std::pair<bool, cudnnConvolutionBwdFilterAlgo_t> > backward_weights_param_to_best_algo_map;
+			mutable std::map<key_convolution_param, std::pair<bool, cudnnConvolutionBwdDataAlgo_t> > backward_data_param_to_best_algo_map;
 		};
 
 		std::ostream& operator<< (std::ostream& out, const cuda_running_configuration& running_configuration);

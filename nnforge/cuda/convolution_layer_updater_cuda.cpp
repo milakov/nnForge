@@ -85,16 +85,16 @@ namespace nnforge
 					workspace_size = temporary_working_fixed_buffer->get_size();
 				}
 
-				cudnnConvolutionFwdAlgo_t algo;
-				cudnn_safe_call(cudnnGetConvolutionForwardAlgorithm(
-					cuda_config->get_cudnn_handle(),
+				cudnnConvolutionFwdAlgo_t algo = cuda_config->cudnn_find_convolution_forward_algo(
 					input_data_desc,
 					weights_desc,
 					convolution_desc,
 					output_data_desc,
-					workspace_size ? CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_FWD_NO_WORKSPACE,
-					workspace_size,
-					&algo));
+					*input_buffers[0],
+					*data[0],
+					*output_buffer,
+					workspace,
+					workspace_size);
 
 				float alpha = 1.0F;
 				float beta = 0.0F;
@@ -167,16 +167,16 @@ namespace nnforge
 					workspace_size = temporary_working_fixed_buffer->get_size();
 				}
 
-				cudnnConvolutionBwdDataAlgo_t algo;
-				cudnn_safe_call(cudnnGetConvolutionBackwardDataAlgorithm(
-					cuda_config->get_cudnn_handle(),
-					weights_desc,
-					output_data_desc,
-					convolution_desc,
+				cudnnConvolutionBwdDataAlgo_t algo = cuda_config->cudnn_find_convolution_backward_data_algo(
 					input_data_desc,
-					workspace_size ? CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_BWD_DATA_NO_WORKSPACE,
-					workspace_size,
-					&algo));
+					weights_desc,
+					convolution_desc,
+					output_data_desc,
+					*output_errors_buffer,
+					*data[0],
+					*temporary_working_per_entry_buffer,
+					workspace,
+					workspace_size);
 
 				float alpha = 1.0F;
 				float beta = (add_update_to_destination ? 1.0F : 0.0F);
@@ -231,16 +231,16 @@ namespace nnforge
 					workspace_size = temporary_working_fixed_buffer->get_size();
 				}
 
-				cudnnConvolutionBwdFilterAlgo_t algo;
-				cudnn_safe_call(cudnnGetConvolutionBackwardFilterAlgorithm(
-					cuda_config->get_cudnn_handle(),
+				cudnnConvolutionBwdFilterAlgo_t algo = cuda_config->cudnn_find_convolution_backward_weights_algo(
 					input_data_desc,
-					output_data_desc,
-					convolution_desc,
 					weights_desc,
-					workspace_size ? CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_BWD_FILTER_NO_WORKSPACE,
-					workspace_size,
-					&algo));
+					convolution_desc,
+					output_data_desc,
+					*input_neurons_buffers[0],
+					*output_errors_buffer,
+					(unsigned char *)workspace + update_weights_working_buffer_size,
+					workspace,
+					update_weights_working_buffer_size);
 
 				float alpha = 1.0F;
 				float beta = 1.0F;
@@ -305,6 +305,16 @@ namespace nnforge
 				convolution_desc,
 				zero_padding,
 				strides);
+
+			unsigned int update_weights_working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
+			for(int i = 0; i < window_sizes.size(); ++i)
+				update_weights_working_buffer_elem_count *= window_sizes[i];
+			update_weights_working_buffer_size = update_weights_working_buffer_elem_count * sizeof(int);
+			update_weights_working_buffer_size = (update_weights_working_buffer_size + 16 - 1) / 16 * 16;
+			unsigned int update_weights_find_algo_working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count * output_configuration_specific.feature_map_count;
+			for(int i = 0; i < window_sizes.size(); ++i)
+				update_weights_find_algo_working_buffer_elem_count *= window_sizes[i];
+			update_weights_find_algo_working_buffer_size = update_weights_find_algo_working_buffer_elem_count * sizeof(float);
 		}
 
 		std::pair<size_t, bool> convolution_layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
@@ -328,14 +338,21 @@ namespace nnforge
 				}
 			case layer_action::backward_weights:
 				{
-					unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
-					for(int i = 0; i < window_sizes.size(); ++i)
-						working_buffer_elem_count *= window_sizes[i];
-					return std::make_pair(working_buffer_elem_count * sizeof(int), is_over_sol_algos_available);
+					return std::make_pair(update_weights_working_buffer_size + update_weights_find_algo_working_buffer_size, is_over_sol_algos_available);
 				}
 			default:
 				return std::make_pair(0, false);
 			}
+		}
+
+		size_t convolution_layer_updater_cuda::get_temporary_working_per_entry_buffer_size(const layer_action& action) const
+		{
+			if (action.get_action_type() == layer_action::backward_data)
+			{
+				return input_elem_count_per_entry_list[0] * sizeof(float);
+			}
+			else
+				return 0;
 		}
 
 		bool convolution_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const

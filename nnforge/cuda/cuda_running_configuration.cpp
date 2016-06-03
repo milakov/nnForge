@@ -25,6 +25,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include "cudnn_util.h"
+
 #include "neural_network_cuda_exception.h"
 #include "neural_network_cublas_exception.h"
 #include "neural_network_cusparse_exception.h"
@@ -267,6 +269,8 @@ namespace nnforge
 		{
 			if (compute_capability_major <= 3)
 				return 192;
+			else if ((compute_capability_major == 6) && (compute_capability_minor == 0))
+				return 64;
 			else
 				return 128;
 		}
@@ -279,6 +283,253 @@ namespace nnforge
 		float cuda_running_configuration::get_device_saturation_time() const
 		{
 			return 5.0e-5F; // 50 us
+		}
+
+		cudnnConvolutionFwdAlgo_t cuda_running_configuration::cudnn_find_convolution_forward_algo(
+			const cudnnTensorDescriptor_t input_desc,
+			const cudnnFilterDescriptor_t weights_desc,
+			const cudnnConvolutionDescriptor_t convolution_desc,
+			const cudnnTensorDescriptor_t output_desc,
+			const void * input_buffer,
+			const void * weights,
+			void * output_buffer,
+			void * workspace,
+			size_t workspace_size) const
+		{
+#if (CUDNN_MAJOR >= 5)
+			key_convolution_param param;
+			param.input_tensor_params = cudnn_util::get_tensor_params(input_desc);
+			param.output_tensor_params = cudnn_util::get_tensor_params(output_desc);
+			param.weights_params = cudnn_util::get_filter_params(weights_desc);
+			param.conv_params = cudnn_util::get_convolution_params(convolution_desc);
+
+			std::map<key_convolution_param, std::pair<bool, cudnnConvolutionFwdAlgo_t> >::const_iterator it = forward_param_to_best_algo_map.find(param);
+			bool should_search = true;
+			if (it != forward_param_to_best_algo_map.end())
+			{
+				if (it->second.first)
+					return it->second.second;
+				else
+					should_search = false;
+			}
+
+			if (output_buffer && should_search)
+			{
+				int returned_algo_count;
+				cudnnConvolutionFwdAlgoPerf_t perf_results;
+				cuda_safe_call(cudaDeviceSynchronize()); // Make sure all previously submitted work doesn't interfere with finding the best algo
+				cudnn_safe_call(cudnnFindConvolutionForwardAlgorithmEx(
+					get_cudnn_handle(),
+					input_desc,
+					input_buffer,
+					weights_desc,
+					weights,
+					convolution_desc,
+					output_desc,
+					output_buffer,
+					1,
+					&returned_algo_count,
+					&perf_results,
+					workspace,
+					workspace_size));
+				if (returned_algo_count == 1)
+				{
+					cudnnConvolutionFwdAlgo_t algo = perf_results.algo;
+					forward_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(true, algo)));
+					return algo;
+				}
+				else
+				{
+					forward_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(false, cudnnConvolutionFwdAlgo_t())));
+				}
+			}
+#endif
+			{
+				cudnnConvolutionFwdAlgo_t algo;
+				cudnn_safe_call(cudnnGetConvolutionForwardAlgorithm(
+					get_cudnn_handle(),
+					input_desc,
+					weights_desc,
+					convolution_desc,
+					output_desc,
+					workspace_size ? CUDNN_CONVOLUTION_FWD_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_FWD_NO_WORKSPACE,
+					workspace_size,
+					&algo));
+				return algo;
+			}
+		}
+
+		cudnnConvolutionBwdFilterAlgo_t cuda_running_configuration::cudnn_find_convolution_backward_weights_algo(
+			const cudnnTensorDescriptor_t input_desc,
+			const cudnnFilterDescriptor_t weights_desc,
+			const cudnnConvolutionDescriptor_t convolution_desc,
+			const cudnnTensorDescriptor_t output_desc,
+			const void * input_buffer,
+			const void * output_errors_buffer,
+			void * gradients,
+			void * workspace,
+			size_t workspace_size) const
+		{
+#if (CUDNN_MAJOR >= 5)
+			key_convolution_param param;
+			param.input_tensor_params = cudnn_util::get_tensor_params(input_desc);
+			param.output_tensor_params = cudnn_util::get_tensor_params(output_desc);
+			param.weights_params = cudnn_util::get_filter_params(weights_desc);
+			param.conv_params = cudnn_util::get_convolution_params(convolution_desc);
+
+			std::map<key_convolution_param, std::pair<bool, cudnnConvolutionBwdFilterAlgo_t> >::const_iterator it = backward_weights_param_to_best_algo_map.find(param);
+			bool should_search = true;
+			if (it != backward_weights_param_to_best_algo_map.end())
+			{
+				if (it->second.first)
+					return it->second.second;
+				else
+					should_search = false;
+			}
+
+			if (gradients && should_search)
+			{
+				int returned_algo_count;
+				cudnnConvolutionBwdFilterAlgoPerf_t perf_results;
+				cuda_safe_call(cudaDeviceSynchronize()); // Make sure all previously submitted work doesn't interfere with finding the best algo
+				cudnn_safe_call(cudnnFindConvolutionBackwardFilterAlgorithmEx(
+					get_cudnn_handle(),
+					input_desc,
+					input_buffer,
+					output_desc,
+					output_errors_buffer,
+					convolution_desc,
+					weights_desc,
+					gradients,
+					1,
+					&returned_algo_count,
+					&perf_results,
+					workspace,
+					workspace_size));
+				if (returned_algo_count == 1)
+				{
+					cudnnConvolutionBwdFilterAlgo_t algo = perf_results.algo;
+					backward_weights_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(true, algo)));
+					return algo;
+				}
+				else
+				{
+					backward_weights_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(false, cudnnConvolutionBwdFilterAlgo_t())));
+				}
+			}
+#endif
+			{
+				cudnnConvolutionBwdFilterAlgo_t algo;
+				cudnn_safe_call(cudnnGetConvolutionBackwardFilterAlgorithm(
+					get_cudnn_handle(),
+					input_desc,
+					output_desc,
+					convolution_desc,
+					weights_desc,
+					workspace_size ? CUDNN_CONVOLUTION_BWD_FILTER_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_BWD_FILTER_NO_WORKSPACE,
+					workspace_size,
+					&algo));
+				return algo;
+			}
+		}
+
+		cudnnConvolutionBwdDataAlgo_t cuda_running_configuration::cudnn_find_convolution_backward_data_algo(
+			const cudnnTensorDescriptor_t input_desc,
+			const cudnnFilterDescriptor_t weights_desc,
+			const cudnnConvolutionDescriptor_t convolution_desc,
+			const cudnnTensorDescriptor_t output_desc,
+			const void * output_errors_buffer,
+			const void * weights,
+			void * input_errors_buffer,
+			void * workspace,
+			size_t workspace_size) const
+		{
+#if (CUDNN_MAJOR >= 5)
+			key_convolution_param param;
+			param.input_tensor_params = cudnn_util::get_tensor_params(input_desc);
+			param.output_tensor_params = cudnn_util::get_tensor_params(output_desc);
+			param.weights_params = cudnn_util::get_filter_params(weights_desc);
+			param.conv_params = cudnn_util::get_convolution_params(convolution_desc);
+
+			std::map<key_convolution_param, std::pair<bool, cudnnConvolutionBwdDataAlgo_t> >::const_iterator it = backward_data_param_to_best_algo_map.find(param);
+			bool should_search = true;
+			if (it != backward_data_param_to_best_algo_map.end())
+			{
+				if (it->second.first)
+					return it->second.second;
+				else
+					should_search = false;
+			}
+
+			if (input_errors_buffer && should_search)
+			{
+				int returned_algo_count;
+				cudnnConvolutionBwdDataAlgoPerf_t perf_results;
+				cuda_safe_call(cudaDeviceSynchronize()); // Make sure all previously submitted work doesn't interfere with finding the best algo
+				cudnn_safe_call(cudnnFindConvolutionBackwardDataAlgorithmEx(
+					get_cudnn_handle(),
+					weights_desc,
+					weights,
+					output_desc,
+					output_errors_buffer,
+					convolution_desc,
+					input_desc,
+					input_errors_buffer,
+					1,
+					&returned_algo_count,
+					&perf_results,
+					workspace,
+					workspace_size));
+				if (returned_algo_count == 1)
+				{
+					cudnnConvolutionBwdDataAlgo_t algo = perf_results.algo;
+					backward_data_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(true, algo)));
+					return algo;
+				}
+				else
+				{
+					backward_data_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(false, cudnnConvolutionBwdDataAlgo_t())));
+				}
+			}
+#endif
+			{
+				cudnnConvolutionBwdDataAlgo_t algo;
+				cudnn_safe_call(cudnnGetConvolutionBackwardDataAlgorithm(
+					get_cudnn_handle(),
+					weights_desc,
+					output_desc,
+					convolution_desc,
+					input_desc,
+					workspace_size ? CUDNN_CONVOLUTION_BWD_DATA_SPECIFY_WORKSPACE_LIMIT : CUDNN_CONVOLUTION_BWD_DATA_NO_WORKSPACE,
+					workspace_size,
+					&algo));
+				return algo;
+			}
+		}
+
+		bool operator<(const key_convolution_param&x, const key_convolution_param&y)
+		{
+			if (x.input_tensor_params < y.input_tensor_params)
+				return true;
+			else if (y.input_tensor_params < x.input_tensor_params)
+				return false;
+
+			if (x.output_tensor_params < y.output_tensor_params)
+				return true;
+			else if (y.output_tensor_params < x.output_tensor_params)
+				return false;
+
+			if (x.weights_params < y.weights_params)
+				return true;
+			else if (y.weights_params < x.weights_params)
+				return false;
+
+			if (x.conv_params < y.conv_params)
+				return true;
+			else if (y.conv_params < x.conv_params)
+				return false;
+
+			return false;
 		}
 	}
 }
