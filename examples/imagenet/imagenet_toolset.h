@@ -99,10 +99,6 @@ private:
 	static const char * ilsvrc2014id_pattern;
 	static const char * training_image_filename_pattern;
 
-	static const float max_contrast_factor;
-	static const float max_brightness_shift;
-	static const float max_color_shift;
-
 	static const unsigned int class_count;
 	static const unsigned int training_target_image_width;
 	static const unsigned int training_target_image_height;
@@ -111,9 +107,13 @@ private:
 	bool rich_inference;
 	int samples_x;
 	int samples_y;
-	int training_min_image_size;
-	int training_max_image_size;
+	float min_relative_target_area;
+	float max_relative_target_area;
 	float max_aspect_ratio_change;
+	float max_brightness_shift;
+	float max_contrast_shift;
+	float max_saturation_shift;
+	float max_lighting_shift;
 
-	static const unsigned int resnet10_blocks[4];
+	static const unsigned int resnet_blocks[4];
 };

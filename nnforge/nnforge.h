@@ -74,6 +74,7 @@
 #include "rotate_band_data_transformer.h"
 #include "uniform_intensity_data_transformer.h"
 #include "normalize_data_transformer.h"
+#include "natural_image_data_transformer.h"
 
 #include "nn_types.h"
 

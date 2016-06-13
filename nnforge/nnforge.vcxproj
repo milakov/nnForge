@@ -47,6 +47,7 @@
     <ClInclude Include="linear_sampler_layer.h" />
     <ClInclude Include="min_weight_sequential_vertex_coloring.h" />
     <ClInclude Include="lerror_layer.h" />
+    <ClInclude Include="natural_image_data_transformer.h" />
     <ClInclude Include="negative_log_likelihood_layer.h" />
     <ClInclude Include="network_action_schema.h" />
     <ClInclude Include="neuron_value_set_data_bunch_reader.h" />
@@ -174,6 +175,7 @@
     <ClCompile Include="learning_rate_decay_policy.cpp" />
     <ClCompile Include="lerror_layer.cpp" />
     <ClCompile Include="linear_sampler_layer.cpp" />
+    <ClCompile Include="natural_image_data_transformer.cpp" />
     <ClCompile Include="negative_log_likelihood_layer.cpp" />
     <ClCompile Include="network_action_schema.cpp" />
     <ClCompile Include="neuron_value_set_data_bunch_reader.cpp" />

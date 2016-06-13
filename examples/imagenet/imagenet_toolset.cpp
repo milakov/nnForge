@@ -35,16 +35,12 @@ const char * imagenet_toolset::validating_images_folder_name = "ILSVRC2012_img_v
 const char * imagenet_toolset::ilsvrc2014id_pattern = "^n\\d{8}$";
 const char * imagenet_toolset::training_image_filename_pattern = "^(n\\d{8})_(\\d+)\\.JPEG$";
 
-const float imagenet_toolset::max_contrast_factor = 1.1F;
-const float imagenet_toolset::max_brightness_shift = 0.0F;//0.05F;
-const float imagenet_toolset::max_color_shift = 0.15F;
-
 const unsigned int imagenet_toolset::class_count = 1000;
 const unsigned int imagenet_toolset::training_target_image_width = 224;
 const unsigned int imagenet_toolset::training_target_image_height = 224;
 const unsigned int imagenet_toolset::validating_image_size = 256; // 256
 
-const unsigned int imagenet_toolset::resnet10_blocks[4] = {3, 4, 6, 3};
+const unsigned int imagenet_toolset::resnet_blocks[4] = {3, 4, 6, 3};
 
 imagenet_toolset::imagenet_toolset(nnforge::factory_generator::ptr factory)
 	: nnforge::toolset(factory)
@@ -301,8 +297,6 @@ std::vector<nnforge::int_option> imagenet_toolset::get_int_options()
 
 	res.push_back(nnforge::int_option("samples_x", &samples_x, 4, "Run multiple samples (in x direction) for each entry"));
 	res.push_back(nnforge::int_option("samples_y", &samples_y, 4, "Run multiple samples (in y direction) for each entry"));
-	res.push_back(nnforge::int_option("training_min_image_size", &training_min_image_size, 224, "Minimum short side of the image from which training sample is extracted"));
-	res.push_back(nnforge::int_option("training_max_image_size", &training_max_image_size, 288, "Maximum short side of the image from which training sample is extracted"));
 
 	return res;
 }
@@ -311,7 +305,13 @@ std::vector<nnforge::float_option> imagenet_toolset::get_float_options()
 {
 	std::vector<nnforge::float_option> res = toolset::get_float_options();
 
-	res.push_back(nnforge::float_option("max_aspect_ratio_change", &max_aspect_ratio_change, 1.0F, "The maximum aspect ration change during training"));
+	res.push_back(nnforge::float_option("max_aspect_ratio_change", &max_aspect_ratio_change, 1.33F, "The maximum aspect ration change during training"));
+	res.push_back(nnforge::float_option("min_relative_target_area", &min_relative_target_area, 0.08F, "The minimum area of the croped image when training, relative to the original image"));
+	res.push_back(nnforge::float_option("max_relative_target_area", &max_relative_target_area, 1.0F, "The maximum area of the croped image when training, relative to the original image"));
+	res.push_back(nnforge::float_option("max_brightness_shift", &max_brightness_shift, 0.4F, "The maximum change in brightness when training"));
+	res.push_back(nnforge::float_option("max_contrast_shift", &max_contrast_shift, 0.4F, "The maximum change in contrast when training"));
+	res.push_back(nnforge::float_option("max_saturation_shift", &max_saturation_shift, 0.4F, "The maximum change in saturation when training"));
+	res.push_back(nnforge::float_option("max_lighting_shift", &max_lighting_shift, 0.1F, "The maximum change in lighting (PCA-based) when training"));
 
 	return res;
 }
@@ -340,8 +340,8 @@ nnforge::structured_data_reader::ptr imagenet_toolset::get_structured_reader(
 			else
 			{
 				transformer = nnforge::raw_to_structured_data_transformer::ptr(new training_imagenet_raw_to_structured_data_transformer(
-					training_min_image_size,
-					training_max_image_size,
+					min_relative_target_area,
+					max_relative_target_area,
 					training_target_image_width,
 					training_target_image_height,
 					max_aspect_ratio_change));
@@ -396,9 +396,13 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 	{
 		if (layer_name == "images")
 		{
-			res.push_back(get_normalize_data_transformer(layer_name));
 			if ((dataset_name == "training") && (usage != dataset_usage_create_normalizer) && (usage != dataset_usage_update_bn_weights))
 			{
+				res.push_back(nnforge::data_transformer::ptr(new nnforge::natural_image_data_transformer(
+					max_brightness_shift,
+					max_contrast_shift,
+					max_saturation_shift,
+					max_lighting_shift)));
 				res.push_back(nnforge::data_transformer::ptr(new nnforge::distort_2d_data_transformer(
 					0.0F,
 					1.0F,
@@ -410,9 +414,6 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 					true,
 					1.0F,
 					std::numeric_limits<float>::max())));
-				res.push_back(nnforge::data_transformer::ptr(new nnforge::uniform_intensity_data_transformer(
-					std::vector<float>(3, -max_color_shift),
-					std::vector<float>(3, max_color_shift))));
 			}
 			else if (dataset_name == "validating")
 			{
@@ -429,6 +430,7 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 						true)));
 				}
 			}
+			res.push_back(get_normalize_data_transformer(layer_name));
 		}
 	}
 
@@ -472,7 +474,7 @@ void imagenet_toolset::create_resnet_schema() const
 	relu1_layer->input_layer_instance_names.push_back("conv1_bn");
 	layer_list.push_back(relu1_layer);
 
-	nnforge::layer::ptr pool1_layer(new nnforge::max_subsampling_layer(std::vector<unsigned int>(2, 2)));
+	nnforge::layer::ptr pool1_layer(new nnforge::max_subsampling_layer(std::vector<unsigned int>(2, 3), 1, 1, false, false, std::vector<bool>(2, true), std::vector<unsigned int>(2, 2)));
 	pool1_layer->instance_name = "pool1";
 	pool1_layer->input_layer_instance_names.push_back("relu1");
 	layer_list.push_back(pool1_layer);
@@ -483,8 +485,8 @@ void imagenet_toolset::create_resnet_schema() const
 	char bottleneck_minor_block_id = 'a';
 	unsigned int restored_feature_map_count = 256;
 
-	for(unsigned int resnet_spatial_block_id = 0; resnet_spatial_block_id < sizeof(resnet10_blocks) / sizeof(resnet10_blocks[0]); ++resnet_spatial_block_id)
-		for(unsigned int resnet_block_id = 0; resnet_block_id < resnet10_blocks[resnet_spatial_block_id]; ++resnet_block_id)
+	for(unsigned int resnet_spatial_block_id = 0; resnet_spatial_block_id < sizeof(resnet_blocks) / sizeof(resnet_blocks[0]); ++resnet_spatial_block_id)
+		for(unsigned int resnet_block_id = 0; resnet_block_id < resnet_blocks[resnet_spatial_block_id]; ++resnet_block_id)
 			add_resnet_bottleneck_block(layer_list, last_layer_feature_map_count, last_layer_name, bottleneck_major_block_id, bottleneck_minor_block_id, restored_feature_map_count, (resnet_block_id == 0) && (resnet_spatial_block_id != 0));
 
 	std::string avg_pool_layer_name = (boost::format("pool%1%") % bottleneck_major_block_id).str(); 
@@ -561,7 +563,7 @@ void imagenet_toolset::add_resnet_bottleneck_block(
 	std::string reduce_fm_bn_layer_name = reduce_fm_layer_name + "_bn";
 	std::string reduce_fm_relu_layer_name = reduce_fm_layer_name + "_relu";
 	{
-		nnforge::layer::ptr reduce_fm_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 1), last_layer_feature_map_count, bottleneck_feature_map_count, std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, spatial_size_reduction ? 2 : 1), false));
+		nnforge::layer::ptr reduce_fm_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 1), last_layer_feature_map_count, bottleneck_feature_map_count, std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, 0), std::vector<unsigned int>(2, 1), false));
 		reduce_fm_layer->instance_name = reduce_fm_layer_name;
 		reduce_fm_layer->input_layer_instance_names.push_back(last_layer_name);
 		layer_list.push_back(reduce_fm_layer);
@@ -579,7 +581,7 @@ void imagenet_toolset::add_resnet_bottleneck_block(
 	std::string bottleneck_bn_layer_name = bottleneck_layer_name + "_bn";
 	std::string bottleneck_relu_layer_name = bottleneck_layer_name + "_relu";
 	{
-		nnforge::layer::ptr bottleneck_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 3), bottleneck_feature_map_count, bottleneck_feature_map_count, std::vector<unsigned int>(2, 1), std::vector<unsigned int>(2, 1), std::vector<unsigned int>(2, 1), false));
+		nnforge::layer::ptr bottleneck_layer(new nnforge::convolution_layer(std::vector<unsigned int>(2, 3), bottleneck_feature_map_count, bottleneck_feature_map_count, std::vector<unsigned int>(2, 1), std::vector<unsigned int>(2, 1), std::vector<unsigned int>(2, spatial_size_reduction ? 2 : 1), false));
 		bottleneck_layer->instance_name = bottleneck_layer_name;
 		bottleneck_layer->input_layer_instance_names.push_back(reduce_fm_relu_layer_name);
 		layer_list.push_back(bottleneck_layer);

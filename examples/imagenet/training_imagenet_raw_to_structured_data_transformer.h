@@ -25,8 +25,8 @@ class training_imagenet_raw_to_structured_data_transformer : public nnforge::raw
 {
 public:
 	training_imagenet_raw_to_structured_data_transformer(
-		unsigned int min_image_size,
-		unsigned int max_image_size,
+		float min_relative_target_area,
+		float max_relative_target_area,
 		unsigned int target_image_width,
 		unsigned int target_image_height,
 		float max_aspect_ratio_change);
@@ -46,6 +46,6 @@ protected:
 
 	boost::mutex gen_mutex;
 	nnforge::random_generator gen;
-	nnforge_uniform_real_distribution<float> dist_size;
+	nnforge_uniform_real_distribution<float> dist_relative_target_area;
 	nnforge_uniform_real_distribution<float> dist_log_aspect_ratio;
 };
