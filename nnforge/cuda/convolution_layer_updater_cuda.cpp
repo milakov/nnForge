@@ -238,9 +238,9 @@ namespace nnforge
 					output_data_desc,
 					*input_neurons_buffers[0],
 					*output_errors_buffer,
-					(unsigned char *)workspace + update_weights_working_buffer_size,
-					workspace,
-					update_weights_working_buffer_size);
+					(unsigned char *)workspace,
+					(unsigned char *)workspace + update_weights_find_algo_working_buffer_size,
+					workspace_size - update_weights_find_algo_working_buffer_size);
 
 				float alpha = 1.0F;
 				float beta = 1.0F;
@@ -306,15 +306,15 @@ namespace nnforge
 				zero_padding,
 				strides);
 
-			unsigned int update_weights_working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
-			for(int i = 0; i < window_sizes.size(); ++i)
-				update_weights_working_buffer_elem_count *= window_sizes[i];
-			update_weights_working_buffer_size = update_weights_working_buffer_elem_count * sizeof(int);
-			update_weights_working_buffer_size = (update_weights_working_buffer_size + 16 - 1) / 16 * 16;
 			unsigned int update_weights_find_algo_working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count * output_configuration_specific.feature_map_count;
 			for(int i = 0; i < window_sizes.size(); ++i)
 				update_weights_find_algo_working_buffer_elem_count *= window_sizes[i];
 			update_weights_find_algo_working_buffer_size = update_weights_find_algo_working_buffer_elem_count * sizeof(float);
+			update_weights_find_algo_working_buffer_size = (update_weights_find_algo_working_buffer_size + 16 - 1) / 16 * 16;
+			unsigned int update_weights_working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
+			for(int i = 0; i < window_sizes.size(); ++i)
+				update_weights_working_buffer_elem_count *= window_sizes[i];
+			update_weights_working_buffer_size = update_weights_working_buffer_elem_count * sizeof(int);
 		}
 
 		std::pair<size_t, bool> convolution_layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
@@ -338,7 +338,7 @@ namespace nnforge
 				}
 			case layer_action::backward_weights:
 				{
-					return std::make_pair(update_weights_working_buffer_size + update_weights_find_algo_working_buffer_size, is_over_sol_algos_available);
+					return std::make_pair(update_weights_find_algo_working_buffer_size + update_weights_working_buffer_size, is_over_sol_algos_available);
 				}
 			default:
 				return std::make_pair(0, false);
