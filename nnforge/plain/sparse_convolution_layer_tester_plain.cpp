@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -61,9 +61,15 @@ namespace nnforge
 			float * const out_it_global = *output_buffer;
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
+			const bool bias = layer_derived->bias;
+
 			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
 			window_sizes_extended.resize(max_dimension_count, 1);
 			const std::vector<unsigned int>& window_sizes = window_sizes_extended;
+
+			std::vector<unsigned int> strides_extended = layer_derived->strides;
+			strides_extended.resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& strides = strides_extended;
 
 			std::vector<unsigned int> left_zero_padding_extended = layer_derived->left_zero_padding;
 			left_zero_padding_extended.resize(max_dimension_count, 0);
@@ -88,7 +94,7 @@ namespace nnforge
 			const unsigned int const_window_elem_count = window_elem_count;
 
 			const std::vector<float>::const_iterator weights = (*data)[0].begin();
-			const std::vector<float>::const_iterator biases = (*data)[1].begin();
+			const float * const biases = bias ? &(*data)[1][0] : 0;
 
 			const std::vector<int>::const_iterator column_indices = (*data_custom)[0].begin();
 			const std::vector<int>::const_iterator row_indices = (*data_custom)[1].begin();
@@ -117,6 +123,7 @@ namespace nnforge
 			const std::vector<unsigned int>::const_iterator output_dimension_sizes_it = output_configuration_specific.dimension_sizes.begin();
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
+			const std::vector<unsigned int>::const_iterator strides_it = strides.begin();
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
@@ -139,13 +146,13 @@ namespace nnforge
 					std::fill_n(current_output_position.begin(), max_dimension_count, 0);
 					for(float * out_it = out_it_base; out_it != out_it_base + output_neuron_count_per_feature_map; ++out_it)
 					{
-						float sum = *(biases + output_feature_map_id);
+						float sum = bias ? *(biases + output_feature_map_id) : 0.0F;
 						std::vector<float>::const_iterator weights_it = weights + start_column_index * const_window_elem_count;
 
 						int in_it_offset2 = 0;
 
 						for(unsigned int i = 0; i < dimension_count; ++i)
-							current_input_position[i] = static_cast<int>(current_output_position[i]) - static_cast<int>(left_zero_padding[i]);
+							current_input_position[i] = static_cast<int>(current_output_position[i] * strides_it[i]) - static_cast<int>(left_zero_padding[i]);
 
 						for(unsigned int i = 0; i < dimension_count; ++i)
 							in_it_offset2 += current_input_position[i] * (*(input_slices_it + i));

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@
 #include "../neural_network_exception.h"
 #include "sparse_fully_connected_1x1_layer_updater_cuda.h"
 #include "sparse_fully_connected_layer_updater_cuda.h"
-#include "sparse_convolution_layer_updater_schema_helper_cuda_kepler.h"
+#include "sparse_convolution_layer_updater_schema_helper_cuda.h"
+#include "sparse_strided_1x1_layer_updater_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -50,30 +51,35 @@ namespace nnforge
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			layer_updater_cuda::ptr res;
-
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			bool zero_padding = (layer_derived->left_zero_padding == std::vector<unsigned int>(layer_derived->left_zero_padding.size(), 0))
 				&& (layer_derived->right_zero_padding == std::vector<unsigned int>(layer_derived->right_zero_padding.size(), 0));
+			bool unit_stride = (layer_derived->strides == std::vector<unsigned int>(layer_derived->strides.size(), 1));
+			bool single_output = (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count);
+			bool fully_connected = single_output & unit_stride;
+			bool window1x1 = (layer_derived->window_sizes == std::vector<unsigned int>(layer_derived->window_sizes.size(), 1));
 
-			if (zero_padding && (output_configuration_specific.get_neuron_count() == output_configuration_specific.feature_map_count))
+			if (zero_padding)
 			{
-				if (input_configuration_specific_list[0].dimension_sizes == output_configuration_specific.dimension_sizes)
+				if (fully_connected)
 				{
-					res = layer_updater_cuda::ptr(new sparse_fully_connected_1x1_layer_updater_cuda());
+					if (window1x1)
+						return layer_updater_cuda::ptr(new sparse_fully_connected_1x1_layer_updater_cuda());
+					else
+						return layer_updater_cuda::ptr(new sparse_fully_connected_layer_updater_cuda());
 				}
 				else
 				{
-					res = layer_updater_cuda::ptr(new sparse_fully_connected_layer_updater_cuda());
+					if (window1x1)
+						return layer_updater_cuda::ptr(new sparse_strided_1x1_layer_updater_cuda());
 				}
 			}
-			else
-			{
-				res = sparse_convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(input_configuration_specific_list, output_configuration_specific);
-			}
 
-			return res;
+			if (unit_stride)
+				return sparse_convolution_layer_updater_schema_helper_cuda::create_updater_specific(input_configuration_specific_list[0], output_configuration_specific);
+
+			throw neural_network_exception("There is no sparse_convolution_layer tester implemented for non-unit stride and non-unit window");
 		}
 	}
 }

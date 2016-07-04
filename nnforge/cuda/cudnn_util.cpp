@@ -27,7 +27,8 @@ namespace nnforge
 		void cudnn_util::set_tensor_descriptor(
 			cudnnTensorDescriptor_t tensor_desc,
 			const layer_configuration_specific& config,
-			unsigned int entry_count)
+			unsigned int entry_count,
+			const std::vector<unsigned int>& strides)
 		{
 			std::vector<int> tensor_dimensions(config.dimension_sizes.size() + 2);
 			tensor_dimensions[0] = entry_count;
@@ -39,7 +40,11 @@ namespace nnforge
 
 			std::vector<int> tensor_strides(tensor_dimensions.size());
 			tensor_strides.back() = 1;
-			for(int i = static_cast<int>(tensor_strides.size()) - 2; i >= 0; --i)
+			std::vector<unsigned int> current_strides(strides);
+			if (current_strides.empty())
+				current_strides.resize(1, 1);
+			std::copy(current_strides.rbegin(), current_strides.rend(), tensor_strides.rbegin());
+			for(int i = static_cast<int>(tensor_strides.size() - current_strides.size() - 1); i >= 0; --i)
 				tensor_strides[i] = tensor_strides[i + 1] * tensor_dimensions[i + 1];
 
 			cudnn_safe_call(cudnnSetTensorNdDescriptor(

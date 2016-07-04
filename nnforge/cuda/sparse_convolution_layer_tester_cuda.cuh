@@ -30,7 +30,7 @@
 #include "../sparse_convolution_layer.h"
 #include "../nn_types.h"
 
-#define MAX_DIMENSION_COUNT 4
+#define MAX_DIMENSION_COUNT 3
 
 #define BLOCK_WIDTH 4
 #define BLOCK_HEIGHT 4
@@ -47,6 +47,7 @@ namespace nnforge
 			const int * __restrict column_indices,
 			const int * __restrict row_ptrs,
 			const float * __restrict biases,
+			bool bias_exists,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
 			array_by_val<int_fastdiv, DIMENSION_COUNT> output_block_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
@@ -100,7 +101,7 @@ namespace nnforge
 
 				float sums[(DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1)][BLOCK_WIDTH];
 
-				float bias = biases[output_feature_map_id];
+				float bias = bias_exists ? biases[output_feature_map_id] : 0.0F;
 				#pragma unroll
 				for(int i = 0; i < (DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1); ++i)
 					#pragma unroll
@@ -138,57 +139,51 @@ namespace nnforge
 					int input_feature_map_id = column_indices[nnz_index];
 					int input_elem_id = input_elem_id_base + input_feature_map_id * input_elem_count_per_feature_map;
 
-					for(int input_w = (DIMENSION_COUNT > 3 ? xyzw[3] : 0); input_w < (DIMENSION_COUNT > 3 ? xyzw[3] + window_sizes[3] : 1); ++input_w)
+					for(int input_z = (DIMENSION_COUNT > 2 ? xyzw[2] : 0); input_z < (DIMENSION_COUNT > 2 ? xyzw[2] + window_sizes[2] : 1); ++input_z)
 					{
-						bool b_fit3 = (DIMENSION_COUNT > 3) ? ((unsigned int)input_w < (unsigned int)input_sizes[3]) : true;
-						for(int input_z = (DIMENSION_COUNT > 2 ? xyzw[2] : 0); input_z < (DIMENSION_COUNT > 2 ? xyzw[2] + window_sizes[2] : 1); ++input_z)
+						bool b_fit2 = (DIMENSION_COUNT > 2) ? ((unsigned int)input_z < (unsigned int)input_sizes[2]) : true;
+
+						float input_local_buf[(DIMENSION_COUNT > 1) ? (WINDOW_HEIGHT + BLOCK_HEIGHT - 1) : 1][WINDOW_WIDTH + BLOCK_WIDTH - 1];
+
+						#pragma unroll
+						for(int input_yy = 0; input_yy < ((DIMENSION_COUNT > 1) ? (WINDOW_HEIGHT + BLOCK_HEIGHT - 1) : 1); ++input_yy)
 						{
-							bool b_fit2 = (DIMENSION_COUNT > 2) ? (b_fit3 && ((unsigned int)input_z < (unsigned int)input_sizes[2])) : true;
-
-							float input_local_buf[(DIMENSION_COUNT > 1) ? (WINDOW_HEIGHT + BLOCK_HEIGHT - 1) : 1][WINDOW_WIDTH + BLOCK_WIDTH - 1];
-
 							#pragma unroll
-							for(int input_yy = 0; input_yy < ((DIMENSION_COUNT > 1) ? (WINDOW_HEIGHT + BLOCK_HEIGHT - 1) : 1); ++input_yy)
+							for(int input_xx = 0; input_xx < (WINDOW_WIDTH + BLOCK_WIDTH - 1); ++input_xx)
 							{
-								#pragma unroll
-								for(int input_xx = 0; input_xx < (WINDOW_WIDTH + BLOCK_WIDTH - 1); ++input_xx)
-								{
-									int pos_total = input_yy * (WINDOW_WIDTH + BLOCK_WIDTH - 1) + input_xx;
-									bool b_fit0 = b_fit2 && ((valid_positions[pos_total / 32] & (1U << (pos_total & 31))) != 0);
-									int current_offset = input_elem_id + input_yy * input_sizes[0] + input_xx;
-									input_local_buf[input_yy][input_xx] = b_fit0 ? __load_nc(input + current_offset) : 0.0F;
-								}
+								int pos_total = input_yy * (WINDOW_WIDTH + BLOCK_WIDTH - 1) + input_xx;
+								bool b_fit0 = b_fit2 && ((valid_positions[pos_total / 32] & (1U << (pos_total & 31))) != 0);
+								int current_offset = input_elem_id + input_yy * input_sizes[0] + input_xx;
+								input_local_buf[input_yy][input_xx] = b_fit0 ? __load_nc(input + current_offset) : 0.0F;
 							}
+						}
 
+						#pragma unroll
+						for(int input_yy = 0; input_yy < WINDOW_HEIGHT; ++input_yy)
+						{
 							#pragma unroll
-							for(int input_yy = 0; input_yy < WINDOW_HEIGHT; ++input_yy)
+							for(int input_xx = 0; input_xx < WINDOW_WIDTH; ++input_xx)
 							{
-								#pragma unroll
-								for(int input_xx = 0; input_xx < WINDOW_WIDTH; ++input_xx)
-								{
-									float weight = __load_nc(current_weights);
+								float weight = __load_nc(current_weights);
 
+								#pragma unroll
+								for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
+								{
 									#pragma unroll
-									for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
+									for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
 									{
-										#pragma unroll
-										for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
-										{
-											float input_val = input_local_buf[input_yy + pos_y][input_xx + pos_x];
-											sums[pos_y][pos_x] += weight * input_val;
-										}
+										float input_val = input_local_buf[input_yy + pos_y][input_xx + pos_x];
+										sums[pos_y][pos_x] += weight * input_val;
 									}
-
-									++current_weights;
 								}
-							}
 
-							if (DIMENSION_COUNT > 2)
-								input_elem_id += input_sizes[0] * input_sizes[1];
-						} // for input_z
-						if (DIMENSION_COUNT > 3)
-							input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - window_sizes[2]);
-					} // for input_w
+								++current_weights;
+							}
+						}
+
+						if (DIMENSION_COUNT > 2)
+							input_elem_id += input_sizes[0] * input_sizes[1];
+					} // for input_z
 				} // for nnz_index
 
 				int output_offset = entry_id * output_feature_map_count + output_feature_map_id;
@@ -216,13 +211,14 @@ namespace nnforge
 		}
 
 		template<int DIMENSION_COUNT>
-		__global__ void sparse_convolution_generic_blocked_kernel_kepler(
+		__global__ void sparse_convolution_generic_blocked_kernel(
 			float * __restrict output,
 			const float * __restrict input,
 			const float * __restrict weights,
 			const int * __restrict column_indices,
 			const int * __restrict row_ptrs,
 			const float * __restrict biases,
+			bool bias_exists,
 			array_by_val<int, DIMENSION_COUNT> output_sizes,
 			array_by_val<int_fastdiv, DIMENSION_COUNT> output_block_sizes,
 			array_by_val<int, DIMENSION_COUNT> input_sizes,
@@ -275,7 +271,7 @@ namespace nnforge
 
 				float sums[(DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1)][BLOCK_WIDTH];
 
-				float bias = biases[output_feature_map_id];
+				float bias = bias_exists ? biases[output_feature_map_id] : 0.0F;
 				#pragma unroll
 				for(int i = 0; i < (DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1); ++i)
 					#pragma unroll
@@ -287,45 +283,39 @@ namespace nnforge
 					int input_feature_map_id = column_indices[nnz_index];
 					int input_elem_id = input_elem_id_base + input_feature_map_id * input_elem_count_per_feature_map;
 
-					for(int input_w = (DIMENSION_COUNT > 3 ? xyzw[3] : 0); input_w < (DIMENSION_COUNT > 3 ? xyzw[3] + window_sizes[3] : 1); ++input_w)
+					for(int input_z = (DIMENSION_COUNT > 2 ? xyzw[2] : 0); input_z < (DIMENSION_COUNT > 2 ? xyzw[2] + window_sizes[2] : 1); ++input_z)
 					{
-						bool b_fit3 = (DIMENSION_COUNT > 3) ? ((unsigned int)input_w < (unsigned int)input_sizes[3]) : true;
-						for(int input_z = (DIMENSION_COUNT > 2 ? xyzw[2] : 0); input_z < (DIMENSION_COUNT > 2 ? xyzw[2] + window_sizes[2] : 1); ++input_z)
+						bool b_fit2 = (DIMENSION_COUNT > 2) ? ((unsigned int)input_z < (unsigned int)input_sizes[2]) : true;
+
+						#pragma unroll 2
+						for(int input_yy = 0; input_yy < ((DIMENSION_COUNT > 1) ? window_sizes[1] : 1); ++input_yy)
 						{
-							bool b_fit2 = (DIMENSION_COUNT > 2) ? (b_fit3 && ((unsigned int)input_z < (unsigned int)input_sizes[2])) : true;
-
 							#pragma unroll 2
-							for(int input_yy = 0; input_yy < ((DIMENSION_COUNT > 1) ? window_sizes[1] : 1); ++input_yy)
+							for(int input_xx = 0; input_xx < window_sizes[0]; ++input_xx)
 							{
-								#pragma unroll 2
-								for(int input_xx = 0; input_xx < window_sizes[0]; ++input_xx)
+								float weight = __load_nc(current_weights);
+
+								#pragma unroll
+								for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
 								{
-									float weight = __load_nc(current_weights);
-
+									bool b_fit1 = (DIMENSION_COUNT > 1) ? (b_fit2 && ((unsigned int)(xyzw[1] + input_yy + pos_y) < (unsigned int)input_sizes[1])) : true;
 									#pragma unroll
-									for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
+									for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
 									{
-										bool b_fit1 = (DIMENSION_COUNT > 1) ? (b_fit2 && ((unsigned int)(xyzw[1] + input_yy + pos_y) < (unsigned int)input_sizes[1])) : true;
-										#pragma unroll
-										for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
-										{
-											bool b_fit0 = (b_fit1 && ((unsigned int)(xyzw[0] + input_xx + pos_x) < (unsigned int)input_sizes[0]));
-											int current_offset = input_elem_id + (input_yy + pos_y) * input_sizes[0] + input_xx + pos_x;
-											float input_val = b_fit0 ? __load_nc(input + current_offset) : 0.0F;
-											sums[pos_y][pos_x] += weight * input_val;
-										}
+										bool b_fit0 = (b_fit1 && ((unsigned int)(xyzw[0] + input_xx + pos_x) < (unsigned int)input_sizes[0]));
+										int current_offset = input_elem_id + (input_yy + pos_y) * input_sizes[0] + input_xx + pos_x;
+										float input_val = b_fit0 ? __load_nc(input + current_offset) : 0.0F;
+										sums[pos_y][pos_x] += weight * input_val;
 									}
-
-									++current_weights;
 								}
-							}
 
-							if (DIMENSION_COUNT > 2)
-								input_elem_id += input_sizes[0] * input_sizes[1];
-						} // for input_z
-						if (DIMENSION_COUNT > 3)
-							input_elem_id += input_sizes[1] * input_sizes[0] * (input_sizes[2] - window_sizes[2]);
-					} // for input_w
+								++current_weights;
+							}
+						}
+
+						if (DIMENSION_COUNT > 2)
+							input_elem_id += input_sizes[0] * input_sizes[1];
+					} // for input_z
 				} // for nnz_index
 
 				int output_offset = entry_id * output_feature_map_count + output_feature_map_id;
@@ -353,10 +343,10 @@ namespace nnforge
 		}
 
 #define launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_exact_blocked_kernel<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, *input_buffers[0], *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_feature_map, weight_count_per_block, 0U);
+	sparse_convolution_exact_blocked_kernel<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, *input_buffers[0], *data[0], *data_custom[0], *data_custom[1], bias ? *data[1] : (const float *)0, bias, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_feature_map, weight_count_per_block, 0U);
 
 #define launch_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_generic_blocked_kernel_kepler<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, *input_buffers[0], *data[0], *data_custom[0], *data_custom[1], *data[1], output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_feature_map, weight_count_per_block);
+	sparse_convolution_generic_blocked_kernel<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, *input_buffers[0], *data[0], *data_custom[0], *data_custom[1], bias ? *data[1] : (const float *)0, bias, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_feature_map, weight_count_per_block);
 
 #define launch_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -412,14 +402,14 @@ namespace nnforge
 	};
 
 		template<int dimension_count>
-		class sparse_convolution_layer_tester_cuda_kepler : public layer_tester_cuda
+		class sparse_convolution_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			sparse_convolution_layer_tester_cuda_kepler()
+			sparse_convolution_layer_tester_cuda()
 			{
 			}
 
-			virtual ~sparse_convolution_layer_tester_cuda_kepler()
+			virtual ~sparse_convolution_layer_tester_cuda()
 			{
 			}
 
@@ -450,6 +440,8 @@ namespace nnforge
 			virtual void tester_configured()
 			{
 				nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+
+				bias = layer_derived->bias;
 
 				block_count_per_feature_map = 1;
 				weight_count_per_block = 1;
@@ -486,6 +478,7 @@ namespace nnforge
 			array_by_val<int, dimension_count> left_zero_padding;
 			int block_count_per_feature_map;
 			int weight_count_per_block;
+			bool bias;
 		};
 	}
 }

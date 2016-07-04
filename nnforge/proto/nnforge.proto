@@ -144,14 +144,16 @@ message CDF2PDFParam {
 message SparseConvolutionalParam {
 	message SparseConvolutionalDimensionParam {
 		required uint32 kernel_size = 1;
-		optional uint32 left_padding = 2;
-		optional uint32 right_padding = 3;
+		optional uint32 left_padding = 2 [default = 0];
+		optional uint32 right_padding = 3 [default = 0];
+		optional uint32 stride = 4 [default = 1];
 	}
 	required uint32 input_feature_map_count = 1;
 	required uint32 output_feature_map_count = 2;
 	optional uint32 feature_map_connection_count = 3;
 	optional float feature_map_connection_sparsity_ratio = 4;
 	repeated SparseConvolutionalDimensionParam dimension_param = 5;
+	optional bool bias = 6 [default = true];
 }
 
 message DropoutParam {

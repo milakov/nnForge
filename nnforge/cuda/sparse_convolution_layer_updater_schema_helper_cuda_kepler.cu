@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-#include "sparse_convolution_layer_updater_schema_helper_cuda_kepler.h"
+#include "sparse_convolution_layer_updater_schema_helper_cuda.h"
 
-#include "sparse_convolution_layer_updater_cuda_kepler.cuh"
+#include "sparse_convolution_layer_updater_cuda.cuh"
 
 #include <boost/format.hpp>
 #include "../neural_network_exception.h"
@@ -25,8 +25,8 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		layer_updater_cuda::ptr sparse_convolution_layer_updater_schema_helper_cuda_kepler::create_updater_specific(
-				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
+		layer_updater_cuda::ptr sparse_convolution_layer_updater_schema_helper_cuda::create_updater_specific(
+				const layer_configuration_specific& input_configuration_specific,
 				const layer_configuration_specific& output_configuration_specific)
 		{
 			layer_updater_cuda::ptr res;
@@ -34,16 +34,13 @@ namespace nnforge
 			switch (output_configuration_specific.dimension_sizes.size()) 
 			{
 				case 1:
-					res = layer_updater_cuda::ptr(new sparse_convolution_layer_updater_cuda_kepler<1>());
+					res = layer_updater_cuda::ptr(new sparse_convolution_layer_updater_cuda<1>());
 					break;
 				case 2:
-					res = layer_updater_cuda::ptr(new sparse_convolution_layer_updater_cuda_kepler<2>());
+					res = layer_updater_cuda::ptr(new sparse_convolution_layer_updater_cuda<2>());
 					break;
 				case 3:
-					res = layer_updater_cuda::ptr(new sparse_convolution_layer_updater_cuda_kepler<3>());
-					break;
-				case 4:
-					res = layer_updater_cuda::ptr(new sparse_convolution_layer_updater_cuda_kepler<4>());
+					res = layer_updater_cuda::ptr(new sparse_convolution_layer_updater_cuda<3>());
 					break;
 				default:
 					throw neural_network_exception((boost::format("No CUDA updater for the sparse convolutional layer of %1% dimensions for Kepler and above architectures") % output_configuration_specific.dimension_sizes.size()).str());

@@ -59,7 +59,8 @@ namespace nnforge
 			static void set_tensor_descriptor(
 				cudnnTensorDescriptor_t tensor_desc,
 				const layer_configuration_specific& config,
-				unsigned int entry_count);
+				unsigned int entry_count,
+				const std::vector<unsigned int>& strides = std::vector<unsigned int>());
 
 			static tensor_params get_tensor_params(cudnnTensorDescriptor_t tensor_desc);
 

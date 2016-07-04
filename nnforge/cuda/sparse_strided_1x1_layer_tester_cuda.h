@@ -24,12 +24,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class sparse_fully_connected_layer_tester_cuda : public layer_tester_cuda
+		class sparse_strided_1x1_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			sparse_fully_connected_layer_tester_cuda();
+			sparse_strided_1x1_layer_tester_cuda();
 
-			virtual ~sparse_fully_connected_layer_tester_cuda();
+			virtual ~sparse_strided_1x1_layer_tester_cuda();
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
@@ -43,23 +43,25 @@ namespace nnforge
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count);
 
+			virtual size_t get_temporary_working_per_entry_buffer_size() const;
+
 		protected:
 			virtual void tester_configured();
 
-			virtual void notify_data_custom(layer_data_custom::const_ptr host_data_custom);
-
 		private:
-			std::pair<int, int> get_input_feature_map_block_size_and_count() const;
-
 			int feature_map_connection_count;
-			int max_column_index_count_per_row;
-			int window_size;
-			float bias;
+			bool bias;
+			layer_configuration_specific input_strided_config;
+			std::vector<unsigned int> input_strides;
+			std::vector<unsigned int> input_converted_strides;
 
-			static const int max_input_feature_map_block_size;
-
+			cudnnTensorDescriptor_t input_strided_data_desc;
+			cudnnTensorDescriptor_t input_converted_data_desc;
 			cudnnTensorDescriptor_t output_data_desc;
 			cudnnTensorDescriptor_t bias_desc;
+
+			int input_converted_elem_count_per_entry_aligned;
+			int output_elem_count_per_entry_aligned;
 		};
 	}
 }

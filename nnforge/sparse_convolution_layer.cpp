@@ -36,19 +36,22 @@ namespace nnforge
 		unsigned int output_feature_map_count,
 		unsigned int feature_map_connection_count,
 		const std::vector<unsigned int>& left_zero_padding,
-		const std::vector<unsigned int>& right_zero_padding)
+		const std::vector<unsigned int>& right_zero_padding,
+		const std::vector<unsigned int>& strides,
+		bool bias)
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count),
 		feature_map_connection_sparsity_ratio(-1.0F),
 		feature_map_connection_count(feature_map_connection_count),
-		left_zero_padding(left_zero_padding),
-		right_zero_padding(right_zero_padding)
+		bias(bias)
 	{
 		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
 		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for right zero padding") % right_zero_padding.size()).str());
+		if ((strides.size() != 0) && (strides.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for strides") % strides.size()).str());
 
 		if (left_zero_padding.empty())
 			this->left_zero_padding.resize(window_sizes.size(), 0);
@@ -59,6 +62,11 @@ namespace nnforge
 			this->right_zero_padding.resize(window_sizes.size(), 0);
 		else
 			this->right_zero_padding = right_zero_padding;
+
+		if (strides.empty())
+			this->strides.resize(window_sizes.size(), 1);
+		else
+			this->strides = strides;
 
 		check();
 	}
@@ -69,19 +77,22 @@ namespace nnforge
 		unsigned int output_feature_map_count,
 		float feature_map_connection_sparsity_ratio,
 		const std::vector<unsigned int>& left_zero_padding,
-		const std::vector<unsigned int>& right_zero_padding)
+		const std::vector<unsigned int>& right_zero_padding,
+		const std::vector<unsigned int>& strides,
+		bool bias)
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count),
 		feature_map_connection_sparsity_ratio(feature_map_connection_sparsity_ratio),
 		feature_map_connection_count(static_cast<unsigned int>(input_feature_map_count * output_feature_map_count * feature_map_connection_sparsity_ratio + 0.5F)),
-		left_zero_padding(left_zero_padding),
-		right_zero_padding(right_zero_padding)
+		bias(bias)
 	{
 		if ((left_zero_padding.size() != 0) && (left_zero_padding.size() != window_sizes.size()))
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for left zero padding") % left_zero_padding.size()).str());
 		if ((right_zero_padding.size() != 0) && (right_zero_padding.size() != window_sizes.size()))
 			throw std::runtime_error((boost::format("Invalid dimension count %1% for right zero padding") % right_zero_padding.size()).str());
+		if ((strides.size() != 0) && (strides.size() != window_sizes.size()))
+			throw std::runtime_error((boost::format("Invalid dimension count %1% for strides") % strides.size()).str());
 
 		if (left_zero_padding.empty())
 			this->left_zero_padding.resize(window_sizes.size(), 0);
@@ -93,14 +104,16 @@ namespace nnforge
 		else
 			this->right_zero_padding = right_zero_padding;
 
+		if (strides.empty())
+			this->strides.resize(window_sizes.size(), 1);
+		else
+			this->strides = strides;
+
 		check();
 	}
 
 	void sparse_convolution_layer::check()
 	{
-		if (window_sizes.size() == 0)
-			throw neural_network_exception("window sizes for sparse convolution layer may not be empty");
-
 		for(unsigned int i = 0; i < window_sizes.size(); i++)
 			if (window_sizes[i] == 0)
 				throw neural_network_exception("window dimension for sparse convolution layer may not be zero");
@@ -119,6 +132,10 @@ namespace nnforge
 		for(unsigned int i = 0; i < window_sizes.size(); i++)
 			if (right_zero_padding[i] >= window_sizes[i])
 				throw neural_network_exception((boost::format("right zero padding %1% of dimension (%2%) is greater or equal than layer window size (%3%)") % right_zero_padding[i] % i % window_sizes[i]).str());
+
+		for(unsigned int i = 0; i < strides.size(); i++)
+			if (strides[i] == 0)
+				throw neural_network_exception((boost::format("stride dimension (%1%) is 0") % i).str());
 	}
 
 	std::string sparse_convolution_layer::get_type_name() const
@@ -144,10 +161,11 @@ namespace nnforge
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
 		{
 			unsigned int total_input_dimension_size = input_configuration_specific_list[0].dimension_sizes[i] + left_zero_padding[i] + right_zero_padding[i];
-			if (total_input_dimension_size < window_sizes[i])
-				throw neural_network_exception((boost::format("Too small total dimension size (with padding) %1% of dimension (%2%) is smaller than layer window size (%3%)") % total_input_dimension_size % i % window_sizes[i]).str());
 
-			res.dimension_sizes.push_back(total_input_dimension_size + 1 - window_sizes[i]);
+			if (total_input_dimension_size < window_sizes[i])
+				throw neural_network_exception((boost::format("Too small total dimension size (with padding) (%1%) of dimension (%2%) is smaller than layer window size (%3%)") % total_input_dimension_size % i % window_sizes[i]).str());
+
+			res.dimension_sizes.push_back((total_input_dimension_size - window_sizes[i]) / strides[i] + 1);
 		}
 
 		return res;
@@ -167,7 +185,7 @@ namespace nnforge
 		input_configuration_specific = layer_configuration_specific(output_feature_map_count);
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			input_configuration_specific.dimension_sizes.push_back(output_configuration_specific.dimension_sizes[i] + window_sizes[i] - 1 - left_zero_padding[i] - right_zero_padding[i]);
+			input_configuration_specific.dimension_sizes.push_back((output_configuration_specific.dimension_sizes[i] - 1) * strides[i] + window_sizes[i] - left_zero_padding[i] - right_zero_padding[i]);
 
 		return true;
 	}
@@ -179,6 +197,8 @@ namespace nnforge
 
 		param->set_output_feature_map_count(output_feature_map_count);
 		param->set_input_feature_map_count(input_feature_map_count);
+		if (!bias)
+			param->set_bias(false);
 
 		if (feature_map_connection_sparsity_ratio >= 0.0F)
 			param->set_feature_map_connection_sparsity_ratio(feature_map_connection_sparsity_ratio);
@@ -193,6 +213,8 @@ namespace nnforge
 				dim_param->set_left_padding(left_zero_padding[i]);
 			if (right_zero_padding[i] > 0)
 				dim_param->set_right_padding(right_zero_padding[i]);
+			if (strides[i] > 1)
+				dim_param->set_stride(strides[i]);
 		}
 	}
 
@@ -202,28 +224,33 @@ namespace nnforge
 		if (!layer_proto_typed->has_sparse_convolution_param())
 			throw neural_network_exception((boost::format("No sparse_convolution_param specified for layer %1% of type %2%") % instance_name % layer_proto_typed->type()).str());
 
-		input_feature_map_count = layer_proto_typed->sparse_convolution_param().input_feature_map_count();
-		output_feature_map_count = layer_proto_typed->sparse_convolution_param().output_feature_map_count();
+		const nnforge::protobuf::SparseConvolutionalParam& param = layer_proto_typed->sparse_convolution_param();
 
-		window_sizes.resize(layer_proto_typed->sparse_convolution_param().dimension_param_size());
-		left_zero_padding.resize(layer_proto_typed->sparse_convolution_param().dimension_param_size());
-		right_zero_padding.resize(layer_proto_typed->sparse_convolution_param().dimension_param_size());
+		input_feature_map_count = param.input_feature_map_count();
+		output_feature_map_count = param.output_feature_map_count();
+		bias = param.bias();
 
-		for(int i = 0; i < layer_proto_typed->sparse_convolution_param().dimension_param_size(); ++i)
+		window_sizes.resize(param.dimension_param_size());
+		left_zero_padding.resize(param.dimension_param_size());
+		right_zero_padding.resize(param.dimension_param_size());
+		strides.resize(param.dimension_param_size());
+
+		for(int i = 0; i < param.dimension_param_size(); ++i)
 		{
-			window_sizes[i] = layer_proto_typed->sparse_convolution_param().dimension_param(i).kernel_size();
-			left_zero_padding[i] = layer_proto_typed->sparse_convolution_param().dimension_param(i).left_padding();
-			right_zero_padding[i] = layer_proto_typed->sparse_convolution_param().dimension_param(i).right_padding();
+			window_sizes[i] = param.dimension_param(i).kernel_size();
+			left_zero_padding[i] = param.dimension_param(i).left_padding();
+			right_zero_padding[i] = param.dimension_param(i).right_padding();
+			strides[i] = param.dimension_param(i).stride();
 		}
 
-		if (layer_proto_typed->sparse_convolution_param().has_feature_map_connection_count())
+		if (param.has_feature_map_connection_count())
 		{
 			feature_map_connection_sparsity_ratio = -1.0F;
-			feature_map_connection_count = layer_proto_typed->sparse_convolution_param().feature_map_connection_count();
+			feature_map_connection_count = param.feature_map_connection_count();
 		}
-		else if (layer_proto_typed->sparse_convolution_param().has_feature_map_connection_sparsity_ratio())
+		else if (param.has_feature_map_connection_sparsity_ratio())
 		{
-			feature_map_connection_sparsity_ratio = layer_proto_typed->sparse_convolution_param().feature_map_connection_sparsity_ratio();
+			feature_map_connection_sparsity_ratio = param.feature_map_connection_sparsity_ratio();
 			feature_map_connection_count = static_cast<unsigned int>(input_feature_map_count * output_feature_map_count * feature_map_connection_sparsity_ratio + 0.5F);
 		}
 		else
@@ -240,7 +267,8 @@ namespace nnforge
 		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
 
 		res.push_back(weight_count);
-		res.push_back(output_feature_map_count);
+		if (bias)
+			res.push_back(output_feature_map_count);
 
 		return res;
 	}
@@ -297,7 +325,8 @@ namespace nnforge
 			}
 		}
 
-		std::fill(data[1].begin(), data[1].end(), 0.0F);
+		if (bias)
+			std::fill(data[1].begin(), data[1].end(), 0.0F);
 	}
 
 	void sparse_convolution_layer::randomize_custom_data(
@@ -396,7 +425,8 @@ namespace nnforge
 				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count_per_feature_map();
 				unsigned int per_item_flops = feature_map_connection_count * 2;
 				std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
-				per_item_flops -= 1;
+				if (!bias)
+					--per_item_flops;
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 			}
 		default:
@@ -408,7 +438,8 @@ namespace nnforge
 	{
 		layer_data_configuration_list res;
 		res.push_back(layer_data_configuration(1, feature_map_connection_count, window_sizes));
-		res.push_back(layer_data_configuration(1, output_feature_map_count, std::vector<unsigned int>()));
+		if (bias)
+			res.push_back(layer_data_configuration(1, output_feature_map_count, std::vector<unsigned int>()));
 
 		return res;
 	}
@@ -463,6 +494,28 @@ namespace nnforge
 						ss << left_zero_padding[i] << "_" << right_zero_padding[i];
 				}
 			}
+
+			bool empty_stride = true;
+			for(int i = 0; i < strides.size(); ++i)
+			{
+				if (strides[i] != 1)
+				{
+					empty_stride = false;
+					break;
+				}
+			}
+			if (!empty_stride)
+			{
+				ss << ", stride ";
+				for(int i = 0; i < strides.size(); ++i)
+				{
+					if (i != 0)
+						ss << "x";
+					ss << strides[i];
+				}
+			}
+			if (!bias)
+				ss << ", w/out bias";
 
 			res.push_back(ss.str());
 		}

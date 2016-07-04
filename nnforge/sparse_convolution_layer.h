@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ namespace nnforge
 			unsigned int output_feature_map_count,
 			unsigned int feature_map_connection_count,
 			const std::vector<unsigned int>& left_zero_padding = std::vector<unsigned int>(),
-			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>());
+			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>(),
+			const std::vector<unsigned int>& strides = std::vector<unsigned int>(),
+			bool bias = true);
 
 		sparse_convolution_layer(
 			const std::vector<unsigned int>& window_sizes,
@@ -39,7 +41,9 @@ namespace nnforge
 			unsigned int output_feature_map_count,
 			float feature_map_connection_sparsity_ratio,
 			const std::vector<unsigned int>& left_zero_padding = std::vector<unsigned int>(),
-			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>());
+			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>(),
+			const std::vector<unsigned int>& strides = std::vector<unsigned int>(),
+			bool bias = true);
 
 		virtual layer::ptr clone() const;
 
@@ -97,6 +101,8 @@ namespace nnforge
 		unsigned int feature_map_connection_count;
 		std::vector<unsigned int> left_zero_padding;
 		std::vector<unsigned int> right_zero_padding;
+		std::vector<unsigned int> strides;
+		bool bias;
 
 	private:
 		float feature_map_connection_sparsity_ratio;

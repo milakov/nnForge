@@ -22,7 +22,7 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class sparse_convolution_layer_testing_schema_helper_cuda_kepler
+		class sparse_convolution_layer_testing_schema_helper_cuda
 		{
 		public:
 			static layer_tester_cuda::ptr create_tester_specific(

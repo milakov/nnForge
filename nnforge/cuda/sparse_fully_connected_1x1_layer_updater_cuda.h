@@ -100,6 +100,7 @@ namespace nnforge
 			int max_column_index_count_per_row;
 			int max_entry32_update_block_size;
 			int max_entry32_backprop_block_size;
+			bool bias;
 
 			int input_elem_count_per_entry_aligned;
 			int output_elem_count_per_entry_aligned;
