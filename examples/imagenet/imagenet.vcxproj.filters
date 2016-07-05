@@ -47,9 +47,4 @@
     </None>
     <None Include="README.md" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="working_data\schema.txt">
-      <Filter>Working Data</Filter>
-    </Text>
-  </ItemGroup>
 </Project>

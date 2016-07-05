@@ -31,21 +31,22 @@ Train
 
 	./imagenet prepare_training_data
 	./imagenet create_normalizer --normalizer_layer_name images
-	./imagenet train
+	./imagenet create_resnet_schema
+	./imagenet train --schema schema_resnet50.txt
 	
-Training will take a week on modern GPU and will give you about 14% Top-5 error on single image inference on validation dataset.
+Training will take a couple of weeks on modern GPU and will give you about 7.5% Top-5 error on single image inference on validation dataset.
 
 Improved validation
 -------------------
 
 You can run training process multiple times (just run "train" again), have multiple networks trained this way, and run samples through all the nets averaging the output. You should get better results this way:
 
-	./imagenet inference --inference_mode dump_average_across_nets --inference_output_layer_name softmax
-	./imagenet inference --inference_force_data_layer_name softmax
+	./imagenet inference --schema schema_resnet50.txt --inference_mode dump_average_across_nets --inference_output_layer_name softmax
+	./imagenet inference --schema schema_resnet50.txt --inference_force_data_layer_name softmax
 
 Imagenet app also allows you to run different crops of each sample through the model, it works both with sinlge net and multiple nets:
 
-	./imagenet inference --inference_mode dump_average_across_nets --inference_output_layer_name softmax --rich_inference 1 --dump_compact_samples 32 --samples_x 4 --samples_y 4
-	./imagenet inference --inference_force_data_layer_name softmax
+	./imagenet inference --schema schema_resnet50.txt --inference_mode dump_average_across_nets --inference_output_layer_name softmax --rich_inference 1 --dump_compact_samples 32 --samples_x 4 --samples_y 4
+	./imagenet inference --schema schema_resnet50.txt --inference_force_data_layer_name softmax
 
 Here dump_compact_samples = samples_x * samples_y * 2 (mirroring)
