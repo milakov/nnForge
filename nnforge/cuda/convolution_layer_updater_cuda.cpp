@@ -315,6 +315,7 @@ namespace nnforge
 			for(int i = 0; i < window_sizes.size(); ++i)
 				update_weights_working_buffer_elem_count *= window_sizes[i];
 			update_weights_working_buffer_size = update_weights_working_buffer_elem_count * sizeof(int);
+			update_weights_working_buffer_size = std::max(update_weights_working_buffer_size, (size_t)(1024*1024));
 		}
 
 		std::pair<size_t, bool> convolution_layer_updater_cuda::get_temporary_working_fixed_buffer_size(const layer_action& action) const
@@ -323,18 +324,12 @@ namespace nnforge
 			switch (action.get_action_type())
 			{
 			case layer_action::forward:
-				{
-					unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
-					for(int i = 0; i < window_sizes.size(); ++i)
-						working_buffer_elem_count *= window_sizes[i];
-					return std::make_pair(working_buffer_elem_count * sizeof(int), is_over_sol_algos_available);
-				}
 			case layer_action::backward_data:
 				{
 					unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 					for(int i = 0; i < window_sizes.size(); ++i)
 						working_buffer_elem_count *= window_sizes[i];
-					return std::make_pair(working_buffer_elem_count * sizeof(int), is_over_sol_algos_available);
+					return std::make_pair(std::max(working_buffer_elem_count * sizeof(int), (size_t)(1024*1024)), is_over_sol_algos_available);
 				}
 			case layer_action::backward_weights:
 				{

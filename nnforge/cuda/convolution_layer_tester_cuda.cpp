@@ -158,10 +158,10 @@ namespace nnforge
 		std::pair<size_t, bool> convolution_layer_tester_cuda::get_temporary_working_fixed_buffer_size() const
 		{
 			bool is_over_sol_algos_available = cudnn_util::is_over_sol_algos_available(window_sizes, strides);
-			unsigned int working_buffer_elem_count = input_configuration_specific_list[0].feature_map_count;
+			unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 			for(int i = 0; i < window_sizes.size(); ++i)
 				working_buffer_elem_count *= window_sizes[i];
-			return std::make_pair(working_buffer_elem_count * sizeof(int), is_over_sol_algos_available);
+			return std::make_pair(std::max(working_buffer_elem_count * sizeof(int), (size_t)(1024*1024)), is_over_sol_algos_available);
 		}
 	}
 }
