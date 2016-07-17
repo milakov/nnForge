@@ -89,7 +89,7 @@ namespace nnforge
 			plain_running_configuration::const_ptr plain_config;
 
 			std::vector<layer_name_with_action> actions_in_execution_order;
-			std::map<std::string, layer_name_with_action> input_to_random_output_map;
+			std::map<std::string, std::vector<layer_name_with_action> > input_to_all_output_map;
 			std::map<std::string, std::set<layer_action> > layer_name_to_action_set_map;
 
 			std::map<std::string, layer_updater_plain::const_ptr> updaters;

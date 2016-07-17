@@ -199,7 +199,7 @@ namespace nnforge
 			network_action_schema::const_ptr optimized_action_schema;
 			std::vector<layer_name_with_action> actions_in_execution_order;
 			std::map<layer_name_with_action, std::pair<cuda_event::ptr, cuda_event::ptr> > start_stop_profiling_events;
-			std::map<std::string, layer_name_with_action> input_to_random_output_map;
+			std::map<std::string, std::vector<layer_name_with_action> > input_to_all_output_map;
 
 			std::map<std::string, layer_updater_schema::const_ptr> updater_schemas;
 			std::map<std::string, layer_updater_cuda::ptr> updaters;

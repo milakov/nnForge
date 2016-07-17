@@ -55,7 +55,7 @@ namespace nnforge
 				{
 					layer::const_ptr l = this->schema->get_layer(it->get_name());
 					const std::string& previous_layer_name = l->input_layer_instance_names[it->get_action().get_backprop_index()];
-					input_to_random_output_map.insert(std::make_pair(previous_layer_name, *it));
+					input_to_all_output_map.insert(std::make_pair(previous_layer_name, std::vector<layer_name_with_action>())).first->second.push_back(*it);
 				}
 				else if (it->get_action().get_action_type() == layer_action::backward_data_and_weights)
 				{
@@ -63,7 +63,7 @@ namespace nnforge
 					for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
 					{
 						const std::string& previous_layer_name = *it2;
-						input_to_random_output_map.insert(std::make_pair(previous_layer_name, *it));
+						input_to_all_output_map.insert(std::make_pair(previous_layer_name, std::vector<layer_name_with_action>())).first->second.push_back(*it);
 					}
 				}
 			}
@@ -702,9 +702,9 @@ namespace nnforge
 
 									cuda_linear_buffer_device::const_ptr output_errors_buffer;
 									{
-										std::map<std::string, layer_name_with_action>::const_iterator it = input_to_random_output_map.find(layer_name);
-										if (it != input_to_random_output_map.end())
-											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second]];
+										std::map<std::string, std::vector<layer_name_with_action> >::const_iterator it = input_to_all_output_map.find(layer_name);
+										if (it != input_to_all_output_map.end())
+											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second.front()]];
 									}
 
 									std::vector<cuda_linear_buffer_device::const_ptr> data_list;
@@ -796,9 +796,9 @@ namespace nnforge
 
 									cuda_linear_buffer_device::const_ptr output_errors_buffer;
 									{
-										std::map<std::string, layer_name_with_action>::const_iterator it = input_to_random_output_map.find(layer_name);
-										if (it != input_to_random_output_map.end())
-											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second]];
+										std::map<std::string, std::vector<layer_name_with_action> >::const_iterator it = input_to_all_output_map.find(layer_name);
+										if (it != input_to_all_output_map.end())
+											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second.front()]];
 									}
 
 									std::vector<cuda_linear_buffer_device::const_ptr> data_list;
@@ -876,9 +876,9 @@ namespace nnforge
 
 									cuda_linear_buffer_device::const_ptr output_errors_buffer;
 									{
-										std::map<std::string, layer_name_with_action>::const_iterator it = input_to_random_output_map.find(layer_name);
-										if (it != input_to_random_output_map.end())
-											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second]];
+										std::map<std::string, std::vector<layer_name_with_action> >::const_iterator it = input_to_all_output_map.find(layer_name);
+										if (it != input_to_all_output_map.end())
+											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second.front()]];
 									}
 
 									if (profile->is_profile())
@@ -1518,9 +1518,10 @@ namespace nnforge
 									if ((data_layer_names.find(previous_layer_name) == data_layer_names.end()) && updater->is_backward_weights_dependent_on_input_buffer(data_input_index))
 										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
 								}
-								std::map<std::string, layer_name_with_action>::const_iterator input_to_random_output_it = input_to_random_output_map.find(l->instance_name);
-								if (input_to_random_output_it != input_to_random_output_map.end())
-									current_dependencies.insert(std::make_pair(input_to_random_output_it->second, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+								std::map<std::string, std::vector<layer_name_with_action> >::const_iterator input_to_all_output_it = input_to_all_output_map.find(l->instance_name);
+								if (input_to_all_output_it != input_to_all_output_map.end())
+									for(std::vector<layer_name_with_action>::const_iterator src_it = input_to_all_output_it->second.begin(); src_it != input_to_all_output_it->second.end(); ++src_it)
+										current_dependencies.insert(std::make_pair(*src_it, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
 								if (updater->is_backward_weights_dependent_on_temporary_per_entry_buffer())
 									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
 							}
@@ -1537,9 +1538,10 @@ namespace nnforge
 								}
 								if (updater->is_backward_data_dependent_on_output_buffer(action_input_index))
 									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
-								std::map<std::string, layer_name_with_action>::const_iterator input_to_random_output_it = input_to_random_output_map.find(l->instance_name);
-								if (input_to_random_output_it != input_to_random_output_map.end())
-									current_dependencies.insert(std::make_pair(input_to_random_output_it->second, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+								std::map<std::string, std::vector<layer_name_with_action> >::const_iterator input_to_all_output_it = input_to_all_output_map.find(l->instance_name);
+								if (input_to_all_output_it != input_to_all_output_map.end())
+									for(std::vector<layer_name_with_action>::const_iterator src_it = input_to_all_output_it->second.begin(); src_it != input_to_all_output_it->second.end(); ++src_it)
+										current_dependencies.insert(std::make_pair(*src_it, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
 								if (updater->is_backward_data_dependent_on_temporary_per_entry_buffer(action_input_index))
 									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
 							}
@@ -1555,9 +1557,10 @@ namespace nnforge
 								}
 								if (updater->is_backward_data_and_weights_dependent_on_output_buffer())
 									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
-								std::map<std::string, layer_name_with_action>::const_iterator input_to_random_output_it = input_to_random_output_map.find(l->instance_name);
-								if (input_to_random_output_it != input_to_random_output_map.end())
-									current_dependencies.insert(std::make_pair(input_to_random_output_it->second, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+								std::map<std::string, std::vector<layer_name_with_action> >::const_iterator input_to_all_output_it = input_to_all_output_map.find(l->instance_name);
+								if (input_to_all_output_it != input_to_all_output_map.end())
+									for(std::vector<layer_name_with_action>::const_iterator src_it = input_to_all_output_it->second.begin(); src_it != input_to_all_output_it->second.end(); ++src_it)
+										current_dependencies.insert(std::make_pair(*src_it, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
 								if (updater->is_backward_data_and_weights_dependent_on_temporary_per_entry_buffer())
 									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
 							}
