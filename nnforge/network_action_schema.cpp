@@ -351,8 +351,7 @@ namespace nnforge
 
 	std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > network_action_schema::get_buffer_set(
 		const std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > >& buffers,
-		const std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > >& dependencies,
-		const std::map<layer_name_with_action, unsigned int>& input_index_layer_can_write_output_map,
+		const std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > > >& dependencies_and_overwrites,
 		const std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >& should_be_placed_into_the_same_buffers) const
 	{
 		typedef boost::adjacency_list<
@@ -419,22 +418,28 @@ namespace nnforge
 			}
 		} // incompatible_output_actions_with_lifetime is filled with layers, no edges yet
 
-		std::map<layer_name_with_action, std::map<buffer_lifetime, std::set<layer_name_with_action> > > reverse_dependencies;
+		std::map<layer_name_with_action, std::map<buffer_lifetime, std::map<layer_name_with_action, bool> > > reverse_dependencies;
 		{
-			for(std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > >::const_iterator it = dependencies.begin(); it != dependencies.end(); ++it)
+			for(std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > > >::const_iterator it = dependencies_and_overwrites.begin(); it != dependencies_and_overwrites.end(); ++it)
 			{
 				const layer_name_with_action& dependent_action = it->first;
-				const std::map<layer_name_with_action, std::vector<buffer_lifetime> >& source_buffers = it->second;
-				for(std::map<layer_name_with_action, std::vector<buffer_lifetime> >::const_iterator it2 = source_buffers.begin(); it2 != source_buffers.end(); ++it2)
+				const std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > >& source_buffers = it->second;
+				for(std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > >::const_iterator it2 = source_buffers.begin(); it2 != source_buffers.end(); ++it2)
 				{
 					const layer_name_with_action& source_action = it2->first;
-					const std::vector<buffer_lifetime>& source_buffer_lifetimes = it2->second;
+					const std::vector<std::pair<buffer_lifetime, bool> >& source_buffer_lifetimes = it2->second;
 
-					std::map<buffer_lifetime, std::set<layer_name_with_action> >& t = reverse_dependencies.insert(std::make_pair(source_action, std::map<buffer_lifetime, std::set<layer_name_with_action> >())).first->second;
-					for(std::vector<buffer_lifetime>::const_iterator it3 = source_buffer_lifetimes.begin(); it3 != source_buffer_lifetimes.end(); ++it3)
+					std::map<buffer_lifetime, std::map<layer_name_with_action, bool> >& t = reverse_dependencies.insert(std::make_pair(source_action, std::map<buffer_lifetime, std::map<layer_name_with_action, bool> >())).first->second;
+					for(std::vector<std::pair<buffer_lifetime, bool> >::const_iterator it3 = source_buffer_lifetimes.begin(); it3 != source_buffer_lifetimes.end(); ++it3)
 					{
-						const buffer_lifetime& source_lifetime = *it3;
-						t.insert(std::make_pair(source_lifetime, std::set<layer_name_with_action>())).first->second.insert(dependent_action);
+						const buffer_lifetime& source_lifetime = it3->first;
+						bool can_overwrite = it3->second;
+						std::map<layer_name_with_action, bool>& tt = t.insert(std::make_pair(source_lifetime, std::map<layer_name_with_action, bool>())).first->second;
+						std::map<layer_name_with_action, bool>::iterator tt_it = tt.find(dependent_action);
+						if (tt_it != tt.end())
+							tt_it->second = tt_it->second && can_overwrite;
+						else
+							tt.insert(std::make_pair(dependent_action, can_overwrite));
 					}
 				}
 			}
@@ -466,15 +471,15 @@ namespace nnforge
 				}
 			}
 
-			std::map<layer_name_with_action, std::map<buffer_lifetime, std::set<layer_name_with_action> > >::const_iterator reverse_dependencies_it = reverse_dependencies.find(current_layer_name_with_action);
+			std::map<layer_name_with_action, std::map<buffer_lifetime, std::map<layer_name_with_action, bool> > >::const_iterator reverse_dependencies_it = reverse_dependencies.find(current_layer_name_with_action);
 			for(std::vector<std::pair<buffer_lifetime, float> >::const_iterator source_buffer_lifetime_it = current_buffer_lifetimes.begin(); source_buffer_lifetime_it != current_buffer_lifetimes.end(); ++source_buffer_lifetime_it)
 			{
 				const buffer_lifetime& source_buffer_lifetime = source_buffer_lifetime_it->first;
 
-				std::set<layer_name_with_action> dependent_actions;
+				std::map<layer_name_with_action, bool> dependent_actions;
 				if (reverse_dependencies_it != reverse_dependencies.end())
 				{
-					std::map<buffer_lifetime, std::set<layer_name_with_action> >::const_iterator reverse_dependencies_it2 = reverse_dependencies_it->second.find(source_buffer_lifetime);
+					std::map<buffer_lifetime, std::map<layer_name_with_action, bool> >::const_iterator reverse_dependencies_it2 = reverse_dependencies_it->second.find(source_buffer_lifetime);
 					if (reverse_dependencies_it2 != reverse_dependencies_it->second.end())
 						dependent_actions = reverse_dependencies_it2->second;
 				}
@@ -515,14 +520,14 @@ namespace nnforge
 				else
 				{
 					std::set<action_schema_graph::vertex_descriptor> dependent_vertices;
-					for(std::set<layer_name_with_action>::const_iterator dependent_action_it = dependent_actions.begin(); dependent_action_it != dependent_actions.end(); ++dependent_action_it)
+					for(std::map<layer_name_with_action, bool>::const_iterator dependent_action_it = dependent_actions.begin(); dependent_action_it != dependent_actions.end(); ++dependent_action_it)
 					{
 						std::set<action_schema_graph::vertex_descriptor> current_dependent_vertices;
 						record_all_edges<action_schema_graph::vertex_descriptor> vis(current_dependent_vertices);
 						std::vector<boost::default_color_type> color_map(boost::num_vertices(actions));
 						boost::depth_first_visit(
 							boost::make_reverse_graph(actions),
-							layer_instance_name_with_action_to_vertex_decriptor_map.find(*dependent_action_it)->second,
+							layer_instance_name_with_action_to_vertex_decriptor_map.find(dependent_action_it->first)->second,
 							vis,
 							boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
 						if (dependent_action_it == dependent_actions.begin())
@@ -542,31 +547,16 @@ namespace nnforge
 						std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > >::const_iterator subsequent_buffer_list_it = buffers.find(subsequent_layer_name_with_action);
 						if (subsequent_buffer_list_it == buffers.end())
 							continue;
+						std::map<layer_name_with_action, bool>::const_iterator dependent_action_it = dependent_actions.find(subsequent_layer_name_with_action);
 						if ((dependent_vertices.find(layer_instance_name_with_action_to_vertex_decriptor_map.find(subsequent_layer_name_with_action)->second) != dependent_vertices.end())
-							&& (dependent_actions.find(subsequent_layer_name_with_action) == dependent_actions.end()))
+							&& (dependent_action_it == dependent_actions.end()))
 							continue; // inside dependency cone
 						bool can_overwrite_input = false;
-						if ((source_buffer_lifetime.get_buffer_lifetime_type() == buffer_lifetime::action_output_buffer)
-							&& (dependent_vertices.find(layer_instance_name_with_action_to_vertex_decriptor_map.find(subsequent_layer_name_with_action)->second) != dependent_vertices.end())
-							&& (dependent_actions.find(subsequent_layer_name_with_action) != dependent_actions.end()))
+						if ((dependent_vertices.find(layer_instance_name_with_action_to_vertex_decriptor_map.find(subsequent_layer_name_with_action)->second) != dependent_vertices.end())
+							&& (dependent_action_it != dependent_actions.end()))
 						{
 							// should check for border cases
-							std::map<layer_name_with_action, unsigned int>::const_iterator input_index_it = input_index_layer_can_write_output_map.find(subsequent_layer_name_with_action);
-							if (input_index_it != input_index_layer_can_write_output_map.end())
-							{
-								switch (subsequent_layer_name_with_action.get_action().get_action_type())
-								{
-								case layer_action::forward:
-									can_overwrite_input = (get_layer(subsequent_layer_name_with_action.get_name())->input_layer_instance_names[input_index_it->second] == current_layer_name_with_action.get_name());
-									break;
-								case layer_action::backward_data:
-									can_overwrite_input = true;
-									break;
-								case layer_action::backward_data_and_weights:
-									can_overwrite_input = true;
-									break;
-								}
-							}
+							can_overwrite_input = dependent_action_it->second;
 						}
 						const std::vector<std::pair<buffer_lifetime, float> >& incompatible_buffer_lifetimes = subsequent_buffer_list_it->second;
 						for(std::vector<std::pair<buffer_lifetime, float> >::const_iterator incompatible_buffer_lifetime_it = incompatible_buffer_lifetimes.begin(); incompatible_buffer_lifetime_it != incompatible_buffer_lifetimes.end(); ++incompatible_buffer_lifetime_it)

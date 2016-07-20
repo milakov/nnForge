@@ -1283,7 +1283,7 @@ namespace nnforge
 
 			{
 				std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > > buffers;
-				std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > > dependencies;
+				std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > > > dependencies;
 				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
 				{
 					std::string layer_name = it->get_name();
@@ -1310,7 +1310,7 @@ namespace nnforge
 					if (!current_buffers.empty())
 						buffers.insert(std::make_pair(*it, current_buffers));
 
-					std::map<layer_name_with_action, std::vector<buffer_lifetime> > current_dependencies;
+					std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > > current_dependencies;
 					{
 						layer::const_ptr l = schema->get_layer(layer_name);
 						switch (it->get_action().get_action_type())
@@ -1318,20 +1318,20 @@ namespace nnforge
 						case layer_action::backward_weights:
 							{
 								if (updater->is_backward_weights_dependent_on_temporary_fixed_buffer())
-									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
+									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::temporary_buffer), false));
 							}
 							break;
 						case layer_action::backward_data:
 							{
 								unsigned int action_input_index = it->get_action().get_backprop_index();
 								if (updater->is_backward_data_dependent_on_temporary_fixed_buffer(action_input_index))
-									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
+									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::temporary_buffer), false));
 							}
 							break;
 						case layer_action::backward_data_and_weights:
 							{
 								if (updater->is_backward_data_and_weights_dependent_on_temporary_fixed_buffer())
-									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
+									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::temporary_buffer), false));
 							}
 							break;
 						}
@@ -1344,7 +1344,6 @@ namespace nnforge
 				fixed_buffer_set_list = optimized_action_schema->get_buffer_set(
 					buffers,
 					dependencies,
-					std::map<layer_name_with_action, unsigned int>(),
 					std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >());
 
 				if (cuda_config->is_dont_share_buffers())
@@ -1435,16 +1434,8 @@ namespace nnforge
 		{
 			std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > > layer_buffer_set_list;
 			{
-				std::map<layer_name_with_action, unsigned int> input_index_layer_can_write_output_map;
-				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
-				{
-					int input_index_layer_can_write = updaters[it->get_name()]->get_input_index_layer_can_write(it->get_action());
-					if (input_index_layer_can_write >= 0)
-						input_index_layer_can_write_output_map.insert(std::make_pair(*it, static_cast<unsigned int>(input_index_layer_can_write)));
-				}
-
 				std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > > buffers;
-				std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > > dependencies;
+				std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > > > dependencies;
 				std::set<std::string> dedicated_output_buffers(output_layer_names.begin(), output_layer_names.end());
 				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
 				{
@@ -1494,18 +1485,21 @@ namespace nnforge
 					if (!current_buffers.empty())
 						buffers.insert(std::make_pair(*it, current_buffers));
 
-					std::map<layer_name_with_action, std::vector<buffer_lifetime> > current_dependencies;
+					int input_index_layer_can_write = updaters[it->get_name()]->get_input_index_layer_can_write(it->get_action());
+					std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > > current_dependencies;
 					{
 						layer::const_ptr l = schema->get_layer(layer_name);
 						switch (it->get_action().get_action_type())
 						{
 						case layer_action::forward:
 							{
-								for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
+								int input_index = 0;
+								for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2, ++input_index)
 								{
 									const std::string& previous_layer_name = *it2;
 									if (data_layer_names.find(previous_layer_name) == data_layer_names.end())
-										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(
+										std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), (input_index_layer_can_write == input_index)));
 								}
 							}
 							break;
@@ -1516,14 +1510,14 @@ namespace nnforge
 								{
 									const std::string& previous_layer_name = *it2;
 									if ((data_layer_names.find(previous_layer_name) == data_layer_names.end()) && updater->is_backward_weights_dependent_on_input_buffer(data_input_index))
-										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), false));
 								}
 								std::map<std::string, std::vector<layer_name_with_action> >::const_iterator input_to_all_output_it = input_to_all_output_map.find(l->instance_name);
 								if (input_to_all_output_it != input_to_all_output_map.end())
 									for(std::vector<layer_name_with_action>::const_iterator src_it = input_to_all_output_it->second.begin(); src_it != input_to_all_output_it->second.end(); ++src_it)
-										current_dependencies.insert(std::make_pair(*src_it, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+										current_dependencies.insert(std::make_pair(*src_it, std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), false));
 								if (updater->is_backward_weights_dependent_on_temporary_per_entry_buffer())
-									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
+									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::temporary_buffer), false));
 							}
 							break;
 						case layer_action::backward_data:
@@ -1534,16 +1528,16 @@ namespace nnforge
 								{
 									const std::string& previous_layer_name = *it2;
 									if ((data_layer_names.find(previous_layer_name) == data_layer_names.end()) && updater->is_backward_data_dependent_on_input_buffer(action_input_index, data_input_index))
-										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), false));
 								}
 								if (updater->is_backward_data_dependent_on_output_buffer(action_input_index))
-									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), false));
 								std::map<std::string, std::vector<layer_name_with_action> >::const_iterator input_to_all_output_it = input_to_all_output_map.find(l->instance_name);
 								if (input_to_all_output_it != input_to_all_output_map.end())
 									for(std::vector<layer_name_with_action>::const_iterator src_it = input_to_all_output_it->second.begin(); src_it != input_to_all_output_it->second.end(); ++src_it)
-										current_dependencies.insert(std::make_pair(*src_it, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+										current_dependencies.insert(std::make_pair(*src_it, std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), (input_index_layer_can_write == 0)));
 								if (updater->is_backward_data_dependent_on_temporary_per_entry_buffer(action_input_index))
-									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
+									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::temporary_buffer), false));
 							}
 							break;
 						case layer_action::backward_data_and_weights:
@@ -1553,16 +1547,16 @@ namespace nnforge
 								{
 									const std::string& previous_layer_name = *it2;
 									if ((data_layer_names.find(previous_layer_name) == data_layer_names.end()) && updater->is_backward_data_and_weights_dependent_on_input_buffer(data_input_index))
-										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+										current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), false));
 								}
 								if (updater->is_backward_data_and_weights_dependent_on_output_buffer())
-									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), false));
 								std::map<std::string, std::vector<layer_name_with_action> >::const_iterator input_to_all_output_it = input_to_all_output_map.find(l->instance_name);
 								if (input_to_all_output_it != input_to_all_output_map.end())
 									for(std::vector<layer_name_with_action>::const_iterator src_it = input_to_all_output_it->second.begin(); src_it != input_to_all_output_it->second.end(); ++src_it)
-										current_dependencies.insert(std::make_pair(*src_it, std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::action_output_buffer));
+										current_dependencies.insert(std::make_pair(*src_it, std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), (input_index_layer_can_write == 0)));
 								if (updater->is_backward_data_and_weights_dependent_on_temporary_per_entry_buffer())
-									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<buffer_lifetime>())).first->second.push_back(buffer_lifetime(buffer_lifetime::temporary_buffer));
+									current_dependencies.insert(std::make_pair(layer_name_with_action(it->get_name(), layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >())).first->second.push_back(std::make_pair(buffer_lifetime(buffer_lifetime::temporary_buffer), false));
 							}
 							break;
 						}
@@ -1585,7 +1579,6 @@ namespace nnforge
 				layer_buffer_set_list = optimized_action_schema->get_buffer_set(
 					buffers,
 					dependencies,
-					input_index_layer_can_write_output_map,
 					should_be_placed_into_the_same_buffers);
 
 				if (cuda_config->is_dont_share_buffers())

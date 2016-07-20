@@ -269,7 +269,7 @@ namespace nnforge
 				}
 
 				std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, float> > > buffers;
-				std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<buffer_lifetime> > > dependencies;
+				std::map<layer_name_with_action, std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > > > dependencies;
 				std::set<std::string> dedicated_output_buffers(output_layer_names.begin(), output_layer_names.end());
 				for(std::vector<layer_name_with_action>::const_iterator it = actions_in_execution_order.begin(); it != actions_in_execution_order.end(); ++it)
 				{
@@ -278,12 +278,29 @@ namespace nnforge
 					if (dedicated_output_buffers.find(layer_name) == dedicated_output_buffers.end())
 						buffers.insert(std::make_pair(*it, std::vector<std::pair<buffer_lifetime, float> >(1, std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), static_cast<float>(buffer_size_per_entry)))));
 					layer::const_ptr l = schema->get_layer(layer_name);
-					std::map<layer_name_with_action, std::vector<buffer_lifetime> > current_dependencies;
-					for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
+
+					int input_index_layer_can_write;
+					{
+						layer_configuration_specific output_layer_configuration_specific = layer_config_map[layer_name];
+						layer::const_ptr l = schema->get_layer(layer_name);
+						std::vector<layer_configuration_specific> input_layer_configuration_specific_list;
+						for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
+							input_layer_configuration_specific_list.push_back(layer_config_map[*it2]);
+						input_index_layer_can_write = testers[layer_name]->get_input_index_layer_can_write(
+							plain_config,
+							schema->get_layer(layer_name),
+							input_layer_configuration_specific_list,
+							output_layer_configuration_specific);
+					}
+
+					std::map<layer_name_with_action, std::vector<std::pair<buffer_lifetime, bool> > > current_dependencies;
+					int input_index = 0;
+					for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2, ++input_index)
 					{
 						const std::string& previous_layer_name = *it2;
 						if (data_layer_names.find(previous_layer_name) == data_layer_names.end())
-							current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<buffer_lifetime>(1, buffer_lifetime(buffer_lifetime::action_output_buffer))));
+							current_dependencies.insert(std::make_pair(layer_name_with_action(previous_layer_name, layer_action(layer_action::forward)), std::vector<std::pair<buffer_lifetime, bool> >(1,
+								std::make_pair(buffer_lifetime(buffer_lifetime::action_output_buffer), (input_index_layer_can_write == input_index)))));
 					}
 					if (!current_dependencies.empty())
 						dependencies.insert(std::make_pair(*it, current_dependencies));
@@ -308,7 +325,6 @@ namespace nnforge
 				layer_buffer_set_list = action_schema->get_buffer_set(
 					buffers,
 					dependencies,
-					input_index_layer_can_write_output_map,
 					std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >());
 			}
 
