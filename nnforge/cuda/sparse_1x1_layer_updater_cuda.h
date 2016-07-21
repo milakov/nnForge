@@ -24,12 +24,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class sparse_strided_1x1_layer_updater_cuda : public layer_updater_cuda
+		class sparse_1x1_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			sparse_strided_1x1_layer_updater_cuda();
+			sparse_1x1_layer_updater_cuda();
 
-			virtual ~sparse_strided_1x1_layer_updater_cuda();
+			virtual ~sparse_1x1_layer_updater_cuda();
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
@@ -101,6 +101,7 @@ namespace nnforge
 			int max_entry32_update_block_size;
 			int max_entry32_backprop_block_size;
 			bool bias;
+			bool unit_stride;
 
 			layer_configuration_specific input_strided_config;
 			std::vector<unsigned int> input_strides;

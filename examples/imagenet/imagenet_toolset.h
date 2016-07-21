@@ -76,6 +76,8 @@ private:
 
 	void create_resnet_schema() const;
 
+	void create_resnet_sparse_schema() const;
+
 	void add_resnet_bottleneck_block(
 		std::vector<nnforge::layer::const_ptr>& layer_list,
 		unsigned int& last_layer_feature_map_count,
@@ -84,6 +86,17 @@ private:
 		char& bottleneck_minor_block_id,
 		unsigned int& restored_feature_map_count,
 		bool spatial_size_reduction) const;
+
+	void add_resnet_sparse_bottleneck_block(
+		std::vector<nnforge::layer::const_ptr>& layer_list,
+		unsigned int& last_layer_feature_map_count,
+		std::string& last_layer_name,
+		unsigned int& bottleneck_major_block_id,
+		char& bottleneck_minor_block_id,
+		unsigned int& restored_feature_map_count,
+		bool spatial_size_reduction,
+		float beginning_sparsity_ratio,
+		float sparsity_ratio) const;
 
 private:
 	std::map<unsigned int, std::string> wnid_to_ilsvrc2014id_map;
@@ -114,6 +127,7 @@ private:
 	float max_contrast_shift;
 	float max_saturation_shift;
 	float max_lighting_shift;
+	int sparse_feature_map_ratio;
 
 	static const unsigned int resnet_blocks[4];
 };

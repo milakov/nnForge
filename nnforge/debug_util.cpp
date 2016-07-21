@@ -21,7 +21,7 @@
 namespace nnforge
 {
 	void debug_util::dump_list(
-		float * buffer,
+		const float * buffer,
 		size_t elem_count,
 		const char * filepath)
 	{
@@ -31,7 +31,7 @@ namespace nnforge
 	}
 
 	void debug_util::dump_list(
-		int * buffer,
+		const int * buffer,
 		size_t elem_count,
 		const char * filepath)
 	{

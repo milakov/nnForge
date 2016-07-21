@@ -14,9 +14,10 @@
  *  limitations under the License.
  */
 
-#include "sparse_strided_1x1_layer_updater_cuda.h"
+#include "sparse_1x1_layer_updater_cuda.h"
 
 #include <cuda_runtime.h>
+#include <boost/format.hpp>
 
 #include "util_cuda.h"
 #include "cudnn_util.h"
@@ -25,13 +26,14 @@
 #include "neural_network_cuda_exception.h"
 #include "neural_network_cudnn_exception.h"
 #include "../sparse_convolution_layer.h"
+#include "int_fastdiv.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
 		#define OUTPUT_ELEM_COUNT_BACKPROP_BLOCK_SIZE 4
-		__global__ void sparse_for_strided_1x1_backprop_upd_kernel(
+		__global__ void sparse_1x1_backprop_upd_kernel(
 			const float * __restrict output_errors,
 			float * __restrict input_errors,
 			const float * __restrict weights,
@@ -87,7 +89,7 @@ namespace nnforge
 
 		#define OUTPUT_ELEM_COUNT_BLOCK_SIZE 4
 		template<bool single_entry_pass>
-		__global__ void sparse_for_strided_1x1_update_weights_kernel(
+		__global__ void sparse_1x1_update_weights_kernel(
 			const float * __restrict output_errors,
 			const float * __restrict input_neurons,
 			float * __restrict gradient_weights,
@@ -164,26 +166,69 @@ namespace nnforge
 				}
 			}
 		}
+/*
+		template<int DIMENSION_COUNT, bool add_update_to_destination>
+		__global__ void sparse_1x1_convert_to_strided(
+			float * __restrict strided_nchw_values,
+			const float * __restrict packed_cnhw_values,
+			array_by_val<int_fastdiv, DIMENSION_COUNT> input_compacted_sizes,
+			array_by_val<int, DIMENSION_COUNT> strides,
+			array_by_val<int, DIMENSION_COUNT> input_sizes,
+			int neuron_count_per_feature_map,
+			int feature_map_count,
+			int entry_count)
+		{
+			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
+			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
+			if ((neuron_id < neuron_count_per_feature_map) && (feature_map_id < feature_map_count) && (entry_id < entry_count))
+			{
+				int xyz[DIMENSION_COUNT];
+				int remainder = neuron_id;
+				#pragma unroll
+				for(int i = 0; i < DIMENSION_COUNT - 1; ++i)
+				{
+					int new_remainder = remainder / input_compacted_sizes[i];
+					xyz[i] = remainder - input_compacted_sizes[i] * new_remainder;
+					remainder = new_remainder;
+				}
+				xyz[DIMENSION_COUNT - 1] = remainder;
 
-		sparse_strided_1x1_layer_updater_cuda::sparse_strided_1x1_layer_updater_cuda()
+				int compacted_offset = (feature_map_id * entry_count + entry_id) * neuron_count_per_feature_map + neuron_id;
+
+				int strided_offset = entry_id * feature_map_count + feature_map_id;
+				#pragma unroll
+				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
+					strided_offset = strided_offset * input_sizes[i] + xyz[i] * strides[i];
+
+				if (add_update_to_destination)
+					strided_nchw_values[strided_offset] += packed_cnhw_values[compacted_offset];
+				else
+					strided_nchw_values[strided_offset] = packed_cnhw_values[compacted_offset];
+			}
+		}
+*/
+		sparse_1x1_layer_updater_cuda::sparse_1x1_layer_updater_cuda()
 			: output_data_desc(0)
 			, bias_desc(0)
 		{
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_strided_data_desc));
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_converted_NHWC_data_desc));
+			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_converted_CNHW_data_desc));
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&output_data_desc));
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&bias_desc));
 		}
 
-		sparse_strided_1x1_layer_updater_cuda::~sparse_strided_1x1_layer_updater_cuda()
+		sparse_1x1_layer_updater_cuda::~sparse_1x1_layer_updater_cuda()
 		{
 			cudnnDestroyTensorDescriptor(input_strided_data_desc);
 			cudnnDestroyTensorDescriptor(input_converted_NHWC_data_desc);
+			cudnnDestroyTensorDescriptor(input_converted_CNHW_data_desc);
 			cudnnDestroyTensorDescriptor(output_data_desc);
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void sparse_strided_1x1_layer_updater_cuda::enqueue_forward_propagation(
+		void sparse_1x1_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
@@ -197,7 +242,19 @@ namespace nnforge
 			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
 			unsigned int entry_count)
 		{
-			// Convert input data to packed NHWC format
+			// Convert input data from NCHW to packed NHWC format
+			if (unit_stride)
+			{
+				cuda_util::transpose(
+					*cuda_config,
+					*input_buffers[0],
+					*temporary_working_per_entry_buffer,
+					input_elem_count_per_feature_map_list[0],
+					input_configuration_specific_list[0].feature_map_count,
+					entry_count,
+					stream_id);
+			}
+			else
 			{
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 				cudnn_util::set_tensor_descriptor(
@@ -212,7 +269,7 @@ namespace nnforge
 					input_converted_NHWC_strides);
 				float alpha = 1.0F;
 				float beta = 0.0F;
-				cudnn_safe_call(cudnnTransformTensor(
+				cudnn_safe_call(cudnnAddTensor(
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					input_strided_data_desc,
@@ -280,7 +337,7 @@ namespace nnforge
 			}
 		}
 
-		void sparse_strided_1x1_layer_updater_cuda::enqueue_backward_data_propagation(
+		void sparse_1x1_layer_updater_cuda::enqueue_backward_data_propagation(
 			cudaStream_t stream_id,
 			unsigned int input_index,
 			cuda_linear_buffer_device::ptr input_errors_buffer,
@@ -325,7 +382,7 @@ namespace nnforge
 					output_configuration_specific.feature_map_count,
 					entry32_block_size_and_count.second,
 					32);
-				sparse_for_strided_1x1_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+				sparse_1x1_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 					((float *)*temporary_working_per_entry_buffer) + input_converted_elem_count_per_entry_aligned * entry_count,
 					*temporary_working_per_entry_buffer,
 					*data[0],
@@ -337,6 +394,86 @@ namespace nnforge
 			}
 
 			// Convert input errors from CNHW to NCHW
+			{
+				if ((!add_update_to_destination) && (!unit_stride))
+				{
+					cuda_util::set_with_value(
+						*cuda_config,
+						*input_errors_buffer,
+						0.0F,
+						input_elem_count_per_entry_list[0] * entry_count,
+						stream_id);
+				}
+
+				if (unit_stride)
+				{
+					cuda_util::transpose23(
+						*cuda_config,
+						*temporary_working_per_entry_buffer,
+						*input_errors_buffer,
+						input_elem_count_per_feature_map_list[0],
+						entry_count,
+						input_configuration_specific_list[0].feature_map_count,
+						stream_id,
+						add_update_to_destination);
+				}
+				else
+				{
+					std::vector<unsigned int> input_converted_CNHW_strides = input_converted_CNHW_strides_base;
+					input_converted_CNHW_strides[input_converted_CNHW_strides.size() - 2] = input_converted_CNHW_strides[input_converted_CNHW_strides.size() - 1] * entry_count;
+					cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
+					cudnn_util::set_tensor_descriptor(
+						input_strided_data_desc,
+						input_strided_config,
+						entry_count,
+						input_strides);
+					cudnn_util::set_tensor_descriptor(
+						input_converted_CNHW_data_desc,
+						input_strided_config,
+						entry_count,
+						input_converted_CNHW_strides);
+
+					float alpha = 1.0F;
+					float beta = add_update_to_destination ? 1.0F : 0.0F;
+					cudnn_safe_call(cudnnAddTensor(
+						cuda_config->get_cudnn_handle(),
+						&alpha,
+						input_converted_CNHW_data_desc,
+						*temporary_working_per_entry_buffer,
+						&beta,
+						input_strided_data_desc,
+						*input_errors_buffer));
+				}
+			}
+		}
+
+		void sparse_1x1_layer_updater_cuda::enqueue_backward_weights_propagation(
+			cudaStream_t stream_id,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
+			const std::vector<cuda_linear_buffer_device::ptr>& gradient,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
+			cuda_linear_buffer_device::const_ptr output_errors_buffer,
+			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
+			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
+			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
+			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
+			unsigned int entry_count)
+		{
+			// Convert input data to packed CNHW format
+			if (unit_stride)
+			{
+				cuda_util::transpose(
+					*cuda_config,
+					*input_neurons_buffers[0],
+					*temporary_working_per_entry_buffer,
+					input_elem_count_per_feature_map_list[0],
+					input_configuration_specific_list[0].feature_map_count,
+					entry_count,
+					stream_id);
+			}
+			else
 			{
 				std::vector<unsigned int> input_converted_CNHW_strides = input_converted_CNHW_strides_base;
 				input_converted_CNHW_strides[input_converted_CNHW_strides.size() - 2] = input_converted_CNHW_strides[input_converted_CNHW_strides.size() - 1] * entry_count;
@@ -351,72 +488,21 @@ namespace nnforge
 					input_strided_config,
 					entry_count,
 					input_converted_CNHW_strides);
-
-				if (!add_update_to_destination)
-				{
-					cuda_util::set_with_value(
-						*cuda_config,
-						*input_errors_buffer,
-						0.0F,
-						input_elem_count_per_entry_list[0] * entry_count,
-						stream_id);
-				}
-
-				float alpha = 1.0F;
-				float beta = add_update_to_destination ? 1.0F : 0.0F;
-				cudnn_safe_call(cudnnTransformTensor(
-					cuda_config->get_cudnn_handle(),
-					&alpha,
-					input_converted_CNHW_data_desc,
-					*temporary_working_per_entry_buffer,
-					&beta,
-					input_strided_data_desc,
-					*input_errors_buffer));
-			}
-		}
-
-		void sparse_strided_1x1_layer_updater_cuda::enqueue_backward_weights_propagation(
-			cudaStream_t stream_id,
-			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
-			const std::vector<cuda_linear_buffer_device::ptr>& gradient,
-			const std::vector<cuda_linear_buffer_device::const_ptr>& data_custom,
-			const std::vector<cuda_linear_buffer_device::const_ptr>& input_neurons_buffers,
-			cuda_linear_buffer_device::const_ptr output_errors_buffer,
-			const std::vector<cuda_linear_buffer_device::const_ptr>& persistent_working_data,
-			cuda_linear_buffer_device::ptr temporary_working_fixed_buffer,
-			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
-			cuda_linear_buffer_device::const_ptr temporary_fixed_buffer,
-			cuda_linear_buffer_device::const_ptr temporary_per_entry_buffer,
-			unsigned int entry_count)
-		{
-			// Convert input data to packed NHWC format
-			{
-				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
-				cudnn_util::set_tensor_descriptor(
-					input_strided_data_desc,
-					input_strided_config,
-					entry_count,
-					input_strides);
-				cudnn_util::set_tensor_descriptor(
-					input_converted_NHWC_data_desc,
-					input_strided_config,
-					entry_count,
-					input_converted_NHWC_strides);
 				float alpha = 1.0F;
 				float beta = 0.0F;
-				cudnn_safe_call(cudnnTransformTensor(
+				cudnn_safe_call(cudnnAddTensor(
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					input_strided_data_desc,
 					*input_neurons_buffers[0],
 					&beta,
-					input_converted_NHWC_data_desc,
+					input_converted_CNHW_data_desc,
 					*temporary_working_per_entry_buffer));
 			}
 
-			// Convert output from NCHW to NHWC 
+			// Convert output from NCHW to CNHW 
 			{
-				cuda_util::transpose(
+				cuda_util::transpose23(
 					*cuda_config,
 					*output_errors_buffer,
 					((float *)*temporary_working_per_entry_buffer) + input_converted_elem_count_per_entry_aligned * entry_count,
@@ -436,7 +522,7 @@ namespace nnforge
 					32);
 				if (entry32_block_size_and_count.second > 1)
 				{
-					sparse_for_strided_1x1_update_weights_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					sparse_1x1_update_weights_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 						((const float *)*temporary_working_per_entry_buffer) + input_converted_elem_count_per_entry_aligned * entry_count,
 						*temporary_working_per_entry_buffer,
 						*gradient[0],
@@ -448,7 +534,7 @@ namespace nnforge
 				}
 				else
 				{
-					sparse_for_strided_1x1_update_weights_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					sparse_1x1_update_weights_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
 						((const float *)*temporary_working_per_entry_buffer) + input_converted_elem_count_per_entry_aligned * entry_count,
 						*temporary_working_per_entry_buffer,
 						*gradient[0],
@@ -481,12 +567,13 @@ namespace nnforge
 			}
 		}
 
-		void sparse_strided_1x1_layer_updater_cuda::updater_configured()
+		void sparse_1x1_layer_updater_cuda::updater_configured()
 		{
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			feature_map_connection_count = layer_derived->feature_map_connection_count;
 			bias = layer_derived->bias;
+			unit_stride = (layer_derived->strides == std::vector<unsigned int>(layer_derived->strides.size(), 1));
 
 			cudnn_util::set_tensor_bias_descriptor(
 				bias_desc,
@@ -506,10 +593,10 @@ namespace nnforge
 			unsigned int dim_size = 1;
 			for(int i = 0; i < strides.size(); ++i)
 			{
-				*(input_strides.rbegin() + i) = strides[i] * dim_size;
+				*(input_strides.begin() + i) = strides[i] * dim_size;
 				dim_size *= input_configuration_specific_list[0].dimension_sizes[i];
 			}
-			input_strides[0] = dim_size;
+			input_strides[strides.size()] = dim_size;
 
 			input_converted_NHWC_strides.resize(strides.size() + 2);
 			input_converted_NHWC_strides[strides.size()] = 1;
@@ -517,7 +604,7 @@ namespace nnforge
 			for(int i = 0; i < strides.size(); ++i)
 			{
 				input_converted_NHWC_strides[i] = dim_size;
-				dim_size *= input_configuration_specific_list[0].dimension_sizes[i];
+				dim_size *= output_configuration_specific.dimension_sizes[i];
 			}
 			input_converted_NHWC_strides.back() = dim_size;
 
@@ -526,7 +613,7 @@ namespace nnforge
 			for(int i = 0; i < strides.size(); ++i)
 			{
 				input_converted_CNHW_strides_base[i] = dim_size;
-				dim_size *= input_configuration_specific_list[0].dimension_sizes[i];
+				dim_size *= output_configuration_specific.dimension_sizes[i];
 			}
 			input_converted_CNHW_strides_base[strides.size() + 1] = dim_size;
 
@@ -534,7 +621,7 @@ namespace nnforge
 			output_elem_count_per_entry_aligned = (output_configuration_specific.get_neuron_count() + 4 - 1) / 4 * 4;
 		}
 
-		void sparse_strided_1x1_layer_updater_cuda::notify_data_custom(layer_data_custom::const_ptr host_data_custom)
+		void sparse_1x1_layer_updater_cuda::notify_data_custom(layer_data_custom::const_ptr host_data_custom)
 		{
 			max_column_index_count_per_row = 0;
 			const std::vector<int>& row_indices = host_data_custom->at(1);
@@ -542,15 +629,15 @@ namespace nnforge
 				max_column_index_count_per_row = std::max(max_column_index_count_per_row, row_indices[i + 1] - row_indices[i]);
 		}
 
-		size_t sparse_strided_1x1_layer_updater_cuda::get_temporary_working_per_entry_buffer_size(const layer_action& action) const
+		size_t sparse_1x1_layer_updater_cuda::get_temporary_working_per_entry_buffer_size(const layer_action& action) const
 		{
-			if ((action.get_action_type() == layer_action::forward) | (action.get_action_type() == layer_action::backward_data) || (action.get_action_type() == layer_action::backward_weights))
+			if ((action.get_action_type() == layer_action::forward) || (action.get_action_type() == layer_action::backward_data) || (action.get_action_type() == layer_action::backward_weights))
 				return (input_converted_elem_count_per_entry_aligned * sizeof(float)) + (output_elem_count_per_entry_aligned * sizeof(float));
 			else
 				return layer_updater_cuda::get_temporary_working_per_entry_buffer_size(action);
 		}
 
-		std::pair<int, int> sparse_strided_1x1_layer_updater_cuda::get_entry32_update_block_size_and_count(unsigned int entry_count) const
+		std::pair<int, int> sparse_1x1_layer_updater_cuda::get_entry32_update_block_size_and_count(unsigned int entry_count) const
 		{
 			int candidate_block_size = (entry_count + 32 - 1) / 32;
 
@@ -563,7 +650,7 @@ namespace nnforge
 			return std::make_pair(candidate_block_size2, candidate_block_count2);
 		}
 
-		std::pair<int, int> sparse_strided_1x1_layer_updater_cuda::get_entry32_backprop_block_size_and_count(unsigned int entry_count) const
+		std::pair<int, int> sparse_1x1_layer_updater_cuda::get_entry32_backprop_block_size_and_count(unsigned int entry_count) const
 		{
 			int candidate_block_size = (entry_count + 32 - 1) / 32;
 
@@ -576,17 +663,17 @@ namespace nnforge
 			return std::make_pair(candidate_block_size2, candidate_block_count2);
 		}
 
-		bool sparse_strided_1x1_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
+		bool sparse_1x1_layer_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
 		{
 			return false;
 		}
 
-		bool sparse_strided_1x1_layer_updater_cuda::is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
+		bool sparse_1x1_layer_updater_cuda::is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
 		{
 			return false;
 		}
 
-		bool sparse_strided_1x1_layer_updater_cuda::is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const
+		bool sparse_1x1_layer_updater_cuda::is_backward_weights_dependent_on_input_buffer(unsigned int data_input_index) const
 		{
 			return true;
 		}

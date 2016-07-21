@@ -18,6 +18,7 @@
 
 #include "../neural_network_exception.h"
 #include "../layer_configuration_specific.h"
+#include "../debug_util.h"
 
 #include "neural_network_cuda_exception.h"
 
@@ -281,6 +282,7 @@ namespace nnforge
 			}
 		}
 
+		template<bool add_to_destination>
 		__global__ void transpose23_kernel(
 			const float * __restrict src,
 			float * __restrict dst,
@@ -293,7 +295,10 @@ namespace nnforge
 			int elem_id3 = blockDim.z * blockIdx.z + threadIdx.z;
 			if ((elem_id1 < src_dim1) && (elem_id2 < src_dim2) && (elem_id3 < src_dim3))
 			{
-				dst[(elem_id2 * src_dim3 + elem_id3) * src_dim1 + elem_id1] = src[(elem_id3 * src_dim2 + elem_id2) * src_dim1 + elem_id1];
+				if (add_to_destination)
+					dst[(elem_id2 * src_dim3 + elem_id3) * src_dim1 + elem_id1] += src[(elem_id3 * src_dim2 + elem_id2) * src_dim1 + elem_id1];
+				else
+					dst[(elem_id2 * src_dim3 + elem_id3) * src_dim1 + elem_id1] = src[(elem_id3 * src_dim2 + elem_id2) * src_dim1 + elem_id1];
 			}
 		}
 
@@ -847,19 +852,28 @@ namespace nnforge
 			int src_dim1,
 			int src_dim2,
 			int src_dim3,
-			cudaStream_t cuda_stream)
+			cudaStream_t cuda_stream,
+			bool add_to_destination)
 		{
 			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 				cuda_config,
 				src_dim1,
 				src_dim2,
 				src_dim3);
-			transpose23_kernel<<<kernel_dims.first, kernel_dims.second>>>(
-				src,
-				dst,
-				src_dim1,
-				src_dim2,
-				src_dim3);
+			if (add_to_destination)
+				transpose23_kernel<true><<<kernel_dims.first, kernel_dims.second>>>(
+					src,
+					dst,
+					src_dim1,
+					src_dim2,
+					src_dim3);
+			else
+				transpose23_kernel<false><<<kernel_dims.first, kernel_dims.second>>>(
+					src,
+					dst,
+					src_dim1,
+					src_dim2,
+					src_dim3);
 		}
 
 		int cuda_util::get_group_count(
@@ -1107,6 +1121,30 @@ namespace nnforge
 				1.0e-8F,
 				elem_count,
 				update_accum_mask);
+		}
+
+		void cuda_util::dump_list(
+			const float * buffer,
+			size_t elem_count,
+			const char * filepath,
+			cudaStream_t cuda_stream)
+		{
+			std::vector<float> elems(elem_count);
+			cuda_safe_call(cudaMemcpyAsync(&elems[0], buffer, elem_count * sizeof(float), cudaMemcpyDeviceToHost, cuda_stream));
+			cuda_safe_call(cudaStreamSynchronize(cuda_stream));
+			debug_util::dump_list(&elems[0], elem_count, filepath);
+		}
+
+		void cuda_util::dump_list(
+			const int * buffer,
+			size_t elem_count,
+			const char * filepath,
+			cudaStream_t cuda_stream)
+		{
+			std::vector<int> elems(elem_count);
+			cuda_safe_call(cudaMemcpyAsync(&elems[0], buffer, elem_count * sizeof(int), cudaMemcpyDeviceToHost, cuda_stream));
+			cuda_safe_call(cudaStreamSynchronize(cuda_stream));
+			debug_util::dump_list(&elems[0], elem_count, filepath);
 		}
 	}
 }

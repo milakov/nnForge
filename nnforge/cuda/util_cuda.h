@@ -181,7 +181,8 @@ namespace nnforge
 				int src_dim1,
 				int src_dim2,
 				int src_dim3,
-				cudaStream_t cuda_stream);
+				cudaStream_t cuda_stream,
+				bool add_to_destination = false);
 
 			static int get_group_count(
 				const cuda_running_configuration& cuda_config,
@@ -275,6 +276,18 @@ namespace nnforge
 				int elem_count,
 				unsigned int update_accum_mask,
 				unsigned int iteration_id,
+				cudaStream_t cuda_stream);
+
+			static void dump_list(
+				const float * buffer,
+				size_t elem_count,
+				const char * filepath,
+				cudaStream_t cuda_stream);
+
+			static void dump_list(
+				const int * buffer,
+				size_t elem_count,
+				const char * filepath,
 				cudaStream_t cuda_stream);
 
 		private:

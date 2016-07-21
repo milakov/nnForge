@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "sparse_strided_1x1_layer_tester_cuda.h"
+#include "sparse_1x1_layer_tester_cuda.h"
 
 #include <cuda_runtime.h>
 
@@ -28,7 +28,7 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		sparse_strided_1x1_layer_tester_cuda::sparse_strided_1x1_layer_tester_cuda()
+		sparse_1x1_layer_tester_cuda::sparse_1x1_layer_tester_cuda()
 			: output_data_desc(0)
 			, bias_desc(0)
 		{
@@ -38,7 +38,7 @@ namespace nnforge
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&bias_desc));
 		}
 
-		sparse_strided_1x1_layer_tester_cuda::~sparse_strided_1x1_layer_tester_cuda()
+		sparse_1x1_layer_tester_cuda::~sparse_1x1_layer_tester_cuda()
 		{
 			cudnnDestroyTensorDescriptor(input_strided_data_desc);
 			cudnnDestroyTensorDescriptor(input_converted_data_desc);
@@ -46,7 +46,7 @@ namespace nnforge
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
 
-		void sparse_strided_1x1_layer_tester_cuda::enqueue_forward_propagation(
+		void sparse_1x1_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
 			const std::vector<cuda_linear_buffer_device::const_ptr>& schema_data,
@@ -59,6 +59,18 @@ namespace nnforge
 			unsigned int entry_count)
 		{
 			// Convert input data to packed NHWC format
+			if (unit_stride)
+			{
+				cuda_util::transpose(
+					*cuda_config,
+					*input_buffers[0],
+					*temporary_working_per_entry_buffer,
+					input_elem_count_per_feature_map_list[0],
+					input_configuration_specific_list[0].feature_map_count,
+					entry_count,
+					stream_id);
+			}
+			else
 			{
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 				cudnn_util::set_tensor_descriptor(
@@ -73,7 +85,7 @@ namespace nnforge
 					input_converted_strides);
 				float alpha = 1.0F;
 				float beta = 0.0F;
-				cudnn_safe_call(cudnnTransformTensor(
+				cudnn_safe_call(cudnnAddTensor(
 					cuda_config->get_cudnn_handle(),
 					&alpha,
 					input_strided_data_desc,
@@ -141,12 +153,13 @@ namespace nnforge
 			}
 		}
 
-		void sparse_strided_1x1_layer_tester_cuda::tester_configured()
+		void sparse_1x1_layer_tester_cuda::tester_configured()
 		{
 			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			feature_map_connection_count = layer_derived->feature_map_connection_count;
 			bias = layer_derived->bias;
+			unit_stride = (layer_derived->strides == std::vector<unsigned int>(layer_derived->strides.size(), 1));
 
 			cudnn_util::set_tensor_bias_descriptor(
 				bias_desc,
@@ -160,10 +173,10 @@ namespace nnforge
 			unsigned int dim_size = 1;
 			for(int i = 0; i < strides.size(); ++i)
 			{
-				*(input_strides.rbegin() + i) = strides[i] * dim_size;
+				*(input_strides.begin() + i) = strides[i] * dim_size;
 				dim_size *= input_configuration_specific_list[0].dimension_sizes[i];
 			}
-			input_strides[0] = dim_size;
+			input_strides[strides.size()] = dim_size;
 
 			input_converted_strides.resize(strides.size() + 2);
 			input_converted_strides[strides.size()] = 1;
@@ -171,7 +184,7 @@ namespace nnforge
 			for(int i = 0; i < strides.size(); ++i)
 			{
 				input_converted_strides[i] = dim_size;
-				dim_size *= input_configuration_specific_list[0].dimension_sizes[i];
+				dim_size *= output_configuration_specific.dimension_sizes[i];
 			}
 			input_converted_strides.back() = dim_size;
 
@@ -179,7 +192,7 @@ namespace nnforge
 			output_elem_count_per_entry_aligned = (output_configuration_specific.get_neuron_count() + 4 - 1) / 4 * 4;
 		}
 
-		size_t sparse_strided_1x1_layer_tester_cuda::get_temporary_working_per_entry_buffer_size() const
+		size_t sparse_1x1_layer_tester_cuda::get_temporary_working_per_entry_buffer_size() const
 		{
 			return (input_converted_elem_count_per_entry_aligned * sizeof(float)) + (output_elem_count_per_entry_aligned * sizeof(float));
 		}

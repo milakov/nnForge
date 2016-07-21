@@ -39,11 +39,10 @@ namespace nnforge
 				tensor_dimensions.push_back(1);
 
 			std::vector<int> tensor_strides(tensor_dimensions.size());
-			tensor_strides.back() = 1;
 			std::vector<unsigned int> current_strides(strides);
 			if (current_strides.empty())
 				current_strides.resize(1, 1);
-			std::copy(current_strides.rbegin(), current_strides.rend(), tensor_strides.rbegin());
+			std::copy(current_strides.begin(), current_strides.end(), tensor_strides.rbegin());
 			for(int i = static_cast<int>(tensor_strides.size() - current_strides.size() - 1); i >= 0; --i)
 				tensor_strides[i] = tensor_strides[i + 1] * tensor_dimensions[i + 1];
 

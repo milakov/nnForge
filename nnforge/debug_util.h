@@ -24,12 +24,12 @@ namespace nnforge
 	{
 	public:
 		static void dump_list(
-			float * buffer,
+			const float * buffer,
 			size_t elem_count,
 			const char * filepath);
 
 		static void dump_list(
-			int * buffer,
+			const int * buffer,
 			size_t elem_count,
 			const char * filepath);
 

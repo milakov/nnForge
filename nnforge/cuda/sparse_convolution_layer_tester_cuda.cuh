@@ -23,7 +23,6 @@
 #include <boost/format.hpp>
 
 #include "util_cuda.h"
-#include "cuda_texture.h"
 #include "neural_network_cuda_exception.h"
 #include "int_fastdiv.h"
 
@@ -425,8 +424,6 @@ namespace nnforge
 				cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 				unsigned int entry_count)
 			{
-				cuda_texture input_tex(input_buffers[0]);
-
 				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
 					*cuda_config,
 					block_count_per_feature_map,

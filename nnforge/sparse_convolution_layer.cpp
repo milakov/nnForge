@@ -333,83 +333,116 @@ namespace nnforge
 		layer_data_custom& data_custom,
 		random_generator& generator) const
 	{
-		std::vector<std::set<int> > out_fm_in_fm_present_list(output_feature_map_count, std::set<int>());
-
-		std::vector<int> output_feature_map_id_list(feature_map_connection_count + output_feature_map_count);
-		int i = 0;
-		for(std::vector<int>::iterator it = output_feature_map_id_list.begin(); it != output_feature_map_id_list.end(); ++it)
+		unsigned int margin = 0;
+		while(true)
 		{
-			*it = i;
-			++i;
-			if (i == output_feature_map_count)
-				i = 0;
-		}
+			std::vector<bool> connection_matrix(output_feature_map_count * input_feature_map_count);
+			unsigned int max_connections_for_output_feature_map = (feature_map_connection_count + output_feature_map_count - 1) / output_feature_map_count + margin;
+			unsigned int max_connections_for_input_feature_map = (feature_map_connection_count + input_feature_map_count - 1) / input_feature_map_count + margin;
+			unsigned int max_connections_for_output_feature_map_overflow = std::max(max_connections_for_output_feature_map + 1, static_cast<unsigned int>(max_connections_for_output_feature_map * 1.01F));
+			unsigned int max_connections_for_input_feature_map_overflow = std::max(max_connections_for_input_feature_map + 1, static_cast<unsigned int>(max_connections_for_input_feature_map * 1.01F));
 
-		std::set<unsigned int> input_feature_map_id_set;
-		unsigned int start_feature_map_index = 0;
-		std::vector<int> v(input_feature_map_count);
-		for(int i = 0; i < static_cast<int>(feature_map_connection_count); ++i)
-		{
-			if (input_feature_map_id_set.empty())
+			std::vector<unsigned int> output_feature_map_id_available_list;
+			std::vector<unsigned int> output_feature_map_id_available_overflow_list;
+			std::map<unsigned int, unsigned int> output_feature_map_to_connection_count_map;
+			for(unsigned int i = 0; i < output_feature_map_count; ++i)
 			{
-				for(unsigned int input_feature_map_id = 0; input_feature_map_id < input_feature_map_count; ++input_feature_map_id)
-					input_feature_map_id_set.insert(input_feature_map_id);
+				output_feature_map_id_available_list.push_back(i);
+				output_feature_map_id_available_overflow_list.push_back(i);
+				output_feature_map_to_connection_count_map.insert(std::make_pair(i, 0));
+			}
+			std::vector<unsigned int> input_feature_map_id_available_list;
+			std::vector<unsigned int> input_feature_map_id_available_overflow_list;
+			std::map<unsigned int, unsigned int> input_feature_map_to_connection_count_map;
+			for(unsigned int i = 0; i < input_feature_map_count; ++i)
+			{
+				input_feature_map_id_available_list.push_back(i);
+				input_feature_map_id_available_overflow_list.push_back(i);
+				input_feature_map_to_connection_count_map.insert(std::make_pair(i, 0));
 			}
 
-			int current_feature_map_index = start_feature_map_index;
-			for(; current_feature_map_index < output_feature_map_id_list.size(); ++current_feature_map_index)
+
+			bool explore_strict = true;
+			bool should_retry_with_larger_margin = false;
+			for(int i = 0; i < static_cast<int>(feature_map_connection_count); ++i)
 			{
-				if (output_feature_map_id_list[current_feature_map_index] == -1)
-					continue;
-
-				int output_feature_map_id = output_feature_map_id_list[current_feature_map_index];
-
-				std::set<int>& in_fm_present_set = out_fm_in_fm_present_list[output_feature_map_id];
-
-				std::vector<int>::iterator end_it = std::set_difference(
-					input_feature_map_id_set.begin(),
-					input_feature_map_id_set.end(),
-					in_fm_present_set.begin(),
-					in_fm_present_set.end(),
-					v.begin());
-				int count = static_cast<int>(end_it - v.begin());
-				if (count == 0)
-					continue;
-
-				int input_feature_map_index = 0;
-				if (count > 1)
+				unsigned int output_feature_map_id;
+				unsigned int input_feature_map_id;
+				bool found = false;
+				if (explore_strict)
 				{
-					nnforge_uniform_int_distribution<int> in_fm_dist(0U, count - 1);
-					input_feature_map_index = in_fm_dist(generator);
+					for(int attempt_id = 0; (attempt_id < 100) && (!found); ++attempt_id)
+					{
+						nnforge_uniform_int_distribution<unsigned int> out_dist(0U, static_cast<unsigned int>(output_feature_map_id_available_list.size() - 1));
+						output_feature_map_id = output_feature_map_id_available_list[out_dist(generator)];
+						nnforge_uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_list.size() - 1));
+						input_feature_map_id = input_feature_map_id_available_list[in_dist(generator)];
+						found = !connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id];
+					}
+					explore_strict = found;
 				}
-				int input_feature_map_id = v[input_feature_map_index];
 
-				in_fm_present_set.insert(input_feature_map_id);
-				input_feature_map_id_set.erase(input_feature_map_id);
+				if (!found)
+				{
+					for(int attempt_id = 0; (attempt_id < 100) && (!found); ++attempt_id)
+					{
+						nnforge_uniform_int_distribution<unsigned int> out_dist(0U, static_cast<unsigned int>(output_feature_map_id_available_overflow_list.size() - 1));
+						output_feature_map_id = output_feature_map_id_available_overflow_list[out_dist(generator)];
+						nnforge_uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_overflow_list.size() - 1));
+						input_feature_map_id = input_feature_map_id_available_overflow_list[in_dist(generator)];
+						found = !connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id];
+					}
+				}
 
+				if (found)
+				{
+					connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id] = true;
+
+					unsigned int output_feature_map_connection_count = ++output_feature_map_to_connection_count_map.find(output_feature_map_id)->second;
+					if (output_feature_map_connection_count == max_connections_for_output_feature_map)
+						output_feature_map_id_available_list.erase(std::find(output_feature_map_id_available_list.begin(), output_feature_map_id_available_list.end(), output_feature_map_id));
+					else if (output_feature_map_connection_count == max_connections_for_output_feature_map_overflow)
+						output_feature_map_id_available_overflow_list.erase(std::find(output_feature_map_id_available_overflow_list.begin(), output_feature_map_id_available_overflow_list.end(), output_feature_map_id));
+
+					unsigned int input_feature_map_connection_count = ++input_feature_map_to_connection_count_map.find(input_feature_map_id)->second;
+					if (input_feature_map_connection_count == max_connections_for_input_feature_map)
+						input_feature_map_id_available_list.erase(std::find(input_feature_map_id_available_list.begin(), input_feature_map_id_available_list.end(), input_feature_map_id));
+					else if (input_feature_map_connection_count == max_connections_for_input_feature_map_overflow)
+						input_feature_map_id_available_overflow_list.erase(std::find(input_feature_map_id_available_overflow_list.begin(), input_feature_map_id_available_overflow_list.end(), input_feature_map_id));
+
+					if (explore_strict)
+						explore_strict = (!output_feature_map_id_available_list.empty()) && (!input_feature_map_id_available_list.empty());
+				}
+				else
+				{
+					should_retry_with_larger_margin = true;
+					break;
+				}
+			}
+
+
+			if (!should_retry_with_larger_margin)
+			{
+				int current_column_offset = 0;
+				for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_feature_map_count); ++output_feature_map_id)
+				{
+					data_custom[1][output_feature_map_id] = current_column_offset;
+
+					for(int input_feature_map_id = 0; input_feature_map_id < static_cast<int>(input_feature_map_count); ++input_feature_map_id)
+					{
+						if (connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id])
+						{
+							data_custom[0][current_column_offset] = input_feature_map_id;
+							++current_column_offset;
+						}
+					}
+				}
+				data_custom[1][output_feature_map_count] = current_column_offset;
 				break;
 			}
-			if (current_feature_map_index == output_feature_map_id_list.size())
-				throw neural_network_exception("Internal error when randomly initializing sparse connections");
 
-			output_feature_map_id_list[current_feature_map_index] = -1;
-
-			while (output_feature_map_id_list[start_feature_map_index] == -1)
-			{
-				++start_feature_map_index;
-			}
+			++margin;
 		}
-
-		int current_column_offset = 0;
-		for(int output_feature_map_id = 0; output_feature_map_id < static_cast<int>(output_feature_map_count); ++output_feature_map_id)
-		{
-			data_custom[1][output_feature_map_id] = current_column_offset;
-			const std::set<int>& input_feature_map_set = out_fm_in_fm_present_list[output_feature_map_id];
-			std::copy(input_feature_map_set.begin(), input_feature_map_set.end(), data_custom[0].begin() + current_column_offset);
-
-			current_column_offset += static_cast<int>(input_feature_map_set.size());
-		}
-		data_custom[1][output_feature_map_count] = current_column_offset;
 	}
 
 	float sparse_convolution_layer::get_flops_per_entry(

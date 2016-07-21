@@ -566,11 +566,11 @@
     <ClInclude Include="sparse_convolution_layer_updater_cuda.cuh">
       <Filter>Source Files\layer_updaters</Filter>
     </ClInclude>
-    <ClInclude Include="sparse_strided_1x1_layer_tester_cuda.h">
-      <Filter>Header Files\layer_testers</Filter>
-    </ClInclude>
-    <ClInclude Include="sparse_strided_1x1_layer_updater_cuda.h">
+    <ClInclude Include="sparse_1x1_layer_updater_cuda.h">
       <Filter>Header Files\layer_updaters</Filter>
+    </ClInclude>
+    <ClInclude Include="sparse_1x1_layer_tester_cuda.h">
+      <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -865,7 +865,7 @@
     <ClCompile Include="linear_sampler_layer_updater_schema.cpp">
       <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
-    <ClCompile Include="sparse_strided_1x1_layer_tester_cuda.cpp">
+    <ClCompile Include="sparse_1x1_layer_tester_cuda.cpp">
       <Filter>Source Files\layer_testers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1029,7 +1029,7 @@
     <CudaCompile Include="sparse_convolution_layer_testing_schema_helper_cuda.cu">
       <Filter>Source Files\testing_schemas</Filter>
     </CudaCompile>
-    <CudaCompile Include="sparse_strided_1x1_layer_updater_cuda.cu">
+    <CudaCompile Include="sparse_1x1_layer_updater_cuda.cu">
       <Filter>Source Files\layer_updaters</Filter>
     </CudaCompile>
   </ItemGroup>

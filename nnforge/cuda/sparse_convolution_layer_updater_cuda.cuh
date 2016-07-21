@@ -832,7 +832,7 @@ namespace nnforge
 							input_local_buf[input_yy][input_xx] = b_fit0 ? __load_nc(input_neurons + current_offset) : 0.0F;
 						}
 					}
-					float output_local_buf[(DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1][WINDOW_WIDTH];
+					float output_local_buf[(DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1][BLOCK_WIDTH];
 					#pragma unroll
 					for(int output_yy = 0; output_yy < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++output_yy)
 					{

@@ -21,7 +21,7 @@
 #include "sparse_fully_connected_1x1_layer_tester_cuda.h"
 #include "sparse_fully_connected_layer_tester_cuda.h"
 #include "sparse_convolution_layer_testing_schema_helper_cuda.h"
-#include "sparse_strided_1x1_layer_tester_cuda.h"
+#include "sparse_1x1_layer_tester_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -72,7 +72,7 @@ namespace nnforge
 				else
 				{
 					if (window1x1)
-						return layer_tester_cuda::ptr(new sparse_strided_1x1_layer_tester_cuda());
+						return layer_tester_cuda::ptr(new sparse_1x1_layer_tester_cuda());
 				}
 			}
 

@@ -21,7 +21,7 @@
 #include "sparse_fully_connected_1x1_layer_updater_cuda.h"
 #include "sparse_fully_connected_layer_updater_cuda.h"
 #include "sparse_convolution_layer_updater_schema_helper_cuda.h"
-#include "sparse_strided_1x1_layer_updater_cuda.h"
+#include "sparse_1x1_layer_updater_cuda.h"
 
 #include <boost/format.hpp>
 
@@ -72,7 +72,7 @@ namespace nnforge
 				else
 				{
 					if (window1x1)
-						return layer_updater_cuda::ptr(new sparse_strided_1x1_layer_updater_cuda());
+						return layer_updater_cuda::ptr(new sparse_1x1_layer_updater_cuda());
 				}
 			}
 

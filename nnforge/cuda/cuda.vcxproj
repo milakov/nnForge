@@ -148,8 +148,8 @@
     <ClInclude Include="sparse_convolution_layer_testing_schema.h" />
     <ClInclude Include="sparse_fully_connected_1x1_layer_updater_cuda.h" />
     <ClInclude Include="sparse_fully_connected_layer_updater_cuda.h" />
-    <ClInclude Include="sparse_strided_1x1_layer_tester_cuda.h" />
-    <ClInclude Include="sparse_strided_1x1_layer_updater_cuda.h" />
+    <ClInclude Include="sparse_1x1_layer_tester_cuda.h" />
+    <ClInclude Include="sparse_1x1_layer_updater_cuda.h" />
     <ClInclude Include="split_policy_z_order.h" />
     <ClInclude Include="untile_layer_tester_cuda.h" />
     <ClInclude Include="untile_layer_testing_schema.h" />
@@ -276,7 +276,7 @@
     <ClCompile Include="sparse_convolution_layer_testing_schema.cpp" />
     <ClCompile Include="sparse_convolution_layer_updater_schema.cpp" />
     <ClCompile Include="sparse_fully_connected_1x1_layer_tester_cuda.cpp" />
-    <ClCompile Include="sparse_strided_1x1_layer_tester_cuda.cpp" />
+    <ClCompile Include="sparse_1x1_layer_tester_cuda.cpp" />
     <ClCompile Include="untile_layer_testing_schema.cpp" />
     <CudaCompile Include="accuracy_layer_tester_cuda.cu" />
     <CudaCompile Include="accuracy_layer_updater_cuda.cu" />
@@ -322,7 +322,7 @@
     <CudaCompile Include="sparse_fully_connected_layer_updater_cuda.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
-    <CudaCompile Include="sparse_strided_1x1_layer_updater_cuda.cu" />
+    <CudaCompile Include="sparse_1x1_layer_updater_cuda.cu" />
     <CudaCompile Include="upsampling_layer_testing_schema.cu" />
     <CudaCompile Include="upsampling_layer_updater_schema.cu" />
     <CudaCompile Include="util_cuda.cu" />

@@ -24,12 +24,12 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		class sparse_strided_1x1_layer_tester_cuda : public layer_tester_cuda
+		class sparse_1x1_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			sparse_strided_1x1_layer_tester_cuda();
+			sparse_1x1_layer_tester_cuda();
 
-			virtual ~sparse_strided_1x1_layer_tester_cuda();
+			virtual ~sparse_1x1_layer_tester_cuda();
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
@@ -51,6 +51,7 @@ namespace nnforge
 		private:
 			int feature_map_connection_count;
 			bool bias;
+			bool unit_stride;
 			layer_configuration_specific input_strided_config;
 			std::vector<unsigned int> input_strides;
 			std::vector<unsigned int> input_converted_strides;
