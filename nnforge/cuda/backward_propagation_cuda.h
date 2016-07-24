@@ -233,6 +233,7 @@ namespace nnforge
 
 		private:
 			static const unsigned int elem_count_update_accum_per_part;
+			static bool dump_data;
 
 		private:
 			backward_propagation_cuda(const backward_propagation_cuda&);

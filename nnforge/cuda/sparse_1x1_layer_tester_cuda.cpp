@@ -33,7 +33,8 @@ namespace nnforge
 			, bias_desc(0)
 		{
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_strided_data_desc));
-			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_converted_data_desc));
+			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_converted_NHWC_data_desc));
+			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_converted_CNHW_data_desc));
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&output_data_desc));
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&bias_desc));
 		}
@@ -41,7 +42,8 @@ namespace nnforge
 		sparse_1x1_layer_tester_cuda::~sparse_1x1_layer_tester_cuda()
 		{
 			cudnnDestroyTensorDescriptor(input_strided_data_desc);
-			cudnnDestroyTensorDescriptor(input_converted_data_desc);
+			cudnnDestroyTensorDescriptor(input_converted_NHWC_data_desc);
+			cudnnDestroyTensorDescriptor(input_converted_CNHW_data_desc);
 			cudnnDestroyTensorDescriptor(output_data_desc);
 			cudnnDestroyTensorDescriptor(bias_desc);
 		}
@@ -58,10 +60,10 @@ namespace nnforge
 			cuda_linear_buffer_device::ptr temporary_working_per_entry_buffer,
 			unsigned int entry_count)
 		{
-			// Convert input data to packed NHWC format
+			// Convert input data strided NCHW to packed CNHW format
 			if (unit_stride)
 			{
-				cuda_util::transpose(
+				cuda_util::transpose23(
 					*cuda_config,
 					*input_buffers[0],
 					*temporary_working_per_entry_buffer,
@@ -72,6 +74,8 @@ namespace nnforge
 			}
 			else
 			{
+				std::vector<unsigned int> input_converted_CNHW_strides = input_converted_CNHW_strides_base;
+				input_converted_CNHW_strides[input_converted_CNHW_strides.size() - 2] = input_converted_CNHW_strides[input_converted_CNHW_strides.size() - 1] * entry_count;
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 				cudnn_util::set_tensor_descriptor(
 					input_strided_data_desc,
@@ -79,10 +83,10 @@ namespace nnforge
 					entry_count,
 					input_strides);
 				cudnn_util::set_tensor_descriptor(
-					input_converted_data_desc,
+					input_converted_CNHW_data_desc,
 					input_strided_config,
 					entry_count,
-					input_converted_strides);
+					input_converted_CNHW_strides);
 				float alpha = 1.0F;
 				float beta = 0.0F;
 				cudnn_safe_call(cudnnAddTensor(
@@ -91,7 +95,7 @@ namespace nnforge
 					input_strided_data_desc,
 					*input_buffers[0],
 					&beta,
-					input_converted_data_desc,
+					input_converted_CNHW_data_desc,
 					*temporary_working_per_entry_buffer));
 			}
 
@@ -101,9 +105,10 @@ namespace nnforge
 				float beta = 0.0F;
 				cusparseMatDescr_t mat_descr;
 				cusparse_safe_call(cusparseCreateMatDescr(&mat_descr));
-				cusparse_safe_call(cusparseScsrmm(
+				cusparse_safe_call(cusparseScsrmm2(
 					cuda_config->get_cusparse_handle(),
 					CUSPARSE_OPERATION_NON_TRANSPOSE,
+					CUSPARSE_OPERATION_TRANSPOSE,
 					output_configuration_specific.feature_map_count,
 					entry_count * output_elem_count_per_feature_map,
 					input_strided_config.feature_map_count,
@@ -114,7 +119,7 @@ namespace nnforge
 					*data_custom[1],
 					*data_custom[0],
 					*temporary_working_per_entry_buffer,
-					input_strided_config.feature_map_count,
+					entry_count * output_elem_count_per_feature_map,
 					&beta,
 					((float *)*temporary_working_per_entry_buffer) + input_converted_elem_count_per_entry_aligned * entry_count,
 					output_configuration_specific.feature_map_count));
@@ -178,15 +183,24 @@ namespace nnforge
 			}
 			input_strides[strides.size()] = dim_size;
 
-			input_converted_strides.resize(strides.size() + 2);
-			input_converted_strides[strides.size()] = 1;
+			input_converted_NHWC_strides.resize(strides.size() + 2);
+			input_converted_NHWC_strides[strides.size()] = 1;
 			dim_size = input_strided_config.feature_map_count;
 			for(int i = 0; i < strides.size(); ++i)
 			{
-				input_converted_strides[i] = dim_size;
+				input_converted_NHWC_strides[i] = dim_size;
 				dim_size *= output_configuration_specific.dimension_sizes[i];
 			}
-			input_converted_strides.back() = dim_size;
+			input_converted_NHWC_strides.back() = dim_size;
+
+			input_converted_CNHW_strides_base.resize(strides.size() + 2);
+			dim_size = 1;
+			for(int i = 0; i < strides.size(); ++i)
+			{
+				input_converted_CNHW_strides_base[i] = dim_size;
+				dim_size *= output_configuration_specific.dimension_sizes[i];
+			}
+			input_converted_CNHW_strides_base[strides.size() + 1] = dim_size;
 
 			input_converted_elem_count_per_entry_aligned = (input_strided_config.get_neuron_count() + 4 - 1) / 4 * 4;
 			output_elem_count_per_entry_aligned = (output_configuration_specific.get_neuron_count() + 4 - 1) / 4 * 4;

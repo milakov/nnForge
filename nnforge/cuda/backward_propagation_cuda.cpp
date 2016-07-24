@@ -33,6 +33,8 @@ namespace nnforge
 {
 	namespace cuda
 	{
+		bool backward_propagation_cuda::dump_data = false;
+
 		const unsigned int backward_propagation_cuda::elem_count_update_accum_per_part = 64;
 		backward_propagation_cuda::backward_propagation_cuda(
 			const network_schema& schema,
@@ -601,6 +603,12 @@ namespace nnforge
 											input_buffers.push_back(layer_buffers[it->second]);
 										else
 											input_buffers.push_back(params.dedicated_buffers.find(*input_layer_name_it)->second[run_kernels_thread_io_set]);
+										if (dump_data)
+											cuda_util::dump_list(
+												(const float *)*input_buffers.back(),
+												layer_config_map[*input_layer_name_it].get_neuron_count() * run_kernels_thread_entry_to_process_count * cumulative_tiling_factor_map[*input_layer_name_it],
+												(std::string("debug_") + current_layer_name_with_action.get_name() + "_" + current_layer_name_with_action.get_action().str() + "_input_buffers_" + *input_layer_name_it + ".txt").c_str(),
+												*current_stream);
 									}
 
 									cuda_linear_buffer_device::ptr temporary_per_entry_buffer;
@@ -643,6 +651,13 @@ namespace nnforge
 										temporary_fixed_buffer,
 										temporary_per_entry_buffer,
 										run_kernels_thread_entry_to_process_count * tiling_factor);
+
+									if (dump_data)
+										cuda_util::dump_list(
+											(const float *)*output_buffer,
+											layer_config_map[layer_name].get_neuron_count() * run_kernels_thread_entry_to_process_count * tiling_factor,
+											(std::string("debug_") + current_layer_name_with_action.get_name() + "_" + current_layer_name_with_action.get_action().str() + "_output_buffer" + ".txt").c_str(),
+											*current_stream);
 
 									if (profile->is_profile())
 										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].second, *current_stream));
@@ -704,7 +719,15 @@ namespace nnforge
 									{
 										std::map<std::string, std::vector<layer_name_with_action> >::const_iterator it = input_to_all_output_map.find(layer_name);
 										if (it != input_to_all_output_map.end())
+										{
 											output_errors_buffer = layer_buffers[layer_buffer_action_to_set_map[it->second.front()]];
+											if (dump_data)
+												cuda_util::dump_list(
+													(const float *)*output_errors_buffer,
+													layer_config_map[layer_name].get_neuron_count() * run_kernels_thread_entry_to_process_count * tiling_factor,
+													(std::string("debug_") + current_layer_name_with_action.get_name() + "_" + current_layer_name_with_action.get_action().str() + "_output_errors" + ".txt").c_str(),
+													*current_stream);
+										}
 									}
 
 									std::vector<cuda_linear_buffer_device::const_ptr> data_list;
@@ -719,6 +742,13 @@ namespace nnforge
 										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].first, *current_stream));
 										actions_profiled.insert(current_layer_name_with_action);
 									}
+
+									if ((dump_data) && (add_output_actions.find(current_layer_name_with_action) != add_output_actions.end()))
+										cuda_util::dump_list(
+											(const float *)*output_buffer,
+											layer_config_map[current_layer->input_layer_instance_names[current_layer_name_with_action.get_action().get_backprop_index()]].get_neuron_count() * run_kernels_thread_entry_to_process_count * tiling_factor,
+											(std::string("debug_") + current_layer_name_with_action.get_name() + "_" + current_layer_name_with_action.get_action().str() + "_original_input_errors" + ".txt").c_str(),
+											*current_stream);
 
 									updaters.find(layer_name)->second->enqueue_backward_data_propagation(
 										*current_stream,
@@ -737,6 +767,13 @@ namespace nnforge
 										temporary_per_entry_buffer,
 										add_output_actions.find(current_layer_name_with_action) != add_output_actions.end(),
 										run_kernels_thread_entry_to_process_count * tiling_factor);
+
+									if (dump_data)
+										cuda_util::dump_list(
+											(const float *)*output_buffer,
+											layer_config_map[current_layer->input_layer_instance_names[current_layer_name_with_action.get_action().get_backprop_index()]].get_neuron_count() * run_kernels_thread_entry_to_process_count * tiling_factor,
+											(std::string("debug_") + current_layer_name_with_action.get_name() + "_" + current_layer_name_with_action.get_action().str() + "_input_errors" + ".txt").c_str(),
+											*current_stream);
 
 									if (profile->is_profile())
 										cuda_safe_call(cudaEventRecord(*start_stop_profiling_events[current_layer_name_with_action].second, *current_stream));
@@ -965,6 +1002,8 @@ namespace nnforge
 							params.action_seconds.insert(std::make_pair(it->first, 0.0)).first->second += static_cast<double>(milliseconds * 0.001F);
 						}
 					}
+
+					dump_data = false;
 
 					// Notify caller thread that result is ready
 					{

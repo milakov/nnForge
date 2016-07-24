@@ -38,7 +38,7 @@
 #define BLOCK_WIDTH 4
 #define BLOCK_HEIGHT 4
 
-#define MAX_EXACT_GRADIENT_UPDATE_WINDOW_WIDTH_HEIGHT 7
+#define MAX_EXACT_GRADIENT_UPDATE_WINDOW_WIDTH_HEIGHT 5
 
 namespace nnforge
 {
@@ -377,7 +377,8 @@ namespace nnforge
 			int entry_count,
 			int block_count_per_feature_map,
 			int weight_count_per_block,
-			unsigned int dummy)
+			unsigned int dummy,
+			bool add_update_to_destination)
 		{
 			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int input_feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
@@ -416,6 +417,7 @@ namespace nnforge
 					output_elem_id_base = output_elem_id_base * output_sizes[i] + xyzw[i];
 
 				float sums[(DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1)][BLOCK_WIDTH];
+				#pragma unroll
 				for(int i = 0; i < (DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1); ++i)
 					#pragma unroll
 					for(int j = 0; j < BLOCK_WIDTH; ++j)
@@ -508,21 +510,51 @@ namespace nnforge
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_offset = input_offset * input_sizes[i] + xyzw_input[i];
 
-				#pragma unroll
-				for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
+				if (add_update_to_destination)
 				{
-					if ((DIMENSION_COUNT > 1) ? (pos_y < input_sizes[1] - xyzw_input[1]) : true)
+					#pragma unroll
+					for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
 					{
-						#pragma unroll
-						for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
+						if ((DIMENSION_COUNT > 1) ? (pos_y < input_sizes[1] - xyzw_input[1]) : true)
 						{
-							if (pos_x < input_sizes[0] - xyzw_input[0])
+							float old_values[BLOCK_WIDTH];
+							for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
 							{
-								input[input_offset + pos_x] = sums[pos_y][pos_x];
+								if (pos_x < input_sizes[0] - xyzw_input[0])
+								{
+									old_values[pos_x] = input[input_offset + pos_x];
+								}
+							}
+							#pragma unroll
+							for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
+							{
+								if (pos_x < input_sizes[0] - xyzw_input[0])
+								{
+									input[input_offset + pos_x] = sums[pos_y][pos_x] + old_values[pos_x];
+								}
 							}
 						}
+						input_offset += input_sizes[0];
 					}
-					input_offset += input_sizes[0];
+				}
+				else
+				{
+					#pragma unroll
+					for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
+					{
+						if ((DIMENSION_COUNT > 1) ? (pos_y < input_sizes[1] - xyzw_input[1]) : true)
+						{
+							#pragma unroll
+							for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
+							{
+								if (pos_x < input_sizes[0] - xyzw_input[0])
+								{
+									input[input_offset + pos_x] = sums[pos_y][pos_x];
+								}
+							}
+						}
+						input_offset += input_sizes[0];
+					}
 				}
 			} // if (in_bounds)
 		}
@@ -544,7 +576,8 @@ namespace nnforge
 			int output_elem_count_per_feature_map,
 			int entry_count,
 			int block_count_per_feature_map,
-			int weight_count_per_block)
+			int weight_count_per_block,
+			bool add_update_to_destination)
 		{
 			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
 			int input_feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
@@ -583,6 +616,7 @@ namespace nnforge
 					output_elem_id_base = output_elem_id_base * output_sizes[i] + xyzw[i];
 
 				float sums[(DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1)][BLOCK_WIDTH];
+				#pragma unroll
 				for(int i = 0; i < (DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1); ++i)
 					#pragma unroll
 					for(int j = 0; j < BLOCK_WIDTH; ++j)
@@ -637,21 +671,51 @@ namespace nnforge
 				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
 					input_offset = input_offset * input_sizes[i] + xyzw_input[i];
 
-				#pragma unroll
-				for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
+				if (add_update_to_destination)
 				{
-					if ((DIMENSION_COUNT > 1) ? (pos_y < input_sizes[1] - xyzw_input[1]) : true)
+					#pragma unroll
+					for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
 					{
-						#pragma unroll
-						for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
+						if ((DIMENSION_COUNT > 1) ? (pos_y < input_sizes[1] - xyzw_input[1]) : true)
 						{
-							if (pos_x < input_sizes[0] - xyzw_input[0])
+							float old_values[BLOCK_WIDTH];
+							for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
 							{
-								input[input_offset + pos_x] = sums[pos_y][pos_x];
+								if (pos_x < input_sizes[0] - xyzw_input[0])
+								{
+									old_values[pos_x] = input[input_offset + pos_x];
+								}
+							}
+							#pragma unroll
+							for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
+							{
+								if (pos_x < input_sizes[0] - xyzw_input[0])
+								{
+									input[input_offset + pos_x] = sums[pos_y][pos_x] + old_values[pos_x];
+								}
 							}
 						}
+						input_offset += input_sizes[0];
 					}
-					input_offset += input_sizes[0];
+				}
+				else
+				{
+					#pragma unroll
+					for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
+					{
+						if ((DIMENSION_COUNT > 1) ? (pos_y < input_sizes[1] - xyzw_input[1]) : true)
+						{
+							#pragma unroll
+							for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
+							{
+								if (pos_x < input_sizes[0] - xyzw_input[0])
+								{
+									input[input_offset + pos_x] = sums[pos_y][pos_x];
+								}
+							}
+						}
+						input_offset += input_sizes[0];
+					}
 				}
 			} // if (in_bounds)
 		}
@@ -756,13 +820,9 @@ namespace nnforge
 				float local_gradients[WINDOW_HEIGHT][WINDOW_WIDTH];
 				#pragma unroll
 				for(int weight_y = 0; weight_y < ((DIMENSION_COUNT > 1) ? WINDOW_HEIGHT : 1); ++weight_y)
-				{
 					#pragma unroll
 					for(int weight_x = 0; weight_x < WINDOW_WIDTH; ++weight_x)
-					{
 						local_gradients[weight_y][weight_x] = 0.0F;
-					}
-				}
 
 				unsigned int input_valid_positions[(((DIMENSION_COUNT > 1) ? (WINDOW_HEIGHT + BLOCK_HEIGHT - 1) : 1) * (WINDOW_WIDTH + BLOCK_WIDTH - 1) + 31) / 32];
 				#pragma unroll
@@ -1143,10 +1203,10 @@ namespace nnforge
 	};
 
 #define launch_backprop_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
-	sparse_convolution_backprop_exact_blocked_upd_kernel<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, *output_errors_buffer, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block, 0U);
+	sparse_convolution_backprop_exact_blocked_upd_kernel<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, *output_errors_buffer, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block, 0U, add_update_to_destination);
 
 #define launch_backprop_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_backprop_generic_blocked_upd_kernel<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, *output_errors_buffer, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block);
+	sparse_convolution_backprop_generic_blocked_upd_kernel<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*input_errors_buffer, *output_errors_buffer, *data[0], row_index_weight_block_id_pairs, *data_custom[3], output_sizes, input_sizes, input_block_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, output_elem_count_per_feature_map, entry_count, block_count_per_input_feature_map, weight_count_per_block, add_update_to_destination);
 
 #define launch_backprop_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \

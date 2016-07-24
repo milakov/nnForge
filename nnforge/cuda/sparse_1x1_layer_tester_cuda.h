@@ -54,10 +54,12 @@ namespace nnforge
 			bool unit_stride;
 			layer_configuration_specific input_strided_config;
 			std::vector<unsigned int> input_strides;
-			std::vector<unsigned int> input_converted_strides;
+			std::vector<unsigned int> input_converted_NHWC_strides;
+			std::vector<unsigned int> input_converted_CNHW_strides_base;
 
 			cudnnTensorDescriptor_t input_strided_data_desc;
-			cudnnTensorDescriptor_t input_converted_data_desc;
+			cudnnTensorDescriptor_t input_converted_NHWC_data_desc;
+			cudnnTensorDescriptor_t input_converted_CNHW_data_desc;
 			cudnnTensorDescriptor_t output_data_desc;
 			cudnnTensorDescriptor_t bias_desc;
 

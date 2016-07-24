@@ -98,6 +98,17 @@ private:
 		float beginning_sparsity_ratio,
 		float sparsity_ratio) const;
 
+	void add_resnet_sparse_basic_block(
+		std::vector<nnforge::layer::const_ptr>& layer_list,
+		unsigned int& last_layer_feature_map_count,
+		std::string& last_layer_name,
+		unsigned int& major_block_id,
+		char& minor_block_id,
+		unsigned int feature_map_count,
+		bool spatial_size_reduction,
+		float beginning_sparsity_ratio,
+		float sparsity_ratio) const;
+
 private:
 	std::map<unsigned int, std::string> wnid_to_ilsvrc2014id_map;
 	std::map<std::string, unsigned int> ilsvrc2014id_to_wnid_map;

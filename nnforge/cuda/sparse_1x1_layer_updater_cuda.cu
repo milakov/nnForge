@@ -242,10 +242,10 @@ namespace nnforge
 			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
 			unsigned int entry_count)
 		{
-			// Convert input data from NCHW to packed NHWC format
+			// Convert input data strided NCHW to packed CNHW format
 			if (unit_stride)
 			{
-				cuda_util::transpose(
+				cuda_util::transpose23(
 					*cuda_config,
 					*input_buffers[0],
 					*temporary_working_per_entry_buffer,
@@ -256,6 +256,8 @@ namespace nnforge
 			}
 			else
 			{
+				std::vector<unsigned int> input_converted_CNHW_strides = input_converted_CNHW_strides_base;
+				input_converted_CNHW_strides[input_converted_CNHW_strides.size() - 2] = input_converted_CNHW_strides[input_converted_CNHW_strides.size() - 1] * entry_count;
 				cudnn_safe_call(cudnnSetStream(cuda_config->get_cudnn_handle(), stream_id));
 				cudnn_util::set_tensor_descriptor(
 					input_strided_data_desc,
@@ -263,10 +265,10 @@ namespace nnforge
 					entry_count,
 					input_strides);
 				cudnn_util::set_tensor_descriptor(
-					input_converted_NHWC_data_desc,
+					input_converted_CNHW_data_desc,
 					input_strided_config,
 					entry_count,
-					input_converted_NHWC_strides);
+					input_converted_CNHW_strides);
 				float alpha = 1.0F;
 				float beta = 0.0F;
 				cudnn_safe_call(cudnnAddTensor(
@@ -275,7 +277,7 @@ namespace nnforge
 					input_strided_data_desc,
 					*input_buffers[0],
 					&beta,
-					input_converted_NHWC_data_desc,
+					input_converted_CNHW_data_desc,
 					*temporary_working_per_entry_buffer));
 			}
 
@@ -285,9 +287,10 @@ namespace nnforge
 				float beta = 0.0F;
 				cusparseMatDescr_t mat_descr;
 				cusparse_safe_call(cusparseCreateMatDescr(&mat_descr));
-				cusparse_safe_call(cusparseScsrmm(
+				cusparse_safe_call(cusparseScsrmm2(
 					cuda_config->get_cusparse_handle(),
 					CUSPARSE_OPERATION_NON_TRANSPOSE,
+					CUSPARSE_OPERATION_TRANSPOSE,
 					output_configuration_specific.feature_map_count,
 					entry_count * output_elem_count_per_feature_map,
 					input_strided_config.feature_map_count,
@@ -298,7 +301,7 @@ namespace nnforge
 					*data_custom[1],
 					*data_custom[0],
 					*temporary_working_per_entry_buffer,
-					input_strided_config.feature_map_count,
+					entry_count * output_elem_count_per_feature_map,
 					&beta,
 					((float *)*temporary_working_per_entry_buffer) + input_converted_elem_count_per_entry_aligned * entry_count,
 					output_configuration_specific.feature_map_count));
