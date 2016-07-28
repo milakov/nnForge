@@ -297,7 +297,7 @@ std::vector<nnforge::int_option> imagenet_toolset::get_int_options()
 
 	res.push_back(nnforge::int_option("samples_x", &samples_x, 4, "Run multiple samples (in x direction) for each entry"));
 	res.push_back(nnforge::int_option("samples_y", &samples_y, 4, "Run multiple samples (in y direction) for each entry"));
-	res.push_back(nnforge::int_option("sparse_feature_map_ratio", &sparse_feature_map_ratio, 2, "Feature map count increase by this ratio while keeping weights at approximately equal to the dense case"));
+	res.push_back(nnforge::int_option("sparse_feature_map_ratio", &sparse_feature_map_ratio, 4, "Feature map count increase by this ratio while keeping weights at approximately equal to the dense case"));
 
 	return res;
 }
@@ -562,8 +562,8 @@ void imagenet_toolset::create_resnet_sparse_schema() const
 
 	unsigned int last_layer_feature_map_count = 64;
 	std::string last_layer_name = "pool1";
-	unsigned int bottleneck_major_block_id = 2;
-	char bottleneck_minor_block_id = 'a';
+	unsigned int major_block_id = 2;
+	char minor_block_id = 'a';
 	unsigned int feature_map_count = 64 * sparse_feature_map_ratio;
 	float partial_sparsity_ratio = 1.0F / static_cast<float>(sparse_feature_map_ratio);
 	float sparsity_ratio = 1.0F / static_cast<float>(sparse_feature_map_ratio * sparse_feature_map_ratio);
@@ -575,8 +575,8 @@ void imagenet_toolset::create_resnet_sparse_schema() const
 				layer_list,
 				last_layer_feature_map_count,
 				last_layer_name,
-				bottleneck_major_block_id,
-				bottleneck_minor_block_id,
+				major_block_id,
+				minor_block_id,
 				feature_map_count,
 				(resnet_block_id == 0) && (resnet_spatial_block_id != 0),
 				((resnet_block_id == 0) && (resnet_spatial_block_id == 0)) ? partial_sparsity_ratio : sparsity_ratio,
@@ -584,7 +584,7 @@ void imagenet_toolset::create_resnet_sparse_schema() const
 		feature_map_count *= 2;
 	}
 
-	std::string avg_pool_layer_name = (boost::format("pool%1%") % bottleneck_major_block_id).str(); 
+	std::string avg_pool_layer_name = (boost::format("pool%1%") % major_block_id).str(); 
 	nnforge::layer::ptr avg_pool_layer(new nnforge::average_subsampling_layer(std::vector<nnforge::average_subsampling_factor>(2, 7)));
 	avg_pool_layer->instance_name = avg_pool_layer_name;
 	avg_pool_layer->input_layer_instance_names.push_back(last_layer_name);

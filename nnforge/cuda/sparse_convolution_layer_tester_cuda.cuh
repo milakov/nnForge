@@ -209,143 +209,8 @@ namespace nnforge
 			} // if (in_bounds)
 		}
 
-		template<int DIMENSION_COUNT>
-		__global__ void sparse_convolution_generic_blocked_kernel(
-			float * __restrict output,
-			const float * __restrict input,
-			const float * __restrict weights,
-			const int * __restrict column_indices,
-			const int * __restrict row_ptrs,
-			const float * __restrict biases,
-			bool bias_exists,
-			array_by_val<int, DIMENSION_COUNT> output_sizes,
-			array_by_val<int_fastdiv, DIMENSION_COUNT> output_block_sizes,
-			array_by_val<int, DIMENSION_COUNT> input_sizes,
-			array_by_val<int, DIMENSION_COUNT> window_sizes,
-			array_by_val<int, DIMENSION_COUNT> left_zero_padding,
-			int input_feature_map_count,
-			int output_feature_map_count,
-			int input_elem_count_per_feature_map,
-			int entry_count,
-			int block_count_per_feature_map,
-			int weight_count_per_block)
-		{
-			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
-			int output_feature_map_id = blockIdx.y * blockDim.y + threadIdx.y;
-			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
-
-			bool in_bounds = (entry_id < entry_count) && (output_feature_map_id < output_feature_map_count) && (neuron_id < block_count_per_feature_map);
-			if (in_bounds)
-			{
-				int xyzw_output[DIMENSION_COUNT];
-				int remainder = neuron_id;
-				#pragma unroll
-				for(int i = 0; i < DIMENSION_COUNT - 1; ++i)
-				{
-					int new_remainder = remainder / output_block_sizes[i];
-					xyzw_output[i] = remainder - output_block_sizes[i] * new_remainder;
-					remainder = new_remainder;
-				}
-				xyzw_output[DIMENSION_COUNT - 1] = remainder;
-				xyzw_output[0] *= BLOCK_WIDTH;
-				if (DIMENSION_COUNT > 1)
-					xyzw_output[1] *= BLOCK_HEIGHT;
-
-				int xyzw[DIMENSION_COUNT];
-				#pragma unroll
-				for(int i = 0; i < DIMENSION_COUNT; ++i)
-				{
-					xyzw[i] = xyzw_output[i] - left_zero_padding[i];
-				}
-
-				int start_column_index = __load_nc(row_ptrs + output_feature_map_id);
-				int end_column_index = __load_nc(row_ptrs + output_feature_map_id + 1);
-
-				const float * current_weights = weights + weight_count_per_block * start_column_index;
-
-				int input_elem_id_base = entry_id * input_feature_map_count;
-				#pragma unroll
-				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-					input_elem_id_base = input_elem_id_base * input_sizes[i] + xyzw[i];
-
-				float sums[(DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1)][BLOCK_WIDTH];
-
-				float bias = bias_exists ? biases[output_feature_map_id] : 0.0F;
-				#pragma unroll
-				for(int i = 0; i < (DIMENSION_COUNT > 1 ? BLOCK_HEIGHT : 1); ++i)
-					#pragma unroll
-					for(int j = 0; j < BLOCK_WIDTH; ++j)
-						sums[i][j] = bias;
-
-				for(int nnz_index = start_column_index; nnz_index < end_column_index; ++nnz_index)
-				{
-					int input_feature_map_id = column_indices[nnz_index];
-					int input_elem_id = input_elem_id_base + input_feature_map_id * input_elem_count_per_feature_map;
-
-					for(int input_z = (DIMENSION_COUNT > 2 ? xyzw[2] : 0); input_z < (DIMENSION_COUNT > 2 ? xyzw[2] + window_sizes[2] : 1); ++input_z)
-					{
-						bool b_fit2 = (DIMENSION_COUNT > 2) ? ((unsigned int)input_z < (unsigned int)input_sizes[2]) : true;
-
-						#pragma unroll 2
-						for(int input_yy = 0; input_yy < ((DIMENSION_COUNT > 1) ? window_sizes[1] : 1); ++input_yy)
-						{
-							#pragma unroll 2
-							for(int input_xx = 0; input_xx < window_sizes[0]; ++input_xx)
-							{
-								float weight = __load_nc(current_weights);
-
-								#pragma unroll
-								for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
-								{
-									bool b_fit1 = (DIMENSION_COUNT > 1) ? (b_fit2 && ((unsigned int)(xyzw[1] + input_yy + pos_y) < (unsigned int)input_sizes[1])) : true;
-									#pragma unroll
-									for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
-									{
-										bool b_fit0 = (b_fit1 && ((unsigned int)(xyzw[0] + input_xx + pos_x) < (unsigned int)input_sizes[0]));
-										int current_offset = input_elem_id + (input_yy + pos_y) * input_sizes[0] + input_xx + pos_x;
-										float input_val = b_fit0 ? __load_nc(input + current_offset) : 0.0F;
-										sums[pos_y][pos_x] += weight * input_val;
-									}
-								}
-
-								++current_weights;
-							}
-						}
-
-						if (DIMENSION_COUNT > 2)
-							input_elem_id += input_sizes[0] * input_sizes[1];
-					} // for input_z
-				} // for nnz_index
-
-				int output_offset = entry_id * output_feature_map_count + output_feature_map_id;
-				#pragma unroll
-				for(int i = DIMENSION_COUNT - 1; i >= 0; --i)
-					output_offset = output_offset * output_sizes[i] + xyzw_output[i];
-
-				#pragma unroll
-				for(int pos_y = 0; pos_y < ((DIMENSION_COUNT > 1) ? BLOCK_HEIGHT : 1); ++pos_y)
-				{
-					if ((DIMENSION_COUNT > 1) ? (pos_y < output_sizes[1] - xyzw_output[1]) : true)
-					{
-						#pragma unroll
-						for(int pos_x = 0; pos_x < BLOCK_WIDTH; ++pos_x)
-						{
-							if (pos_x < output_sizes[0] - xyzw_output[0])
-							{
-								output[output_offset + pos_x] = sums[pos_y][pos_x];
-							}
-						}
-					}
-					output_offset += output_sizes[0];
-				}
-			} // if (in_bounds)
-		}
-
 #define launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, window_height_const) \
 	sparse_convolution_exact_blocked_kernel<dimension_count_const,window_width_const,window_height_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, *input_buffers[0], *data[0], *data_custom[0], *data_custom[1], bias ? *data[1] : (const float *)0, bias, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_feature_map, weight_count_per_block, 0U);
-
-#define launch_generic_kernel_const(dimension_count_const) \
-	sparse_convolution_generic_blocked_kernel<dimension_count_const><<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(*output_buffer, *input_buffers[0], *data[0], *data_custom[0], *data_custom[1], bias ? *data[1] : (const float *)0, bias, output_sizes, output_block_sizes, input_sizes, window_sizes, left_zero_padding, input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count, input_elem_count_per_feature_map_list[0], entry_count, block_count_per_feature_map, weight_count_per_block);
 
 #define launch_kernel_const_const(dimension_count_const, window_width_const, window_height) \
 	if (dimension_count_const > 1) \
@@ -353,23 +218,22 @@ namespace nnforge
 		switch (window_height) \
 		{ \
 		case 1: \
-			if (window_width_const >= 1) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 1); } else { launch_generic_kernel_const(dimension_count_const); } \
+			if (window_width_const >= 1) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 1); } else { throw neural_network_exception("Unsupported config for sparse convolutional layer"); } \
 			break; \
 		case 2: \
-			if (window_width_const >= 2) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 2); } else { launch_generic_kernel_const(dimension_count_const); } \
+			if (window_width_const >= 2) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 2); } else { throw neural_network_exception("Unsupported config for sparse convolutional layer"); } \
 			break; \
 		case 3: \
-			if (window_width_const >= 3) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 3); } else { launch_generic_kernel_const(dimension_count_const); } \
+			if (window_width_const >= 3) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 3); } else { throw neural_network_exception("Unsupported config for sparse convolutional layer"); } \
 			break; \
 		case 4: \
-			if (window_width_const >= 4) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 4); } else { launch_generic_kernel_const(dimension_count_const); } \
+			if (window_width_const >= 4) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 4); } else { throw neural_network_exception("Unsupported config for sparse convolutional layer"); } \
 			break; \
 		case 5: \
-			if (window_width_const >= 5) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 5); } else { launch_generic_kernel_const(dimension_count_const); } \
+			if (window_width_const >= 5) { launch_exact_kernel_const_const_const(dimension_count_const, window_width_const, 5); } else { throw neural_network_exception("Unsupported config for sparse convolutional layer"); } \
 			break; \
 		default: \
-			launch_generic_kernel_const(dimension_count_const); \
-			break; \
+			throw neural_network_exception("Unsupported config for sparse convolutional layer"); \
 		} \
 	} \
 	else \
@@ -396,8 +260,7 @@ namespace nnforge
 		launch_kernel_const_const(dimension_count_const, 5, window_height); \
 		break; \
 	default: \
-		launch_generic_kernel_const(dimension_count_const); \
-		break; \
+		throw neural_network_exception("Unsupported config for sparse convolutional layer"); \
 	};
 
 		template<int dimension_count>

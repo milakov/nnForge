@@ -364,6 +364,7 @@ namespace nnforge
 
 			bool explore_strict = true;
 			bool should_retry_with_larger_margin = false;
+			unsigned int current_output_feature_map_index = 0;
 			for(int i = 0; i < static_cast<int>(feature_map_connection_count); ++i)
 			{
 				unsigned int output_feature_map_id;
@@ -371,13 +372,23 @@ namespace nnforge
 				bool found = false;
 				if (explore_strict)
 				{
-					for(int attempt_id = 0; (attempt_id < 100) && (!found); ++attempt_id)
+					for(int attempt_id = 0; (attempt_id < 20) && (!found); ++attempt_id)
 					{
-						nnforge_uniform_int_distribution<unsigned int> out_dist(0U, static_cast<unsigned int>(output_feature_map_id_available_list.size() - 1));
-						output_feature_map_id = output_feature_map_id_available_list[out_dist(generator)];
+						output_feature_map_id = output_feature_map_id_available_list[current_output_feature_map_index];
 						nnforge_uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_list.size() - 1));
 						input_feature_map_id = input_feature_map_id_available_list[in_dist(generator)];
 						found = !connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id];
+					}
+					if (!found)
+					{
+						for(int attempt_id = 0; (attempt_id < 100) && (!found); ++attempt_id)
+						{
+							nnforge_uniform_int_distribution<unsigned int> out_dist(0U, static_cast<unsigned int>(output_feature_map_id_available_list.size() - 1));
+							output_feature_map_id = output_feature_map_id_available_list[out_dist(generator)];
+							nnforge_uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_list.size() - 1));
+							input_feature_map_id = input_feature_map_id_available_list[in_dist(generator)];
+							found = !connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id];
+						}
 					}
 					explore_strict = found;
 				}
@@ -401,14 +412,21 @@ namespace nnforge
 					unsigned int output_feature_map_connection_count = ++output_feature_map_to_connection_count_map.find(output_feature_map_id)->second;
 					if (output_feature_map_connection_count == max_connections_for_output_feature_map)
 						output_feature_map_id_available_list.erase(std::find(output_feature_map_id_available_list.begin(), output_feature_map_id_available_list.end(), output_feature_map_id));
-					else if (output_feature_map_connection_count == max_connections_for_output_feature_map_overflow)
-						output_feature_map_id_available_overflow_list.erase(std::find(output_feature_map_id_available_overflow_list.begin(), output_feature_map_id_available_overflow_list.end(), output_feature_map_id));
+					else
+					{
+						++current_output_feature_map_index;
+						if (output_feature_map_connection_count == max_connections_for_output_feature_map_overflow)
+							output_feature_map_id_available_overflow_list.erase(std::find(output_feature_map_id_available_overflow_list.begin(), output_feature_map_id_available_overflow_list.end(), output_feature_map_id));
+					}
 
 					unsigned int input_feature_map_connection_count = ++input_feature_map_to_connection_count_map.find(input_feature_map_id)->second;
 					if (input_feature_map_connection_count == max_connections_for_input_feature_map)
 						input_feature_map_id_available_list.erase(std::find(input_feature_map_id_available_list.begin(), input_feature_map_id_available_list.end(), input_feature_map_id));
 					else if (input_feature_map_connection_count == max_connections_for_input_feature_map_overflow)
 						input_feature_map_id_available_overflow_list.erase(std::find(input_feature_map_id_available_overflow_list.begin(), input_feature_map_id_available_overflow_list.end(), input_feature_map_id));
+
+					if (!output_feature_map_id_available_list.empty())
+						current_output_feature_map_index = current_output_feature_map_index % output_feature_map_id_available_list.size();
 
 					if (explore_strict)
 						explore_strict = (!output_feature_map_id_available_list.empty()) && (!input_feature_map_id_available_list.empty());
