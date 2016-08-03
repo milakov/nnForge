@@ -48,6 +48,8 @@ protected:
 
 	virtual std::vector<nnforge::float_option> get_float_options();
 
+	virtual std::vector<nnforge::string_option> get_string_options();
+
 	virtual std::vector<nnforge::data_transformer::ptr> get_data_transformer_list(
 		const std::string& dataset_name,
 		const std::string& layer_name,
@@ -74,9 +76,11 @@ private:
 		unsigned int class_id,
 		nnforge::structured_data_writer& label_writer);
 
-	void create_resnet_schema() const;
+	void create_resnet_dense_bottleneck_schema() const;
 
-	void create_resnet_sparse_schema() const;
+	void create_resnet_sparse_basic_schema() const;
+
+	void create_resnet_dense_basic_schema() const;
 
 	void add_resnet_bottleneck_block(
 		std::vector<nnforge::layer::const_ptr>& layer_list,
@@ -109,10 +113,20 @@ private:
 		float beginning_sparsity_ratio,
 		float sparsity_ratio) const;
 
+	void add_resnet_dense_basic_block(
+		std::vector<nnforge::layer::const_ptr>& layer_list,
+		unsigned int& last_layer_feature_map_count,
+		std::string& last_layer_name,
+		unsigned int& major_block_id,
+		char& minor_block_id,
+		unsigned int feature_map_count,
+		bool spatial_size_reduction) const;
+
 private:
 	std::map<unsigned int, std::string> wnid_to_ilsvrc2014id_map;
 	std::map<std::string, unsigned int> ilsvrc2014id_to_wnid_map;
 	int epoch_count_in_image_net_training_set;
+	std::string schema_create_type;
 
 	static const char * cls_class_info_filename;
 	static const char * training_images_folder_name;

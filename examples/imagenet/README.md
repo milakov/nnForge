@@ -31,7 +31,7 @@ Train
 
 	./imagenet prepare_training_data
 	./imagenet create_normalizer --normalizer_layer_name images
-	./imagenet create_resnet_schema
+	./imagenet create_schema
 	./imagenet train --schema schema_resnet50.txt
 	
 Training will take a couple of weeks on modern GPU and will give you about 7.5% Top-5 error on single image inference on validation dataset.
