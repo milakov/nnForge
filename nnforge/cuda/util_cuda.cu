@@ -31,8 +31,11 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		__forceinline__ __device__ double atomicAdd(double* address, double val)
+		__forceinline__ __device__ double atomicAddD(double* address, double val)
 		{
+#if (__CUDA_ARCH__ >= 600)
+				return atomicAdd(address, val);
+#else
 				unsigned long long int* address_as_ull = (unsigned long long int*)address;
 				unsigned long long int old = *address_as_ull, assumed;
 				do {
@@ -40,6 +43,7 @@ namespace nnforge
 					old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
 				} while (assumed != old);
 				return __longlong_as_double(old);
+#endif
 		}
 
 		__global__ void set_with_value_util_kernel(
@@ -374,7 +378,7 @@ namespace nnforge
 
 				int accum_bucket_id = block_id & update_accum_mask;
 
-				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+				atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
 			}
 		}
 
@@ -429,7 +433,7 @@ namespace nnforge
 
 				int accum_bucket_id = block_id & update_accum_mask;
 
-				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+				atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
 			}
 		}
 
@@ -486,7 +490,7 @@ namespace nnforge
 
 				int accum_bucket_id = block_id & update_accum_mask;
 
-				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+				atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
 			}
 		}
 
@@ -553,7 +557,7 @@ namespace nnforge
 
 				int accum_bucket_id = block_id & update_accum_mask;
 
-				atomicAdd(update_accum + accum_bucket_id, upd_acc_d);
+				atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
 			}
 		}
 
