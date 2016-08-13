@@ -21,6 +21,7 @@
     <ClInclude Include="batch_norm_layer.h" />
     <ClInclude Include="buffer_lifetime.h" />
     <ClInclude Include="cdf_to_pdf_layer.h" />
+    <ClInclude Include="clean_snapshots_network_data_pusher.h" />
     <ClInclude Include="color_palette.h" />
     <ClInclude Include="complex_network_data_pusher.h" />
     <ClInclude Include="concat_layer.h" />
@@ -153,6 +154,7 @@
     <ClCompile Include="backward_propagation_factory.cpp" />
     <ClCompile Include="batch_norm_layer.cpp" />
     <ClCompile Include="cdf_to_pdf_layer.cpp" />
+    <ClCompile Include="clean_snapshots_network_data_pusher.cpp" />
     <ClCompile Include="color_palette.cpp" />
     <ClCompile Include="complex_network_data_pusher.cpp" />
     <ClCompile Include="concat_layer.cpp" />

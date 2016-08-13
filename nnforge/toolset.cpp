@@ -31,6 +31,7 @@
 #include "network_data_peeker_random.h"
 #include "complex_network_data_pusher.h"
 #include "save_snapshot_network_data_pusher.h"
+#include "clean_snapshots_network_data_pusher.h"
 #include "report_progress_network_data_pusher.h"
 #include "summarize_network_data_pusher.h"
 #include "validate_progress_network_data_pusher.h"
@@ -424,6 +425,7 @@ namespace nnforge
 		res.push_back(int_option("dump_compact_samples", &dump_compact_samples, 1, "Compact (average) results acrioss samples for inference of type dump_average_across_nets"));
 		res.push_back(int_option("shuffle_block_size", &shuffle_block_size, 0, "The size of contiguous blocks when shuffling training data, 0 indicates no shuffling"));
 		res.push_back(int_option("check_gradient_max_weights_per_set", &check_gradient_max_weights_per_set, 20, "The maximum amount of weights to check in the set"));
+		res.push_back(int_option("keep_snapshots_frequency", &keep_snapshots_frequency, 10, "Keep every Nth snapshot"));
 
 		return res;
 	}
@@ -753,6 +755,11 @@ namespace nnforge
 		if (dump_snapshot)
 		{
 			progress.push_back(network_data_pusher::ptr(new save_snapshot_network_data_pusher(batch_snapshot_folder)));
+		}
+
+		if (keep_snapshots_frequency > 1)
+		{
+			progress.push_back(network_data_pusher::ptr(new clean_snapshots_network_data_pusher(batch_snapshot_folder, keep_snapshots_frequency)));
 		}
 
 		progress.push_back(network_data_pusher::ptr(new report_progress_network_data_pusher()));

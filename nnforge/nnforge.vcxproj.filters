@@ -509,6 +509,9 @@
     <ClInclude Include="natural_image_data_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
     </ClInclude>
+    <ClInclude Include="clean_snapshots_network_data_pusher.h">
+      <Filter>Header Files\training\pushers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -882,6 +885,9 @@
     </ClCompile>
     <ClCompile Include="natural_image_data_transformer.cpp">
       <Filter>Source Files\data_transformers</Filter>
+    </ClCompile>
+    <ClCompile Include="clean_snapshots_network_data_pusher.cpp">
+      <Filter>Source Files\training\pushers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -219,6 +219,7 @@ namespace nnforge
 		float momentum_val2;
 		bool resume_from_snapshot;
 		bool dump_snapshot;
+		int keep_snapshots_frequency;
 		int ann_count;
 		int batch_offset;
 		std::string inference_mode;
