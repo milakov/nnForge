@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,7 +30,11 @@ namespace nnforge
 		generator = rnd::get_random_generator();
 
 		for(unsigned int i = 0; i < min_shift_list.size(); ++i)
-			shift_distribution_list.push_back(nnforge_uniform_real_distribution<float>(min_shift_list[i], max_shift_list[i]));
+		{
+			bool apply = (min_shift_list[i] < max_shift_list[i]);
+			apply_shift_distribution_list.push_back(apply);
+			shift_distribution_list.push_back(nnforge_uniform_real_distribution<float>(min_shift_list[i], max_shift_list[i] + (apply ? 0.0F : 1.0F)));
+		}
 	}
 
 	uniform_intensity_data_transformer::~uniform_intensity_data_transformer()
@@ -54,7 +58,7 @@ namespace nnforge
 			{
 				nnforge_uniform_real_distribution<float>& dist = shift_distribution_list[feature_map_id];
 				float shift = dist.min();
-				if (dist.max() > dist.min())
+				if (apply_shift_distribution_list[feature_map_id])
 					shift = dist(generator);
 				shift_list[feature_map_id] = shift;
 			}

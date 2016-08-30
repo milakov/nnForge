@@ -282,13 +282,15 @@ namespace nnforge
 				const float * buffer,
 				size_t elem_count,
 				const char * filepath,
-				cudaStream_t cuda_stream);
+				cudaStream_t cuda_stream,
+				unsigned int elem_count_per_line = 1);
 
 			static void dump_list(
 				const int * buffer,
 				size_t elem_count,
 				const char * filepath,
-				cudaStream_t cuda_stream);
+				cudaStream_t cuda_stream,
+				unsigned int elem_count_per_line = 1);
 
 		private:
 			cuda_util();

@@ -23,20 +23,38 @@ namespace nnforge
 	void debug_util::dump_list(
 		const float * buffer,
 		size_t elem_count,
-		const char * filepath)
+		const char * filepath,
+		unsigned int elem_count_per_line)
 	{
 		std::ofstream out(filepath);
 		for(size_t i = 0; i < elem_count; ++i)
-			out << buffer[i] << std::endl;
+		{
+			if ((i % elem_count_per_line) != 0)
+				out << '\t';
+			out << buffer[i];
+			if (((i + 1) % elem_count_per_line) == 0)
+				out << std::endl;
+		}
+		if ((elem_count % elem_count_per_line) != 0)
+			out << std::endl;
 	}
 
 	void debug_util::dump_list(
 		const int * buffer,
 		size_t elem_count,
-		const char * filepath)
+		const char * filepath,
+		unsigned int elem_count_per_line)
 	{
 		std::ofstream out(filepath);
 		for(size_t i = 0; i < elem_count; ++i)
-			out << buffer[i] << std::endl;
+		{
+			if ((i % elem_count_per_line) != 0)
+				out << '\t';
+			out << buffer[i];
+			if (((i + 1) % elem_count_per_line) == 0)
+				out << std::endl;
+		}
+		if ((elem_count % elem_count_per_line) != 0)
+			out << std::endl;
 	}
 }

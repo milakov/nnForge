@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,11 +27,13 @@ namespace nnforge
 	intensity_2d_data_transformer::intensity_2d_data_transformer(
 		float max_contrast_factor,
 		float max_absolute_brightness_shift)
+		: apply_contrast_distribution(max_contrast_factor > 1.0F)
+		, apply_brightness_shift_distribution(apply_brightness_shift_distribution != 0.0F)
 	{
 		generator = rnd::get_random_generator();
 
-		contrast_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_contrast_factor, max_contrast_factor);
-		brightness_shift_distribution = nnforge_uniform_real_distribution<float>(-max_absolute_brightness_shift, max_absolute_brightness_shift);
+		contrast_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_contrast_factor, max_contrast_factor + (apply_contrast_distribution ? 0.0F: 1.0F));
+		brightness_shift_distribution = nnforge_uniform_real_distribution<float>(-max_absolute_brightness_shift, max_absolute_brightness_shift + (apply_brightness_shift_distribution ? 0.0F : 1.0F));
 	}
 
 	intensity_2d_data_transformer::~intensity_2d_data_transformer()
@@ -53,9 +55,9 @@ namespace nnforge
 		{
 			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
 
-			if (contrast_distribution.max() > contrast_distribution.min())
+			if (apply_contrast_distribution)
 				contrast = contrast_distribution(generator);
-			if (brightness_shift_distribution.max() > brightness_shift_distribution.min())
+			if (apply_brightness_shift_distribution)
 				brightness_shift = brightness_shift_distribution(generator);
 		}
 

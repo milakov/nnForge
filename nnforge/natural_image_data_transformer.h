@@ -54,9 +54,15 @@ namespace nnforge
 		random_generator generator;
 		boost::mutex gen_mutex;
 
+		bool apply_brightness_distribution;
 		nnforge_uniform_real_distribution<float> brightness_distribution;
+
+		bool apply_contrast_distribution;
 		nnforge_uniform_real_distribution<float> contrast_distribution;
+
+		bool apply_saturation_distribution;
 		nnforge_uniform_real_distribution<float> saturation_distribution;
+
 		bool apply_lighting;
 		nnforge_normal_distribution<float> lighting_1st_eigen_alpha_distribution;
 		nnforge_normal_distribution<float> lighting_2nd_eigen_alpha_distribution;

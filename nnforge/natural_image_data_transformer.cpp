@@ -29,14 +29,20 @@ namespace nnforge
 		float saturation,
 		float lighting)
 		: generator(rnd::get_random_generator())
-		, brightness_distribution(nnforge_uniform_real_distribution<float>(1.0F - brightness, 1.0F + brightness))
-		, contrast_distribution(nnforge_uniform_real_distribution<float>(1.0F - contrast, 1.0F + contrast))
-		, saturation_distribution(nnforge_uniform_real_distribution<float>(1.0F - saturation, 1.0F + saturation))
+		, apply_brightness_distribution(brightness > 0.0F)
+		, apply_contrast_distribution(contrast > 0.0F)
+		, apply_saturation_distribution(saturation > 0.0F)
 		, apply_lighting(lighting > 0.0F)
 		, lighting_1st_eigen_alpha_distribution(0.0F, (lighting > 0.0F ? lighting : 1.0F) * 0.2175F)
 		, lighting_2nd_eigen_alpha_distribution(0.0F, (lighting > 0.0F ? lighting : 1.0F) * 0.0188F)
 		, lighting_3rd_eigen_alpha_distribution(0.0F, (lighting > 0.0F ? lighting : 1.0F) * 0.0045F)
 	{
+		if (apply_brightness_distribution)
+			brightness_distribution = nnforge_uniform_real_distribution<float>(nnforge_uniform_real_distribution<float>(1.0F - brightness, 1.0F + brightness));
+		if (apply_contrast_distribution)
+			contrast_distribution = nnforge_uniform_real_distribution<float>(nnforge_uniform_real_distribution<float>(1.0F - contrast, 1.0F + contrast));
+		if (apply_saturation_distribution)
+			saturation_distribution = nnforge_uniform_real_distribution<float>(nnforge_uniform_real_distribution<float>(1.0F - saturation, 1.0F + saturation));
 	}
 
 	natural_image_data_transformer::~natural_image_data_transformer()
@@ -62,16 +68,16 @@ namespace nnforge
 		{
 			boost::lock_guard<boost::mutex> lock(gen_mutex);
 
-			alpha_brightness = brightness_distribution.min();
-			if (brightness_distribution.max() > brightness_distribution.min())
+			alpha_brightness = 1.0F;
+			if (apply_brightness_distribution)
 				alpha_brightness = brightness_distribution(generator);
 
-			alpha_contrast = contrast_distribution.min();
-			if (contrast_distribution.max() > contrast_distribution.min())
+			alpha_contrast = 1.0F;
+			if (apply_contrast_distribution)
 				alpha_contrast = contrast_distribution(generator);
 
-			alpha_saturation = saturation_distribution.min();
-			if (saturation_distribution.max() > saturation_distribution.min())
+			alpha_saturation = 1.0F;
+			if (apply_saturation_distribution)
 				alpha_saturation = saturation_distribution(generator);
 
 			if (alpha_brightness != 1.0F)

@@ -1131,24 +1131,26 @@ namespace nnforge
 			const float * buffer,
 			size_t elem_count,
 			const char * filepath,
-			cudaStream_t cuda_stream)
+			cudaStream_t cuda_stream,
+			unsigned int elem_count_per_line)
 		{
 			std::vector<float> elems(elem_count);
 			cuda_safe_call(cudaMemcpyAsync(&elems[0], buffer, elem_count * sizeof(float), cudaMemcpyDeviceToHost, cuda_stream));
 			cuda_safe_call(cudaStreamSynchronize(cuda_stream));
-			debug_util::dump_list(&elems[0], elem_count, filepath);
+			debug_util::dump_list(&elems[0], elem_count, filepath, elem_count_per_line);
 		}
 
 		void cuda_util::dump_list(
 			const int * buffer,
 			size_t elem_count,
 			const char * filepath,
-			cudaStream_t cuda_stream)
+			cudaStream_t cuda_stream,
+			unsigned int elem_count_per_line)
 		{
 			std::vector<int> elems(elem_count);
 			cuda_safe_call(cudaMemcpyAsync(&elems[0], buffer, elem_count * sizeof(int), cudaMemcpyDeviceToHost, cuda_stream));
 			cuda_safe_call(cudaStreamSynchronize(cuda_stream));
-			debug_util::dump_list(&elems[0], elem_count, filepath);
+			debug_util::dump_list(&elems[0], elem_count, filepath, elem_count_per_line);
 		}
 	}
 }

@@ -26,12 +26,14 @@ namespace nnforge
 		static void dump_list(
 			const float * buffer,
 			size_t elem_count,
-			const char * filepath);
+			const char * filepath,
+			unsigned int elem_count_per_line = 1);
 
 		static void dump_list(
 			const int * buffer,
 			size_t elem_count,
-			const char * filepath);
+			const char * filepath,
+			unsigned int elem_count_per_line = 1);
 
 	private:
 		debug_util();

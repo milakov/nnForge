@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -43,7 +43,10 @@ namespace nnforge
 		random_generator generator;
 		boost::mutex gen_stream_mutex;
 
+		bool apply_contrast_distribution;
 		nnforge_uniform_real_distribution<float> contrast_distribution;
+
+		bool apply_brightness_shift_distribution;
 		nnforge_uniform_real_distribution<float> brightness_shift_distribution;
 	};
 }

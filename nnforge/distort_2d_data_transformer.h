@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -54,15 +54,29 @@ namespace nnforge
 		random_generator generator;
 		boost::mutex gen_stream_mutex;
 
+		bool apply_rotate_angle_distribution;
 		nnforge_uniform_real_distribution<float> rotate_angle_distribution;
+
+		bool apply_scale_distribution;
 		nnforge_uniform_real_distribution<float> scale_distribution;
+
+		bool apply_shift_x_distribution;
 		nnforge_uniform_real_distribution<float> shift_x_distribution;
+
+		bool apply_shift_y_distribution;
 		nnforge_uniform_real_distribution<float> shift_y_distribution;
+
 		nnforge_uniform_int_distribution<int> flip_around_x_distribution;
 		nnforge_uniform_int_distribution<int> flip_around_y_distribution;
+
+		bool apply_stretch_distribution;
 		nnforge_uniform_real_distribution<float> stretch_distribution;
+
 		nnforge_uniform_real_distribution<float> stretch_angle_distribution;
+
+		bool apply_perspective_reverse_distance_distribution;
 		nnforge_uniform_real_distribution<float> perspective_reverse_distance_distribution;
+
 		nnforge_uniform_real_distribution<float> perspective_angle_distribution;
 	};
 }
