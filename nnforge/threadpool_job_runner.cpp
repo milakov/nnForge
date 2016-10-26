@@ -16,19 +16,23 @@
 
 #include "threadpool_job_runner.h"
 
+#include <boost/thread/thread.hpp>
+
 namespace nnforge
 {
 	threadpool_job_runner::threadpool_job_runner(unsigned int thread_count)
 		: thread_count(thread_count)
 		, work(service)
+		, threadpool(new boost::thread_group())
 	{
 		for(unsigned int i = 0; i < thread_count; ++i)
-			threadpool.create_thread(boost::bind(&boost::asio::io_service::run, &service));
+			((boost::thread_group *)threadpool)->create_thread(boost::bind(&boost::asio::io_service::run, &service));
 	}
 
 	threadpool_job_runner::~threadpool_job_runner()
 	{
 		service.stop();
-		threadpool.join_all();
+		((boost::thread_group *)threadpool)->join_all();
+		delete ((boost::thread_group *)threadpool);
 	}
 }

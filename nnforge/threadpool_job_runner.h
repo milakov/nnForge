@@ -23,7 +23,6 @@
 #endif 
 
 #include <boost/asio/io_service.hpp>
-#include <boost/thread/thread.hpp>
 
 namespace nnforge
 {
@@ -42,7 +41,7 @@ namespace nnforge
 		boost::asio::io_service service;
 
 	private:
-		boost::thread_group threadpool;
+		void * threadpool;
 		boost::asio::io_service::work work;
 
 	private:
