@@ -21,13 +21,13 @@
 #include <cuda_runtime.h>
 
 #include <boost/format.hpp>
+#include <memory>
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
 #include "int_fastdiv.h"
 
 #include "../sparse_convolution_layer.h"
-#include "../nn_types.h"
 
 #define MAX_DIMENSION_COUNT 3
 
@@ -299,7 +299,7 @@ namespace nnforge
 		protected:
 			virtual void tester_configured()
 			{
-				nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+				std::shared_ptr<const sparse_convolution_layer> layer_derived = std::dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 				bias = layer_derived->bias;
 

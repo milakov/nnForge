@@ -21,13 +21,13 @@
 #include "layer_data_custom.h"
 #include "rnd.h"
 #include "layer_data_configuration.h"
-#include "nn_types.h"
 #include "tiling_factor.h"
 #include "layer_action.h"
 
 #include <ostream>
 #include <istream>
 #include <set>
+#include <memory>
 
 namespace nnforge
 {
@@ -37,10 +37,10 @@ namespace nnforge
 	class layer
 	{
 	public:
-		typedef nnforge_shared_ptr<layer> ptr;
-		typedef nnforge_shared_ptr<const layer> const_ptr;
+		typedef std::shared_ptr<layer> ptr;
+		typedef std::shared_ptr<const layer> const_ptr;
 
-		virtual ~layer();
+		virtual ~layer() = default;
 
 		virtual layer::ptr clone() const = 0;
 
@@ -110,7 +110,7 @@ namespace nnforge
 		std::vector<std::string> input_layer_instance_names;
 
 	protected:
-		layer();
+		layer() = default;
 
 		virtual data_config get_data_config() const;
 

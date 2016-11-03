@@ -38,7 +38,7 @@ namespace nnforge
 		, neuron_value_list(entry_count)
 	{
 		for(unsigned int i = 0; i < entry_count; ++i)
-			neuron_value_list[i] = nnforge_shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count));
+			neuron_value_list[i] = std::shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count));
 	}
 
 	neuron_value_set::neuron_value_set(
@@ -48,7 +48,7 @@ namespace nnforge
 		, neuron_value_list(source_neuron_value_set_list[0]->neuron_value_list.size())
 	{
 		for(unsigned int i = 0; i < static_cast<unsigned int>(neuron_value_list.size()); ++i)
-			neuron_value_list[i] = nnforge_shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count));
+			neuron_value_list[i] = std::shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count));
 
 		if (merge_type == merge_average)
 		{
@@ -123,7 +123,7 @@ namespace nnforge
 
 	void neuron_value_set::add_entry(const float * new_data)
 	{
-		neuron_value_list.push_back(nnforge_shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count)));
+		neuron_value_list.push_back(std::shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count)));
 		memcpy(&neuron_value_list.back()->at(0), new_data, neuron_count * sizeof(float));
 	}
 
@@ -134,17 +134,17 @@ namespace nnforge
 		if (neuron_value_list.size() <= entry_id)
 		{
 			neuron_value_list.resize(entry_id + 1);
-			neuron_value_list[entry_id] = nnforge_shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count));
+			neuron_value_list[entry_id] = std::shared_ptr<std::vector<float> >(new std::vector<float>(neuron_count));
 		}
 		memcpy(&neuron_value_list[entry_id]->at(0), new_data, neuron_count * sizeof(float));
 	}
 
-	nnforge_shared_ptr<std::vector<double> > neuron_value_set::get_average() const
+	std::shared_ptr<std::vector<double> > neuron_value_set::get_average() const
 	{
-		nnforge_shared_ptr<std::vector<double> > res(new std::vector<double>(neuron_count, 0.0));
-		for(std::vector<nnforge_shared_ptr<std::vector<float> > >::const_iterator it = neuron_value_list.begin(); it != neuron_value_list.end(); ++it)
+		std::shared_ptr<std::vector<double> > res(new std::vector<double>(neuron_count, 0.0));
+		for(std::vector<std::shared_ptr<std::vector<float> > >::const_iterator it = neuron_value_list.begin(); it != neuron_value_list.end(); ++it)
 		{
-			nnforge_shared_ptr<std::vector<float> > current_item = *it;
+			std::shared_ptr<std::vector<float> > current_item = *it;
 			for(unsigned int i = 0; i < neuron_count; ++i)
 				res->at(i) += static_cast<double>(current_item->at(i));
 		}

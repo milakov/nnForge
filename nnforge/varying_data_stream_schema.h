@@ -26,8 +26,8 @@ namespace nnforge
 		static const boost::uuids::uuid varying_data_stream_guid;
 
 	private:
-		varying_data_stream_schema();
-		varying_data_stream_schema(const varying_data_stream_schema&);
-		varying_data_stream_schema& operator =(const varying_data_stream_schema&);
+		varying_data_stream_schema() = delete;
+		varying_data_stream_schema(const varying_data_stream_schema&) = delete;
+		varying_data_stream_schema& operator =(const varying_data_stream_schema&) = delete;
 	};
 }

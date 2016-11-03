@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,11 +32,7 @@ namespace nnforge
 		, sigma(sigma)
 		, border_value(border_value)
 		, gen(rnd::get_random_generator())
-		, displacement_distribution(nnforge_uniform_real_distribution<float>(-1.0F, 1.0F))
-	{
-	}
-
-	elastic_deformation_2d_data_transformer::~elastic_deformation_2d_data_transformer()
+		, displacement_distribution(std::uniform_real_distribution<float>(-1.0F, 1.0F))
 	{
 	}
 
@@ -55,7 +51,7 @@ namespace nnforge
 		cv::Mat1f y_disp(original_config.dimension_sizes[1], original_config.dimension_sizes[0]);
 
 		{
-			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
+			std::lock_guard<std::mutex> lock(gen_stream_mutex);
 
 			for(int row_id = 0; row_id < x_disp.rows; ++row_id)
 			{

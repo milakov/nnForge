@@ -27,14 +27,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		upsampling_layer_updater_schema::upsampling_layer_updater_schema()
-		{
-		}
-
-		upsampling_layer_updater_schema::~upsampling_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr upsampling_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new upsampling_layer_updater_schema());

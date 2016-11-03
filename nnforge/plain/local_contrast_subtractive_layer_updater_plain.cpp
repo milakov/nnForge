@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,14 +28,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		local_contrast_subtractive_layer_updater_plain::local_contrast_subtractive_layer_updater_plain()
-		{
-		}
-
-		local_contrast_subtractive_layer_updater_plain::~local_contrast_subtractive_layer_updater_plain()
-		{
-		}
-
 		std::string local_contrast_subtractive_layer_updater_plain::get_type_name() const
 		{
 			return local_contrast_subtractive_layer::layer_type_name;
@@ -58,7 +50,7 @@ namespace nnforge
 		{
 			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			std::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 			const std::vector<std::vector<float> >& window_weights_list = layer_derived->window_weights_list;
 			const std::vector<unsigned int>& feature_maps_affected = layer_derived->feature_maps_affected;
 			const std::vector<unsigned int>& feature_maps_unaffected = layer_derived->feature_maps_unaffected;
@@ -193,7 +185,7 @@ namespace nnforge
 		{
 			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			std::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 			const std::vector<std::vector<float> >& window_weights_list = layer_derived->window_weights_list;
 			const std::vector<unsigned int>& feature_maps_affected = layer_derived->feature_maps_affected;
 			const std::vector<unsigned int>& feature_maps_unaffected = layer_derived->feature_maps_unaffected;

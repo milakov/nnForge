@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,14 +22,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		layer_updater_plain::layer_updater_plain()
-		{
-		}
-
-		layer_updater_plain::~layer_updater_plain()
-		{
-		}
-
 		void layer_updater_plain::run_backward_data_propagation(
 			unsigned int input_index,
 			plain_buffer::ptr input_errors_buffer,

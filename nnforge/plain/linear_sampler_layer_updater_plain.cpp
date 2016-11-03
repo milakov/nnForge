@@ -16,7 +16,6 @@
 
 #include "linear_sampler_layer_updater_plain.h"
 
-#include "../nn_types.h"
 #include "../linear_sampler_layer.h"
 #include "../neural_network_exception.h"
 
@@ -26,14 +25,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		linear_sampler_layer_updater_plain::linear_sampler_layer_updater_plain()
-		{
-		}
-
-		linear_sampler_layer_updater_plain::~linear_sampler_layer_updater_plain()
-		{
-		}
-
 		std::string linear_sampler_layer_updater_plain::get_type_name() const
 		{
 			return linear_sampler_layer::layer_type_name;

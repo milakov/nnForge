@@ -17,7 +17,6 @@
 #include "entry_convolution_layer_tester_plain.h"
 
 #include "../entry_convolution_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -25,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		entry_convolution_layer_tester_plain::entry_convolution_layer_tester_plain()
-		{
-		}
-
-		entry_convolution_layer_tester_plain::~entry_convolution_layer_tester_plain()
-		{
-		}
-
 		std::string entry_convolution_layer_tester_plain::get_type_name() const
 		{
 			return entry_convolution_layer::layer_type_name;
@@ -56,7 +47,7 @@ namespace nnforge
 			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const entry_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const entry_convolution_layer>(layer_schema);
+			std::shared_ptr<const entry_convolution_layer> layer_derived = std::dynamic_pointer_cast<const entry_convolution_layer>(layer_schema);
 			const unsigned int padding = layer_derived->padding;
 			const int total_workload = entry_count * neuron_count_per_feature_map;
 			const int input_feature_map_count = input_configuration_specific_list[0].feature_map_count;

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../nn_types.h"
+#include <memory>
 
 namespace nnforge
 {
@@ -25,20 +25,20 @@ namespace nnforge
 		class cuda_memobject
 		{
 		public:
-			virtual ~cuda_memobject();
+			virtual ~cuda_memobject() = default;
 
 			virtual size_t get_size() const = 0;
 
 		protected:
-			cuda_memobject();
+			cuda_memobject() = default;
 
 		private:
-			cuda_memobject(const cuda_memobject&);
-			cuda_memobject& operator =(const cuda_memobject&);
+			cuda_memobject(const cuda_memobject&) = delete;
+			cuda_memobject& operator =(const cuda_memobject&) = delete;
 			
 		};
 
-		typedef nnforge_shared_ptr<cuda_memobject> cuda_memobject_smart_ptr;
-		typedef nnforge_shared_ptr<const cuda_memobject> const_cuda_memobject_smart_ptr;
+		typedef std::shared_ptr<cuda_memobject> cuda_memobject_smart_ptr;
+		typedef std::shared_ptr<const cuda_memobject> const_cuda_memobject_smart_ptr;
 	}
 }

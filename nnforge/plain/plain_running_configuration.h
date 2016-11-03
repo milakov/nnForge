@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 
 #include "buffer_plain_size_configuration.h"
 
-#include "../nn_types.h"
+#include <memory>
 
 namespace nnforge
 {
@@ -29,7 +29,7 @@ namespace nnforge
 		class plain_running_configuration
 		{
 		public:
-			typedef nnforge_shared_ptr<const plain_running_configuration> const_ptr;
+			typedef std::shared_ptr<const plain_running_configuration> const_ptr;
 
 			plain_running_configuration(
 				int openmp_thread_count,
@@ -43,9 +43,9 @@ namespace nnforge
 			int openmp_thread_count;
 
 		private:
-			plain_running_configuration();
-			plain_running_configuration(const plain_running_configuration&);
-			plain_running_configuration& operator =(const plain_running_configuration&);
+			plain_running_configuration() = delete;
+			plain_running_configuration(const plain_running_configuration&) = delete;
+			plain_running_configuration& operator =(const plain_running_configuration&) = delete;
 		};
 
 		std::ostream& operator<< (std::ostream& out, const plain_running_configuration& running_configuration);

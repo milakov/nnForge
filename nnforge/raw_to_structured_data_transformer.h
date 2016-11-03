@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,18 +16,19 @@
 
 #pragma once
 
-#include "nn_types.h"
 #include "layer_configuration_specific.h"
+
 #include <vector>
+#include <memory>
 
 namespace nnforge
 {
 	class raw_to_structured_data_transformer
 	{
 	public:
-		typedef nnforge_shared_ptr<raw_to_structured_data_transformer> ptr;
+		typedef std::shared_ptr<raw_to_structured_data_transformer> ptr;
 
-		virtual ~raw_to_structured_data_transformer();
+		virtual ~raw_to_structured_data_transformer() = default;
 
 		virtual void transform(
 			unsigned int sample_id,
@@ -39,10 +40,10 @@ namespace nnforge
 		virtual unsigned int get_sample_count() const;
 
 	protected:
-		raw_to_structured_data_transformer();
+		raw_to_structured_data_transformer() = default;
 
 	private:
-		raw_to_structured_data_transformer(const raw_to_structured_data_transformer&);
-		raw_to_structured_data_transformer& operator =(const raw_to_structured_data_transformer&);
+		raw_to_structured_data_transformer(const raw_to_structured_data_transformer&) = delete;
+		raw_to_structured_data_transformer& operator =(const raw_to_structured_data_transformer&) = delete;
 	};
 }

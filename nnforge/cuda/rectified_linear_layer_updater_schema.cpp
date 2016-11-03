@@ -24,14 +24,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		rectified_linear_layer_updater_schema::rectified_linear_layer_updater_schema()
-		{
-		}
-
-		rectified_linear_layer_updater_schema::~rectified_linear_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr rectified_linear_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new rectified_linear_layer_updater_schema());

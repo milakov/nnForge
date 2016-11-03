@@ -25,9 +25,9 @@ namespace nnforge
 		class prefix_sum_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			prefix_sum_layer_updater_schema();
+			prefix_sum_layer_updater_schema() = default;
 
-			virtual ~prefix_sum_layer_updater_schema();
+			virtual ~prefix_sum_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

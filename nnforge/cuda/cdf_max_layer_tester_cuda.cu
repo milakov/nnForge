@@ -22,7 +22,7 @@
 #include "neural_network_cuda_exception.h"
 
 #include "../cdf_max_layer.h"
-#include "../nn_types.h"
+#include <memory>
 
 template<bool IS_MIN>
 __global__ void cdf_max_kernel(
@@ -59,14 +59,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		cdf_max_layer_tester_cuda::cdf_max_layer_tester_cuda()
-		{
-		}
-
-		cdf_max_layer_tester_cuda::~cdf_max_layer_tester_cuda()
-		{
-		}
-
 		void cdf_max_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -103,7 +95,7 @@ namespace nnforge
 
 		void cdf_max_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const cdf_max_layer> layer_derived = nnforge_dynamic_pointer_cast<const cdf_max_layer>(layer_schema);
+			std::shared_ptr<const cdf_max_layer> layer_derived = std::dynamic_pointer_cast<const cdf_max_layer>(layer_schema);
 
 			entry_subsampling_size = layer_derived->entry_subsampling_size;
 			is_min = layer_derived->is_min;

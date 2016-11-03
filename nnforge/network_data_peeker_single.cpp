@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,10 +21,6 @@ namespace nnforge
 	network_data_peeker_single::network_data_peeker_single(network_data::ptr data)
 		: data(data)
 		, is_peeked(false)
-	{
-	}
-
-	network_data_peeker_single::~network_data_peeker_single()
 	{
 	}
 

@@ -21,20 +21,20 @@
 #include "training_task_state.h"
 #include "network_schema.h"
 #include "structured_data_bunch_reader.h"
-#include "nn_types.h"
 #include "training_momentum.h"
 #include "learning_rate_decay_policy.h"
 
 #include <map>
+#include <memory>
 
 namespace nnforge
 {
 	class network_trainer
 	{
 	public:
-		typedef nnforge_shared_ptr<network_trainer> ptr;
+		typedef std::shared_ptr<network_trainer> ptr;
 
-		virtual ~network_trainer();
+		virtual ~network_trainer() = default;
 
 		void train(
 			structured_data_bunch_reader& reader,

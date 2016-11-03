@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ namespace nnforge
 			int shift_y_to_top);
 
 	private:
-		data_transformer_util();
-		~data_transformer_util();
+		data_transformer_util() = delete;
+		~data_transformer_util() = delete;
 	};
 }

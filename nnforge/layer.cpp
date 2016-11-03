@@ -19,19 +19,10 @@
 
 #include <boost/format.hpp>
 #include <algorithm>
-#include <boost/lambda/lambda.hpp>
 #include <sstream>
 
 namespace nnforge
 {
-	layer::layer()
-	{
-	}
-
-	layer::~layer()
-	{
-	}
-
 	bool layer::is_empty_data() const
 	{
 		return get_data_config().empty();

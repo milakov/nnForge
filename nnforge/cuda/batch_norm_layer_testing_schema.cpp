@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		batch_norm_layer_testing_schema::batch_norm_layer_testing_schema()
-		{
-		}
-
-		batch_norm_layer_testing_schema::~batch_norm_layer_testing_schema()
-		{
-		}
-
 		std::string batch_norm_layer_testing_schema::get_type_name() const
 		{
 			return batch_norm_layer::layer_type_name;

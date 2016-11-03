@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		concat_layer_tester_plain::concat_layer_tester_plain()
-		{
-		}
-
-		concat_layer_tester_plain::~concat_layer_tester_plain()
-		{
-		}
-
 		std::string concat_layer_tester_plain::get_type_name() const
 		{
 			return concat_layer::layer_type_name;

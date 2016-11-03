@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 #include "hyperbolic_tangent_layer_tester_cuda.h"
 
 #include <cuda_runtime.h>
+#include <memory>
 
 #include "util_cuda.h"
 
 #include "../hyperbolic_tangent_layer.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -55,14 +55,6 @@ namespace nnforge
 			}
 		}
 
-		hyperbolic_tangent_layer_tester_cuda::hyperbolic_tangent_layer_tester_cuda()
-		{
-		}
-
-		hyperbolic_tangent_layer_tester_cuda::~hyperbolic_tangent_layer_tester_cuda()
-		{
-		}
-
 		void hyperbolic_tangent_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -89,7 +81,7 @@ namespace nnforge
 
 		void hyperbolic_tangent_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
+			std::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 
 			hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
 			hyperbolic_tangent_major_multiplier = layer_derived->scale;

@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include "nn_types.h"
-
 #include <memory>
 
 namespace nnforge
@@ -25,9 +23,9 @@ namespace nnforge
 	class raw_data_writer
 	{
 	public:
-		typedef nnforge_shared_ptr<raw_data_writer> ptr;
+		typedef std::shared_ptr<raw_data_writer> ptr;
 
-		virtual ~raw_data_writer();
+		virtual ~raw_data_writer() = default;
 
 		virtual void raw_write(
 			const void * all_entry_data,
@@ -39,10 +37,10 @@ namespace nnforge
 			size_t data_length) = 0;
 
 	protected:
-		raw_data_writer();
+		raw_data_writer() = default;
 
 	private:
-		raw_data_writer(const raw_data_writer&);
-		raw_data_writer& operator =(const raw_data_writer&);
+		raw_data_writer(const raw_data_writer&) = delete;
+		raw_data_writer& operator =(const raw_data_writer&) = delete;
 	};
 }

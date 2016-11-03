@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -79,14 +79,6 @@ namespace nnforge
 			}
 		}
 
-		dropout_layer_updater_cuda::dropout_layer_updater_cuda()
-		{
-		}
-
-		dropout_layer_updater_cuda::~dropout_layer_updater_cuda()
-		{
-		}
-
 		void dropout_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -152,7 +144,7 @@ namespace nnforge
 
 		void dropout_layer_updater_cuda::updater_configured()
 		{
-			nnforge_shared_ptr<const dropout_layer> layer_derived = nnforge_dynamic_pointer_cast<const dropout_layer>(layer_schema);
+			std::shared_ptr<const dropout_layer> layer_derived = std::dynamic_pointer_cast<const dropout_layer>(layer_schema);
 			dropout_rate = layer_derived->dropout_rate;
 			keep_rate = 1.0F - dropout_rate;
 			mult = 1.0F / keep_rate;

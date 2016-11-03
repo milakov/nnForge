@@ -25,9 +25,9 @@ namespace nnforge
 		class affine_grid_generator_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			affine_grid_generator_layer_updater_schema();
+			affine_grid_generator_layer_updater_schema() = default;
 
-			virtual ~affine_grid_generator_layer_updater_schema();
+			virtual ~affine_grid_generator_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,10 +29,10 @@ namespace nnforge
 	class layer_data_custom_list
 	{
 	public:
-		typedef nnforge_shared_ptr<layer_data_custom_list> ptr;
-		typedef nnforge_shared_ptr<const layer_data_custom_list> const_ptr;
+		typedef std::shared_ptr<layer_data_custom_list> ptr;
+		typedef std::shared_ptr<const layer_data_custom_list> const_ptr;
 
-		layer_data_custom_list();
+		layer_data_custom_list() = default;
 
 		layer_data_custom_list(const std::vector<layer::const_ptr>& layer_list);
 

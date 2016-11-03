@@ -25,9 +25,9 @@ namespace nnforge
 		class accuracy_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			accuracy_layer_testing_schema();
+			accuracy_layer_testing_schema() = default;
 
-			virtual ~accuracy_layer_testing_schema();
+			virtual ~accuracy_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

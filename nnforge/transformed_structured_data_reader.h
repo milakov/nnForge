@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ namespace nnforge
 			structured_data_reader::ptr original_reader,
 			data_transformer::ptr transformer);
 
-		virtual ~transformed_structured_data_reader();
+		virtual ~transformed_structured_data_reader() = default;
 
 		virtual bool read(
 			unsigned int entry_id,
@@ -44,10 +44,10 @@ namespace nnforge
 
 		virtual int get_entry_count() const;
 
-		virtual raw_data_writer::ptr get_writer(nnforge_shared_ptr<std::ostream> out) const;
+		virtual raw_data_writer::ptr get_writer(std::shared_ptr<std::ostream> out) const;
 
 	protected:
-		transformed_structured_data_reader();
+		transformed_structured_data_reader() = default;
 
 	protected:
 		structured_data_reader::ptr original_reader;
@@ -56,7 +56,7 @@ namespace nnforge
 		layer_configuration_specific original_config;
 
 	private:
-		transformed_structured_data_reader(const transformed_structured_data_reader&);
-		transformed_structured_data_reader& operator =(const transformed_structured_data_reader&);
+		transformed_structured_data_reader(const transformed_structured_data_reader&) = delete;
+		transformed_structured_data_reader& operator =(const transformed_structured_data_reader&) = delete;
 	};
 }

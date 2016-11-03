@@ -25,9 +25,9 @@ namespace nnforge
 		class cdf_max_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			cdf_max_layer_updater_cuda();
+			cdf_max_layer_updater_cuda() = default;
 
-			virtual ~cdf_max_layer_updater_cuda();
+			virtual ~cdf_max_layer_updater_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

@@ -17,8 +17,8 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
-#include "nn_types.h"
 
+#include <memory>
 #include <map>
 
 namespace nnforge
@@ -26,9 +26,9 @@ namespace nnforge
 	class structured_data_bunch_writer
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_data_bunch_writer> ptr;
+		typedef std::shared_ptr<structured_data_bunch_writer> ptr;
 
-		~structured_data_bunch_writer();
+		~structured_data_bunch_writer() = default;
 
 		virtual void set_config_map(const std::map<std::string, layer_configuration_specific> config_map) = 0;
 
@@ -37,10 +37,10 @@ namespace nnforge
 			const std::map<std::string, const float *>& data_map) = 0;
 
 	protected:
-		structured_data_bunch_writer();
+		structured_data_bunch_writer() = default;
 
 	private:
-		structured_data_bunch_writer(const structured_data_bunch_writer&);
-		structured_data_bunch_writer& operator =(const structured_data_bunch_writer&);
+		structured_data_bunch_writer(const structured_data_bunch_writer&) = delete;
+		structured_data_bunch_writer& operator =(const structured_data_bunch_writer&) = delete;
 	};
 }

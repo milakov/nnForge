@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,22 +17,21 @@
 #pragma once
 
 #include <boost/filesystem.hpp>
-#include <boost/thread/thread.hpp>
-
-#include "nn_types.h"
+#include <mutex>
+#include <memory>
 
 namespace nnforge
 {
 	class debug_state
 	{
 	public:
-		typedef nnforge_shared_ptr<debug_state> ptr;
+		typedef std::shared_ptr<debug_state> ptr;
 
 		debug_state(
 			bool debug_mode,
 			const boost::filesystem::path& debug_folder);
 
-		~debug_state();
+		~debug_state() = default;
 
 		bool is_debug() const;
 
@@ -47,12 +46,12 @@ namespace nnforge
 		boost::filesystem::path debug_folder;
 
 	private:
-		boost::mutex index_mutex;
+		std::mutex index_mutex;
 		unsigned int index;
 
 	private:
-		debug_state();
-		debug_state(const debug_state&);
-		debug_state& operator =(const debug_state&);
+		debug_state() = delete;
+		debug_state(const debug_state&) = delete;
+		debug_state& operator =(const debug_state&) = delete;
 	};
 }

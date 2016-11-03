@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include "../layer.h"
 #include "../layer_data.h"
 #include "../layer_configuration_specific.h"
-#include "../nn_types.h"
 
 #include "cuda_running_configuration.h"
 
@@ -37,12 +36,12 @@ namespace nnforge
 		class layer_updater_schema
 		{
 		public:
-			typedef nnforge_shared_ptr<layer_updater_schema> ptr;
-			typedef nnforge_shared_ptr<const layer_updater_schema> const_ptr;
+			typedef std::shared_ptr<layer_updater_schema> ptr;
+			typedef std::shared_ptr<const layer_updater_schema> const_ptr;
 
-			virtual ~layer_updater_schema();
+			virtual ~layer_updater_schema() = default;
 
-			nnforge_shared_ptr<layer_updater_schema> create(
+			std::shared_ptr<layer_updater_schema> create(
 				layer::const_ptr layer_schema,
 				cuda_running_configuration::const_ptr cuda_config) const;
 
@@ -63,14 +62,14 @@ namespace nnforge
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific) const = 0;
 
-			layer_updater_schema();
+			layer_updater_schema() = default;
 
 			layer::const_ptr layer_schema;
 			cuda_running_configuration::const_ptr cuda_config;
 
 		private:
-			layer_updater_schema(const layer_updater_schema&);
-			layer_updater_schema& operator =(const layer_updater_schema&);
+			layer_updater_schema(const layer_updater_schema&) = delete;
+			layer_updater_schema& operator =(const layer_updater_schema&) = delete;
 		};
 	}
 }

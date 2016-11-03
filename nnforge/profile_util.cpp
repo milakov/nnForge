@@ -22,11 +22,6 @@
 
 namespace nnforge
 {
-	bool profile_util::compare_entry(const entry& i, const entry& j)
-	{
-		return i.seconds > j.seconds;
-	}
-
 	void profile_util::dump_layer_action_performance(
 		profile_state::ptr profile,
 		float max_flops,
@@ -41,7 +36,7 @@ namespace nnforge
 			std::vector<entry> entries;
 			for(std::map<layer_name_with_action, float>::const_iterator it = action_seconds.begin(); it != action_seconds.end(); ++it)
 				entries.push_back(entry(it->first, it->second));
-			std::sort(entries.begin(), entries.end(), compare_entry);
+			std::sort(entries.begin(), entries.end(), [] (const entry& i, const entry& j) {return i.seconds > j.seconds;} );
 
 			boost::filesystem::path profile_path = profile->get_path_to_unique_file((boost::format("%1%_perf_per_layer_action") % action_prefix).str().c_str(), "csv");
 			boost::filesystem::ofstream out(profile_path, std::ios_base::out | std::ios_base::trunc);
@@ -81,7 +76,7 @@ namespace nnforge
 			std::vector<entry> entries;
 			for(std::map<layer_name_with_action, double>::const_iterator it = action_seconds2.begin(); it != action_seconds2.end(); ++it)
 				entries.push_back(entry(it->first, static_cast<float>(it->second)));
-			std::sort(entries.begin(), entries.end(), compare_entry);
+			std::sort(entries.begin(), entries.end(), [] (const entry& i, const entry& j) {return i.seconds > j.seconds;} );
 
 			boost::filesystem::path profile_path = profile->get_path_to_unique_file((boost::format("%1%_perf_per_layer_type_action") % action_prefix).str().c_str(), "csv");
 			boost::filesystem::ofstream out(profile_path, std::ios_base::out | std::ios_base::trunc);

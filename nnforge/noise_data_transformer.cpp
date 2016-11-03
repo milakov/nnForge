@@ -27,11 +27,7 @@ namespace nnforge
 	{
 		generator = rnd::get_random_generator();
 
-		max_noise_distribution = nnforge_uniform_real_distribution<float>(-max_noise, max_noise);
-	}
-
-	noise_data_transformer::~noise_data_transformer()
-	{
+		max_noise_distribution = std::uniform_real_distribution<float>(-max_noise, max_noise);
 	}
 
 	void noise_data_transformer::transform(
@@ -43,7 +39,7 @@ namespace nnforge
 		unsigned int elem_count = original_config.get_neuron_count();
 
 		{
-			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
+			std::lock_guard<std::mutex> lock(gen_stream_mutex);
 
 			for(unsigned int elem_id = 0; elem_id < elem_count; ++elem_id)
 			{

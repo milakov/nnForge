@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@
 
 #include "data_transformer.h"
 #include "rnd.h"
-#include "nn_types.h"
 
 #include <opencv2/core/core.hpp>
-#include <boost/thread/thread.hpp>
+#include <mutex>
+#include <random>
 
 namespace nnforge
 {
@@ -33,7 +33,7 @@ namespace nnforge
 			float alpha,
 			float border_value = 0.5F);
 
-		virtual ~elastic_deformation_2d_data_transformer();
+		virtual ~elastic_deformation_2d_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -55,7 +55,7 @@ namespace nnforge
 		float border_value;
 
 		random_generator gen;
-		boost::mutex gen_stream_mutex;
-		nnforge_uniform_real_distribution<float> displacement_distribution;
+		std::mutex gen_stream_mutex;
+		std::uniform_real_distribution<float> displacement_distribution;
 	};
 }

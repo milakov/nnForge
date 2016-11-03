@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		concat_layer_testing_schema::concat_layer_testing_schema()
-		{
-		}
-
-		concat_layer_testing_schema::~concat_layer_testing_schema()
-		{
-		}
-
 		std::string concat_layer_testing_schema::get_type_name() const
 		{
 			return concat_layer::layer_type_name;

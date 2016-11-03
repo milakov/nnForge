@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ namespace nnforge
 		class max_subsampling_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			max_subsampling_layer_tester_plain();
+			max_subsampling_layer_tester_plain() = default;
 
-			virtual ~max_subsampling_layer_tester_plain();
+			virtual ~max_subsampling_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

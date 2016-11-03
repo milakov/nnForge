@@ -25,9 +25,9 @@ namespace nnforge
 		class reshape_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			reshape_layer_updater_schema();
+			reshape_layer_updater_schema() = default;
 
-			virtual ~reshape_layer_updater_schema();
+			virtual ~reshape_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

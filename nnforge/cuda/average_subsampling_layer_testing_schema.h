@@ -25,9 +25,9 @@ namespace nnforge
 		class average_subsampling_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			average_subsampling_layer_testing_schema();
+			average_subsampling_layer_testing_schema() = default;
 
-			virtual ~average_subsampling_layer_testing_schema();
+			virtual ~average_subsampling_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

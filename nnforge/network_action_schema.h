@@ -36,10 +36,10 @@ namespace nnforge
 	class network_action_schema
 	{
 	public:
-		typedef nnforge_shared_ptr<network_action_schema> ptr;
-		typedef nnforge_shared_ptr<const network_action_schema> const_ptr;
+		typedef std::shared_ptr<network_action_schema> ptr;
+		typedef std::shared_ptr<const network_action_schema> const_ptr;
 
-		network_action_schema();
+		network_action_schema() = default;
 
 		network_action_schema(const network_action_schema& other);
 
@@ -138,10 +138,6 @@ namespace nnforge
 		layer::const_ptr get_layer(const std::string& instance_name) const;
 
 	private:
-
-		static bool compare_start_times(
-			const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t1,
-			const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t2);
 
 		template<class vertex>
 		struct record_all_edges : public boost::default_dfs_visitor

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <boost/serialization/singleton.hpp>
 #include <string>
 #include <vector>
 
@@ -45,13 +44,13 @@ namespace nnforge
 	class color_palette
 	{
 	public:
-		color_palette();
-
 		std::string get_color_name(unsigned int logical_color_id) const;
 
+		static color_palette& get_singleton();
+
 	private:
+		color_palette();
+
 		std::vector<rgba_color> colors;
 	};
-
-	typedef boost::serialization::singleton<color_palette> single_color_palette;
 }

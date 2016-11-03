@@ -27,7 +27,7 @@ namespace nnforge
 	public:
 		save_snapshot_network_data_pusher(const boost::filesystem::path& folder_path);
 
-		virtual ~save_snapshot_network_data_pusher();
+		virtual ~save_snapshot_network_data_pusher() = default;
 
 		virtual void push(
 			const training_task_state& task_state,

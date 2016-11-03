@@ -46,20 +46,16 @@ namespace nnforge
 	{
 		generator = rnd::get_random_generator();
 
-		rotate_angle_distribution = nnforge_uniform_real_distribution<float>(-max_absolute_rotation_angle_in_degrees, max_absolute_rotation_angle_in_degrees + (apply_rotate_angle_distribution ? 0.0F : 1.0F));
-		scale_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_scale_factor, max_scale_factor + (apply_scale_distribution ? 0.0F : 1.0F));
-		shift_x_distribution = nnforge_uniform_real_distribution<float>(min_shift_right_x, max_shift_right_x + (apply_shift_x_distribution ? 0.0F : 1.0F));
-		shift_y_distribution = nnforge_uniform_real_distribution<float>(min_shift_down_y, max_shift_down_y + (apply_shift_y_distribution ? 0.0F : 1.0F));
-		flip_around_x_distribution = nnforge_uniform_int_distribution<int>(0, flip_around_x_axis_allowed ? 1 : 0);
-		flip_around_y_distribution = nnforge_uniform_int_distribution<int>(0, flip_around_y_axis_allowed ? 1 : 0);
-		stretch_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_stretch_factor, max_stretch_factor + (apply_stretch_distribution ? 0.0F : 1.0F));
-		stretch_angle_distribution = nnforge_uniform_real_distribution<float>(-180.0F, 180.0F);
-		perspective_reverse_distance_distribution = nnforge_uniform_real_distribution<float>(0.0F, apply_perspective_reverse_distance_distribution ? 1.0F / min_perspective_distance : 1.0F);
-		perspective_angle_distribution = nnforge_uniform_real_distribution<float>(-180.0F, 180.0F);
-	}
-
-	distort_2d_data_transformer::~distort_2d_data_transformer()
-	{
+		rotate_angle_distribution = std::uniform_real_distribution<float>(-max_absolute_rotation_angle_in_degrees, max_absolute_rotation_angle_in_degrees + (apply_rotate_angle_distribution ? 0.0F : 1.0F));
+		scale_distribution = std::uniform_real_distribution<float>(1.0F / max_scale_factor, max_scale_factor + (apply_scale_distribution ? 0.0F : 1.0F));
+		shift_x_distribution = std::uniform_real_distribution<float>(min_shift_right_x, max_shift_right_x + (apply_shift_x_distribution ? 0.0F : 1.0F));
+		shift_y_distribution = std::uniform_real_distribution<float>(min_shift_down_y, max_shift_down_y + (apply_shift_y_distribution ? 0.0F : 1.0F));
+		flip_around_x_distribution = std::uniform_int_distribution<int>(0, flip_around_x_axis_allowed ? 1 : 0);
+		flip_around_y_distribution = std::uniform_int_distribution<int>(0, flip_around_y_axis_allowed ? 1 : 0);
+		stretch_distribution = std::uniform_real_distribution<float>(1.0F / max_stretch_factor, max_stretch_factor + (apply_stretch_distribution ? 0.0F : 1.0F));
+		stretch_angle_distribution = std::uniform_real_distribution<float>(-180.0F, 180.0F);
+		perspective_reverse_distance_distribution = std::uniform_real_distribution<float>(0.0F, apply_perspective_reverse_distance_distribution ? 1.0F / min_perspective_distance : 1.0F);
+		perspective_angle_distribution = std::uniform_real_distribution<float>(-180.0F, 180.0F);
 	}
 
 	void distort_2d_data_transformer::transform(
@@ -84,7 +80,7 @@ namespace nnforge
 		float perspective_angle = perspective_angle_distribution.min();
 
 		{
-			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
+			std::lock_guard<std::mutex> lock(gen_stream_mutex);
 
 			if (apply_rotate_angle_distribution)
 				rotation_angle = rotate_angle_distribution(generator);

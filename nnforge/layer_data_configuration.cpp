@@ -18,10 +18,6 @@
 
 namespace nnforge
 {
-	layer_data_configuration::layer_data_configuration()
-	{
-	}
-
 	layer_data_configuration::layer_data_configuration(
 		unsigned int input_feature_map_count,
 		unsigned int output_feature_map_count,

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,13 +25,13 @@ namespace nnforge
 	class structured_from_raw_data_reader : public structured_data_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_from_raw_data_reader> ptr;
+		typedef std::shared_ptr<structured_from_raw_data_reader> ptr;
 
 		structured_from_raw_data_reader(
 			raw_data_reader::ptr raw_reader,
 			raw_to_structured_data_transformer::ptr transformer);
 
-		virtual ~structured_from_raw_data_reader();
+		virtual ~structured_from_raw_data_reader() = default;
 
 		virtual bool read(
 			unsigned int entry_id,
@@ -45,7 +45,7 @@ namespace nnforge
 
 		virtual int get_entry_count() const;
 
-		virtual raw_data_writer::ptr get_writer(nnforge_shared_ptr<std::ostream> out) const;
+		virtual raw_data_writer::ptr get_writer(std::shared_ptr<std::ostream> out) const;
 
 	protected:
 		raw_data_reader::ptr raw_reader;
@@ -53,10 +53,10 @@ namespace nnforge
 		unsigned int transformer_sample_count;
 
 	protected:
-		structured_from_raw_data_reader();
+		structured_from_raw_data_reader() = default;
 
 	private:
-		structured_from_raw_data_reader(const structured_from_raw_data_reader&);
-		structured_from_raw_data_reader& operator =(const structured_from_raw_data_reader&);
+		structured_from_raw_data_reader(const structured_from_raw_data_reader&) = delete;
+		structured_from_raw_data_reader& operator =(const structured_from_raw_data_reader&) = delete;
 	};
 }

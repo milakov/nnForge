@@ -184,7 +184,7 @@ namespace nnforge
 
 		void batch_norm_layer_updater_cuda::updater_configured()
 		{
-			nnforge_shared_ptr<const batch_norm_layer> layer_derived = nnforge_dynamic_pointer_cast<const batch_norm_layer>(layer_schema);
+			std::shared_ptr<const batch_norm_layer> layer_derived = std::dynamic_pointer_cast<const batch_norm_layer>(layer_schema);
 
 			epsilon = layer_derived->epsilon;
 			if (epsilon < CUDNN_BN_MIN_EPSILON)

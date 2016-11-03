@@ -25,9 +25,9 @@ namespace nnforge
 		class untile_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			untile_layer_testing_schema();
+			untile_layer_testing_schema() = default;
 
-			virtual ~untile_layer_testing_schema();
+			virtual ~untile_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

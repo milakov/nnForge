@@ -25,9 +25,9 @@ namespace nnforge
 		class linear_sampler_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			linear_sampler_layer_testing_schema();
+			linear_sampler_layer_testing_schema() = default;
 
-			virtual ~linear_sampler_layer_testing_schema();
+			virtual ~linear_sampler_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

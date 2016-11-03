@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		absolute_layer_updater_schema::absolute_layer_updater_schema()
-		{
-		}
-
-		absolute_layer_updater_schema::~absolute_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr absolute_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new absolute_layer_updater_schema());

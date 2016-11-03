@@ -27,14 +27,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		convolution_layer_testing_schema::convolution_layer_testing_schema()
-		{
-		}
-
-		convolution_layer_testing_schema::~convolution_layer_testing_schema()
-		{
-		}
-
 		std::string convolution_layer_testing_schema::get_type_name() const
 		{
 			return convolution_layer::layer_type_name;
@@ -51,7 +43,7 @@ namespace nnforge
 		{
 			layer_tester_cuda::ptr res;
 
-			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			std::shared_ptr<const convolution_layer> layer_derived = std::dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			bool no_padding = (layer_derived->left_zero_padding == std::vector<unsigned int>(layer_derived->left_zero_padding.size(), 0))
 				&& (layer_derived->right_zero_padding == std::vector<unsigned int>(layer_derived->right_zero_padding.size(), 0));

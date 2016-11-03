@@ -114,10 +114,7 @@
     <ClInclude Include="network_schema.h" />
     <ClInclude Include="network_trainer.h" />
     <ClInclude Include="neural_network_exception.h" />
-    <ClInclude Include="neural_network_toolset.h" />
-    <ClInclude Include="neuron_data_type.h" />
     <ClInclude Include="nnforge.h" />
-    <ClInclude Include="nn_types.h" />
     <ClInclude Include="noise_data_transformer.h" />
     <ClInclude Include="normalize_data_transformer.h" />
     <ClInclude Include="neuron_value_set.h" />
@@ -174,7 +171,6 @@
     <ClCompile Include="forward_propagation_factory.cpp" />
     <ClCompile Include="gradient_modifier_layer.cpp" />
     <ClCompile Include="layer_data_custom_list.cpp" />
-    <ClCompile Include="learning_rate_decay_policy.cpp" />
     <ClCompile Include="lerror_layer.cpp" />
     <ClCompile Include="linear_sampler_layer.cpp" />
     <ClCompile Include="natural_image_data_transformer.cpp" />
@@ -185,8 +181,6 @@
     <ClCompile Include="prefix_sum_layer.cpp" />
     <ClCompile Include="profile_state.cpp" />
     <ClCompile Include="profile_util.cpp" />
-    <ClCompile Include="raw_data_reader.cpp" />
-    <ClCompile Include="raw_data_writer.cpp" />
     <ClCompile Include="raw_to_structured_data_transformer.cpp" />
     <ClCompile Include="reshape_layer.cpp" />
     <ClCompile Include="stat_data_bunch_writer.cpp" />
@@ -195,7 +189,6 @@
     <ClCompile Include="structured_data_bunch_mix_reader.cpp" />
     <ClCompile Include="structured_data_bunch_reader.cpp" />
     <ClCompile Include="structured_data_bunch_stream_reader.cpp" />
-    <ClCompile Include="structured_data_bunch_writer.cpp" />
     <ClCompile Include="structured_data_constant_reader.cpp" />
     <ClCompile Include="structured_data_writer.cpp" />
     <ClCompile Include="structured_from_raw_data_reader.cpp" />
@@ -235,15 +228,11 @@
     <ClCompile Include="sparse_convolution_layer.cpp" />
     <ClCompile Include="stream_duplicator.cpp" />
     <ClCompile Include="network_data.cpp" />
-    <ClCompile Include="network_data_peeker.cpp" />
     <ClCompile Include="network_data_peeker_random.cpp" />
     <ClCompile Include="network_data_peeker_single.cpp" />
-    <ClCompile Include="network_data_pusher.cpp" />
     <ClCompile Include="network_schema.cpp" />
     <ClCompile Include="network_trainer.cpp" />
     <ClCompile Include="neural_network_exception.cpp" />
-    <ClCompile Include="neural_network_toolset.cpp" />
-    <ClCompile Include="neuron_data_type.cpp" />
     <ClCompile Include="nnforge.cpp" />
     <ClCompile Include="noise_data_transformer.cpp" />
     <ClCompile Include="normalize_data_transformer.cpp" />
@@ -263,7 +252,6 @@
     <ClCompile Include="varying_data_stream_reader.cpp" />
     <ClCompile Include="varying_data_stream_schema.cpp" />
     <ClCompile Include="varying_data_stream_writer.cpp" />
-    <ClCompile Include="training_task_state.cpp" />
     <ClCompile Include="structured_data_reader.cpp" />
     <ClCompile Include="structured_data_stream_reader.cpp" />
     <ClCompile Include="structured_data_stream_schema.cpp" />
@@ -333,7 +321,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

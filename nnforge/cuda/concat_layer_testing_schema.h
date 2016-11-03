@@ -25,9 +25,9 @@ namespace nnforge
 		class concat_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			concat_layer_testing_schema();
+			concat_layer_testing_schema() = default;
 
-			virtual ~concat_layer_testing_schema();
+			virtual ~concat_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

@@ -67,10 +67,6 @@ namespace nnforge
 		}
 	}
 
-	convert_to_polar_data_transformer::~convert_to_polar_data_transformer()
-	{
-	}
-
 	void convert_to_polar_data_transformer::transform(
 		const float * data,
 		float * data_transformed,

@@ -80,4 +80,10 @@ namespace nnforge
 		unsigned int color_id_wrapped = (logical_color_id % colors.size());
 		return (boost::format("#%|1$06x|") % colors[color_id_wrapped].c.val).str();
 	}
+
+	color_palette& color_palette::get_singleton()
+	{
+		static color_palette instance;
+		return instance;
+	}
 }

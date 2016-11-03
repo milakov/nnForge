@@ -25,9 +25,9 @@ namespace nnforge
 		class max_subsampling_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			max_subsampling_layer_testing_schema();
+			max_subsampling_layer_testing_schema() = default;
 
-			virtual ~max_subsampling_layer_testing_schema();
+			virtual ~max_subsampling_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

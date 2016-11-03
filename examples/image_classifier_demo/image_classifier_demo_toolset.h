@@ -21,8 +21,8 @@
 #include <map>
 
 #include <boost/filesystem/fstream.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/chrono.hpp>
+#include <mutex>
+#include <chrono>
 
 #include <nnforge/nnforge.h>
 
@@ -68,13 +68,13 @@ private:
 
 	void add_classifier_results(cv::Mat3b frame);
 
-	nnforge_shared_ptr<std::vector<float> > safe_peek_input_data();
+	std::shared_ptr<std::vector<float> > safe_peek_input_data();
 
-	void safe_set_input_data(nnforge_shared_ptr<std::vector<float> > val);
+	void safe_set_input_data(std::shared_ptr<std::vector<float> > val);
 
-	nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > safe_peek_output_data();
+	std::shared_ptr<std::vector<std::pair<unsigned int, float> > > safe_peek_output_data();
 
-	void safe_set_output_data(nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > val);
+	void safe_set_output_data(std::shared_ptr<std::vector<std::pair<unsigned int, float> > > val);
 
 	bool safe_peek_demo_should_stop();
 
@@ -106,17 +106,17 @@ private:
 
 private:
 	bool demo_should_stop;
-	boost::mutex demo_should_stop_mutex;
+	std::mutex demo_should_stop_mutex;
 
-	nnforge_shared_ptr<std::vector<float> > input_data_smart_ptr;
-	boost::mutex input_data_mutex;
+	std::shared_ptr<std::vector<float> > input_data_smart_ptr;
+	std::mutex input_data_mutex;
 
-	nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > output_data_smart_ptr;
-	boost::mutex output_data_mutex;
+	std::shared_ptr<std::vector<std::pair<unsigned int, float> > > output_data_smart_ptr;
+	std::mutex output_data_mutex;
 
-	boost::chrono::steady_clock::time_point last_write;
+	std::chrono::high_resolution_clock::time_point last_write;
 	float fps;
-	boost::mutex fps_mutex;
+	std::mutex fps_mutex;
 
 	std::string error_message;
 
@@ -126,7 +126,7 @@ private:
 	bool should_report_stats;
 	std::string input_layer_name;
 
-	boost::chrono::steady_clock::time_point last_report_time;
+	std::chrono::high_resolution_clock::time_point last_report_time;
 
 	std::map<unsigned int, std::string> class_id_to_class_name_map;
 

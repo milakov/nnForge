@@ -25,9 +25,9 @@ namespace nnforge
 		class dropout_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			dropout_layer_updater_schema();
+			dropout_layer_updater_schema() = default;
 
-			virtual ~dropout_layer_updater_schema();
+			virtual ~dropout_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

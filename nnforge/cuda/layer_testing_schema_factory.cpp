@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,6 +45,12 @@ namespace nnforge
 			return i->second->create(
 				layer,
 				cuda_config);
+		}
+
+		layer_testing_schema_factory& layer_testing_schema_factory::get_singleton()
+		{
+			static layer_testing_schema_factory instance;
+			return instance;
 		}
 	}
 }

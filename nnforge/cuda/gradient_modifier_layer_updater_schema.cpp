@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		gradient_modifier_layer_updater_schema::gradient_modifier_layer_updater_schema()
-		{
-		}
-
-		gradient_modifier_layer_updater_schema::~gradient_modifier_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr gradient_modifier_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new gradient_modifier_layer_updater_schema());

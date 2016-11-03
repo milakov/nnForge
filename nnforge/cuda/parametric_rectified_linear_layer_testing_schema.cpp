@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		parametric_rectified_linear_layer_testing_schema::parametric_rectified_linear_layer_testing_schema()
-		{
-		}
-
-		parametric_rectified_linear_layer_testing_schema::~parametric_rectified_linear_layer_testing_schema()
-		{
-		}
-
 		std::string parametric_rectified_linear_layer_testing_schema::get_type_name() const
 		{
 			return parametric_rectified_linear_layer::layer_type_name;

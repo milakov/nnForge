@@ -433,28 +433,4 @@ namespace nnforge
 			throw std::runtime_error((boost::format("Error saving snapshot to %1%") % file_path).str());
 	}
 	*/
-	data_visualizer::normalize_pixel_helper::normalize_pixel_helper(
-		float addition,
-		float multiplication)
-		: addition(addition), multiplication(multiplication)
-	{
-	}
-
-	unsigned char data_visualizer::normalize_pixel_helper::operator()(float x)
-	{
-		return static_cast<unsigned char>(std::min<float>(std::max<float>((x + addition) * multiplication, 0.0F), 255.0F));
-	}
-
-	data_visualizer::color_normalize_pixel_helper::color_normalize_pixel_helper(
-		float addition,
-		float multiplication)
-		: addition(addition), multiplication(multiplication)
-	{
-	}
-
-	cv::Vec3b data_visualizer::color_normalize_pixel_helper::operator()(float x)
-	{
-		unsigned char val = static_cast<unsigned char>(std::min<float>(std::max<float>((x + addition) * multiplication, 0.0F), 255.0F));
-		return cv::Vec3b(val, val, val);
-	}
 }

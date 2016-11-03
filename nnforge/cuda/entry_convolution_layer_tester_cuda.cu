@@ -66,14 +66,6 @@ namespace nnforge
 			}
 		}
 
-		entry_convolution_layer_tester_cuda::entry_convolution_layer_tester_cuda()
-		{
-		}
-
-		entry_convolution_layer_tester_cuda::~entry_convolution_layer_tester_cuda()
-		{
-		}
-
 		void entry_convolution_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,

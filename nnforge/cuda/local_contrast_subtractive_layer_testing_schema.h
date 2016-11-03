@@ -25,9 +25,9 @@ namespace nnforge
 		class local_contrast_subtractive_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			local_contrast_subtractive_layer_testing_schema();
+			local_contrast_subtractive_layer_testing_schema() = default;
 
-			virtual ~local_contrast_subtractive_layer_testing_schema();
+			virtual ~local_contrast_subtractive_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

@@ -25,9 +25,9 @@ namespace nnforge
 		class maxout_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			maxout_layer_updater_schema();
+			maxout_layer_updater_schema() = default;
 
-			virtual ~maxout_layer_updater_schema();
+			virtual ~maxout_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

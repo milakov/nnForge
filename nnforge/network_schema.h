@@ -19,7 +19,6 @@
 #include "layer.h"
 #include "layer_configuration_specific.h"
 #include "layer_data_configuration.h"
-#include "nn_types.h"
 #include "network_action_schema.h"
 
 #include <vector>
@@ -28,6 +27,7 @@
 #include <string>
 #include <map>
 #include <set>
+#include <memory>
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>
@@ -37,10 +37,10 @@ namespace nnforge
 	class network_schema
 	{
 	public:
-		typedef nnforge_shared_ptr<network_schema> ptr;
-		typedef nnforge_shared_ptr<const network_schema> const_ptr;
+		typedef std::shared_ptr<network_schema> ptr;
+		typedef std::shared_ptr<const network_schema> const_ptr;
 
-		network_schema();
+		network_schema() = default;
 
 		network_schema(const std::vector<layer::const_ptr>& layer_list);
 
@@ -129,9 +129,6 @@ namespace nnforge
 
 		schema_graph layers;
 		std::map<std::string, schema_graph::vertex_descriptor> layer_instance_name_to_vertex_decriptor_map;
-
-	private:
-		static bool compare_entry(std::pair<schema_graph::vertex_descriptor, size_t> i, std::pair<schema_graph::vertex_descriptor, size_t> j);
 
 	private:
 		struct cycle_detector : public boost::default_dfs_visitor

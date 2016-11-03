@@ -8,7 +8,5 @@ USE_NNFORGE=yes
 include ../../Settings.mk
 include ../../Main.mk
 
-INPUT_DIRECTORY_SEPARATOR?=_
-
 include ../Example.mk
 

@@ -40,7 +40,7 @@ protected:
 		const std::string& dataset_name,
 		const std::string& layer_name,
 		dataset_usage usage,
-		nnforge_shared_ptr<std::istream> in) const;
+		std::shared_ptr<std::istream> in) const;
 
 	virtual std::vector<nnforge::bool_option> get_bool_options();
 

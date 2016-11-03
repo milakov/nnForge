@@ -17,9 +17,7 @@
 #pragma once
 
 #include <vector>
-
-#include "../neural_network_exception.h"
-#include "../nn_types.h"
+#include <array>
 
 namespace nnforge
 {
@@ -30,12 +28,12 @@ namespace nnforge
 		{
 		public:
 			static void fill_pattern(
-				const nnforge_array<int, dimension_count>& size_list,
-				std::vector<nnforge_array<int, dimension_count> >& ordered_list)
+				const std::array<int, dimension_count>& size_list,
+				std::vector<std::array<int, dimension_count> >& ordered_list)
 			{
 				ordered_list.clear();
 
-				nnforge_array<int, dimension_count> new_elem;
+				std::array<int, dimension_count> new_elem;
 				for(int i = 0; i < dimension_count; ++i)
 					new_elem[i] = 0;
 				int total_elem_count = 1;

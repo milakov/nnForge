@@ -22,14 +22,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		batch_norm_layer_tester_plain::batch_norm_layer_tester_plain()
-		{
-		}
-
-		batch_norm_layer_tester_plain::~batch_norm_layer_tester_plain()
-		{
-		}
-
 		std::string batch_norm_layer_tester_plain::get_type_name() const
 		{
 			return batch_norm_layer::layer_type_name;

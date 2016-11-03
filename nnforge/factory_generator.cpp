@@ -18,14 +18,6 @@
 
 namespace nnforge
 {
-	factory_generator::factory_generator()
-	{
-	}
-
-	factory_generator::~factory_generator()
-	{
-	}
-
 	std::vector<string_option> factory_generator::get_string_options()
 	{
 		return std::vector<string_option>();

@@ -25,9 +25,9 @@ namespace nnforge
 		class reshape_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			reshape_layer_updater_cuda();
+			reshape_layer_updater_cuda() = default;
 
-			virtual ~reshape_layer_updater_cuda();
+			virtual ~reshape_layer_updater_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

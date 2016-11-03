@@ -18,9 +18,9 @@
 
 #include "data_transformer.h"
 #include "rnd.h"
-#include "nn_types.h"
 
-#include <boost/thread/thread.hpp>
+#include <mutex>
+#include <random>
 
 namespace nnforge
 {
@@ -40,7 +40,7 @@ namespace nnforge
 			float min_perspective_distance, // std::numeric_limits<float>::max()
 			float border_value = 0.5F); 
 
-		virtual ~distort_2d_data_transformer();
+		virtual ~distort_2d_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -52,31 +52,31 @@ namespace nnforge
 		float border_value;
 
 		random_generator generator;
-		boost::mutex gen_stream_mutex;
+		std::mutex gen_stream_mutex;
 
 		bool apply_rotate_angle_distribution;
-		nnforge_uniform_real_distribution<float> rotate_angle_distribution;
+		std::uniform_real_distribution<float> rotate_angle_distribution;
 
 		bool apply_scale_distribution;
-		nnforge_uniform_real_distribution<float> scale_distribution;
+		std::uniform_real_distribution<float> scale_distribution;
 
 		bool apply_shift_x_distribution;
-		nnforge_uniform_real_distribution<float> shift_x_distribution;
+		std::uniform_real_distribution<float> shift_x_distribution;
 
 		bool apply_shift_y_distribution;
-		nnforge_uniform_real_distribution<float> shift_y_distribution;
+		std::uniform_real_distribution<float> shift_y_distribution;
 
-		nnforge_uniform_int_distribution<int> flip_around_x_distribution;
-		nnforge_uniform_int_distribution<int> flip_around_y_distribution;
+		std::uniform_int_distribution<int> flip_around_x_distribution;
+		std::uniform_int_distribution<int> flip_around_y_distribution;
 
 		bool apply_stretch_distribution;
-		nnforge_uniform_real_distribution<float> stretch_distribution;
+		std::uniform_real_distribution<float> stretch_distribution;
 
-		nnforge_uniform_real_distribution<float> stretch_angle_distribution;
+		std::uniform_real_distribution<float> stretch_angle_distribution;
 
 		bool apply_perspective_reverse_distance_distribution;
-		nnforge_uniform_real_distribution<float> perspective_reverse_distance_distribution;
+		std::uniform_real_distribution<float> perspective_reverse_distance_distribution;
 
-		nnforge_uniform_real_distribution<float> perspective_angle_distribution;
+		std::uniform_real_distribution<float> perspective_angle_distribution;
 	};
 }

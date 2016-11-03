@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		maxout_layer_updater_schema::maxout_layer_updater_schema()
-		{
-		}
-
-		maxout_layer_updater_schema::~maxout_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr maxout_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new maxout_layer_updater_schema());

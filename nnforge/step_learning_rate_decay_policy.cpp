@@ -39,11 +39,7 @@ namespace nnforge
 			new_entry.decay_rate = static_cast<float>(atof(strs[i + 1].c_str()));
 			decay_rate_entry_list.push_back(new_entry);
 		}
-		std::sort(decay_rate_entry_list.begin(), decay_rate_entry_list.end(), compare_entry);
-	}
-
-	step_learning_rate_decay_policy::~step_learning_rate_decay_policy()
-	{
+		std::sort(decay_rate_entry_list.begin(), decay_rate_entry_list.end(), [] (const decay_rate_entry& i, const decay_rate_entry& j) { return (i.start_epoch < j.start_epoch); });
 	}
 
 	float step_learning_rate_decay_policy::get_learning_rate_decay(unsigned int epoch) const
@@ -57,10 +53,5 @@ namespace nnforge
 				break;
 		}
 		return current_decay;
-	}
-
-	bool step_learning_rate_decay_policy::compare_entry(const decay_rate_entry& i, const decay_rate_entry& j)
-	{
-		return (i.start_epoch < j.start_epoch);
 	}
 }

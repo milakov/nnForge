@@ -25,9 +25,9 @@ namespace nnforge
 		class rgb_to_yuv_convert_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			rgb_to_yuv_convert_layer_testing_schema();
+			rgb_to_yuv_convert_layer_testing_schema() = default;
 
-			virtual ~rgb_to_yuv_convert_layer_testing_schema();
+			virtual ~rgb_to_yuv_convert_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

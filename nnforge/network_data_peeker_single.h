@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace nnforge
 	public:
 		network_data_peeker_single(network_data::ptr data);
 
-		virtual ~network_data_peeker_single();
+		virtual ~network_data_peeker_single() = default;
 
 		// The method should return empty data smart pointer in case no more layer data are available
 		// The caller is free to modify the data returned

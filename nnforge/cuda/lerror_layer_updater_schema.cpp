@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		lerror_layer_updater_schema::lerror_layer_updater_schema()
-		{
-		}
-
-		lerror_layer_updater_schema::~lerror_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr lerror_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new lerror_layer_updater_schema());

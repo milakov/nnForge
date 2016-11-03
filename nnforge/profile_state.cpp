@@ -17,6 +17,7 @@
 #include "profile_state.h"
 
 #include <boost/format.hpp>
+#include <iostream>
 
 namespace nnforge
 {
@@ -44,10 +45,6 @@ namespace nnforge
 		}
 	}
 
-	profile_state::~profile_state()
-	{
-	}
-
 	bool profile_state::is_profile() const
 	{
 		return profile_mode;
@@ -59,7 +56,7 @@ namespace nnforge
 	{
 		unsigned int old_val;
 		{
-			boost::unique_lock<boost::mutex> lock(index_mutex);
+			std::lock_guard<std::mutex> lock(index_mutex);
 			old_val = index++;
 		}
 		boost::filesystem::path file_path = profile_folder / (boost::format("%|1$05d|_%2%.%3%") % old_val % file_prefix % file_extension).str();

@@ -48,6 +48,6 @@ namespace nnforge
 			cudaArray_t arr;
 		};
 
-		typedef nnforge_shared_ptr<cuda_array> cuda_array_smart_ptr;
+		typedef std::shared_ptr<cuda_array> cuda_array_smart_ptr;
 	}
 }

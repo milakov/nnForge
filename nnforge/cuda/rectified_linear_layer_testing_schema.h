@@ -25,9 +25,9 @@ namespace nnforge
 		class rectified_linear_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			rectified_linear_layer_testing_schema();
+			rectified_linear_layer_testing_schema() = default;
 
-			virtual ~rectified_linear_layer_testing_schema();
+			virtual ~rectified_linear_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

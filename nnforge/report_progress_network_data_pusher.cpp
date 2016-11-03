@@ -18,17 +18,10 @@
 
 #include <stdio.h>
 #include <boost/format.hpp>
+#include <iostream>
 
 namespace nnforge
 {
-	report_progress_network_data_pusher::report_progress_network_data_pusher()
-	{
-	}
-
-	report_progress_network_data_pusher::~report_progress_network_data_pusher()
-	{
-	}
-
 	void report_progress_network_data_pusher::push(
 		const training_task_state& task_state,
 		const network_schema& schema)
@@ -71,7 +64,7 @@ namespace nnforge
 		}
 		std::cout << std::endl;
 
-		for(std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<double> > > >::const_iterator it = task_state.history[last_index].second.begin(); it != task_state.history[last_index].second.end(); ++it)
+		for(std::map<std::string, std::pair<layer_configuration_specific, std::shared_ptr<std::vector<double> > > >::const_iterator it = task_state.history[last_index].second.begin(); it != task_state.history[last_index].second.end(); ++it)
 			std::cout << schema.get_layer(it->first)->get_string_for_average_data(it->second.first, *it->second.second) << std::endl;
 	}
 }

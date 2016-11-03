@@ -28,7 +28,7 @@ namespace nnforge
 		public:
 			forward_propagation_plain_factory(plain_running_configuration::const_ptr plain_config);
 
-			virtual ~forward_propagation_plain_factory();
+			virtual ~forward_propagation_plain_factory() = default;
 
 			virtual forward_propagation::ptr create(
 				const network_schema& schema,

@@ -18,10 +18,6 @@
 
 namespace nnforge
 {
-	layer_configuration_specific_snapshot::layer_configuration_specific_snapshot()
-	{
-	}
-
 	layer_configuration_specific_snapshot::layer_configuration_specific_snapshot(const layer_configuration_specific& config)
 		: config(config)
 	{

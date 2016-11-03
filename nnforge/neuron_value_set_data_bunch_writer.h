@@ -26,11 +26,11 @@ namespace nnforge
 	class neuron_value_set_data_bunch_writer : public structured_data_bunch_writer
 	{
 	public:
-		typedef nnforge_shared_ptr<neuron_value_set_data_bunch_writer> ptr;
+		typedef std::shared_ptr<neuron_value_set_data_bunch_writer> ptr;
 
-		neuron_value_set_data_bunch_writer();
+		neuron_value_set_data_bunch_writer() = default;
 
-		~neuron_value_set_data_bunch_writer();
+		~neuron_value_set_data_bunch_writer() = default;
 
 		virtual void set_config_map(const std::map<std::string, layer_configuration_specific> config_map);
 

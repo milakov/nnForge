@@ -59,14 +59,6 @@ namespace nnforge
 			}
 		}
 
-		batch_norm_layer_tester_cuda::batch_norm_layer_tester_cuda()
-		{
-		}
-
-		batch_norm_layer_tester_cuda::~batch_norm_layer_tester_cuda()
-		{
-		}
-
 		void batch_norm_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -99,7 +91,7 @@ namespace nnforge
 
 		void batch_norm_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const batch_norm_layer> layer_derived = nnforge_dynamic_pointer_cast<const batch_norm_layer>(layer_schema);
+			std::shared_ptr<const batch_norm_layer> layer_derived = std::dynamic_pointer_cast<const batch_norm_layer>(layer_schema);
 
 			epsilon = layer_derived->epsilon;
 			if (epsilon < CUDNN_BN_MIN_EPSILON)

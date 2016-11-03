@@ -16,17 +16,18 @@
 
 #pragma once
 
-#include "nn_types.h"
 #include "raw_data_writer.h"
+
+#include <memory>
 
 namespace nnforge
 {
 	class structured_data_writer : public raw_data_writer
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_data_writer> ptr;
+		typedef std::shared_ptr<structured_data_writer> ptr;
 
-		virtual ~structured_data_writer();
+		virtual ~structured_data_writer() = default;
 
 		virtual void raw_write(
 			const void * all_entry_data,
@@ -44,10 +45,10 @@ namespace nnforge
 			const float * neurons) = 0;
 
 	protected:
-		structured_data_writer();
+		structured_data_writer() = default;
 
 	private:
-		structured_data_writer(const structured_data_writer&);
-		structured_data_writer& operator =(const structured_data_writer&);
+		structured_data_writer(const structured_data_writer&) = delete;
+		structured_data_writer& operator =(const structured_data_writer&) = delete;
 	};
 }

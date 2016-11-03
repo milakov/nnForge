@@ -19,10 +19,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <boost/thread/thread.hpp>
+#include <thread>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
-
+#include <iostream>
 #include <exception>
 
 const unsigned int image_classifier_demo_toolset::top_n = 5;
@@ -85,9 +85,9 @@ void image_classifier_demo_toolset::run_demo()
 
 	error_message.clear();
 	safe_set_fps(-1.0F);
-	last_report_time = boost::chrono::high_resolution_clock::now();
+	last_report_time = std::chrono::high_resolution_clock::now();
 	safe_set_demo_should_stop(false);
-	boost::thread classifier_thread(callable(*this));
+	std::thread classifier_thread(callable(*this));
 	try
 	{
 		init_draw_params();
@@ -191,7 +191,7 @@ void image_classifier_demo_toolset::run_classifier_loop()
 		layer_config_map.insert(std::make_pair(input_layer_name, input_config));
 		forward_prop->set_input_configuration_specific(layer_config_map);
 
-		last_write = boost::chrono::high_resolution_clock::now();
+		last_write = std::chrono::high_resolution_clock::now();
 		forward_prop->run(*this, *this);
 	}
 	catch(std::exception& e)
@@ -203,8 +203,8 @@ void image_classifier_demo_toolset::run_classifier_loop()
 
 void image_classifier_demo_toolset::report_stats()
 {
-	boost::chrono::steady_clock::time_point new_report_time = boost::chrono::high_resolution_clock::now();
-	boost::chrono::duration<float> run_duration = new_report_time - last_report_time;
+	auto new_report_time = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> run_duration = new_report_time - last_report_time;
 	std::cout << "Frame FPS=" << (1.0F / run_duration.count());
 	last_report_time = new_report_time;
 
@@ -212,7 +212,7 @@ void image_classifier_demo_toolset::report_stats()
 	if (current_fps > 0.0F)
 		std::cout << ", Classifier FPS=" << current_fps;
 
-	nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > output_data = safe_peek_output_data();
+	std::shared_ptr<std::vector<std::pair<unsigned int, float> > > output_data = safe_peek_output_data();
 	if (output_data)
 	{
 		for(int i = 0; i < output_data->size(); ++i)
@@ -231,7 +231,7 @@ void image_classifier_demo_toolset::add_classifier_results(cv::Mat3b frame)
 	if (current_fps > 0.0F)
 		add_classifier_fps(frame, current_fps);
 
-	nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > output_data = safe_peek_output_data();
+	std::shared_ptr<std::vector<std::pair<unsigned int, float> > > output_data = safe_peek_output_data();
 	if (output_data && (!output_data->empty()))
 		add_classifier_output(frame, *output_data);
 }
@@ -287,58 +287,58 @@ void image_classifier_demo_toolset::add_classifier_fps(cv::Mat3b frame, float fp
 		text_thickness);
 }
 
-nnforge_shared_ptr<std::vector<float> > image_classifier_demo_toolset::safe_peek_input_data()
+std::shared_ptr<std::vector<float> > image_classifier_demo_toolset::safe_peek_input_data()
 {
-	boost::lock_guard<boost::mutex> guard(input_data_mutex);
+	std::lock_guard<std::mutex> guard(input_data_mutex);
 
 	return input_data_smart_ptr;
 }
 
-void image_classifier_demo_toolset::safe_set_input_data(nnforge_shared_ptr<std::vector<float> > val)
+void image_classifier_demo_toolset::safe_set_input_data(std::shared_ptr<std::vector<float> > val)
 {
-	boost::lock_guard<boost::mutex> guard(input_data_mutex);
+	std::lock_guard<std::mutex> guard(input_data_mutex);
 
 	input_data_smart_ptr = val;
 }
 
-nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > image_classifier_demo_toolset::safe_peek_output_data()
+std::shared_ptr<std::vector<std::pair<unsigned int, float> > > image_classifier_demo_toolset::safe_peek_output_data()
 {
-	boost::lock_guard<boost::mutex> guard(output_data_mutex);
+	std::lock_guard<std::mutex> guard(output_data_mutex);
 
 	return output_data_smart_ptr;
 }
 
-void image_classifier_demo_toolset::safe_set_output_data(nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > val)
+void image_classifier_demo_toolset::safe_set_output_data(std::shared_ptr<std::vector<std::pair<unsigned int, float> > > val)
 {
-	boost::lock_guard<boost::mutex> guard(output_data_mutex);
+	std::lock_guard<std::mutex> guard(output_data_mutex);
 
 	output_data_smart_ptr = val;
 }
 
 bool image_classifier_demo_toolset::safe_peek_demo_should_stop()
 {
-	boost::lock_guard<boost::mutex> guard(demo_should_stop_mutex);
+	std::lock_guard<std::mutex> guard(demo_should_stop_mutex);
 
 	return demo_should_stop;
 }
 
 void image_classifier_demo_toolset::safe_set_demo_should_stop(bool val)
 {
-	boost::lock_guard<boost::mutex> guard(demo_should_stop_mutex);
+	std::lock_guard<std::mutex> guard(demo_should_stop_mutex);
 
 	demo_should_stop = val;
 }
 
 float image_classifier_demo_toolset::safe_peek_fps()
 {
-	boost::lock_guard<boost::mutex> guard(fps_mutex);
+	std::lock_guard<std::mutex> guard(fps_mutex);
 
 	return fps;
 }
 
 void image_classifier_demo_toolset::safe_set_fps(float val)
 {
-	boost::lock_guard<boost::mutex> guard(fps_mutex);
+	std::lock_guard<std::mutex> guard(fps_mutex);
 
 	fps = val;
 }
@@ -404,7 +404,7 @@ void image_classifier_demo_toolset::set_input_data(cv::Mat original_image, bool 
 		cv::resize(original_image, dest_sub_image, cv::Size(dest_sub_image.cols, dest_sub_image.rows), 0.0, 0.0);
 	}
 
-	nnforge_shared_ptr<std::vector<float> > new_input_data(new std::vector<float>(dest_image.rows * dest_image.cols * 3));
+	std::shared_ptr<std::vector<float> > new_input_data(new std::vector<float>(dest_image.rows * dest_image.cols * 3));
 
 	float * input_data = &(*new_input_data->begin());
 
@@ -521,10 +521,10 @@ bool image_classifier_demo_toolset::read(
 	if (safe_peek_demo_should_stop())
 		return false;
 
-	nnforge_shared_ptr<std::vector<float> > input_data = safe_peek_input_data();
+	std::shared_ptr<std::vector<float> > input_data = safe_peek_input_data();
 	while (!input_data)
 	{
-		boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		input_data = safe_peek_input_data();
 		if (safe_peek_demo_should_stop())
 			return false;
@@ -552,8 +552,8 @@ void image_classifier_demo_toolset::write(
 	unsigned int entry_id,
 	const std::map<std::string, const float *>& data_map)
 {
-	boost::chrono::steady_clock::time_point new_last_write = boost::chrono::high_resolution_clock::now();
-	boost::chrono::duration<float> run_duration = new_last_write - last_write;
+	auto new_last_write = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> run_duration = new_last_write - last_write;
 	last_write = new_last_write;
 	safe_set_fps(1.0F / run_duration.count());
 
@@ -565,7 +565,7 @@ void image_classifier_demo_toolset::write(
 	unsigned int top_n_actual = std::min(top_n, (unsigned int)full_output.size());
 	std::partial_sort(full_output.begin(), full_output.begin() + top_n_actual, full_output.end(), compare_results);
 
-	nnforge_shared_ptr<std::vector<std::pair<unsigned int, float> > > new_output(new std::vector<std::pair<unsigned int, float> >(top_n_actual));
+	std::shared_ptr<std::vector<std::pair<unsigned int, float> > > new_output(new std::vector<std::pair<unsigned int, float> >(top_n_actual));
 	for(unsigned int i = 0; i < top_n_actual; ++i)
 		new_output->at(i) = full_output[i];
 	safe_set_output_data(new_output);

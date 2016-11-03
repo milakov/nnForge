@@ -17,7 +17,6 @@
 #pragma once
 
 #include "../layer.h"
-#include "../nn_types.h"
 
 #include "cuda_running_configuration.h"
 #include "buffer_cuda_size_configuration.h"
@@ -26,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <cuda_runtime.h>
+#include <memory>
 
 namespace nnforge
 {
@@ -34,9 +34,9 @@ namespace nnforge
 		class layer_tester_cuda
 		{
 		public:
-			typedef nnforge_shared_ptr<layer_tester_cuda> ptr;
+			typedef std::shared_ptr<layer_tester_cuda> ptr;
 
-			virtual ~layer_tester_cuda();
+			virtual ~layer_tester_cuda() = default;
 
 			void configure(
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
@@ -72,7 +72,7 @@ namespace nnforge
 			virtual std::vector<unsigned int> get_linear_addressing_through_texture_per_entry() const;
 
 		protected:
-			layer_tester_cuda();
+			layer_tester_cuda() = default;
 
 			// The method is called when configuration is finished
 			virtual void tester_configured();
@@ -91,8 +91,8 @@ namespace nnforge
 			unsigned int output_elem_count_per_feature_map;
 
 		private:
-			layer_tester_cuda(const layer_tester_cuda&);
-			layer_tester_cuda& operator =(const layer_tester_cuda&);
+			layer_tester_cuda(const layer_tester_cuda&) = delete;
+			layer_tester_cuda& operator =(const layer_tester_cuda&) = delete;
 		};
 	}
 }

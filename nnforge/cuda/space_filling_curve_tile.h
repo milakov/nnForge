@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../nn_types.h"
+#include <array>
 
 namespace nnforge
 {
@@ -29,8 +29,8 @@ namespace nnforge
 			space_filling_curve_tile() {}
 
 			space_filling_curve_tile(
-				const nnforge_array<int, dimension_count>& start_elems,
-				const nnforge_array<int, dimension_count>& end_elems)
+				const std::array<int, dimension_count>& start_elems,
+				const std::array<int, dimension_count>& end_elems)
 				: start_elems(start_elems)
 				, end_elems(end_elems)
 			{
@@ -45,8 +45,8 @@ namespace nnforge
 				return true;
 			}
 
-			nnforge_array<int, dimension_count> start_elems;
-			nnforge_array<int, dimension_count> end_elems;
+			std::array<int, dimension_count> start_elems;
+			std::array<int, dimension_count> end_elems;
 		};
 	}
 }

@@ -33,9 +33,7 @@ namespace nnforge
 			update_weights = 4
 		};
 
-		layer_action()
-		{
-		}
+		layer_action() = default;
 
 		layer_action(
 			action_type at,

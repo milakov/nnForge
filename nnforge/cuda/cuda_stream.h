@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include "../nn_types.h"
-
 #include <cuda_runtime.h>
+#include <memory>
 
 namespace nnforge
 {
@@ -27,7 +26,7 @@ namespace nnforge
 		class cuda_stream
 		{
 		public:
-			typedef nnforge_shared_ptr<cuda_stream> ptr;
+			typedef std::shared_ptr<cuda_stream> ptr;
 
 			cuda_stream();
 
@@ -39,8 +38,8 @@ namespace nnforge
 			cudaStream_t stream;
 
 		private:
-			cuda_stream(const cuda_stream&);
-			cuda_stream& operator =(const cuda_stream&);
+			cuda_stream(const cuda_stream&) = delete;
+			cuda_stream& operator =(const cuda_stream&) = delete;
 		};
 	}
 }

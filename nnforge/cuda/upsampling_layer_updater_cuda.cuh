@@ -19,13 +19,13 @@
 #include "layer_updater_cuda.h"
 
 #include <cuda_runtime.h>
+#include <memory>
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
 #include "int_fastdiv.h"
 
 #include "../upsampling_layer.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -397,7 +397,7 @@ namespace nnforge
 		protected:
 			virtual void updater_configured()
 			{
-				nnforge_shared_ptr<const upsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const upsampling_layer>(layer_schema);
+				std::shared_ptr<const upsampling_layer> layer_derived = std::dynamic_pointer_cast<const upsampling_layer>(layer_schema);
 
 				feature_map_upsampling_size = layer_derived->feature_map_upsampling_size;
 				entry_upsampling_size = layer_derived->entry_upsampling_size;

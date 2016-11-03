@@ -25,9 +25,9 @@ namespace nnforge
 		class linear_sampler_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			linear_sampler_layer_tester_cuda();
+			linear_sampler_layer_tester_cuda() = default;
 
-			virtual ~linear_sampler_layer_tester_cuda();
+			virtual ~linear_sampler_layer_tester_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

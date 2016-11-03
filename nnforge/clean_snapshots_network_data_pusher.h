@@ -29,7 +29,7 @@ namespace nnforge
 			const boost::filesystem::path& folder_path,
 			unsigned int keep_frequency);
 
-		virtual ~clean_snapshots_network_data_pusher();
+		virtual ~clean_snapshots_network_data_pusher() = default;
 
 		virtual void push(
 			const training_task_state& task_state,

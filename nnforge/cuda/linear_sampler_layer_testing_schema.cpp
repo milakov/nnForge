@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		linear_sampler_layer_testing_schema::linear_sampler_layer_testing_schema()
-		{
-		}
-
-		linear_sampler_layer_testing_schema::~linear_sampler_layer_testing_schema()
-		{
-		}
-
 		std::string linear_sampler_layer_testing_schema::get_type_name() const
 		{
 			return linear_sampler_layer::layer_type_name;

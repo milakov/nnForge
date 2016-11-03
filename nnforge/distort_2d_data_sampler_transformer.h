@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ namespace nnforge
 			bool flip_around_y,
 			float border_value = 0.5F);
 
-		virtual ~distort_2d_data_sampler_transformer();
+		virtual ~distort_2d_data_sampler_transformer() = default;
 
 		virtual void transform(
 			const float * data,

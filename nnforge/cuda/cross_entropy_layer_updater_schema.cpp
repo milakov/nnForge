@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		cross_entropy_layer_updater_schema::cross_entropy_layer_updater_schema()
-		{
-		}
-
-		cross_entropy_layer_updater_schema::~cross_entropy_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr cross_entropy_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new cross_entropy_layer_updater_schema());

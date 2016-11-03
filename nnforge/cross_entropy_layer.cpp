@@ -20,7 +20,6 @@
 #include "proto/nnforge.pb.h"
 
 #include <algorithm>
-#include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
 #include <sstream>
 

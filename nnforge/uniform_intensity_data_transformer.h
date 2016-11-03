@@ -18,10 +18,10 @@
 
 #include "data_transformer.h"
 #include "rnd.h"
-#include "nn_types.h"
 
 #include <vector>
-#include <boost/thread/thread.hpp>
+#include <mutex>
+#include <random>
 
 namespace nnforge
 {
@@ -32,7 +32,7 @@ namespace nnforge
 			const std::vector<float>& min_shift_list,
 			const std::vector<float>& max_shift_list);
 
-		virtual ~uniform_intensity_data_transformer();
+		virtual ~uniform_intensity_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -42,9 +42,9 @@ namespace nnforge
 			
 	protected:
 		random_generator generator;
-		boost::mutex gen_stream_mutex;
+		std::mutex gen_stream_mutex;
 
 		std::vector<bool> apply_shift_distribution_list;
-		std::vector<nnforge_uniform_real_distribution<float> > shift_distribution_list;
+		std::vector<std::uniform_real_distribution<float> > shift_distribution_list;
 	};
 }

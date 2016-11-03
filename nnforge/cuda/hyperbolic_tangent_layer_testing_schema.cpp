@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		hyperbolic_tangent_layer_testing_schema::hyperbolic_tangent_layer_testing_schema()
-		{
-		}
-
-		hyperbolic_tangent_layer_testing_schema::~hyperbolic_tangent_layer_testing_schema()
-		{
-		}
-
 		std::string hyperbolic_tangent_layer_testing_schema::get_type_name() const
 		{
 			return hyperbolic_tangent_layer::layer_type_name;

@@ -25,9 +25,9 @@ namespace nnforge
 		class hyperbolic_tangent_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			hyperbolic_tangent_layer_testing_schema();
+			hyperbolic_tangent_layer_testing_schema() = default;
 
-			virtual ~hyperbolic_tangent_layer_testing_schema();
+			virtual ~hyperbolic_tangent_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

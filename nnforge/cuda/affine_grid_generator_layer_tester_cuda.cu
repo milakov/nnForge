@@ -19,7 +19,6 @@
 #include <cuda_runtime.h>
 
 #include "../affine_grid_generator_layer.h"
-#include "../nn_types.h"
 
 #include "util_cuda.h"
 
@@ -74,14 +73,6 @@ namespace nnforge
 			}
 		}
 
-		affine_grid_generator_layer_tester_cuda::affine_grid_generator_layer_tester_cuda()
-		{
-		}
-
-		affine_grid_generator_layer_tester_cuda::~affine_grid_generator_layer_tester_cuda()
-		{
-		}
-
 		void affine_grid_generator_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -126,7 +117,7 @@ namespace nnforge
 
 		void affine_grid_generator_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const affine_grid_generator_layer> layer_derived = nnforge_dynamic_pointer_cast<const affine_grid_generator_layer>(layer_schema);
+			std::shared_ptr<const affine_grid_generator_layer> layer_derived = std::dynamic_pointer_cast<const affine_grid_generator_layer>(layer_schema);
 
 			adjust_for_zero_init = layer_derived->adjust_for_zero_init;
 

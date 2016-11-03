@@ -25,9 +25,9 @@ namespace nnforge
 		class add_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			add_layer_tester_plain();
+			add_layer_tester_plain() = default;
 
-			virtual ~add_layer_tester_plain();
+			virtual ~add_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

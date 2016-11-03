@@ -94,10 +94,10 @@ namespace nnforge
 				const std::vector<unsigned int>& strides);
 
 		private:
-			cudnn_util();
-			cudnn_util(const cudnn_util&);
-			cudnn_util& operator =(const cudnn_util&);
-			~cudnn_util();
+			cudnn_util() = delete;
+			cudnn_util(const cudnn_util&) = delete;
+			cudnn_util& operator =(const cudnn_util&) = delete;
+			~cudnn_util() = delete;
 		};
 	}
 }

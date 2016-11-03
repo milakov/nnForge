@@ -25,9 +25,9 @@ namespace nnforge
 		class batch_norm_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			batch_norm_layer_tester_plain();
+			batch_norm_layer_tester_plain() = default;
 
-			virtual ~batch_norm_layer_tester_plain();
+			virtual ~batch_norm_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

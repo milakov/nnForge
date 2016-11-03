@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		hyperbolic_tangent_layer_updater_schema::hyperbolic_tangent_layer_updater_schema()
-		{
-		}
-
-		hyperbolic_tangent_layer_updater_schema::~hyperbolic_tangent_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr hyperbolic_tangent_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new hyperbolic_tangent_layer_updater_schema());

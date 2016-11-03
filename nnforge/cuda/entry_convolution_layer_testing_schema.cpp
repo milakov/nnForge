@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		entry_convolution_layer_testing_schema::entry_convolution_layer_testing_schema()
-		{
-		}
-
-		entry_convolution_layer_testing_schema::~entry_convolution_layer_testing_schema()
-		{
-		}
-
 		std::string entry_convolution_layer_testing_schema::get_type_name() const
 		{
 			return entry_convolution_layer::layer_type_name;

@@ -25,9 +25,9 @@ namespace nnforge
 		class affine_grid_generator_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			affine_grid_generator_layer_tester_plain();
+			affine_grid_generator_layer_tester_plain() = default;
 
-			virtual ~affine_grid_generator_layer_tester_plain();
+			virtual ~affine_grid_generator_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

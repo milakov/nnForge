@@ -22,14 +22,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		reshape_layer_tester_cuda::reshape_layer_tester_cuda()
-		{
-		}
-
-		reshape_layer_tester_cuda::~reshape_layer_tester_cuda()
-		{
-		}
-
 		void reshape_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,

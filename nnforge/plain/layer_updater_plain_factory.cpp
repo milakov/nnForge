@@ -43,5 +43,11 @@ namespace nnforge
 
 			return i->second;
 		}
+
+		layer_updater_plain_factory& layer_updater_plain_factory::get_singleton()
+		{
+			static layer_updater_plain_factory instance;
+			return instance;
+		}
 	}
 }

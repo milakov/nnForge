@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@
 #include "layer_data.h"
 #include "layer_data_custom.h"
 #include "layer.h"
-#include "nn_types.h"
 #include "rnd.h"
 #include "layer_data_list.h"
 #include "layer_data_custom_list.h"
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <boost/uuid/uuid.hpp>
 #include <boost/filesystem.hpp>
 
@@ -34,10 +34,10 @@ namespace nnforge
 	class network_data
 	{
 	public:
-		typedef nnforge_shared_ptr<network_data> ptr;
-		typedef nnforge_shared_ptr<const network_data> const_ptr;
+		typedef std::shared_ptr<network_data> ptr;
+		typedef std::shared_ptr<const network_data> const_ptr;
 
-		network_data();
+		network_data() = default;
 
 		network_data(
 			const std::vector<layer::const_ptr>& layer_list,

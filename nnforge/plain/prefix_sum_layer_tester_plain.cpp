@@ -17,7 +17,6 @@
 #include "prefix_sum_layer_tester_plain.h"
 
 #include "../prefix_sum_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -25,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		prefix_sum_layer_tester_plain::prefix_sum_layer_tester_plain()
-		{
-		}
-
-		prefix_sum_layer_tester_plain::~prefix_sum_layer_tester_plain()
-		{
-		}
-
 		std::string prefix_sum_layer_tester_plain::get_type_name() const
 		{
 			return prefix_sum_layer::layer_type_name;
@@ -54,7 +45,7 @@ namespace nnforge
 			const float * const in_it_global = *input_buffers[0];
 			float * const out_it_global = *output_buffer;
 			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
-			nnforge_shared_ptr<const prefix_sum_layer> layer_derived = nnforge_dynamic_pointer_cast<const prefix_sum_layer>(layer_schema);
+			std::shared_ptr<const prefix_sum_layer> layer_derived = std::dynamic_pointer_cast<const prefix_sum_layer>(layer_schema);
 			const unsigned int feature_map_segment_length = layer_derived->feature_map_segment_length;
 			const unsigned int feature_map_segment_count = output_configuration_specific.feature_map_count / feature_map_segment_length;
 			const unsigned int neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();

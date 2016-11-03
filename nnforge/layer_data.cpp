@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,10 +20,6 @@
 
 namespace nnforge
 {
-	layer_data::layer_data()
-	{
-	}
-
 	void layer_data::write(std::ostream& binary_stream_to_write_to) const
 	{
 		unsigned int weight_vector_count = static_cast<unsigned int>(size());
@@ -68,20 +64,10 @@ namespace nnforge
 	{
 		for(std::vector<std::vector<float> >::iterator it = begin(); it != end(); ++it)
 		{
-			nnforge_uniform_real_distribution<float> nd(min, max);
+			std::uniform_real_distribution<float> nd(min, max);
 
 			for(std::vector<float>::iterator it2 = it->begin(); it2 != it->end(); ++it2)
 				*it2 = nd(gen);
 		}
-	}
-
-	layer_data::mult_transform::mult_transform(float mult)
-		: mult(mult)
-	{
-	}
-
-	float layer_data::mult_transform::operator() (float in)
-	{
-		return in * mult;
 	}
 }

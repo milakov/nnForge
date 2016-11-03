@@ -25,9 +25,9 @@ namespace nnforge
 		class dropout_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			dropout_layer_testing_schema();
+			dropout_layer_testing_schema() = default;
 
-			virtual ~dropout_layer_testing_schema();
+			virtual ~dropout_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,22 +16,16 @@
 
 #include "gradient_modifier_layer_updater_plain.h"
 
+#include <memory>
+#include <cstring>
+
 #include "../gradient_modifier_layer.h"
 #include "../neural_network_exception.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
 	namespace plain
 	{
-		gradient_modifier_layer_updater_plain::gradient_modifier_layer_updater_plain()
-		{
-		}
-
-		gradient_modifier_layer_updater_plain::~gradient_modifier_layer_updater_plain()
-		{
-		}
-
 		std::string gradient_modifier_layer_updater_plain::get_type_name() const
 		{
 			return gradient_modifier_layer::layer_type_name;
@@ -81,7 +75,7 @@ namespace nnforge
 			float * const in_err_it = *input_errors_buffer;
 			const float * const out_err_it = *output_errors_buffer;
 
-			nnforge_shared_ptr<const gradient_modifier_layer> layer_derived = nnforge_dynamic_pointer_cast<const gradient_modifier_layer>(layer_schema);
+			std::shared_ptr<const gradient_modifier_layer> layer_derived = std::dynamic_pointer_cast<const gradient_modifier_layer>(layer_schema);
 			const float scale = layer_derived->scale;
 
 			if (add_update_to_destination)

@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		dropout_layer_testing_schema::dropout_layer_testing_schema()
-		{
-		}
-
-		dropout_layer_testing_schema::~dropout_layer_testing_schema()
-		{
-		}
-
 		std::string dropout_layer_testing_schema::get_type_name() const
 		{
 			return dropout_layer::layer_type_name;

@@ -19,6 +19,7 @@
 #include "layer_tester_cuda.h"
 
 #include <cuda_runtime.h>
+#include <memory>
 
 #include <boost/format.hpp>
 
@@ -30,7 +31,6 @@
 #include "int_fastdiv.h"
 
 #include "../max_subsampling_layer.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -186,7 +186,7 @@ namespace nnforge
 
 			virtual void tester_configured()
 			{
-				nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+				std::shared_ptr<const max_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 				is_min = layer_derived->is_min;
 
@@ -214,15 +214,15 @@ namespace nnforge
 				{
 					std::vector<packed_config<spatial_dimension_count> > task_list;
 					{
-						nnforge_array<int, dimension_count> size_list;
+						std::array<int, dimension_count> size_list;
 						for(int i = 0; i < dimension_count; ++i)
 							size_list[i] = output_sizes[i];
-						std::vector<nnforge_array<int, dimension_count> > ordered_list;
+						std::vector<std::array<int, dimension_count> > ordered_list;
 						sequential_curve<dimension_count>::fill_pattern(size_list, ordered_list);
 						packed_config<spatial_dimension_count> new_elem;
 						for(int j = 0; j < ordered_list.size(); ++j)
 						{
-							const nnforge_array<int, dimension_count>& spatial_dimensions = ordered_list[j];
+							const std::array<int, dimension_count>& spatial_dimensions = ordered_list[j];
 							for(int i = 0; i < dimension_count; ++i)
 								new_elem.set_val(i, spatial_dimensions[i]);
 							task_list.push_back(new_elem);
@@ -234,15 +234,15 @@ namespace nnforge
 				{
 					std::vector<packed_config<tiling_dimension_count> > task_list;
 					{
-						nnforge_array<int, dimension_count> subsampling_list;
+						std::array<int, dimension_count> subsampling_list;
 						for(int i = 0; i < dimension_count; ++i)
 							subsampling_list[i] = subsampling_sizes[i];
-						std::vector<nnforge_array<int, dimension_count> > ordered_list;
+						std::vector<std::array<int, dimension_count> > ordered_list;
 						sequential_curve<dimension_count>::fill_pattern(subsampling_list, ordered_list);
 						packed_config<tiling_dimension_count> new_elem;
 						for(int j = 0; j < ordered_list.size(); ++j)
 						{
-							const nnforge_array<int, dimension_count>& subsampling_offsets = ordered_list[j];
+							const std::array<int, dimension_count>& subsampling_offsets = ordered_list[j];
 							for(int i = 0; i < dimension_count; ++i)
 								new_elem.set_val(i, subsampling_offsets[i]);
 							task_list.push_back(new_elem);

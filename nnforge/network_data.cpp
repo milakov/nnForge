@@ -32,10 +32,6 @@ namespace nnforge
 		, 0xa2, 0x78
 		, 0xfd, 0xa9, 0xaf, 0xeb, 0xe7, 0x6d };
 
-	network_data::network_data()
-	{
-	}
-
 	network_data::network_data(
 		const std::vector<layer::const_ptr>& layer_list,
 		float val)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ namespace nnforge
 			unsigned int base_index,
 			const std::vector<network_data_peek_entry>& leading_tasks);
 
-		virtual ~network_data_peeker_random();
+		virtual ~network_data_peeker_random() = default;
 
 		// The method should return empty data smart pointer in case no more layer data are available
 		// The caller is free to modify the data returned

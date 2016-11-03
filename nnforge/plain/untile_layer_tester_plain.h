@@ -25,9 +25,9 @@ namespace nnforge
 		class untile_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			untile_layer_tester_plain();
+			untile_layer_tester_plain() = default;
 
-			virtual ~untile_layer_tester_plain();
+			virtual ~untile_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

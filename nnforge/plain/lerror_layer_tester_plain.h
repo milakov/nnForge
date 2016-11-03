@@ -25,9 +25,9 @@ namespace nnforge
 		class lerror_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			lerror_layer_tester_plain();
+			lerror_layer_tester_plain() = default;
 
-			virtual ~lerror_layer_tester_plain();
+			virtual ~lerror_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "layer_updater_schema_factory.h"
 #include "../neural_network_exception.h"
 
-#include <boost/uuid/uuid_io.hpp>
 #include <boost/format.hpp>
 
 namespace nnforge
@@ -46,6 +45,12 @@ namespace nnforge
 			return i->second->create(
 				layer,
 				cuda_config);
+		}
+
+		layer_updater_schema_factory& layer_updater_schema_factory::get_singleton()
+		{
+			static layer_updater_schema_factory instance;
+			return instance;
 		}
 	}
 }

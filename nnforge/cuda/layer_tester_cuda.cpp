@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		layer_tester_cuda::layer_tester_cuda()
-		{
-		}
-
-		layer_tester_cuda::~layer_tester_cuda()
-		{
-		}
-
 		void layer_tester_cuda::configure(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,

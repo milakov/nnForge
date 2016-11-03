@@ -20,7 +20,7 @@
 #include <boost/format.hpp>
 #include <limits>
 #include <iostream>
-#include <boost/thread/thread.hpp>
+#include <thread>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -130,7 +130,7 @@ namespace nnforge
 			curand_safe_call(curandCreateGenerator(&curand_gen, CURAND_RNG_PSEUDO_MRG32K3A));
 			curand_safe_call(curandSetPseudoRandomGeneratorSeed(curand_gen, rnd::get_time_dependent_seed()));
 
-			unsigned int core_count = boost::thread::hardware_concurrency();
+			unsigned int core_count = std::thread::hardware_concurrency();
 			job_runner = threadpool_job_runner::ptr(new threadpool_job_runner(core_count > reserved_thread_count ? core_count - reserved_thread_count : 1));
 		}
 

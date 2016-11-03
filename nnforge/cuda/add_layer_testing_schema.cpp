@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		add_layer_testing_schema::add_layer_testing_schema()
-		{
-		}
-
-		add_layer_testing_schema::~add_layer_testing_schema()
-		{
-		}
-
 		std::string add_layer_testing_schema::get_type_name() const
 		{
 			return add_layer::layer_type_name;

@@ -25,9 +25,9 @@ namespace nnforge
 		class batch_norm_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			batch_norm_layer_updater_schema();
+			batch_norm_layer_updater_schema() = default;
 
-			virtual ~batch_norm_layer_updater_schema();
+			virtual ~batch_norm_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

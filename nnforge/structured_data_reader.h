@@ -17,17 +17,18 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
-#include "nn_types.h"
 #include "raw_data_reader.h"
+
+#include <memory>
 
 namespace nnforge
 {
 	class structured_data_reader : public raw_data_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_data_reader> ptr;
+		typedef std::shared_ptr<structured_data_reader> ptr;
 
-		virtual ~structured_data_reader();
+		virtual ~structured_data_reader() = default;
 
 		virtual bool read(
 			unsigned int entry_id,
@@ -40,10 +41,10 @@ namespace nnforge
 		virtual layer_configuration_specific get_configuration() const = 0;
 
 	protected:
-		structured_data_reader();
+		structured_data_reader() = default;
 
 	private:
-		structured_data_reader(const structured_data_reader&);
-		structured_data_reader& operator =(const structured_data_reader&);
+		structured_data_reader(const structured_data_reader&) = delete;
+		structured_data_reader& operator =(const structured_data_reader&) = delete;
 	};
 }

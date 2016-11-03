@@ -23,9 +23,7 @@ namespace nnforge
 	class data_layer : public layer
 	{
 	public:
-		data_layer();
-
-		virtual ~data_layer();
+		data_layer() = default;
 
 		virtual layer::ptr clone() const;
 

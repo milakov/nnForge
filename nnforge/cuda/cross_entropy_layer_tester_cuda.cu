@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -97,14 +97,6 @@ namespace nnforge
 				output[output_offset] = err * (mask * scale);
 		}
 
-		cross_entropy_layer_tester_cuda::cross_entropy_layer_tester_cuda()
-		{
-		}
-
-		cross_entropy_layer_tester_cuda::~cross_entropy_layer_tester_cuda()
-		{
-		}
-
 		void cross_entropy_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -137,7 +129,7 @@ namespace nnforge
 
 		void cross_entropy_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const cross_entropy_layer> layer_derived = nnforge_dynamic_pointer_cast<const cross_entropy_layer>(layer_schema);
+			std::shared_ptr<const cross_entropy_layer> layer_derived = std::dynamic_pointer_cast<const cross_entropy_layer>(layer_schema);
 
 			scale = layer_derived->scale;
 		}

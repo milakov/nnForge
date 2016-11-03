@@ -67,10 +67,6 @@ namespace nnforge
 									}
 	}
 
-	distort_2d_data_sampler_transformer::~distort_2d_data_sampler_transformer()
-	{
-	}
-
 	void distort_2d_data_sampler_transformer::transform(
 		const float * data,
 		float * data_transformed,

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 
 #include "util_cuda.h"
 
-
 namespace nnforge
 {
 	namespace cuda
@@ -40,14 +39,6 @@ namespace nnforge
 				val.w = fabsf(val.w);
 				output[elem_id] = val;
 			}
-		}
-
-		absolute_layer_tester_cuda::absolute_layer_tester_cuda()
-		{
-		}
-
-		absolute_layer_tester_cuda::~absolute_layer_tester_cuda()
-		{
 		}
 
 		void absolute_layer_tester_cuda::enqueue_forward_propagation(

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@
 
 #include <cuda_runtime.h>
 #include <boost/format.hpp>
+#include <memory>
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
 
 #include "../untile_layer.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -57,14 +57,6 @@ namespace nnforge
 				int output_offset = (output_entry_id * feature_map_count + feature_map_id) * neuron_count_per_output_feature_map + output_neuron_offset;
 				output[output_offset] = val;
 			}
-		}
-
-		untile_layer_tester_cuda::untile_layer_tester_cuda()
-		{
-		}
-
-		untile_layer_tester_cuda::~untile_layer_tester_cuda()
-		{
 		}
 
 		void untile_layer_tester_cuda::enqueue_forward_propagation(
@@ -196,7 +188,7 @@ namespace nnforge
 
 		void untile_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const untile_layer> layer_derived = nnforge_dynamic_pointer_cast<const untile_layer>(layer_schema);
+			std::shared_ptr<const untile_layer> layer_derived = std::dynamic_pointer_cast<const untile_layer>(layer_schema);
 
 			upsampling_sizes_list = layer_derived->upsampling_sizes_list;
 			total_tiling_factor = layer_derived->get_tiling_factor().get_inverse();

@@ -194,13 +194,7 @@
     <ClInclude Include="factory_generator.h">
       <Filter>Header Files\toolset</Filter>
     </ClInclude>
-    <ClInclude Include="neural_network_toolset.h">
-      <Filter>Header Files\toolset</Filter>
-    </ClInclude>
     <ClInclude Include="supervised_data_stream_schema.h">
-      <Filter>Header Files\training_data</Filter>
-    </ClInclude>
-    <ClInclude Include="neuron_data_type.h">
       <Filter>Header Files\training_data</Filter>
     </ClInclude>
     <ClInclude Include="network_output_type.h">
@@ -241,9 +235,6 @@
     </ClInclude>
     <ClInclude Include="distort_2d_data_sampler_transformer.h">
       <Filter>Header Files\data_transformers</Filter>
-    </ClInclude>
-    <ClInclude Include="nn_types.h">
-      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="varying_data_stream_writer.h">
       <Filter>Header Files\training_data</Filter>
@@ -568,9 +559,6 @@
     <ClCompile Include="complex_network_data_pusher.cpp">
       <Filter>Source Files\training\pushers</Filter>
     </ClCompile>
-    <ClCompile Include="network_data_pusher.cpp">
-      <Filter>Source Files\training\pushers</Filter>
-    </ClCompile>
     <ClCompile Include="report_progress_network_data_pusher.cpp">
       <Filter>Source Files\training\pushers</Filter>
     </ClCompile>
@@ -579,12 +567,6 @@
     </ClCompile>
     <ClCompile Include="validate_progress_network_data_pusher.cpp">
       <Filter>Source Files\training\pushers</Filter>
-    </ClCompile>
-    <ClCompile Include="training_task_state.cpp">
-      <Filter>Source Files\training\result</Filter>
-    </ClCompile>
-    <ClCompile Include="network_data_peeker.cpp">
-      <Filter>Source Files\training\peekers</Filter>
     </ClCompile>
     <ClCompile Include="network_data_peeker_random.cpp">
       <Filter>Source Files\training\peekers</Filter>
@@ -598,13 +580,7 @@
     <ClCompile Include="factory_generator.cpp">
       <Filter>Source Files\toolset</Filter>
     </ClCompile>
-    <ClCompile Include="neural_network_toolset.cpp">
-      <Filter>Source Files\toolset</Filter>
-    </ClCompile>
     <ClCompile Include="supervised_data_stream_schema.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
-    <ClCompile Include="neuron_data_type.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="layer_data_configuration.cpp">
@@ -703,9 +679,6 @@
     <ClCompile Include="training_momentum.cpp">
       <Filter>Source Files\training\trainer</Filter>
     </ClCompile>
-    <ClCompile Include="raw_data_reader.cpp">
-      <Filter>Source Files\training_data</Filter>
-    </ClCompile>
     <ClCompile Include="varying_data_stream_reader.cpp">
       <Filter>Source Files\training_data</Filter>
     </ClCompile>
@@ -741,9 +714,6 @@
     </ClCompile>
     <ClCompile Include="neuron_value_set.cpp">
       <Filter>Source Files\result</Filter>
-    </ClCompile>
-    <ClCompile Include="structured_data_bunch_writer.cpp">
-      <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="threadpool_job_runner.cpp">
       <Filter>Source Files\util</Filter>
@@ -786,9 +756,6 @@
     </ClCompile>
     <ClCompile Include="save_snapshot_network_data_pusher.cpp">
       <Filter>Source Files\training\pushers</Filter>
-    </ClCompile>
-    <ClCompile Include="raw_data_writer.cpp">
-      <Filter>Source Files\training_data</Filter>
     </ClCompile>
     <ClCompile Include="structured_data_writer.cpp">
       <Filter>Source Files\training_data</Filter>
@@ -861,9 +828,6 @@
     </ClCompile>
     <ClCompile Include="profile_util.cpp">
       <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="learning_rate_decay_policy.cpp">
-      <Filter>Source Files\training\trainer</Filter>
     </ClCompile>
     <ClCompile Include="exponential_learning_rate_decay_policy.cpp">
       <Filter>Source Files\training\learning_rate_decay_policies</Filter>

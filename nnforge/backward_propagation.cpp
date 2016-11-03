@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include "profile_util.h"
 
 #include <boost/format.hpp>
-#include <boost/chrono.hpp>
+#include <chrono>
 #include <boost/filesystem/fstream.hpp>
 
 namespace nnforge
@@ -125,10 +125,6 @@ namespace nnforge
 			data_layer_names.insert((*it)->instance_name);
 	}
 
-	backward_propagation::~backward_propagation()
-	{
-	}
-
 	void backward_propagation::set_input_configuration_specific(const std::map<std::string, layer_configuration_specific>& input_configuration_specific_map)
 	{
 		bool same_input_config = true;
@@ -186,7 +182,7 @@ namespace nnforge
 		// Check data-schema consistency
 		data.check_network_data_consistency(schema->get_layers());
 
-		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
+		std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 		set_input_configuration_specific(reader.get_config_map());
 		structured_data_bunch_reader::ptr narrow_reader = reader.get_narrow_reader(data_layer_names);
 		res.flops_per_entry = flops;
@@ -210,7 +206,7 @@ namespace nnforge
 			res.average_absolute_updates,
 			res.entry_processed_count,
 			action_seconds);
-		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
+		std::chrono::duration<float> sec = std::chrono::high_resolution_clock::now() - start;
 		res.total_seconds = sec.count();
 
 		if (profile->is_profile() && !action_seconds.empty())

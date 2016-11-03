@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		negative_log_likelihood_layer_updater_schema::negative_log_likelihood_layer_updater_schema()
-		{
-		}
-
-		negative_log_likelihood_layer_updater_schema::~negative_log_likelihood_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr negative_log_likelihood_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new negative_log_likelihood_layer_updater_schema());

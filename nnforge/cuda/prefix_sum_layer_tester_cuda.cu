@@ -78,14 +78,6 @@ namespace nnforge
 			}
 		}
 
-		prefix_sum_layer_tester_cuda::prefix_sum_layer_tester_cuda()
-		{
-		}
-
-		prefix_sum_layer_tester_cuda::~prefix_sum_layer_tester_cuda()
-		{
-		}
-
 		void prefix_sum_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -116,7 +108,7 @@ namespace nnforge
 
 		void prefix_sum_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const prefix_sum_layer> layer_derived = nnforge_dynamic_pointer_cast<const prefix_sum_layer>(layer_schema);
+			std::shared_ptr<const prefix_sum_layer> layer_derived = std::dynamic_pointer_cast<const prefix_sum_layer>(layer_schema);
 
 			feature_map_segment_length = layer_derived->feature_map_segment_length;
 			clamp_min = layer_derived->clamp_min;

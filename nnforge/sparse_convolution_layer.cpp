@@ -17,12 +17,10 @@
 #include "sparse_convolution_layer.h"
 
 #include "neural_network_exception.h"
-#include "nn_types.h"
 #include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <set>
-#include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
 #include <sstream>
 
@@ -264,7 +262,7 @@ namespace nnforge
 		data_config res;
 
 		unsigned int weight_count = feature_map_connection_count;
-		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
+		std::for_each(window_sizes.begin(), window_sizes.end(), [&weight_count] (unsigned int x) { weight_count *= x; });
 
 		res.push_back(weight_count);
 		if (bias)
@@ -299,7 +297,7 @@ namespace nnforge
 		random_generator& generator) const
 	{
 		unsigned int weight_count = 1;
-		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
+		std::for_each(window_sizes.begin(), window_sizes.end(), [&weight_count] (unsigned int x) { weight_count *= x; });
 
 		unsigned int current_weight_index = 0;
 		for(unsigned int output_feature_map_id = 0; output_feature_map_id < output_feature_map_count; ++output_feature_map_id)
@@ -310,7 +308,7 @@ namespace nnforge
 				float current_average_feature_map_count = sqrtf(static_cast<float>(current_input_feature_map_count) * static_cast<float>(output_feature_map_count));
 				float standard_deviation = sqrtf(1.0F / (current_average_feature_map_count * static_cast<float>(weight_count)));
 				float max_abs_value = 100.0F * standard_deviation;
-				nnforge_normal_distribution<float> nd(0.0F, standard_deviation);
+				std::normal_distribution<float> nd(0.0F, standard_deviation);
 
 				unsigned int currrent_input_neuron_count = weight_count * current_input_feature_map_count;
 				for(unsigned int i = 0; i < currrent_input_neuron_count; ++i)
@@ -375,7 +373,7 @@ namespace nnforge
 					for(int attempt_id = 0; (attempt_id < 20) && (!found); ++attempt_id)
 					{
 						output_feature_map_id = output_feature_map_id_available_list[current_output_feature_map_index];
-						nnforge_uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_list.size() - 1));
+						std::uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_list.size() - 1));
 						input_feature_map_id = input_feature_map_id_available_list[in_dist(generator)];
 						found = !connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id];
 					}
@@ -383,9 +381,9 @@ namespace nnforge
 					{
 						for(int attempt_id = 0; (attempt_id < 100) && (!found); ++attempt_id)
 						{
-							nnforge_uniform_int_distribution<unsigned int> out_dist(0U, static_cast<unsigned int>(output_feature_map_id_available_list.size() - 1));
+							std::uniform_int_distribution<unsigned int> out_dist(0U, static_cast<unsigned int>(output_feature_map_id_available_list.size() - 1));
 							output_feature_map_id = output_feature_map_id_available_list[out_dist(generator)];
-							nnforge_uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_list.size() - 1));
+							std::uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_list.size() - 1));
 							input_feature_map_id = input_feature_map_id_available_list[in_dist(generator)];
 							found = !connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id];
 						}
@@ -397,9 +395,9 @@ namespace nnforge
 				{
 					for(int attempt_id = 0; (attempt_id < 100) && (!found); ++attempt_id)
 					{
-						nnforge_uniform_int_distribution<unsigned int> out_dist(0U, static_cast<unsigned int>(output_feature_map_id_available_overflow_list.size() - 1));
+						std::uniform_int_distribution<unsigned int> out_dist(0U, static_cast<unsigned int>(output_feature_map_id_available_overflow_list.size() - 1));
 						output_feature_map_id = output_feature_map_id_available_overflow_list[out_dist(generator)];
-						nnforge_uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_overflow_list.size() - 1));
+						std::uniform_int_distribution<unsigned int> in_dist(0U, static_cast<unsigned int>(input_feature_map_id_available_overflow_list.size() - 1));
 						input_feature_map_id = input_feature_map_id_available_overflow_list[in_dist(generator)];
 						found = !connection_matrix[output_feature_map_id * input_feature_map_count + input_feature_map_id];
 					}
@@ -475,7 +473,7 @@ namespace nnforge
 			{
 				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count_per_feature_map();
 				unsigned int per_item_flops = feature_map_connection_count * 2;
-				std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
+				std::for_each(window_sizes.begin(), window_sizes.end(), [&per_item_flops] (unsigned int x) { per_item_flops *= x; });
 				if (!bias)
 					--per_item_flops;
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);

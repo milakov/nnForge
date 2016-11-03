@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <boost/format.hpp>
+#include <iostream>
 
 namespace nnforge
 {
@@ -30,10 +31,6 @@ namespace nnforge
 		: forward_prop(forward_prop)
 		, reader(reader)
 		, report_frequency(report_frequency)
-	{
-	}
-
-	validate_progress_network_data_pusher::~validate_progress_network_data_pusher()
 	{
 	}
 

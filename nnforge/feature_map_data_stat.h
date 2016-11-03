@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ namespace nnforge
 	class feature_map_data_stat
 	{
 	public:
-		feature_map_data_stat();
+		feature_map_data_stat() = default;
 
 		float min;
 		float max;

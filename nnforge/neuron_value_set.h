@@ -19,8 +19,7 @@
 #include <vector>
 #include <string>
 #include <map>
-
-#include "nn_types.h"
+#include <memory>
 
 namespace nnforge
 {
@@ -33,8 +32,8 @@ namespace nnforge
 			merge_median
 		};
 
-		typedef nnforge_shared_ptr<neuron_value_set> ptr;
-		typedef nnforge_shared_ptr<const neuron_value_set> const_ptr;
+		typedef std::shared_ptr<neuron_value_set> ptr;
+		typedef std::shared_ptr<const neuron_value_set> const_ptr;
 
 		neuron_value_set(unsigned int neuron_count);
 
@@ -55,7 +54,7 @@ namespace nnforge
 			unsigned int entry_id,
 			const float * new_data);
 
-		nnforge_shared_ptr<std::vector<double> > get_average() const;
+		std::shared_ptr<std::vector<double> > get_average() const;
 
 		void add(
 			const neuron_value_set& other,
@@ -66,6 +65,6 @@ namespace nnforge
 
 	public:
 		unsigned int neuron_count;
-		std::vector<nnforge_shared_ptr<std::vector<float> > > neuron_value_list;
+		std::vector<std::shared_ptr<std::vector<float> > > neuron_value_list;
 	};
 }

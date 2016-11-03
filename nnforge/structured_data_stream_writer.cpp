@@ -24,7 +24,7 @@
 namespace nnforge
 {
 	structured_data_stream_writer::structured_data_stream_writer(
-		nnforge_shared_ptr<std::ostream> output_stream,
+		std::shared_ptr<std::ostream> output_stream,
 		const layer_configuration_specific& config)
 		: out_stream(output_stream), entry_count(0)
 	{

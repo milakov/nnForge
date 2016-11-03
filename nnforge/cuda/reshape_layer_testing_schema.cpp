@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		reshape_layer_testing_schema::reshape_layer_testing_schema()
-		{
-		}
-
-		reshape_layer_testing_schema::~reshape_layer_testing_schema()
-		{
-		}
-
 		std::string reshape_layer_testing_schema::get_type_name() const
 		{
 			return reshape_layer::layer_type_name;

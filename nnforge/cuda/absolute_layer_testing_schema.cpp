@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		absolute_layer_testing_schema::absolute_layer_testing_schema()
-		{
-		}
-
-		absolute_layer_testing_schema::~absolute_layer_testing_schema()
-		{
-		}
-
 		std::string absolute_layer_testing_schema::get_type_name() const
 		{
 			return absolute_layer::layer_type_name;

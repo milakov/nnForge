@@ -115,7 +115,7 @@ namespace nnforge
 
 		void fully_connected_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			std::shared_ptr<const convolution_layer> layer_derived = std::dynamic_pointer_cast<const convolution_layer>(layer_schema);
 			bias = layer_derived->bias;
 
 			cudnn_util::set_tensor_bias_descriptor(

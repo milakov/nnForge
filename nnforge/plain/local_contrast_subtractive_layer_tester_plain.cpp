@@ -21,7 +21,6 @@
 #endif
 
 #include "../local_contrast_subtractive_layer.h"
-#include "../nn_types.h"
 
 #include <cstring>
 
@@ -29,14 +28,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		local_contrast_subtractive_layer_tester_plain::local_contrast_subtractive_layer_tester_plain()
-		{
-		}
-
-		local_contrast_subtractive_layer_tester_plain::~local_contrast_subtractive_layer_tester_plain()
-		{
-		}
-
 		std::string local_contrast_subtractive_layer_tester_plain::get_type_name() const
 		{
 			return local_contrast_subtractive_layer::layer_type_name;
@@ -57,7 +48,7 @@ namespace nnforge
 		{
 			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			std::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 			const std::vector<std::vector<float> >& window_weights_list = layer_derived->window_weights_list;
 			const std::vector<unsigned int>& feature_maps_affected = layer_derived->feature_maps_affected;
 			const unsigned int dimension_count = static_cast<unsigned int>(window_weights_list.size());

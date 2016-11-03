@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "dropout_layer_updater_plain.h"
 
 #include "../dropout_layer.h"
-#include "../nn_types.h"
 
 #include <cstring>
 
@@ -27,10 +26,6 @@ namespace nnforge
 	{
 		dropout_layer_updater_plain::dropout_layer_updater_plain()
 			: gen(rnd::get_random_generator())
-		{
-		}
-
-		dropout_layer_updater_plain::~dropout_layer_updater_plain()
 		{
 		}
 
@@ -58,14 +53,14 @@ namespace nnforge
 			float * const out_it_global = *output_buffer;
 			unsigned char * keep_elem_ptr = *temporary_per_entry_buffer;
 
-			nnforge_shared_ptr<const dropout_layer> layer_derived = nnforge_dynamic_pointer_cast<const dropout_layer>(layer_schema);
+			std::shared_ptr<const dropout_layer> layer_derived = std::dynamic_pointer_cast<const dropout_layer>(layer_schema);
 			const float dropout_rate = layer_derived->dropout_rate;
 			const float keep_rate = 1.0F - dropout_rate;
 			const float mult = 1.0F / keep_rate;
 
 			const int total_workload = output_configuration_specific.get_neuron_count() * entry_count;
 
-			nnforge_uniform_real_distribution<float> dist(0.0F, 1.0F);
+			std::uniform_real_distribution<float> dist(0.0F, 1.0F);
 
 			for(int i = 0; i < total_workload; ++i)
 				keep_elem_ptr[i] = (dist(gen) <= keep_rate ? (unsigned char)1 : (unsigned char)0);
@@ -104,7 +99,7 @@ namespace nnforge
 			const float * const out_err_it_global = *output_errors_buffer;
 			const unsigned char * keep_elem_ptr = *temporary_per_entry_buffer;
 
-			nnforge_shared_ptr<const dropout_layer> layer_derived = nnforge_dynamic_pointer_cast<const dropout_layer>(layer_schema);
+			std::shared_ptr<const dropout_layer> layer_derived = std::dynamic_pointer_cast<const dropout_layer>(layer_schema);
 			const float dropout_rate = layer_derived->dropout_rate;
 			const float keep_rate = 1.0F - dropout_rate;
 			const float mult = 1.0F / keep_rate;

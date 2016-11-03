@@ -25,9 +25,9 @@ namespace nnforge
 		class entry_convolution_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			entry_convolution_layer_testing_schema();
+			entry_convolution_layer_testing_schema() = default;
 
-			virtual ~entry_convolution_layer_testing_schema();
+			virtual ~entry_convolution_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

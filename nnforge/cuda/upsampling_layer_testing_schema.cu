@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		upsampling_layer_testing_schema::upsampling_layer_testing_schema()
-		{
-		}
-
-		upsampling_layer_testing_schema::~upsampling_layer_testing_schema()
-		{
-		}
-
 		std::string upsampling_layer_testing_schema::get_type_name() const
 		{
 			return upsampling_layer::layer_type_name;

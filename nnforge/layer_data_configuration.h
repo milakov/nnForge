@@ -25,7 +25,7 @@ namespace nnforge
 	class layer_data_configuration
 	{
 	public:
-		layer_data_configuration();
+		layer_data_configuration() = default;
 
 		layer_data_configuration(
 			unsigned int input_feature_map_count,

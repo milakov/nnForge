@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ namespace nnforge
 	public:
 		summarize_network_data_pusher(const boost::filesystem::path& folder_path);
 
-		virtual ~summarize_network_data_pusher();
+		virtual ~summarize_network_data_pusher() = default;
 
 		virtual void push(
 			const training_task_state& task_state,

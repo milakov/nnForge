@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include "layer_updater_plain.h"
 
 #include <map>
-#include <boost/serialization/singleton.hpp>
 
 namespace nnforge
 {
@@ -29,15 +28,17 @@ namespace nnforge
 		class layer_updater_plain_factory
 		{
 		public:
-			typedef boost::serialization::singleton<layer_updater_plain_factory> singleton;
-
 			bool register_layer_updater_plain(layer_updater_plain::const_ptr sample_layer_updater_plain);
 
 			bool unregister_layer_updater_plain(const std::string& layer_type_name);
 
 			layer_updater_plain::const_ptr get_updater_plain_layer(const std::string& layer_type_name) const;
 
+			static layer_updater_plain_factory& get_singleton();
+
 		private:
+			layer_updater_plain_factory() = default;
+
 			typedef std::map<std::string, layer_updater_plain::const_ptr> sample_map;
 			sample_map sample_layer_updater_plain_map;
 		};

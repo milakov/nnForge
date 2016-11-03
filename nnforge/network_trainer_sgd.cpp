@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,16 +36,10 @@ namespace nnforge
 	{
 	}
 
-	network_trainer_sgd::~network_trainer_sgd()
-	{
-	}
-
 	void network_trainer_sgd::train_step(
 		structured_data_bunch_reader& reader,
 		training_task_state& task)
 	{
-		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
-
 		std::pair<std::map<std::string, std::vector<float> >, std::string> lr_and_comment = prepare_learning_rates(task.get_current_epoch(), task.data);
 		task.comments.push_back(lr_and_comment.second);
 
@@ -61,7 +55,7 @@ namespace nnforge
 			weight_decay,
 			momentum,
 			task.get_current_epoch());
-		std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<double> > > > output_data_average_results;
+		std::map<std::string, std::pair<layer_configuration_specific, std::shared_ptr<std::vector<double> > > > output_data_average_results;
 		for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::const_iterator it = writer.layer_name_to_config_and_value_set_map.begin(); it != writer.layer_name_to_config_and_value_set_map.end(); ++it)
 			output_data_average_results.insert(std::make_pair(it->first, std::make_pair(it->second.first, it->second.second->get_average())));
 

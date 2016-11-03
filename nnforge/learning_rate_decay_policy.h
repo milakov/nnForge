@@ -16,26 +16,26 @@
 
 #pragma once
 
-#include "nn_types.h"
+#include <memory>
 
 namespace nnforge
 {
 	class learning_rate_decay_policy
 	{
 	public:
-		typedef nnforge_shared_ptr<learning_rate_decay_policy> ptr;
-		typedef nnforge_shared_ptr<const learning_rate_decay_policy> const_ptr;
+		typedef std::shared_ptr<learning_rate_decay_policy> ptr;
+		typedef std::shared_ptr<const learning_rate_decay_policy> const_ptr;
 
-		virtual ~learning_rate_decay_policy();
+		virtual ~learning_rate_decay_policy() = default;
 
 		virtual float get_learning_rate_decay(unsigned int epoch) const = 0;
 
 	protected:
-		learning_rate_decay_policy();
+		learning_rate_decay_policy() = default;
 		
 	private:
-		learning_rate_decay_policy(const learning_rate_decay_policy&);
-		learning_rate_decay_policy& operator =(const learning_rate_decay_policy&);
+		learning_rate_decay_policy(const learning_rate_decay_policy&) = delete;
+		learning_rate_decay_policy& operator =(const learning_rate_decay_policy&) = delete;
 	};
 }
 

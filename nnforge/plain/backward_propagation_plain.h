@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ namespace nnforge
 				profile_state::ptr profile,
 				plain_running_configuration::const_ptr plain_config);
 
-			virtual ~backward_propagation_plain();
+			virtual ~backward_propagation_plain() = default;
 
 		protected:
 			// schema, network data and data are guaranteed to be compatible
@@ -106,8 +106,8 @@ namespace nnforge
 			buffer_plain_size_configuration buffer_config_without_data_and_momentum;
 
 		private:
-			backward_propagation_plain(const backward_propagation_plain&);
-			backward_propagation_plain& operator =(const backward_propagation_plain&);
+			backward_propagation_plain(const backward_propagation_plain&) = delete;
+			backward_propagation_plain& operator =(const backward_propagation_plain&) = delete;
 		};
 	}
 }

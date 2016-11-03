@@ -16,9 +16,8 @@
 
 #pragma once
 
-#include "../nn_types.h"
-
 #include <cuda_runtime.h>
+#include <memory>
 
 namespace nnforge
 {
@@ -27,7 +26,7 @@ namespace nnforge
 		class cuda_event
 		{
 		public:
-			typedef nnforge_shared_ptr<cuda_event> ptr;
+			typedef std::shared_ptr<cuda_event> ptr;
 
 			cuda_event(bool with_timing = false);
 
@@ -39,8 +38,8 @@ namespace nnforge
 			cudaEvent_t event;
 
 		private:
-			cuda_event(const cuda_event&);
-			cuda_event& operator =(const cuda_event&);
+			cuda_event(const cuda_event&) = delete;
+			cuda_event& operator =(const cuda_event&) = delete;
 		};
 	}
 }

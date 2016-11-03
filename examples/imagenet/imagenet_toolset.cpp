@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <regex>
+#include <iostream>
 
 #include <nnforge/rnd.h>
 
@@ -64,16 +65,16 @@ void imagenet_toolset::prepare_true_randomized_training_data()
 	std::cout << "Enumerating training images from " + training_images_folder_path.string() << "..." << std::endl;
 	std::vector<std::pair<std::string, unsigned int> > ilsvrc2014id_localid_pair_list;
 	{
-		nnforge_regex folder_expression(ilsvrc2014id_pattern);
-		nnforge_regex file_expression(training_image_filename_pattern);
-		nnforge_cmatch what;
+		std::regex folder_expression(ilsvrc2014id_pattern);
+		std::regex file_expression(training_image_filename_pattern);
+		std::cmatch what;
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(training_images_folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
 			if (it->status().type() == boost::filesystem::directory_file)
 			{
 				boost::filesystem::path folder_path = it->path();
 				std::string folder_name = folder_path.filename().string();
-				if (nnforge_regex_match(folder_name, folder_expression))
+				if (std::regex_match(folder_name, folder_expression))
 				{
 					const std::string& ilsvrc2014id = folder_name;
 					unsigned int class_id = get_classid_by_wnid(get_wnid_by_ilsvrc2014id(ilsvrc2014id));
@@ -83,7 +84,7 @@ void imagenet_toolset::prepare_true_randomized_training_data()
 						{
 							boost::filesystem::path file_path = it2->path();
 							std::string file_name = file_path.filename().string();
-							if (nnforge_regex_search(file_name.c_str(), what, file_expression))
+							if (std::regex_search(file_name.c_str(), what, file_expression))
 							{
 								int localid = atol(std::string(what[2].first, what[2].second).c_str());
 								ilsvrc2014id_localid_pair_list.push_back(std::make_pair(ilsvrc2014id, localid));
@@ -103,7 +104,7 @@ void imagenet_toolset::prepare_true_randomized_training_data()
 	{
 		boost::filesystem::path training_images_file_path = get_working_data_folder() / "training_images.dt";
 		std::cout << "Writing randomized training data (images) to " << training_images_file_path.string() << "..." << std::endl;
-		nnforge_shared_ptr<std::ofstream> training_images_file_stream(new boost::filesystem::ofstream(training_images_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		std::shared_ptr<std::ofstream> training_images_file_stream(new boost::filesystem::ofstream(training_images_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		training_images_data_writer = nnforge::varying_data_stream_writer::ptr(new nnforge::varying_data_stream_writer(training_images_file_stream));
 	}
 
@@ -111,14 +112,14 @@ void imagenet_toolset::prepare_true_randomized_training_data()
 	{
 		boost::filesystem::path training_labels_file_path = get_working_data_folder() / "training_labels.dt";
 		std::cout << "Writing randomized training data (labels) to " << training_labels_file_path.string() << "..." << std::endl;
-		nnforge_shared_ptr<std::ofstream> training_labels_file_stream(new boost::filesystem::ofstream(training_labels_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		std::shared_ptr<std::ofstream> training_labels_file_stream(new boost::filesystem::ofstream(training_labels_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific config(class_count, std::vector<unsigned int>(2, 1));
 		training_labels_data_writer = nnforge::structured_data_writer::ptr(new nnforge::structured_data_stream_writer(training_labels_file_stream, config));
 	}
 
 	for(unsigned int entry_written_count = 0; entry_written_count < total_training_image_count; ++entry_written_count)
 	{
-		nnforge_uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(ilsvrc2014id_localid_pair_list.size()) - 1);
+		std::uniform_int_distribution<unsigned int> dist(0, static_cast<unsigned int>(ilsvrc2014id_localid_pair_list.size()) - 1);
 		unsigned int index = dist(gen);
 
 		std::pair<std::string, unsigned int> ilsvrc2014id_localid_pair = ilsvrc2014id_localid_pair_list[index];
@@ -168,7 +169,7 @@ void imagenet_toolset::prepare_validating_data()
 	{
 		boost::filesystem::path validating_images_file_path = get_working_data_folder() / "validating_images.dt";
 		std::cout << "Writing validating data (images) to " << validating_images_file_path.string() << "..." << std::endl;
-		nnforge_shared_ptr<std::ofstream> validating_images_file_stream(new boost::filesystem::ofstream(validating_images_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		std::shared_ptr<std::ofstream> validating_images_file_stream(new boost::filesystem::ofstream(validating_images_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		validating_images_data_writer = nnforge::varying_data_stream_writer::ptr(new nnforge::varying_data_stream_writer(validating_images_file_stream));
 	}
 
@@ -176,7 +177,7 @@ void imagenet_toolset::prepare_validating_data()
 	{
 		boost::filesystem::path validating_labels_file_path = get_working_data_folder() / "validating_labels.dt";
 		std::cout << "Writing validating data (labels) to " << validating_labels_file_path.string() << "..." << std::endl;
-		nnforge_shared_ptr<std::ofstream> validating_labels_file_stream(new boost::filesystem::ofstream(validating_labels_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		std::shared_ptr<std::ofstream> validating_labels_file_stream(new boost::filesystem::ofstream(validating_labels_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific config(class_count, std::vector<unsigned int>(2, 1));
 		validating_labels_data_writer = nnforge::structured_data_writer::ptr(new nnforge::structured_data_stream_writer(validating_labels_file_stream, config));
 	}
@@ -330,7 +331,7 @@ nnforge::structured_data_reader::ptr imagenet_toolset::get_structured_reader(
 	const std::string& dataset_name,
 	const std::string& layer_name,
 	dataset_usage usage,
-	nnforge_shared_ptr<std::istream> in) const
+	std::shared_ptr<std::istream> in) const
 {
 	if (layer_name == "images")
 	{

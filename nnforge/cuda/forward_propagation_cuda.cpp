@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/format.hpp>
+#include <thread>
+#include <functional>
 
 namespace nnforge
 {
@@ -52,14 +54,10 @@ namespace nnforge
 				testing_schemas.insert(
 					std::make_pair(
 						it->get_name(),
-						layer_testing_schema_factory::singleton::get_const_instance().create_testing_schema_layer(this->schema->get_layer(it->get_name()), cuda_config)));
+						layer_testing_schema_factory::get_singleton().create_testing_schema_layer(this->schema->get_layer(it->get_name()), cuda_config)));
 
 			for(std::map<std::string, layer_testing_schema::const_ptr>::const_iterator it = testing_schemas.begin(); it != testing_schemas.end(); ++it)
 				schema_data.insert(std::make_pair(it->first, it->second->get_schema_buffers()));
-		}
-
-		forward_propagation_cuda::~forward_propagation_cuda()
-		{
 		}
 
 		forward_propagation_cuda::read_entry_info::read_entry_info()
@@ -80,10 +78,10 @@ namespace nnforge
 				current_max_entry_count = std::min(current_max_entry_count, static_cast<unsigned int>(reader_entry_count));
 			current_max_entry_count = std::min(current_max_entry_count, max_max_entry_count);
 
-			std::map<std::string, nnforge_array<cuda_linear_buffer_device::ptr, 2> > dedicated_buffers;
+			std::map<std::string, std::array<cuda_linear_buffer_device::ptr, 2> > dedicated_buffers;
 			for(std::map<std::string, size_t>::const_iterator it = dedicated_per_entry_data_name_to_size_map.begin(); it != dedicated_per_entry_data_name_to_size_map.end(); ++it)
 			{
-				nnforge_array<cuda_linear_buffer_device::ptr, 2>& arr = dedicated_buffers.insert(std::make_pair(it->first, nnforge_array<cuda_linear_buffer_device::ptr, 2>())).first->second;
+				std::array<cuda_linear_buffer_device::ptr, 2>& arr = dedicated_buffers.insert(std::make_pair(it->first, std::array<cuda_linear_buffer_device::ptr, 2>())).first->second;
 				arr[0] = cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(it->second * current_max_entry_count));
 				arr[1] = cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(it->second * current_max_entry_count));
 			}
@@ -104,7 +102,8 @@ namespace nnforge
 			run_kernels_params params(
 				dedicated_buffers,
 				current_max_entry_count);
-			boost::thread run_kernels_thread(run_kernels_static, this, &params);
+			interrupt_thread = false;
+			std::thread run_kernels_thread(run_kernels_static, this, &params);
 			try
 			{
 				run_kernels_thread_io_set = 0;
@@ -134,7 +133,7 @@ namespace nnforge
 						run_kernels_thread_entry_to_process_count = entry_to_process_count;
 						run_kernels_finished = false;
 						{
-							boost::lock_guard<boost::mutex> lock(run_kernels_pending_mutex);
+							std::lock_guard<std::mutex> lock(run_kernels_pending_mutex);
 							run_kernels_task_ready = true;
 						}
 						run_kernels_pending_condition.notify_one();
@@ -168,7 +167,7 @@ namespace nnforge
 							read_entry_info& current_info = *read_entry_info_list[i];
 							current_info.read_entry_finished = false;
 							current_info.entry_id = base_entry_to_read_id + i;
-							cuda_config->get_job_runner()->service.post(boost::bind(read_input_data_static, &current_info));
+							cuda_config->get_job_runner()->service.post(std::bind(read_input_data_static, &current_info));
 						}
 
 						// Wait for all input data to be read
@@ -177,7 +176,7 @@ namespace nnforge
 							read_entry_info& current_info = *read_entry_info_list[i];
 
 							{
-								boost::unique_lock<boost::mutex> lock(current_info.read_entry_finished_mutex);
+								std::unique_lock<std::mutex> lock(current_info.read_entry_finished_mutex);
 								while (!current_info.read_entry_finished)
 									current_info.read_entry_finished_condition.wait(lock);
 							}
@@ -187,7 +186,7 @@ namespace nnforge
 								{
 									read_entry_info& current_info = *read_entry_info_list[j];
 									{
-										boost::unique_lock<boost::mutex> lock(current_info.read_entry_finished_mutex);
+										std::unique_lock<std::mutex> lock(current_info.read_entry_finished_mutex);
 										while (!current_info.read_entry_finished)
 											current_info.read_entry_finished_condition.wait(lock);
 									}
@@ -246,7 +245,7 @@ namespace nnforge
 						PUSH_RANGE("Waiting for kernels to finish", 2);
 						// Wait for all the kernels to finish execution
 						{
-							boost::unique_lock<boost::mutex> lock(run_kernels_finished_mutex);
+							std::unique_lock<std::mutex> lock(run_kernels_finished_mutex);
 							while (!run_kernels_finished)
 								run_kernels_finished_condition.wait(lock);
 						}
@@ -268,7 +267,7 @@ namespace nnforge
 			}
 			catch (const std::exception&)
 			{
-				run_kernels_thread.interrupt();
+				interrupt_thread = true;
 				run_kernels_thread.join();
 				throw;
 			}
@@ -292,7 +291,7 @@ namespace nnforge
 
 				// Notify caller thread that result is ready
 				{
-					boost::lock_guard<boost::mutex> lock(params->read_entry_finished_mutex);
+					std::lock_guard<std::mutex> lock(params->read_entry_finished_mutex);
 					params->read_entry_finished = true;
 				}
 				params->read_entry_finished_condition.notify_one();
@@ -301,7 +300,7 @@ namespace nnforge
 			{
 				params->error_message = e.what();
 				{
-					boost::lock_guard<boost::mutex> lock(params->read_entry_finished_mutex);
+					std::lock_guard<std::mutex> lock(params->read_entry_finished_mutex);
 					params->read_entry_finished = true;
 				}
 				params->read_entry_finished_condition.notify_one();
@@ -322,10 +321,11 @@ namespace nnforge
 				for(std::vector<size_t>::const_iterator it = layer_buffer_set_per_entry_size_list.begin(); it != layer_buffer_set_per_entry_size_list.end(); ++it)
 					layer_buffers.push_back(cuda_linear_buffer_device::ptr(new cuda_linear_buffer_device(*it * params.current_max_entry_count)));
 
-				boost::unique_lock<boost::mutex> lock(run_kernels_pending_mutex);
+				std::unique_lock<std::mutex> lock(run_kernels_pending_mutex);
 				while(true)
 				{
-					boost::this_thread::interruption_point();
+					if (interrupt_thread)
+						break;
 
 					while (!run_kernels_task_ready)
 						run_kernels_pending_condition.wait(lock);
@@ -458,7 +458,7 @@ namespace nnforge
 
 					// Notify caller thread that result is ready
 					{
-						boost::lock_guard<boost::mutex> lock(run_kernels_finished_mutex);
+						std::lock_guard<std::mutex> lock(run_kernels_finished_mutex);
 						run_kernels_finished = true;
 					}
 					run_kernels_finished_condition.notify_one();
@@ -468,7 +468,7 @@ namespace nnforge
 			{
 				params.error_message = e.what();
 				{
-					boost::lock_guard<boost::mutex> lock(run_kernels_finished_mutex);
+					std::lock_guard<std::mutex> lock(run_kernels_finished_mutex);
 					run_kernels_finished = true;
 				}
 				run_kernels_finished_condition.notify_one();
@@ -481,7 +481,7 @@ namespace nnforge
 		}
 
 		forward_propagation_cuda::run_kernels_params::run_kernels_params(
-			std::map<std::string, nnforge_array<cuda_linear_buffer_device::ptr, 2> >& dedicated_buffers,
+			std::map<std::string, std::array<cuda_linear_buffer_device::ptr, 2> >& dedicated_buffers,
 			unsigned int current_max_entry_count)
 			: dedicated_buffers(dedicated_buffers)
 			, current_max_entry_count(current_max_entry_count)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,10 +31,6 @@ namespace nnforge
 {
 	const unsigned int network_action_schema::border_penwidth = 5;
 	const unsigned int network_action_schema::arrow_penwidth = 3;
-
-	network_action_schema::network_action_schema()
-	{
-	}
 
 	network_action_schema::network_action_schema(const network_action_schema& other)
 	{
@@ -270,18 +266,18 @@ namespace nnforge
 
 		std::map<layer_name_with_action, unsigned int>::const_iterator bg_color_it = layer_name_with_action_bg_color_map.find(layer_name_with_action(g[v].l->instance_name, g[v].action));
 		if (bg_color_it != layer_name_with_action_bg_color_map.end())
-			out << " BGCOLOR=\"" << single_color_palette::get_const_instance().get_color_name(bg_color_it->second) << "\"";
+			out << " BGCOLOR=\"" << color_palette::get_singleton().get_color_name(bg_color_it->second) << "\"";
 
 		out << ">" << g[v].action.str() << "</TD></TR></TABLE>>";
 		out << " shape=rect";
 		
 		std::map<layer_name_with_action, unsigned int>::const_iterator color_it = layer_name_with_action_color_map.find(layer_name_with_action(g[v].l->instance_name, g[v].action));
 		if (color_it != layer_name_with_action_color_map.end())
-			out << " style=filled fillcolor=\"" << single_color_palette::get_const_instance().get_color_name(color_it->second) << "\"";
+			out << " style=filled fillcolor=\"" << color_palette::get_singleton().get_color_name(color_it->second) << "\"";
 
 		std::map<layer_name_with_action, unsigned int>::const_iterator border_color_it = layer_name_with_action_border_color_map.find(layer_name_with_action(g[v].l->instance_name, g[v].action));
 		if (border_color_it != layer_name_with_action_border_color_map.end())
-			out << " penwidth=" << border_penwidth << " color=\"" << single_color_palette::get_const_instance().get_color_name(border_color_it->second) << "\"";
+			out << " penwidth=" << border_penwidth << " color=\"" << color_palette::get_singleton().get_color_name(border_color_it->second) << "\"";
 
 		out << " ]";
 	}
@@ -301,7 +297,7 @@ namespace nnforge
 		network_action_schema::reverse_action_schema_graph::vertex_descriptor source_v = boost::source(e, g);
 		std::map<layer_name_with_action, unsigned int>::const_iterator output_edge_color_it = layer_name_with_action_output_edges_color_map.find(layer_name_with_action(g[source_v].l->instance_name, g[source_v].action));
 		if (output_edge_color_it != layer_name_with_action_output_edges_color_map.end())
-			out << " penwidth=" << arrow_penwidth << " color=\"" << single_color_palette::get_const_instance().get_color_name(output_edge_color_it->second) << "\"";
+			out << " penwidth=" << arrow_penwidth << " color=\"" << color_palette::get_singleton().get_color_name(output_edge_color_it->second) << "\"";
 
 		out << " ]";
 	}
@@ -649,13 +645,6 @@ namespace nnforge
 		}
 	}
 
-	bool network_action_schema::compare_start_times(
-		const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t1,
-		const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t2)
-	{
-		return (t1.second.first < t2.second.first);
-	}
-
 	std::vector<std::pair<network_action_schema::action_schema_graph::vertex_descriptor, std::pair<double, float> > > network_action_schema::get_vertex_with_start_and_duration_list(
 		const std::map<std::string, layer_configuration_specific>& layer_config_map,
 		const std::map<std::string, unsigned int>& tiling_factor_map) const
@@ -695,7 +684,9 @@ namespace nnforge
 
 				vertex_distance_list.push_back(std::make_pair(*it, std::make_pair(max_start_time, flops)));
 			}
-			std::stable_sort(vertex_distance_list.begin(), vertex_distance_list.end(), compare_start_times);
+			std::stable_sort(vertex_distance_list.begin(), vertex_distance_list.end(), [] (
+				const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t1,
+				const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t2) { return (t1.second.first < t2.second.first); } );
 			// vertex_distance_list is now vertecices in execution order AND with non-decreasing distance to reach each of them
 		}
 

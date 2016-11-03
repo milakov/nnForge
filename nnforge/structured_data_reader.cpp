@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,14 +24,6 @@
 
 namespace nnforge
 {
-	structured_data_reader::structured_data_reader()
-	{
-	}
-
-	structured_data_reader::~structured_data_reader()
-	{
-	}
-
 	bool structured_data_reader::raw_read(
 		unsigned int entry_id,
 		std::vector<unsigned char>& all_elems)

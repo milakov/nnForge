@@ -18,7 +18,8 @@
 
 #include "network_schema.h"
 #include "network_data.h"
-#include "nn_types.h"
+
+#include <memory>
 
 namespace nnforge
 {
@@ -34,19 +35,19 @@ namespace nnforge
 	class network_data_peeker
 	{
 	public:
-		typedef nnforge_shared_ptr<network_data_peeker> ptr;
+		typedef std::shared_ptr<network_data_peeker> ptr;
 
-		virtual ~network_data_peeker();
+		virtual ~network_data_peeker() = default;
 
 		// The method should return empty data smart pointer in case no more layer data are available
 		// The caller is free to modify the data returned
 		virtual network_data_peek_entry peek(network_schema::ptr schema) = 0;
 
 	protected:
-		network_data_peeker();
+		network_data_peeker() = default;
 
 	private:
-		network_data_peeker(const network_data_peeker&);
-		network_data_peeker& operator =(const network_data_peeker&);
+		network_data_peeker(const network_data_peeker&) = delete;
+		network_data_peeker& operator =(const network_data_peeker&) = delete;
 	};
 }

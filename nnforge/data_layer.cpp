@@ -20,14 +20,6 @@ namespace nnforge
 {
 	const std::string data_layer::layer_type_name = "Data";
 
-	data_layer::data_layer()
-	{
-	}
-
-	data_layer::~data_layer()
-	{
-	}
-
 	layer::ptr data_layer::clone() const
 	{
 		return layer::ptr(new data_layer(*this));

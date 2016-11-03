@@ -17,22 +17,15 @@
 #include "rgb_to_yuv_convert_layer_updater_schema.h"
 
 #include "../rgb_to_yuv_convert_layer.h"
-#include "../nn_types.h"
 
 #include "rgb_to_yuv_convert_layer_updater_cuda.h"
+
+#include <memory>
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		rgb_to_yuv_convert_layer_updater_schema::rgb_to_yuv_convert_layer_updater_schema()
-		{
-		}
-
-		rgb_to_yuv_convert_layer_updater_schema::~rgb_to_yuv_convert_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr rgb_to_yuv_convert_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new rgb_to_yuv_convert_layer_updater_schema());
@@ -54,7 +47,7 @@ namespace nnforge
 		{
 			std::vector<cuda_linear_buffer_device::const_ptr> res;
 
-			nnforge_shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = nnforge_dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
+			std::shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = std::dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
 			std::vector<int> color_feature_map_config_raw_value_list;
 			for(std::vector<color_feature_map_config>::const_iterator it = layer_derived->color_feature_map_config_list.begin(); it != layer_derived->color_feature_map_config_list.end(); ++it)
 			{

@@ -27,14 +27,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		max_subsampling_layer_testing_schema::max_subsampling_layer_testing_schema()
-		{
-		}
-
-		max_subsampling_layer_testing_schema::~max_subsampling_layer_testing_schema()
-		{
-		}
-
 		std::string max_subsampling_layer_testing_schema::get_type_name() const
 		{
 			return max_subsampling_layer::layer_type_name;
@@ -51,7 +43,7 @@ namespace nnforge
 		{
 			layer_tester_cuda::ptr res;
 
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+			std::shared_ptr<const max_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 			if (layer_derived->tiling)
 			{

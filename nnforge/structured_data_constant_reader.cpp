@@ -32,10 +32,6 @@ namespace nnforge
 	{
 	}
 
-	structured_data_constant_reader::~structured_data_constant_reader()
-	{
-	}
-
 	bool structured_data_constant_reader::read(
 		unsigned int entry_id,
 		float * data)
@@ -58,7 +54,7 @@ namespace nnforge
 		return entry_count;
 	}
 
-	raw_data_writer::ptr structured_data_constant_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const
+	raw_data_writer::ptr structured_data_constant_reader::get_writer(std::shared_ptr<std::ostream> out) const
 	{
 		throw std::runtime_error("get_writer not implemented for structured_data_constant_reader");
 	}

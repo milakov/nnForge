@@ -25,9 +25,9 @@ namespace nnforge
 		class prefix_sum_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			prefix_sum_layer_updater_cuda();
+			prefix_sum_layer_updater_cuda() = default;
 
-			virtual ~prefix_sum_layer_updater_cuda();
+			virtual ~prefix_sum_layer_updater_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

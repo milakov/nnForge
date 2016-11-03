@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "nn_types.h"
 #include "network_schema.h"
 #include "network_data.h"
 #include "layer_configuration_specific.h"
@@ -33,6 +32,7 @@
 #include <set>
 #include <map>
 #include <ostream>
+#include <memory>
 
 namespace nnforge
 {
@@ -49,9 +49,9 @@ namespace nnforge
 		};
 
 	public:
-		typedef nnforge_shared_ptr<backward_propagation> ptr;
+		typedef std::shared_ptr<backward_propagation> ptr;
 
-		~backward_propagation();
+		~backward_propagation() = default;
 
 		// You don't need to call this method before calling test with supervised_data_reader
 		void set_input_configuration_specific(const std::map<std::string, layer_configuration_specific>& input_configuration_specific_map);
@@ -120,9 +120,9 @@ namespace nnforge
 	private:
 		void update_flops();
 
-		backward_propagation();
-		backward_propagation(const backward_propagation&);
-		backward_propagation& operator =(const backward_propagation&);
+		backward_propagation() = delete;
+		backward_propagation(const backward_propagation&) = delete;
+		backward_propagation& operator =(const backward_propagation&) = delete;
 	};
 
 	std::ostream& operator<< (std::ostream& out, const backward_propagation::stat& val);

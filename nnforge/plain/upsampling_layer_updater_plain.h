@@ -25,9 +25,9 @@ namespace nnforge
 		class upsampling_layer_updater_plain : public layer_updater_plain
 		{
 		public:
-			upsampling_layer_updater_plain();
+			upsampling_layer_updater_plain() = default;
 
-			virtual ~upsampling_layer_updater_plain();
+			virtual ~upsampling_layer_updater_plain() = default;
 
 			virtual std::string get_type_name() const;
 

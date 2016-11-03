@@ -23,17 +23,12 @@
 #include "rectified_linear_layer.h"
 #include "parametric_rectified_linear_layer.h"
 #include "add_layer.h"
-#include "nn_types.h"
 
 #include <cmath>
 #include <numeric>
 
 namespace nnforge
 {
-	network_data_initializer::network_data_initializer()
-	{
-	}
-
 	void network_data_initializer::initialize(
 		layer_data_list& data_list,
 		const network_schema& schema)
@@ -54,7 +49,7 @@ namespace nnforge
 			}
 			if (layer_list[i]->get_type_name() == add_layer::layer_type_name)
 			{
-				nnforge_shared_ptr<const add_layer> layer_derived = nnforge_dynamic_pointer_cast<const add_layer>(layer_list[i]);
+				std::shared_ptr<const add_layer> layer_derived = std::dynamic_pointer_cast<const add_layer>(layer_list[i]);
 				weight_multiplier *= 1.0F / std::max(static_cast<int>(layer_list[i]->input_layer_instance_names.size()), 1) / layer_derived->alpha;
 			}
 

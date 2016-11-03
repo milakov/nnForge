@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
 #include "../layer.h"
 #include "../layer_data.h"
 #include "../layer_configuration_specific.h"
-#include "../nn_types.h"
  
 #include "layer_tester_cuda.h"
 #include "cuda_running_configuration.h"
@@ -37,12 +36,12 @@ namespace nnforge
 		class layer_testing_schema
 		{
 		public:
-			typedef nnforge_shared_ptr<layer_testing_schema> ptr;
-			typedef nnforge_shared_ptr<const layer_testing_schema> const_ptr;
+			typedef std::shared_ptr<layer_testing_schema> ptr;
+			typedef std::shared_ptr<const layer_testing_schema> const_ptr;
 
-			virtual ~layer_testing_schema();
+			virtual ~layer_testing_schema() = default;
 
-			nnforge_shared_ptr<layer_testing_schema> create(
+			std::shared_ptr<layer_testing_schema> create(
 				layer::const_ptr layer_schema,
 				cuda_running_configuration::const_ptr cuda_config) const;
 
@@ -56,20 +55,20 @@ namespace nnforge
 			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_schema_buffers() const;
 
 		protected:
-			virtual nnforge_shared_ptr<layer_testing_schema> create_specific() const = 0;
+			virtual std::shared_ptr<layer_testing_schema> create_specific() const = 0;
 
 			virtual layer_tester_cuda::ptr create_tester_specific(
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific) const = 0;
 
-			layer_testing_schema();
+			layer_testing_schema() = default;
 
 			layer::const_ptr layer_schema;
 			cuda_running_configuration::const_ptr cuda_config;
 
 		private:
-			layer_testing_schema(const layer_testing_schema&);
-			layer_testing_schema& operator =(const layer_testing_schema&);
+			layer_testing_schema(const layer_testing_schema&) = delete;
+			layer_testing_schema& operator =(const layer_testing_schema&) = delete;
 		};
 	}
 }

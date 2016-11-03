@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ namespace nnforge
 				profile_state::ptr profile,
 				plain_running_configuration::const_ptr plain_config);
 
-			virtual ~forward_propagation_plain();
+			virtual ~forward_propagation_plain() = default;
 
 		protected:
 			// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
@@ -86,8 +86,8 @@ namespace nnforge
 			static const unsigned int max_max_entry_count;
 
 		private:
-			forward_propagation_plain(const forward_propagation_plain&);
-			forward_propagation_plain& operator =(const forward_propagation_plain&);
+			forward_propagation_plain(const forward_propagation_plain&) = delete;
+			forward_propagation_plain& operator =(const forward_propagation_plain&) = delete;
 		};
 	}
 }

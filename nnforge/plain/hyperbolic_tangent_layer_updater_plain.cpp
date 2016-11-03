@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,14 +22,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		hyperbolic_tangent_layer_updater_plain::hyperbolic_tangent_layer_updater_plain()
-		{
-		}
-
-		hyperbolic_tangent_layer_updater_plain::~hyperbolic_tangent_layer_updater_plain()
-		{
-		}
-
 		std::string hyperbolic_tangent_layer_updater_plain::get_type_name() const
 		{
 			return hyperbolic_tangent_layer::layer_type_name;
@@ -54,7 +46,7 @@ namespace nnforge
 			float * const out_it = *output_buffer;
 			const float * const in_it = *input_buffers[0];
 
-			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
+			std::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 			const float hyperbolic_tangent_steepness2 = layer_derived->steepness * 2.0F;
 			const float hyperbolic_tangent_major_multiplier = layer_derived->scale;
 
@@ -92,7 +84,7 @@ namespace nnforge
 			const float * const out_it = *output_neurons_buffer;
 			const float * const out_err_it = *output_errors_buffer;
 
-			nnforge_shared_ptr<const hyperbolic_tangent_layer> layer_derived = nnforge_dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
+			std::shared_ptr<const hyperbolic_tangent_layer> layer_derived = std::dynamic_pointer_cast<const hyperbolic_tangent_layer>(layer_schema);
 			const float hyperbolic_tangent_major_multiplier_reverse = 1.0F / layer_derived->scale;
 			const float hyperbolic_tangent_steepness3 = layer_derived->steepness * layer_derived->scale;
 			if (add_update_to_destination)

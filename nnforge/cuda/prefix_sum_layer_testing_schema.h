@@ -25,9 +25,9 @@ namespace nnforge
 		class prefix_sum_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			prefix_sum_layer_testing_schema();
+			prefix_sum_layer_testing_schema() = default;
 
-			virtual ~prefix_sum_layer_testing_schema();
+			virtual ~prefix_sum_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

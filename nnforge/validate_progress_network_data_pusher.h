@@ -30,7 +30,7 @@ namespace nnforge
 			structured_data_bunch_reader::ptr reader,
 			unsigned int report_frequency = 1);
 
-		virtual ~validate_progress_network_data_pusher();
+		virtual ~validate_progress_network_data_pusher() = default;
 
 		virtual void push(
 			const training_task_state& task_state,

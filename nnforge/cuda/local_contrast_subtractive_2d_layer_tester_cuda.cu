@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 #include "local_contrast_subtractive_2d_layer_tester_cuda.h"
 
+#include <memory>
+
 #include "../local_contrast_subtractive_layer.h"
-#include "../nn_types.h"
 
 #include "util_cuda.h"
 
@@ -213,14 +214,6 @@ namespace nnforge
 			}
 		}
 
-		local_contrast_subtractive_2d_layer_tester_cuda::local_contrast_subtractive_2d_layer_tester_cuda()
-		{
-		}
-
-		local_contrast_subtractive_2d_layer_tester_cuda::~local_contrast_subtractive_2d_layer_tester_cuda()
-		{
-		}
-
 		void local_contrast_subtractive_2d_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -352,7 +345,7 @@ namespace nnforge
 
 		void local_contrast_subtractive_2d_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const local_contrast_subtractive_layer> layer_derived = nnforge_dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
+			std::shared_ptr<const local_contrast_subtractive_layer> layer_derived = std::dynamic_pointer_cast<const local_contrast_subtractive_layer>(layer_schema);
 
 			affected_feature_map_count = static_cast<int>(layer_derived->feature_maps_affected.size());
 

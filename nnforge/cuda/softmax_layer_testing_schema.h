@@ -25,9 +25,9 @@ namespace nnforge
 		class softmax_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			softmax_layer_testing_schema();
+			softmax_layer_testing_schema() = default;
 
-			virtual ~softmax_layer_testing_schema();
+			virtual ~softmax_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

@@ -69,11 +69,7 @@ namespace nnforge
 				testers.insert(
 					std::make_pair(
 						it->get_name(),
-						layer_tester_plain_factory::singleton::get_const_instance().get_tester_plain_layer(this->schema->get_layer(it->get_name())->get_type_name())));
-		}
-
-		forward_propagation_plain::~forward_propagation_plain()
-		{
+						layer_tester_plain_factory::get_singleton().get_tester_plain_layer(this->schema->get_layer(it->get_name())->get_type_name())));
 		}
 
 		void forward_propagation_plain::actual_set_data(network_data::const_ptr data)

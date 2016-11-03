@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		softmax_layer_updater_schema::softmax_layer_updater_schema()
-		{
-		}
-
-		softmax_layer_updater_schema::~softmax_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr softmax_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new softmax_layer_updater_schema());

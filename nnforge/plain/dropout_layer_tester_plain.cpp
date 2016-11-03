@@ -24,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		dropout_layer_tester_plain::dropout_layer_tester_plain()
-		{
-		}
-
-		dropout_layer_tester_plain::~dropout_layer_tester_plain()
-		{
-		}
-
 		std::string dropout_layer_tester_plain::get_type_name() const
 		{
 			return dropout_layer::layer_type_name;

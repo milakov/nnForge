@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2015 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,10 +18,6 @@
 
 namespace nnforge
 {
-	feature_map_data_stat::feature_map_data_stat()
-	{
-	}
-
 	std::ostream& operator<< (std::ostream& out, const feature_map_data_stat& val)
 	{
 		out << "Average " << val.average << ", StdDev " << val.std_dev << ", Min " << val.min << ", Max " << val.max;

@@ -25,9 +25,9 @@ namespace nnforge
 		class add_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			add_layer_tester_cuda();
+			add_layer_tester_cuda() = default;
 
-			virtual ~add_layer_tester_cuda();
+			virtual ~add_layer_tester_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

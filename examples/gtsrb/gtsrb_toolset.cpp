@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/format.hpp>
+#include <iostream>
 
 const unsigned int gtsrb_toolset::image_width = 32;
 const unsigned int gtsrb_toolset::image_height = 32;
@@ -50,7 +51,7 @@ void gtsrb_toolset::prepare_training_data()
 		boost::filesystem::path label_file_path = get_working_data_folder() / "training_labels.dt";
 		std::cout << "Writing data to " << image_file_path.string() << " and " << label_file_path.string() << std::endl;
 
-		nnforge_shared_ptr<std::ofstream> image_file_stream(new boost::filesystem::ofstream(image_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		std::shared_ptr<std::ofstream> image_file_stream(new boost::filesystem::ofstream(image_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific input_configuration;
 		input_configuration.feature_map_count = 1;
 		input_configuration.dimension_sizes.push_back(image_width);
@@ -59,7 +60,7 @@ void gtsrb_toolset::prepare_training_data()
 			image_file_stream,
 			input_configuration);
 
-		nnforge_shared_ptr<std::ofstream> label_file_stream(new boost::filesystem::ofstream(label_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		std::shared_ptr<std::ofstream> label_file_stream(new boost::filesystem::ofstream(label_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific output_configuration;
 		output_configuration.feature_map_count = class_count;
 		output_configuration.dimension_sizes.push_back(1);
@@ -86,7 +87,7 @@ void gtsrb_toolset::prepare_training_data()
 		boost::filesystem::path label_file_path = get_working_data_folder() / "validating_labels.dt";
 		std::cout << "Writing data to " << image_file_path.string() << " and " << label_file_path.string() << std::endl;
 
-		nnforge_shared_ptr<std::ofstream> image_file_stream(new boost::filesystem::ofstream(image_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		std::shared_ptr<std::ofstream> image_file_stream(new boost::filesystem::ofstream(image_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific input_configuration;
 		input_configuration.feature_map_count = 1;
 		input_configuration.dimension_sizes.push_back(image_width);
@@ -95,7 +96,7 @@ void gtsrb_toolset::prepare_training_data()
 			image_file_stream,
 			input_configuration);
 
-		nnforge_shared_ptr<std::ofstream> label_file_stream(new boost::filesystem::ofstream(label_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
+		std::shared_ptr<std::ofstream> label_file_stream(new boost::filesystem::ofstream(label_file_path, std::ios_base::out | std::ios_base::binary | std::ios_base::trunc));
 		nnforge::layer_configuration_specific output_configuration;
 		output_configuration.feature_map_count = class_count;
 		output_configuration.dimension_sizes.push_back(1);
@@ -129,11 +130,11 @@ void gtsrb_toolset::write_folder(
 	boost::filesystem::ifstream file_input(annotation_file_path, std::ios_base::in);
 
 	nnforge::random_generator generator = nnforge::rnd::get_random_generator();
-	nnforge_uniform_real_distribution<float> rotate_angle_distribution(-max_rotation_angle_in_degrees, max_rotation_angle_in_degrees);
-	nnforge_uniform_real_distribution<float> scale_distribution(1.0F / max_scale_factor, max_scale_factor);
-	nnforge_uniform_real_distribution<float> shift_distribution(-max_shift, max_shift);
-	nnforge_uniform_real_distribution<float> contrast_distribution(1.0F / max_contrast_factor, max_contrast_factor);
-	nnforge_uniform_real_distribution<float> brightness_shift_distribution(-max_brightness_shift, max_brightness_shift);
+	std::uniform_real_distribution<float> rotate_angle_distribution(-max_rotation_angle_in_degrees, max_rotation_angle_in_degrees);
+	std::uniform_real_distribution<float> scale_distribution(1.0F / max_scale_factor, max_scale_factor);
+	std::uniform_real_distribution<float> shift_distribution(-max_shift, max_shift);
+	std::uniform_real_distribution<float> contrast_distribution(1.0F / max_contrast_factor, max_contrast_factor);
+	std::uniform_real_distribution<float> brightness_shift_distribution(-max_brightness_shift, max_brightness_shift);
 
 	std::string str;
 	std::getline(file_input, str); // read the header

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "nn_types.h"
 #include "raw_data_writer.h"
 
 #include <vector>
@@ -28,9 +27,9 @@ namespace nnforge
 	class raw_data_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<raw_data_reader> ptr;
+		typedef std::shared_ptr<raw_data_reader> ptr;
 
-		virtual ~raw_data_reader();
+		virtual ~raw_data_reader() = default;
 
 		// The method returns false in case the entry cannot be read
 		virtual bool raw_read(
@@ -40,13 +39,13 @@ namespace nnforge
 		// The method should return -1 if entry count is unknown
 		virtual int get_entry_count() const = 0;
 
-		virtual raw_data_writer::ptr get_writer(nnforge_shared_ptr<std::ostream> out) const = 0;
+		virtual raw_data_writer::ptr get_writer(std::shared_ptr<std::ostream> out) const = 0;
 
 	protected:
-		raw_data_reader();
+		raw_data_reader() = default;
 
 	private:
-		raw_data_reader(const raw_data_reader&);
-		raw_data_reader& operator =(const raw_data_reader&);
+		raw_data_reader(const raw_data_reader&) = delete;
+		raw_data_reader& operator =(const raw_data_reader&) = delete;
 	};
 }

@@ -25,9 +25,9 @@ namespace nnforge
 		class entry_convolution_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			entry_convolution_layer_tester_plain();
+			entry_convolution_layer_tester_plain() = default;
 
-			virtual ~entry_convolution_layer_tester_plain();
+			virtual ~entry_convolution_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

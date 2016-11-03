@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		sigmoid_layer_testing_schema::sigmoid_layer_testing_schema()
-		{
-		}
-
-		sigmoid_layer_testing_schema::~sigmoid_layer_testing_schema()
-		{
-		}
-
 		std::string sigmoid_layer_testing_schema::get_type_name() const
 		{
 			return sigmoid_layer::layer_type_name;

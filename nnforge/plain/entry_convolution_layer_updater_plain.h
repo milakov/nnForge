@@ -25,9 +25,9 @@ namespace nnforge
 		class entry_convolution_layer_updater_plain : public layer_updater_plain
 		{
 		public:
-			entry_convolution_layer_updater_plain();
+			entry_convolution_layer_updater_plain() = default;
 
-			virtual ~entry_convolution_layer_updater_plain();
+			virtual ~entry_convolution_layer_updater_plain() = default;
 
 			virtual std::string get_type_name() const;
 

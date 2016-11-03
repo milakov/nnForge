@@ -16,6 +16,8 @@
 
 #include "exponential_learning_rate_decay_policy.h"
 
+#include <math.h>
+
 namespace nnforge
 {
 	exponential_learning_rate_decay_policy::exponential_learning_rate_decay_policy(
@@ -23,10 +25,6 @@ namespace nnforge
 		unsigned int start_decay_epoch)
 		: learning_rate_decay_rate(learning_rate_decay_rate)
 		, start_decay_epoch(start_decay_epoch)
-	{
-	}
-
-	exponential_learning_rate_decay_policy::~exponential_learning_rate_decay_policy()
 	{
 	}
 

@@ -26,10 +26,6 @@ namespace nnforge
 	{
 	}
 
-	neuron_value_set_data_bunch_reader::~neuron_value_set_data_bunch_reader()
-	{
-	}
-
 	std::map<std::string, layer_configuration_specific> neuron_value_set_data_bunch_reader::get_config_map() const
 	{
 		std::map<std::string, layer_configuration_specific> res;
@@ -47,7 +43,7 @@ namespace nnforge
 			const std::pair<layer_configuration_specific, neuron_value_set::ptr>& nvs = layer_name_to_config_and_value_set_map.find(it->first)->second;
 			if (entry_id >= nvs.second->neuron_value_list.size())
 				return false;
-			nnforge_shared_ptr<std::vector<float> > src_data = nvs.second->neuron_value_list[entry_id];
+			std::shared_ptr<std::vector<float> > src_data = nvs.second->neuron_value_list[entry_id];
 			float * src_ptr = &src_data->at(0);
 			memcpy(it->second, src_ptr, nvs.first.get_neuron_count() * sizeof(float));
 		}

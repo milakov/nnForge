@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,16 +17,17 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
-#include "nn_types.h"
+
+#include <memory>
 
 namespace nnforge
 {
 	class data_transformer
 	{
 	public:
-		typedef nnforge_shared_ptr<data_transformer> ptr;
+		typedef std::shared_ptr<data_transformer> ptr;
 
-		virtual ~data_transformer();
+		virtual ~data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -39,10 +40,10 @@ namespace nnforge
 		virtual unsigned int get_sample_count() const;
 
 	protected:
-		data_transformer();
+		data_transformer() = default;
 
 	private:
-		data_transformer(const data_transformer&);
-		data_transformer& operator =(const data_transformer&);
+		data_transformer(const data_transformer&) = delete;
+		data_transformer& operator =(const data_transformer&) = delete;
 	};
 }

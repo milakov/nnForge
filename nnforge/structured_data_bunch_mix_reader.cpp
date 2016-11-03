@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,10 +31,6 @@ namespace nnforge
 		, auxiliary_reader_part(auxiliary_reader_part)
 	{
 		update_redirect_entry_list();
-	}
-
-	structured_data_bunch_mix_reader::~structured_data_bunch_mix_reader()
-	{
 	}
 
 	void structured_data_bunch_mix_reader::update_redirect_entry_list()

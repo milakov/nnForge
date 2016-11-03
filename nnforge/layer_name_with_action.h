@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,9 +25,7 @@ namespace nnforge
 	class layer_name_with_action
 	{
 	public:
-		layer_name_with_action()
-		{
-		}
+		layer_name_with_action() = default;
 
 		layer_name_with_action(
 			const std::string& name,

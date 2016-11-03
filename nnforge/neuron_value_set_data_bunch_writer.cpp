@@ -18,14 +18,6 @@
 
 namespace nnforge
 {
-	neuron_value_set_data_bunch_writer::neuron_value_set_data_bunch_writer()
-	{
-	}
-
-	neuron_value_set_data_bunch_writer::~neuron_value_set_data_bunch_writer()
-	{
-	}
-
 	void neuron_value_set_data_bunch_writer::set_config_map(const std::map<std::string, layer_configuration_specific> config_map)
 	{
 		layer_name_to_config_and_value_set_map.clear();

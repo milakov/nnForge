@@ -604,9 +604,6 @@
     <ClCompile Include="cuda_linear_buffer_host.cpp">
       <Filter>Source Files\memobjects</Filter>
     </ClCompile>
-    <ClCompile Include="cuda_memobject.cpp">
-      <Filter>Source Files\memobjects</Filter>
-    </ClCompile>
     <ClCompile Include="layer_testing_schema.cpp">
       <Filter>Source Files\forward_propagation</Filter>
     </ClCompile>

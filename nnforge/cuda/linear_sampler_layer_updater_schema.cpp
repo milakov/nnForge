@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		linear_sampler_layer_updater_schema::linear_sampler_layer_updater_schema()
-		{
-		}
-
-		linear_sampler_layer_updater_schema::~linear_sampler_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr linear_sampler_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new linear_sampler_layer_updater_schema());

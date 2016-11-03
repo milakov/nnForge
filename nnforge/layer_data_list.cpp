@@ -21,6 +21,7 @@
 #include <numeric>
 #include <boost/format.hpp>
 #include <cmath>
+#include <regex>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
@@ -35,10 +36,6 @@ namespace nnforge
 		, 0x1c, 0x43, 0x22, 0xf8, 0x13, 0xd };
 
 	const char * layer_data_list::data_extractor_pattern = "^(.+)\\.data$";
-
-	layer_data_list::layer_data_list()
-	{
-	}
 
 	layer_data_list::layer_data_list(
 		const std::vector<layer::const_ptr>& layer_list,
@@ -175,8 +172,8 @@ namespace nnforge
 		if (!boost::filesystem::exists(folder_path) || !boost::filesystem::is_directory(folder_path))
 			throw neural_network_exception((boost::format("Directory %1% doesn't exist") % folder_path).str());
 
-		nnforge_regex expression(data_extractor_pattern);
-		nnforge_cmatch what;
+		std::regex expression(data_extractor_pattern);
+		std::cmatch what;
 
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
@@ -185,7 +182,7 @@ namespace nnforge
 				boost::filesystem::path file_path = it->path();
 				std::string file_name = file_path.filename().string();
 
-				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				if (std::regex_search(file_name.c_str(), what, expression))
 				{
 					std::string data_name = std::string(what[1].first, what[1].second);
 					boost::filesystem::ifstream in(file_path, std::ios_base::in | std::ios_base::binary);

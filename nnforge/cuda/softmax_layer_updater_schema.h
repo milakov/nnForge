@@ -25,9 +25,9 @@ namespace nnforge
 		class softmax_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			softmax_layer_updater_schema();
+			softmax_layer_updater_schema() = default;
 
-			virtual ~softmax_layer_updater_schema();
+			virtual ~softmax_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

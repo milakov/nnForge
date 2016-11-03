@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,22 +17,22 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
-#include "nn_types.h"
 
 #include <vector>
+#include <memory>
 
 namespace nnforge
 {
 	class layer_configuration_specific_snapshot
 	{
 	public:
-		layer_configuration_specific_snapshot();
+		typedef std::shared_ptr<layer_configuration_specific_snapshot> ptr;
+
+		layer_configuration_specific_snapshot() = default;
 
 		layer_configuration_specific_snapshot(const layer_configuration_specific& config);
 
 		layer_configuration_specific config;
 		std::vector<float> data;
 	};
-
-	typedef nnforge_shared_ptr<layer_configuration_specific_snapshot> layer_configuration_specific_snapshot_smart_ptr;
 }

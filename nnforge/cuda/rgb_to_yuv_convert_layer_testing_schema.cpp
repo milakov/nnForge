@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		rgb_to_yuv_convert_layer_testing_schema::rgb_to_yuv_convert_layer_testing_schema()
-		{
-		}
-
-		rgb_to_yuv_convert_layer_testing_schema::~rgb_to_yuv_convert_layer_testing_schema()
-		{
-		}
-
 		std::string rgb_to_yuv_convert_layer_testing_schema::get_type_name() const
 		{
 			return rgb_to_yuv_convert_layer::layer_type_name;
@@ -55,7 +47,7 @@ namespace nnforge
 		{
 			std::vector<cuda_linear_buffer_device::const_ptr> res;
 
-			nnforge_shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = nnforge_dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
+			std::shared_ptr<const rgb_to_yuv_convert_layer> layer_derived = std::dynamic_pointer_cast<const rgb_to_yuv_convert_layer>(layer_schema);
 			std::vector<int> color_feature_map_config_raw_value_list;
 			for(std::vector<color_feature_map_config>::const_iterator it = layer_derived->color_feature_map_config_list.begin(); it != layer_derived->color_feature_map_config_list.end(); ++it)
 			{

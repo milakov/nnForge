@@ -18,10 +18,9 @@
 
 #include "data_transformer.h"
 #include "rnd.h"
-#include "nn_types.h"
 
 #include <vector>
-#include <boost/thread/thread.hpp>
+#include <mutex>
 
 namespace nnforge
 {
@@ -34,7 +33,7 @@ namespace nnforge
 			float saturation = 0.4F,
 			float lighting = 0.1F);
 
-		virtual ~natural_image_data_transformer();
+		virtual ~natural_image_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -52,20 +51,20 @@ namespace nnforge
 
 	protected:
 		random_generator generator;
-		boost::mutex gen_mutex;
+		std::mutex gen_mutex;
 
 		bool apply_brightness_distribution;
-		nnforge_uniform_real_distribution<float> brightness_distribution;
+		std::uniform_real_distribution<float> brightness_distribution;
 
 		bool apply_contrast_distribution;
-		nnforge_uniform_real_distribution<float> contrast_distribution;
+		std::uniform_real_distribution<float> contrast_distribution;
 
 		bool apply_saturation_distribution;
-		nnforge_uniform_real_distribution<float> saturation_distribution;
+		std::uniform_real_distribution<float> saturation_distribution;
 
 		bool apply_lighting;
-		nnforge_normal_distribution<float> lighting_1st_eigen_alpha_distribution;
-		nnforge_normal_distribution<float> lighting_2nd_eigen_alpha_distribution;
-		nnforge_normal_distribution<float> lighting_3rd_eigen_alpha_distribution;
+		std::normal_distribution<float> lighting_1st_eigen_alpha_distribution;
+		std::normal_distribution<float> lighting_2nd_eigen_alpha_distribution;
+		std::normal_distribution<float> lighting_3rd_eigen_alpha_distribution;
 	};
 }

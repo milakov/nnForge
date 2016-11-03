@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,23 +17,23 @@
 #pragma once
 
 #include "structured_data_reader.h"
-#include "nn_types.h"
 
 #include <vector>
 #include <istream>
-#include <boost/thread/thread.hpp>
+#include <memory>
+#include <mutex>
 
 namespace nnforge
 {
 	class structured_data_stream_reader : public structured_data_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_data_stream_reader> ptr;
+		typedef std::shared_ptr<structured_data_stream_reader> ptr;
 
 		// The constructor modifies input_stream to throw exceptions in case of failure
-		structured_data_stream_reader(nnforge_shared_ptr<std::istream> input_stream);
+		structured_data_stream_reader(std::shared_ptr<std::istream> input_stream);
 
-		virtual ~structured_data_stream_reader();
+		virtual ~structured_data_stream_reader() = default;
 
 		virtual bool read(
 			unsigned int entry_id,
@@ -43,18 +43,18 @@ namespace nnforge
 
 		virtual int get_entry_count() const;
 
-		virtual raw_data_writer::ptr get_writer(nnforge_shared_ptr<std::ostream> out) const;
+		virtual raw_data_writer::ptr get_writer(std::shared_ptr<std::ostream> out) const;
 
 	protected:
-		nnforge_shared_ptr<std::istream> in_stream;
+		std::shared_ptr<std::istream> in_stream;
 		unsigned int input_neuron_count;
 		layer_configuration_specific input_configuration;
 		unsigned int entry_count;
 		std::istream::pos_type reset_pos;
-		boost::mutex read_data_from_stream_mutex;
+		std::mutex read_data_from_stream_mutex;
 
 	private:
-		structured_data_stream_reader(const structured_data_stream_reader&);
-		structured_data_stream_reader& operator =(const structured_data_stream_reader&);
+		structured_data_stream_reader(const structured_data_stream_reader&) = delete;
+		structured_data_stream_reader& operator =(const structured_data_stream_reader&) = delete;
 	};
 }

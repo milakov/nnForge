@@ -16,14 +16,12 @@
 
 #include "stat_data_bunch_writer.h"
 
+#include <algorithm>
+
 namespace nnforge
 {
 	stat_data_bunch_writer::stat_data_bunch_writer()
 		: entry_count(0)
-	{
-	}
-
-	stat_data_bunch_writer::~stat_data_bunch_writer()
 	{
 	}
 
@@ -68,7 +66,7 @@ namespace nnforge
 				}
 
 				{
-					boost::lock_guard<boost::mutex> lock(update_stat_mutex);
+					std::lock_guard<std::mutex> lock(update_stat_mutex);
 					running_stats[feature_map_id].max_val = std::max(running_stats[feature_map_id].max_val, current_running_stat.max_val);
 					running_stats[feature_map_id].min_val = std::min(running_stats[feature_map_id].min_val, current_running_stat.min_val);
 					running_stats[feature_map_id].sum += current_running_stat.sum;

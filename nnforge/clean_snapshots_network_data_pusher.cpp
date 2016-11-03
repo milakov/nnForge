@@ -33,10 +33,6 @@ namespace nnforge
 	{
 	}
 
-	clean_snapshots_network_data_pusher::~clean_snapshots_network_data_pusher()
-	{
-	}
-
 	void clean_snapshots_network_data_pusher::push(
 		const training_task_state& task_state,
 		const network_schema& schema)

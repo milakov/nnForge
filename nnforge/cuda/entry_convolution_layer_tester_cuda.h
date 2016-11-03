@@ -25,9 +25,9 @@ namespace nnforge
 		class entry_convolution_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			entry_convolution_layer_tester_cuda();
+			entry_convolution_layer_tester_cuda() = default;
 
-			virtual ~entry_convolution_layer_tester_cuda();
+			virtual ~entry_convolution_layer_tester_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

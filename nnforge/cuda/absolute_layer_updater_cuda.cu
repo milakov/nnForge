@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -72,14 +72,6 @@ namespace nnforge
 				}
 				input_errors[elem_id] = current_error;
 			}
-		}
-
-		absolute_layer_updater_cuda::absolute_layer_updater_cuda()
-		{
-		}
-
-		absolute_layer_updater_cuda::~absolute_layer_updater_cuda()
-		{
 		}
 
 		void absolute_layer_updater_cuda::enqueue_forward_propagation(

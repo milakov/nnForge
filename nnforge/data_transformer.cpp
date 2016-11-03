@@ -18,14 +18,6 @@
 
 namespace nnforge
 {
-	data_transformer::data_transformer()
-	{
-	}
-
-	data_transformer::~data_transformer()
-	{
-	}
-
 	layer_configuration_specific data_transformer::get_transformed_configuration(const layer_configuration_specific& original_config) const
 	{
 		return original_config;

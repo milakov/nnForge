@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "accuracy_layer_tester_plain.h"
 
 #include "../accuracy_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -25,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		accuracy_layer_tester_plain::accuracy_layer_tester_plain()
-		{
-		}
-
-		accuracy_layer_tester_plain::~accuracy_layer_tester_plain()
-		{
-		}
-
 		std::string accuracy_layer_tester_plain::get_type_name() const
 		{
 			return accuracy_layer::layer_type_name;

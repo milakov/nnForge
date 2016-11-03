@@ -17,6 +17,7 @@
 #include "network_trainer.h"
 
 #include <vector>
+#include <iostream>
 
 #include "neural_network_exception.h"
 #include "exponential_learning_rate_decay_policy.h"
@@ -36,10 +37,6 @@ namespace nnforge
 		, learning_rate(0.02F)
 		, lr_policy(new exponential_learning_rate_decay_policy())
 		, batch_size(1)
-	{
-	}
-
-	network_trainer::~network_trainer()
 	{
 	}
 
@@ -144,7 +141,7 @@ namespace nnforge
 
 	bool network_trainer::is_broken(const training_task_state& state) const
 	{
-		for(std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<double> > > >::const_iterator it = state.history.back().second.begin(); it != state.history.back().second.end(); ++it)
+		for(std::map<std::string, std::pair<layer_configuration_specific, std::shared_ptr<std::vector<double> > > >::const_iterator it = state.history.back().second.begin(); it != state.history.back().second.end(); ++it)
 		{
 			for(std::vector<double>::const_iterator it2 = it->second.second->begin(); it2 != it->second.second->end(); ++it2)
 			{

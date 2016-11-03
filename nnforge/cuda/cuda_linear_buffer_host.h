@@ -27,8 +27,8 @@ namespace nnforge
 		class cuda_linear_buffer_host : public cuda_linear_buffer
 		{
 		public:
-			typedef nnforge_shared_ptr<cuda_linear_buffer_host> ptr;
-			typedef nnforge_shared_ptr<const cuda_linear_buffer_host> const_ptr;
+			typedef std::shared_ptr<cuda_linear_buffer_host> ptr;
+			typedef std::shared_ptr<const cuda_linear_buffer_host> const_ptr;
 
 			cuda_linear_buffer_host(
 				size_t size,

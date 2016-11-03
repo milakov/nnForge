@@ -25,9 +25,9 @@ namespace nnforge
 		class sparse_convolution_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			sparse_convolution_layer_updater_schema();
+			sparse_convolution_layer_updater_schema() = default;
 
-			virtual ~sparse_convolution_layer_updater_schema();
+			virtual ~sparse_convolution_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

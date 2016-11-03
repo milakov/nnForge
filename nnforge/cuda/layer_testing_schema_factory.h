@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@
 
 #include <map>
 #include <vector>
-#include <boost/uuid/uuid.hpp>
-#include <boost/serialization/singleton.hpp>
 
 namespace nnforge
 {
@@ -32,8 +30,6 @@ namespace nnforge
 		class layer_testing_schema_factory
 		{
 		public:
-			typedef boost::serialization::singleton<layer_testing_schema_factory> singleton;
-
 			bool register_layer_testing_schema(layer_testing_schema::const_ptr sample_layer_testing_schema);
 
 			bool unregister_layer_testing_schema(const std::string& layer_type_name);
@@ -42,7 +38,11 @@ namespace nnforge
 				layer::const_ptr layer,
 				cuda_running_configuration::const_ptr cuda_config) const;
 
+			static layer_testing_schema_factory& get_singleton();
+
 		private:
+			layer_testing_schema_factory() = default;
+
 			typedef std::map<std::string, layer_testing_schema::const_ptr> sample_map;
 			sample_map sample_layer_testing_schema_map;
 		};

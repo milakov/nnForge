@@ -25,9 +25,9 @@ namespace nnforge
 		class maxout_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			maxout_layer_tester_plain();
+			maxout_layer_tester_plain() = default;
 
-			virtual ~maxout_layer_tester_plain();
+			virtual ~maxout_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

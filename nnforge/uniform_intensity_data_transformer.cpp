@@ -33,12 +33,8 @@ namespace nnforge
 		{
 			bool apply = (min_shift_list[i] < max_shift_list[i]);
 			apply_shift_distribution_list.push_back(apply);
-			shift_distribution_list.push_back(nnforge_uniform_real_distribution<float>(min_shift_list[i], max_shift_list[i] + (apply ? 0.0F : 1.0F)));
+			shift_distribution_list.push_back(std::uniform_real_distribution<float>(min_shift_list[i], max_shift_list[i] + (apply ? 0.0F : 1.0F)));
 		}
-	}
-
-	uniform_intensity_data_transformer::~uniform_intensity_data_transformer()
-	{
 	}
 
 	void uniform_intensity_data_transformer::transform(
@@ -52,11 +48,11 @@ namespace nnforge
 
 		std::vector<float> shift_list(original_config.feature_map_count);
 		{
-			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
+			std::lock_guard<std::mutex> lock(gen_stream_mutex);
 
 			for(unsigned int feature_map_id = 0; feature_map_id < original_config.feature_map_count; ++feature_map_id)
 			{
-				nnforge_uniform_real_distribution<float>& dist = shift_distribution_list[feature_map_id];
+				std::uniform_real_distribution<float>& dist = shift_distribution_list[feature_map_id];
 				float shift = dist.min();
 				if (apply_shift_distribution_list[feature_map_id])
 					shift = dist(generator);

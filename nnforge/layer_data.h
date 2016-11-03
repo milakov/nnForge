@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,22 +16,22 @@
 
 #pragma once
 
-#include "nn_types.h"
 #include "rnd.h"
 
 #include <vector>
 #include <ostream>
 #include <istream>
+#include <memory>
 
 namespace nnforge
 {
 	class layer_data : public std::vector<std::vector<float> >
 	{
 	public:
-		typedef nnforge_shared_ptr<layer_data> ptr;
-		typedef nnforge_shared_ptr<const layer_data> const_ptr;
+		typedef std::shared_ptr<layer_data> ptr;
+		typedef std::shared_ptr<const layer_data> const_ptr;
 
-		layer_data();
+		layer_data() = default;
 
 		// The stream should be created with std::ios_base::binary flag
 		void write(std::ostream& binary_stream_to_write_to) const;
@@ -45,17 +45,5 @@ namespace nnforge
 			float min,
 			float max,
 			random_generator& gen);
-
-	private:
-		class mult_transform
-		{
-		public:
-			mult_transform(float mult);
-			
-			float operator() (float in);
-
-		private:
-			float mult;
-		};
 	};
 }

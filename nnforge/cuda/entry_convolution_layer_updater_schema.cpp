@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		entry_convolution_layer_updater_schema::entry_convolution_layer_updater_schema()
-		{
-		}
-
-		entry_convolution_layer_updater_schema::~entry_convolution_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr entry_convolution_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new entry_convolution_layer_updater_schema());

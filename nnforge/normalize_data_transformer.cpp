@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,10 +27,6 @@
 
 namespace nnforge
 {
-	normalize_data_transformer::normalize_data_transformer()
-	{
-	}
-
 	normalize_data_transformer::normalize_data_transformer(const std::vector<feature_map_data_stat>& feature_map_data_stat_list)
 	{
 		for (std::vector<feature_map_data_stat>::const_iterator it = feature_map_data_stat_list.begin(); it != feature_map_data_stat_list.end(); ++it)
@@ -53,13 +49,9 @@ namespace nnforge
 		}
 	}
 
-	normalize_data_transformer::~normalize_data_transformer()
+	std::shared_ptr<normalize_data_transformer> normalize_data_transformer::get_inverted_transformer() const
 	{
-	}
-
-	nnforge_shared_ptr<normalize_data_transformer> normalize_data_transformer::get_inverted_transformer() const
-	{
-		nnforge_shared_ptr<normalize_data_transformer> res(new normalize_data_transformer());
+		std::shared_ptr<normalize_data_transformer> res(new normalize_data_transformer());
 
 		for(std::vector<std::pair<float, float> >::const_iterator mul_add_it = mul_add_list.begin(); mul_add_it != mul_add_list.end(); ++mul_add_it)
 		{
@@ -80,8 +72,8 @@ namespace nnforge
 	{
 		unsigned int elem_count_per_feature_map = original_config.get_neuron_count_per_feature_map();
 
-		for(std::vector<std::pair<float, float> >::const_iterator mul_add_it = mul_add_list.begin(); mul_add_it != mul_add_list.end(); ++mul_add_it, data += elem_count_per_feature_map, data_transformed += elem_count_per_feature_map)
-			std::transform(data, data + elem_count_per_feature_map, data_transformed, normalize_helper_struct(mul_add_it->first, mul_add_it->second));
+		for(auto mul_add_it = mul_add_list.begin(); mul_add_it != mul_add_list.end(); ++mul_add_it, data += elem_count_per_feature_map, data_transformed += elem_count_per_feature_map)
+			std::transform(data, data + elem_count_per_feature_map, data_transformed, [mul_add_it] (float x) { return x * mul_add_it->first + mul_add_it->second; });
 	}
 
 	void normalize_data_transformer::write_proto(std::ostream& stream_to_write_to) const

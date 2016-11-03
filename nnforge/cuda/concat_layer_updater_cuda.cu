@@ -57,14 +57,6 @@ namespace nnforge
 			}
 		}
 
-		concat_layer_updater_cuda::concat_layer_updater_cuda()
-		{
-		}
-
-		concat_layer_updater_cuda::~concat_layer_updater_cuda()
-		{
-		}
-
 		void concat_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,

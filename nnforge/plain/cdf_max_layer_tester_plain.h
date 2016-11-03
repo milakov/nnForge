@@ -25,9 +25,9 @@ namespace nnforge
 		class cdf_max_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			cdf_max_layer_tester_plain();
+			cdf_max_layer_tester_plain() = default;
 
-			virtual ~cdf_max_layer_tester_plain();
+			virtual ~cdf_max_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

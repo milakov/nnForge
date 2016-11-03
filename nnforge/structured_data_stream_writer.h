@@ -17,23 +17,23 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
-#include "nn_types.h"
 #include "structured_data_writer.h"
 
 #include <vector>
 #include <ostream>
+#include <memory>
 
 namespace nnforge
 {
 	class structured_data_stream_writer : public structured_data_writer
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_data_stream_writer> ptr;
+		typedef std::shared_ptr<structured_data_stream_writer> ptr;
 
 		// The constructor modifies output_stream to throw exceptions in case of failure
 		// The stream should be created with std::ios_base::binary flag
 		structured_data_stream_writer(
-			nnforge_shared_ptr<std::ostream> output_stream,
+			std::shared_ptr<std::ostream> output_stream,
 			const layer_configuration_specific& config);
 
 		virtual ~structured_data_stream_writer();
@@ -45,7 +45,7 @@ namespace nnforge
 			const float * neurons);
 
 	private:
-		nnforge_shared_ptr<std::ostream> out_stream;
+		std::shared_ptr<std::ostream> out_stream;
 
 		unsigned int neuron_count;
 		std::ostream::pos_type entry_count_pos;

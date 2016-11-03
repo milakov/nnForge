@@ -19,20 +19,18 @@
 #include "network_data.h"
 #include "backward_propagation.h"
 
-#include <boost/chrono.hpp>
-
 namespace nnforge
 {
 	class training_task_state
 	{
 	public:
-		training_task_state();
+		training_task_state() = default;
 
 		unsigned int index_peeked;
 		network_data::ptr data;
 		network_data::ptr momentum_data;
 		network_data::ptr momentum_data2;
-		std::vector<std::pair<backward_propagation::stat, std::map<std::string, std::pair<layer_configuration_specific, nnforge_shared_ptr<std::vector<double> > > > > > history;
+		std::vector<std::pair<backward_propagation::stat, std::map<std::string, std::pair<layer_configuration_specific, std::shared_ptr<std::vector<double> > > > > > history;
 		std::vector<std::string> comments;
 		unsigned int initial_epoch;
 

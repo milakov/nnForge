@@ -17,12 +17,10 @@
 #include "convolution_layer.h"
 
 #include "neural_network_exception.h"
-#include "nn_types.h"
 #include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <numeric>
-#include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
 #include <opencv2/core/core.hpp>
 #include <sstream>
@@ -196,7 +194,7 @@ namespace nnforge
 		data_config res;
 
 		unsigned int weight_count = input_feature_map_count * output_feature_map_count;
-		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
+		std::for_each(window_sizes.begin(), window_sizes.end(), [&weight_count] (unsigned int x) { weight_count *= x; });
 
 		res.push_back(weight_count);
 
@@ -212,14 +210,14 @@ namespace nnforge
 		random_generator& generator) const
 	{
 		unsigned int weight_count = 1;
-		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
+		std::for_each(window_sizes.begin(), window_sizes.end(), [&weight_count] (unsigned int x) { weight_count *= x; });
 
 		float average_feature_map_count = sqrtf(static_cast<float>(input_feature_map_count) * static_cast<float>(output_feature_map_count));
 
 		float standard_deviation = sqrtf(1.0F / (average_feature_map_count * static_cast<float>(weight_count)));
 		float max_abs_value = 100.0F * standard_deviation;
 
-		nnforge_normal_distribution<float> nd(0.0F, standard_deviation);
+		std::normal_distribution<float> nd(0.0F, standard_deviation);
 
 		for(unsigned int i = 0; i < (*data)[0].size(); ++i)
 		{
@@ -240,11 +238,11 @@ namespace nnforge
 		random_generator& generator) const
 	{
 		unsigned int weight_count = 1;
-		std::for_each(window_sizes.begin(), window_sizes.end(), weight_count *= boost::lambda::_1);
+		std::for_each(window_sizes.begin(), window_sizes.end(), [&weight_count] (unsigned int x) { weight_count *= x; });
 		unsigned int weight_col_count = weight_count * input_feature_map_count;
 		unsigned int weight_row_count = output_feature_map_count;
 
-		nnforge_normal_distribution<float> nd(0.0F, 1.0F);
+		std::normal_distribution<float> nd(0.0F, 1.0F);
 		for(unsigned int i = 0; i < (*data)[0].size(); ++i)
 		{
 			float val = nd(generator);
@@ -282,7 +280,7 @@ namespace nnforge
 			{
 				unsigned int neuron_count = get_output_layer_configuration_specific(input_configuration_specific_list).get_neuron_count();
 				unsigned int per_item_flops = input_feature_map_count * 2;
-				std::for_each(window_sizes.begin(), window_sizes.end(), per_item_flops *= boost::lambda::_1);
+				std::for_each(window_sizes.begin(), window_sizes.end(), [&per_item_flops] (unsigned int x) { per_item_flops *= x; });
 				if (!bias)
 					--per_item_flops;
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);

@@ -17,7 +17,6 @@
 #pragma once
 
 #include "../layer.h"
-#include "../nn_types.h"
 #include "../layer_action.h"
 
 #include "cuda_running_configuration.h"
@@ -28,6 +27,7 @@
 #include <vector>
 #include <string>
 #include <cuda_runtime.h>
+#include <memory>
 
 namespace nnforge
 {
@@ -36,9 +36,9 @@ namespace nnforge
 		class layer_updater_cuda
 		{
 		public:
-			typedef nnforge_shared_ptr<layer_updater_cuda> ptr;
+			typedef std::shared_ptr<layer_updater_cuda> ptr;
 
-			virtual ~layer_updater_cuda();
+			virtual ~layer_updater_cuda() = default;
 
 			void configure(
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
@@ -169,7 +169,7 @@ namespace nnforge
 			virtual bool is_backward_weights_dependent_on_temporary_per_entry_buffer() const;
 
 		protected:
-			layer_updater_cuda();
+			layer_updater_cuda() = default;
 
 			// The method is called when configuration is finished
 			virtual void updater_configured();
@@ -190,8 +190,8 @@ namespace nnforge
 			std::set<layer_action> actions;
 
 		private:
-			layer_updater_cuda(const layer_updater_cuda&);
-			layer_updater_cuda& operator =(const layer_updater_cuda&);
+			layer_updater_cuda(const layer_updater_cuda&) = delete;
+			layer_updater_cuda& operator =(const layer_updater_cuda&) = delete;
 		};
 	}
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@ namespace nnforge
 	class structured_data_bunch_mix_reader : public structured_data_bunch_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_data_bunch_mix_reader> ptr;
+		typedef std::shared_ptr<structured_data_bunch_mix_reader> ptr;
 
 		structured_data_bunch_mix_reader(
 			structured_data_bunch_reader::ptr main_reader,
 			structured_data_bunch_reader::ptr auxiliary_reader,
 			float auxiliary_reader_part);
 
-		~structured_data_bunch_mix_reader();
+		~structured_data_bunch_mix_reader() = default;
 
 		virtual std::map<std::string, layer_configuration_specific> get_config_map() const;
 

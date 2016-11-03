@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@
 #include <cusparse_v2.h>
 #include <cudnn.h>
 #include <curand.h>
+#include <memory>
 
 #include "buffer_cuda_size_configuration.h"
-#include "../nn_types.h"
 #include "../threadpool_job_runner.h"
 
 #include "cudnn_util.h"
@@ -47,8 +47,8 @@ namespace nnforge
 		class cuda_running_configuration
 		{
 		public:
-			typedef nnforge_shared_ptr<cuda_running_configuration> ptr;
-			typedef nnforge_shared_ptr<const cuda_running_configuration> const_ptr;
+			typedef std::shared_ptr<cuda_running_configuration> ptr;
+			typedef std::shared_ptr<const cuda_running_configuration> const_ptr;
 
 			cuda_running_configuration(
 				int device_id,
@@ -167,9 +167,9 @@ namespace nnforge
 			int get_core_count_per_sm() const;
 
 		private:
-			cuda_running_configuration();
-			cuda_running_configuration(const cuda_running_configuration&);
-			cuda_running_configuration& operator =(const cuda_running_configuration&);
+			cuda_running_configuration() = delete;
+			cuda_running_configuration(const cuda_running_configuration&) = delete;
+			cuda_running_configuration& operator =(const cuda_running_configuration&) = delete;
 
 			void update_parameters();
 

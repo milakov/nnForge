@@ -76,8 +76,6 @@
 #include "normalize_data_transformer.h"
 #include "natural_image_data_transformer.h"
 
-#include "nn_types.h"
-
 namespace nnforge
 {
 	class nnforge
@@ -86,7 +84,7 @@ namespace nnforge
 		static void init();
 
 	private:
-		nnforge();
-		~nnforge();
+		nnforge() = delete;
+		~nnforge() = delete;
 	};
 }

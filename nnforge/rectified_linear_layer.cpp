@@ -20,10 +20,6 @@ namespace nnforge
 {
 	const std::string rectified_linear_layer::layer_type_name = "ReLU";
 
-	rectified_linear_layer::rectified_linear_layer()
-	{
-	}
-
 	std::string rectified_linear_layer::get_type_name() const
 	{
 		return layer_type_name;

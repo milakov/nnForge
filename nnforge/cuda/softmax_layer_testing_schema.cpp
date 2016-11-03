@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		softmax_layer_testing_schema::softmax_layer_testing_schema()
-		{
-		}
-
-		softmax_layer_testing_schema::~softmax_layer_testing_schema()
-		{
-		}
-
 		std::string softmax_layer_testing_schema::get_type_name() const
 		{
 			return softmax_layer::layer_type_name;

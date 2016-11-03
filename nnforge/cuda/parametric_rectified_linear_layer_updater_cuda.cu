@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 
 #include "../parametric_rectified_linear_layer.h"
 #include "../neural_network_exception.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -126,14 +125,6 @@ namespace nnforge
 
 			if (thread_id == 0)
 				atomicAdd(gradients + feature_map_id, arr[0]);
-		}
-
-		parametric_rectified_linear_layer_updater_cuda::parametric_rectified_linear_layer_updater_cuda()
-		{
-		}
-
-		parametric_rectified_linear_layer_updater_cuda::~parametric_rectified_linear_layer_updater_cuda()
-		{
 		}
 
 		void parametric_rectified_linear_layer_updater_cuda::enqueue_forward_propagation(

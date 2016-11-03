@@ -28,10 +28,6 @@ namespace nnforge
 	{
 	}
 
-	save_snapshot_network_data_pusher::~save_snapshot_network_data_pusher()
-	{
-	}
-
 	void save_snapshot_network_data_pusher::push(
 		const training_task_state& task_state,
 		const network_schema& schema)

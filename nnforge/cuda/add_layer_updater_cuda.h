@@ -25,9 +25,9 @@ namespace nnforge
 		class add_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			add_layer_updater_cuda();
+			add_layer_updater_cuda() = default;
 
-			virtual ~add_layer_updater_cuda();
+			virtual ~add_layer_updater_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

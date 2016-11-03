@@ -25,9 +25,9 @@ namespace nnforge
 		class lerror_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			lerror_layer_updater_schema();
+			lerror_layer_updater_schema() = default;
 
-			virtual ~lerror_layer_updater_schema();
+			virtual ~lerror_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

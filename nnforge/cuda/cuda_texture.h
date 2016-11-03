@@ -29,8 +29,8 @@ namespace nnforge
 		class cuda_texture : public cuda_memobject
 		{
 		public:
-			typedef nnforge_shared_ptr<cuda_texture> ptr;
-			typedef nnforge_shared_ptr<const cuda_texture> const_ptr;
+			typedef std::shared_ptr<cuda_texture> ptr;
+			typedef std::shared_ptr<const cuda_texture> const_ptr;
 
 			cuda_texture(
 				cuda_linear_buffer_device::const_ptr dev_smart_ptr,

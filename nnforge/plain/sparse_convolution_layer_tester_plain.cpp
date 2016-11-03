@@ -17,7 +17,6 @@
 #include "sparse_convolution_layer_tester_plain.h"
 
 #include "../sparse_convolution_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -26,14 +25,6 @@ namespace nnforge
 	namespace plain
 	{
 		const int sparse_convolution_layer_tester_plain::max_dimension_count = 4;
-
-		sparse_convolution_layer_tester_plain::sparse_convolution_layer_tester_plain()
-		{
-		}
-
-		sparse_convolution_layer_tester_plain::~sparse_convolution_layer_tester_plain()
-		{
-		}
 
 		std::string sparse_convolution_layer_tester_plain::get_type_name() const
 		{
@@ -59,7 +50,7 @@ namespace nnforge
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			const float * const in_it_global = *input_buffers[0];
 			float * const out_it_global = *output_buffer;
-			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+			std::shared_ptr<const sparse_convolution_layer> layer_derived = std::dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			const bool bias = layer_derived->bias;
 
@@ -127,8 +118,8 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
-				nnforge_array<int, max_dimension_count> current_input_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
+				std::array<int, max_dimension_count> current_input_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)

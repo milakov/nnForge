@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		accuracy_layer_updater_schema::accuracy_layer_updater_schema()
-		{
-		}
-
-		accuracy_layer_updater_schema::~accuracy_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr accuracy_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new accuracy_layer_updater_schema());

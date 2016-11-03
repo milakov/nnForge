@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		untile_layer_testing_schema::untile_layer_testing_schema()
-		{
-		}
-
-		untile_layer_testing_schema::~untile_layer_testing_schema()
-		{
-		}
-
 		std::string untile_layer_testing_schema::get_type_name() const
 		{
 			return untile_layer::layer_type_name;

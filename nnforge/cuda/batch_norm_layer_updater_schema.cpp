@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		batch_norm_layer_updater_schema::batch_norm_layer_updater_schema()
-		{
-		}
-
-		batch_norm_layer_updater_schema::~batch_norm_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr batch_norm_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new batch_norm_layer_updater_schema());

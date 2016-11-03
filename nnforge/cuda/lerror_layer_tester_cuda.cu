@@ -97,14 +97,6 @@ namespace nnforge
 				output[output_offset] = err * (mask * scale);
 		}
 
-		lerror_layer_tester_cuda::lerror_layer_tester_cuda()
-		{
-		}
-
-		lerror_layer_tester_cuda::~lerror_layer_tester_cuda()
-		{
-		}
-
 		void lerror_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -161,7 +153,7 @@ namespace nnforge
 
 		void lerror_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const lerror_layer> layer_derived = nnforge_dynamic_pointer_cast<const lerror_layer>(layer_schema);
+			std::shared_ptr<const lerror_layer> layer_derived = std::dynamic_pointer_cast<const lerror_layer>(layer_schema);
 
 			scale = layer_derived->scale;
 			n_value = layer_derived->n;

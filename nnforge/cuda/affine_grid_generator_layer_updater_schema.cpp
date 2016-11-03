@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		affine_grid_generator_layer_updater_schema::affine_grid_generator_layer_updater_schema()
-		{
-		}
-
-		affine_grid_generator_layer_updater_schema::~affine_grid_generator_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr affine_grid_generator_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new affine_grid_generator_layer_updater_schema());

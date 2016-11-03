@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@
 #pragma once
 
 #include "../layer.h"
-#include "../nn_types.h"
 #include "../layer_action.h"
 
 #include "plain_running_configuration.h"
 #include "buffer_plain_size_configuration.h"
 #include "plain_buffer.h"
+
+#include <memory>
 
 namespace nnforge
 {
@@ -31,10 +32,10 @@ namespace nnforge
 		class layer_updater_plain
 		{
 		public:
-			typedef nnforge_shared_ptr<layer_updater_plain> ptr;
-			typedef nnforge_shared_ptr<const layer_updater_plain> const_ptr;
+			typedef std::shared_ptr<layer_updater_plain> ptr;
+			typedef std::shared_ptr<const layer_updater_plain> const_ptr;
 
-			virtual ~layer_updater_plain();
+			virtual ~layer_updater_plain() = default;
 
 			virtual std::string get_type_name() const = 0;
 
@@ -166,11 +167,11 @@ namespace nnforge
 				const layer_configuration_specific& output_configuration_specific) const;
 
 		protected:
-			layer_updater_plain();
+			layer_updater_plain() = default;
 
 		private:
-			layer_updater_plain(const layer_updater_plain&);
-			layer_updater_plain& operator =(const layer_updater_plain&);
+			layer_updater_plain(const layer_updater_plain&) = delete;
+			layer_updater_plain& operator =(const layer_updater_plain&) = delete;
 		};
 	}
 }

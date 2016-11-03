@@ -25,9 +25,9 @@ namespace nnforge
 		class linear_sampler_layer_updater_plain : public layer_updater_plain
 		{
 		public:
-			linear_sampler_layer_updater_plain();
+			linear_sampler_layer_updater_plain() = default;
 
-			virtual ~linear_sampler_layer_updater_plain();
+			virtual ~linear_sampler_layer_updater_plain() = default;
 
 			virtual std::string get_type_name() const;
 

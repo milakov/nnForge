@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		maxout_layer_testing_schema::maxout_layer_testing_schema()
-		{
-		}
-
-		maxout_layer_testing_schema::~maxout_layer_testing_schema()
-		{
-		}
-
 		std::string maxout_layer_testing_schema::get_type_name() const
 		{
 			return maxout_layer::layer_type_name;

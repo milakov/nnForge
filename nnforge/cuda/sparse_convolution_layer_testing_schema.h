@@ -25,9 +25,9 @@ namespace nnforge
 		class sparse_convolution_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			sparse_convolution_layer_testing_schema();
+			sparse_convolution_layer_testing_schema() = default;
 
-			virtual ~sparse_convolution_layer_testing_schema();
+			virtual ~sparse_convolution_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

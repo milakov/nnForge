@@ -83,11 +83,7 @@ namespace nnforge
 				updaters.insert(
 					std::make_pair(
 						*it,
-						layer_updater_plain_factory::singleton::get_const_instance().get_updater_plain_layer(this->schema->get_layer(*it)->get_type_name())));
-		}
-
-		backward_propagation_plain::~backward_propagation_plain()
-		{
+						layer_updater_plain_factory::get_singleton().get_updater_plain_layer(this->schema->get_layer(*it)->get_type_name())));
 		}
 
 		void backward_propagation_plain::actual_run(

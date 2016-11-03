@@ -25,9 +25,9 @@ namespace nnforge
 		class maxout_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			maxout_layer_testing_schema();
+			maxout_layer_testing_schema() = default;
 
-			virtual ~maxout_layer_testing_schema();
+			virtual ~maxout_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

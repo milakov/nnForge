@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		gradient_modifier_layer_testing_schema::gradient_modifier_layer_testing_schema()
-		{
-		}
-
-		gradient_modifier_layer_testing_schema::~gradient_modifier_layer_testing_schema()
-		{
-		}
-
 		std::string gradient_modifier_layer_testing_schema::get_type_name() const
 		{
 			return gradient_modifier_layer::layer_type_name;

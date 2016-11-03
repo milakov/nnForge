@@ -160,7 +160,7 @@ namespace nnforge
 
 		void sparse_1x1_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+			std::shared_ptr<const sparse_convolution_layer> layer_derived = std::dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			feature_map_connection_count = layer_derived->feature_map_connection_count;
 			bias = layer_derived->bias;

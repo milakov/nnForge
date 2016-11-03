@@ -25,9 +25,9 @@ namespace nnforge
 		class add_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			add_layer_updater_schema();
+			add_layer_updater_schema() = default;
 
-			virtual ~add_layer_updater_schema();
+			virtual ~add_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

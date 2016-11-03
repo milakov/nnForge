@@ -25,9 +25,9 @@ namespace nnforge
 		class batch_norm_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			batch_norm_layer_tester_cuda();
+			batch_norm_layer_tester_cuda() = default;
 
-			virtual ~batch_norm_layer_tester_cuda();
+			virtual ~batch_norm_layer_tester_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

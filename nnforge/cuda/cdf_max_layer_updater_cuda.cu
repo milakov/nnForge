@@ -22,89 +22,81 @@
 #include "neural_network_cuda_exception.h"
 
 #include "../cdf_max_layer.h"
-#include "../nn_types.h"
-
-template<bool IS_MIN>
-__global__ void cdf_max_upd_kernel(
-	float * __restrict output,
-	const float * __restrict input,
-	int neuron_count,
-	int entry_subsampling_size,
-	int output_entry_count)
-{
-	int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
-	int output_entry_id = blockIdx.y * blockDim.y + threadIdx.y;
-
-	if ((neuron_id < neuron_count) && (output_entry_id < output_entry_count))
-	{
-		int input_offset = output_entry_id * neuron_count * entry_subsampling_size + neuron_id;
-		float product = 1.0F;
-		#pragma unroll 4
-		for(int i = 0; i < entry_subsampling_size; ++i)
-		{
-			float val = input[input_offset];
-			if (IS_MIN)
-				product *= (1.0F - val);
-			else
-				product *= val;
-			input_offset += neuron_count;
-		}
-		if (IS_MIN)
-			product = 1.0F - product;
-		output[output_entry_id * neuron_count + neuron_id] = product;
-	}
-}
-
-template<bool add_update_to_destination,bool IS_MIN>
-__global__ void cdf_max_backprop_upd_kernel(
-	float * __restrict input_errors,
-	const float * __restrict output_errors,
-	const float * __restrict input_neurons,
-	const float * __restrict output_neurons,
-	int neuron_count,
-	int entry_subsampling_size,
-	int output_entry_count)
-{
-	int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
-	int output_entry_id = blockIdx.y * blockDim.y + threadIdx.y;
-
-	if ((neuron_id < neuron_count) && (output_entry_id < output_entry_count))
-	{
-		int output_offset = output_entry_id * neuron_count + neuron_id;
-		float output_error = output_errors[output_offset];
-		float output_neuron = output_neurons[output_offset];
-		float mult = output_error * (IS_MIN ? 1.0F - output_neuron : output_neuron);
-
-		int input_offset = output_entry_id * neuron_count * entry_subsampling_size + neuron_id;
-		#pragma unroll 4
-		for(unsigned int i = 0; i < entry_subsampling_size; ++i)
-		{
-			float err = 0.0F;
-			if (mult != 0.0F)
-			{
-				float input_val = input_neurons[input_offset];
-				err = __fdividef(mult, (IS_MIN ? 1.0F - input_val : input_val));
-			}
-			if (add_update_to_destination)
-				input_errors[input_offset] += err;
-			else
-				input_errors[input_offset] = err;
-
-			input_offset += neuron_count;
-		}
-	}
-}
+#include <memory>
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		cdf_max_layer_updater_cuda::cdf_max_layer_updater_cuda()
+		template<bool IS_MIN>
+		__global__ void cdf_max_upd_kernel(
+			float * __restrict output,
+			const float * __restrict input,
+			int neuron_count,
+			int entry_subsampling_size,
+			int output_entry_count)
 		{
+			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int output_entry_id = blockIdx.y * blockDim.y + threadIdx.y;
+
+			if ((neuron_id < neuron_count) && (output_entry_id < output_entry_count))
+			{
+				int input_offset = output_entry_id * neuron_count * entry_subsampling_size + neuron_id;
+				float product = 1.0F;
+				#pragma unroll 4
+				for(int i = 0; i < entry_subsampling_size; ++i)
+				{
+					float val = input[input_offset];
+					if (IS_MIN)
+						product *= (1.0F - val);
+					else
+						product *= val;
+					input_offset += neuron_count;
+				}
+				if (IS_MIN)
+					product = 1.0F - product;
+				output[output_entry_id * neuron_count + neuron_id] = product;
+			}
 		}
 
-		cdf_max_layer_updater_cuda::~cdf_max_layer_updater_cuda()
+		template<bool add_update_to_destination,bool IS_MIN>
+		__global__ void cdf_max_backprop_upd_kernel(
+			float * __restrict input_errors,
+			const float * __restrict output_errors,
+			const float * __restrict input_neurons,
+			const float * __restrict output_neurons,
+			int neuron_count,
+			int entry_subsampling_size,
+			int output_entry_count)
 		{
+			int neuron_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int output_entry_id = blockIdx.y * blockDim.y + threadIdx.y;
+
+			if ((neuron_id < neuron_count) && (output_entry_id < output_entry_count))
+			{
+				int output_offset = output_entry_id * neuron_count + neuron_id;
+				float output_error = output_errors[output_offset];
+				float output_neuron = output_neurons[output_offset];
+				float mult = output_error * (IS_MIN ? 1.0F - output_neuron : output_neuron);
+
+				int input_offset = output_entry_id * neuron_count * entry_subsampling_size + neuron_id;
+				#pragma unroll 4
+				for(unsigned int i = 0; i < entry_subsampling_size; ++i)
+				{
+					float err = 0.0F;
+					if (mult != 0.0F)
+					{
+						float input_val = input_neurons[input_offset];
+						err = __fdividef(mult, (IS_MIN ? 1.0F - input_val : input_val));
+					}
+					if (add_update_to_destination)
+						input_errors[input_offset] += err;
+					else
+						input_errors[input_offset] = err;
+
+					input_offset += neuron_count;
+				}
+			}
 		}
 
 		void cdf_max_layer_updater_cuda::enqueue_forward_propagation(
@@ -223,7 +215,7 @@ namespace nnforge
 
 		void cdf_max_layer_updater_cuda::updater_configured()
 		{
-			nnforge_shared_ptr<const cdf_max_layer> layer_derived = nnforge_dynamic_pointer_cast<const cdf_max_layer>(layer_schema);
+			std::shared_ptr<const cdf_max_layer> layer_derived = std::dynamic_pointer_cast<const cdf_max_layer>(layer_schema);
 
 			entry_subsampling_size = layer_derived->entry_subsampling_size;
 			is_min = layer_derived->is_min;

@@ -17,23 +17,23 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
-#include "nn_types.h"
 #include "structured_data_bunch_reader.h"
 #include "neuron_value_set.h"
 
 #include <map>
+#include <memory>
 
 namespace nnforge
 {
 	class neuron_value_set_data_bunch_reader : public structured_data_bunch_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<neuron_value_set_data_bunch_reader> ptr;
+		typedef std::shared_ptr<neuron_value_set_data_bunch_reader> ptr;
 
 		neuron_value_set_data_bunch_reader(
 			const std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >& layer_name_to_config_and_value_set_map);
 
-		virtual ~neuron_value_set_data_bunch_reader();
+		virtual ~neuron_value_set_data_bunch_reader() = default;
 
 		virtual std::map<std::string, layer_configuration_specific> get_config_map() const;
 

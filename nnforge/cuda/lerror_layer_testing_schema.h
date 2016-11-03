@@ -25,9 +25,9 @@ namespace nnforge
 		class lerror_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			lerror_layer_testing_schema();
+			lerror_layer_testing_schema() = default;
 
-			virtual ~lerror_layer_testing_schema();
+			virtual ~lerror_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

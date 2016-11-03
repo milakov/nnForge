@@ -30,9 +30,7 @@ namespace nnforge
 			temporary_buffer = 2
 		};
 
-		buffer_lifetime()
-		{
-		}
+		buffer_lifetime() = default;
 
 		buffer_lifetime(buffer_lifetime_type blt)
 			: blt(blt)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 
 namespace nnforge
 {
-	structured_data_stream_reader::structured_data_stream_reader(nnforge_shared_ptr<std::istream> input_stream)
+	structured_data_stream_reader::structured_data_stream_reader(std::shared_ptr<std::istream> input_stream)
 		: in_stream(input_stream)
 	{
 		in_stream->exceptions(std::ostream::eofbit | std::ostream::failbit | std::ostream::badbit);
@@ -44,10 +44,6 @@ namespace nnforge
 		reset_pos = in_stream->tellg();
 	}
 
-	structured_data_stream_reader::~structured_data_stream_reader()
-	{
-	}
-
 	bool structured_data_stream_reader::read(
 		unsigned int entry_id,
 		float * data)
@@ -56,7 +52,7 @@ namespace nnforge
 			return false;
 
 		{
-			boost::lock_guard<boost::mutex> lock(read_data_from_stream_mutex);
+			std::lock_guard<std::mutex> lock(read_data_from_stream_mutex);
 			in_stream->seekg(reset_pos + (std::istream::off_type)entry_id * (std::istream::off_type)(sizeof(float) * input_neuron_count), std::ios::beg);
 			in_stream->read(reinterpret_cast<char*>(data), sizeof(float) * input_neuron_count);
 		}
@@ -74,7 +70,7 @@ namespace nnforge
 		return entry_count;
 	}
 
-	raw_data_writer::ptr structured_data_stream_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const
+	raw_data_writer::ptr structured_data_stream_reader::get_writer(std::shared_ptr<std::ostream> out) const
 	{
 		return raw_data_writer::ptr(new structured_data_stream_writer(out, get_configuration()));
 	}

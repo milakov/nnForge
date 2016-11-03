@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 
 #include "data_transformer.h"
 #include "rnd.h"
-#include "nn_types.h"
 
-#include <boost/thread/thread.hpp>
+#include <mutex>
+#include <random>
 
 namespace nnforge
 {
@@ -29,7 +29,7 @@ namespace nnforge
 	public:
 		noise_data_transformer(float max_noise);
 
-		virtual ~noise_data_transformer();
+		virtual ~noise_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -39,8 +39,8 @@ namespace nnforge
 			
 	protected:
 		random_generator generator;
-		boost::mutex gen_stream_mutex;
+		std::mutex gen_stream_mutex;
 
-		nnforge_uniform_real_distribution<float> max_noise_distribution;
+		std::uniform_real_distribution<float> max_noise_distribution;
 	};
 }

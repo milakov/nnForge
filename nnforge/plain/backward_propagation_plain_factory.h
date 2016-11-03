@@ -28,7 +28,7 @@ namespace nnforge
 		public:
 			backward_propagation_plain_factory(plain_running_configuration::const_ptr plain_config);
 
-			virtual ~backward_propagation_plain_factory();
+			virtual ~backward_propagation_plain_factory() = default;
 
 			virtual backward_propagation::ptr create(
 				const network_schema& schema,

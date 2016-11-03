@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		reshape_layer_updater_schema::reshape_layer_updater_schema()
-		{
-		}
-
-		reshape_layer_updater_schema::~reshape_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr reshape_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new reshape_layer_updater_schema());

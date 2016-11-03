@@ -20,7 +20,6 @@
 
 #include <map>
 #include <string>
-#include <boost/serialization/singleton.hpp>
 
 namespace nnforge
 {
@@ -35,10 +34,12 @@ namespace nnforge
 
 		unsigned int get_layer_type_id(const std::string& layer_type_name) const;
 
+		static layer_factory& get_singleton();
+
 	private:
+		layer_factory() = default;
+
 		std::map<std::string, layer::const_ptr> sample_name_layer_map;
 		std::map<std::string, unsigned int> sample_name_id_map;
 	};
-
-	typedef boost::serialization::singleton<layer_factory> single_layer_factory;
 }

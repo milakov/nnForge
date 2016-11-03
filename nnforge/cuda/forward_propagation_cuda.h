@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@
 #include "cuda_event.h"
 
 #include <map>
-#include <boost/thread/thread.hpp>
+#include <condition_variable>
+#include <mutex>
 
 namespace nnforge
 {
@@ -39,7 +40,7 @@ namespace nnforge
 				profile_state::ptr profile,
 				cuda_running_configuration::const_ptr cuda_config);
 
-			virtual ~forward_propagation_cuda();
+			virtual ~forward_propagation_cuda() = default;
 
 		protected:
 			// The method is called when client calls set_data. The data is guaranteed to be compatible with schema
@@ -84,10 +85,10 @@ namespace nnforge
 			{
 			public:
 				run_kernels_params(
-					std::map<std::string, nnforge_array<cuda_linear_buffer_device::ptr, 2> >& dedicated_buffers,
+					std::map<std::string, std::array<cuda_linear_buffer_device::ptr, 2> >& dedicated_buffers,
 					unsigned int current_max_entry_count);
 
-				std::map<std::string, nnforge_array<cuda_linear_buffer_device::ptr, 2> >& dedicated_buffers;
+				std::map<std::string, std::array<cuda_linear_buffer_device::ptr, 2> >& dedicated_buffers;
 				unsigned int current_max_entry_count;
 
 				std::map<layer_name_with_action, double> action_seconds;
@@ -102,18 +103,20 @@ namespace nnforge
 			unsigned int run_kernels_thread_io_set;
 
 			bool run_kernels_task_ready;
-			boost::mutex run_kernels_pending_mutex;
-			boost::condition_variable run_kernels_pending_condition;
+			std::mutex run_kernels_pending_mutex;
+			std::condition_variable run_kernels_pending_condition;
 
 			bool run_kernels_finished;
-			boost::mutex run_kernels_finished_mutex;
-			boost::condition_variable run_kernels_finished_condition;
+			std::mutex run_kernels_finished_mutex;
+			std::condition_variable run_kernels_finished_condition;
+
+			bool interrupt_thread;
 
 		private:
 			class read_entry_info
 			{
 			public:
-				typedef nnforge_shared_ptr<read_entry_info> ptr;
+				typedef std::shared_ptr<read_entry_info> ptr;
 
 				read_entry_info();
 
@@ -124,8 +127,8 @@ namespace nnforge
 				structured_data_bunch_reader * reader;
 
 				bool read_entry_finished;
-				boost::mutex read_entry_finished_mutex;
-				boost::condition_variable read_entry_finished_condition;
+				std::mutex read_entry_finished_mutex;
+				std::condition_variable read_entry_finished_condition;
 				std::string error_message;
 
 			private:

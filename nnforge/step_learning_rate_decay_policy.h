@@ -27,7 +27,7 @@ namespace nnforge
 	public:
 		step_learning_rate_decay_policy(const std::string& semicolon_separated_list);
 
-		virtual ~step_learning_rate_decay_policy();
+		virtual ~step_learning_rate_decay_policy() = default;
 
 		virtual float get_learning_rate_decay(unsigned int epoch) const;
 
@@ -37,8 +37,6 @@ namespace nnforge
 			unsigned int start_epoch;
 			float decay_rate;
 		};
-
-		static bool compare_entry(const decay_rate_entry& i, const decay_rate_entry& j);
 
 		std::vector<decay_rate_entry> decay_rate_entry_list;
 	};

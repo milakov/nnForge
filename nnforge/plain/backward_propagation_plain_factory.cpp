@@ -27,10 +27,6 @@ namespace nnforge
 		{
 		}
 
-		backward_propagation_plain_factory::~backward_propagation_plain_factory()
-		{
-		}
-
 		backward_propagation::ptr backward_propagation_plain_factory::create(
 			const network_schema& schema,
 			const std::vector<std::string>& output_layer_names,

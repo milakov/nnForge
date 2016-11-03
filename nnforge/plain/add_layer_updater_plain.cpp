@@ -16,7 +16,6 @@
 
 #include "add_layer_updater_plain.h"
 
-#include "../nn_types.h"
 #include "../add_layer.h"
 
 #include <cstring>
@@ -25,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		add_layer_updater_plain::add_layer_updater_plain()
-		{
-		}
-
-		add_layer_updater_plain::~add_layer_updater_plain()
-		{
-		}
-
 		std::string add_layer_updater_plain::get_type_name() const
 		{
 			return add_layer::layer_type_name;
@@ -58,7 +49,7 @@ namespace nnforge
 			for(std::vector<plain_buffer::const_ptr>::const_iterator it = input_buffers.begin(); it != input_buffers.end(); ++it)
 				in_list.push_back(**it);
 			const float ** const in_ptr_list = &in_list[0];
-			nnforge_shared_ptr<const add_layer> layer_derived = nnforge_dynamic_pointer_cast<const add_layer>(layer_schema);
+			std::shared_ptr<const add_layer> layer_derived = std::dynamic_pointer_cast<const add_layer>(layer_schema);
 			const float alpha = layer_derived->alpha;
 			const int src_ptr_count = static_cast<int>(in_list.size());
 			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
@@ -93,7 +84,7 @@ namespace nnforge
 		{
 			float * const in_errors = *input_errors_buffer;
 			const float * const out_errors = *output_errors_buffer;
-			nnforge_shared_ptr<const add_layer> layer_derived = nnforge_dynamic_pointer_cast<const add_layer>(layer_schema);
+			std::shared_ptr<const add_layer> layer_derived = std::dynamic_pointer_cast<const add_layer>(layer_schema);
 			const float alpha = layer_derived->alpha;
 			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
 			if (add_update_to_destination)

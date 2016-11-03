@@ -59,32 +59,6 @@ namespace nnforge
 			const std::vector<unsigned int>& snapshot_data_dimension_list);
 
 	private:
-		struct normalize_pixel_helper
-		{
-			normalize_pixel_helper(
-				float addition,
-				float multiplication);
-
-			unsigned char operator()(float x);
-
-		private:
-			float addition;
-			float multiplication;
-		};
-
-		struct color_normalize_pixel_helper
-		{
-			color_normalize_pixel_helper(
-				float addition,
-				float multiplication);
-
-			cv::Vec3b operator()(float x);
-
-		private:
-			float addition;
-			float multiplication;
-		};
-
-		data_visualizer();
+		data_visualizer() = delete;
 	};
 }

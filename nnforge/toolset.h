@@ -34,7 +34,7 @@ namespace nnforge
 	public:
 		toolset(factory_generator::ptr master_factory);
 
-		virtual ~toolset();
+		virtual ~toolset() = default;
 
 		// Returns true if action is specified
 		bool parse(int argc, char* argv[]);
@@ -133,13 +133,13 @@ namespace nnforge
 			const std::string& dataset_name,
 			const std::string& layer_name,
 			dataset_usage usage,
-			nnforge_shared_ptr<std::istream> in) const;
+			std::shared_ptr<std::istream> in) const;
 
 		virtual structured_data_reader::ptr get_structured_reader(
 			const std::string& dataset_name,
 			const std::string& layer_name,
 			dataset_usage usage,
-			nnforge_shared_ptr<std::istream> in) const;
+			std::shared_ptr<std::istream> in) const;
 
 		virtual std::vector<unsigned int> get_dump_data_dimension_list(unsigned int original_dimension_count) const;
 
@@ -184,8 +184,8 @@ namespace nnforge
 		forward_propagation_factory::ptr forward_prop_factory;
 		backward_propagation_factory::ptr backward_prop_factory;
 
-		nnforge_shared_ptr<stream_duplicator> out_to_log_duplicator;
-		nnforge_shared_ptr<stream_redirector> out_to_log_redirector;
+		std::shared_ptr<stream_duplicator> out_to_log_duplicator;
+		std::shared_ptr<stream_redirector> out_to_log_redirector;
 
 	protected:
 		std::string action;

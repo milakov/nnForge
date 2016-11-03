@@ -19,7 +19,6 @@
 #include <cuda_runtime.h>
 
 #include "../linear_sampler_layer.h"
-#include "../nn_types.h"
 #include "../neural_network_exception.h"
 
 #include "util_cuda.h"
@@ -180,14 +179,6 @@ namespace nnforge
 				input_grid_errors[grid_x_offset] = old_input_err_x + input_err_x;
 				input_grid_errors[grid_y_offset] = old_input_err_y + input_err_y;
 			}
-		}
-
-		linear_sampler_layer_updater_cuda::linear_sampler_layer_updater_cuda()
-		{
-		}
-
-		linear_sampler_layer_updater_cuda::~linear_sampler_layer_updater_cuda()
-		{
 		}
 
 		void linear_sampler_layer_updater_cuda::enqueue_forward_propagation(

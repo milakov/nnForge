@@ -18,28 +18,28 @@
 
 #include "training_task_state.h"
 #include "network_data.h"
-#include "nn_types.h"
 
 #include <vector>
+#include <memory>
 
 namespace nnforge
 {
 	class network_data_pusher
 	{
 	public:
-		typedef nnforge_shared_ptr<network_data_pusher> ptr;
+		typedef std::shared_ptr<network_data_pusher> ptr;
 
-		virtual ~network_data_pusher();
+		virtual ~network_data_pusher() = default;
 
 		virtual void push(
 			const training_task_state& task_state,
 			const network_schema& schema) = 0;
 
 	protected:
-		network_data_pusher();
+		network_data_pusher() = default;
 
 	private:
-		network_data_pusher(const network_data_pusher&);
-		network_data_pusher& operator =(const network_data_pusher&);
+		network_data_pusher(const network_data_pusher&) = delete;
+		network_data_pusher& operator =(const network_data_pusher&) = delete;
 	};
 }

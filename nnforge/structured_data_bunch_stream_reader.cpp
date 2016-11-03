@@ -87,10 +87,6 @@ namespace nnforge
 		}
 	}
 
-	structured_data_bunch_stream_reader::~structured_data_bunch_stream_reader()
-	{
-	}
-
 	structured_data_bunch_reader::ptr structured_data_bunch_stream_reader::get_narrow_reader(const std::set<std::string>& layer_names) const
 	{
 		std::map<std::string, structured_data_reader::ptr> narrow_data_reader_map;
@@ -173,7 +169,7 @@ namespace nnforge
 			blocks_shuffled[i] = i;
 		for(int i = static_cast<int>(block_count) - 1; i > 0; --i)
 		{
-			nnforge_uniform_int_distribution<int> dist(0, i);
+			std::uniform_int_distribution<int> dist(0, i);
 			int elem_id = dist(gen);
 			std::swap(blocks_shuffled[elem_id], blocks_shuffled[i]);
 		}

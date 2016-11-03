@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,14 +20,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		cuda_linear_buffer::cuda_linear_buffer()
-		{
-		}
-
-		cuda_linear_buffer::~cuda_linear_buffer()
-		{
-		}
-
 		cuda_linear_buffer::operator void *()
 		{
 			return get_buf();

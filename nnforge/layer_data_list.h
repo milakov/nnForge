@@ -30,10 +30,10 @@ namespace nnforge
 	class layer_data_list
 	{
 	public:
-		typedef nnforge_shared_ptr<layer_data_list> ptr;
-		typedef nnforge_shared_ptr<const layer_data_list> const_ptr;
+		typedef std::shared_ptr<layer_data_list> ptr;
+		typedef std::shared_ptr<const layer_data_list> const_ptr;
 
-		layer_data_list();
+		layer_data_list() = default;
 
 		layer_data_list(
 			const std::vector<layer::const_ptr>& layer_list,

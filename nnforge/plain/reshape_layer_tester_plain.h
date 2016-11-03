@@ -25,9 +25,9 @@ namespace nnforge
 		class reshape_layer_tester_plain : public layer_tester_plain
 		{
 		public:
-			reshape_layer_tester_plain();
+			reshape_layer_tester_plain() = default;
 
-			virtual ~reshape_layer_tester_plain();
+			virtual ~reshape_layer_tester_plain() = default;
 
 			virtual std::string get_type_name() const;
 

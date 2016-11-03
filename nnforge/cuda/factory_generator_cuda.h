@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,9 +35,9 @@ namespace nnforge
 				unsigned int cuda_optimize_action_graph_assumed_chunk_size,
 				float cuda_fixed_working_buffers_ratio);
 
-			factory_generator_cuda();
+			factory_generator_cuda() = default;
 
-			~factory_generator_cuda();
+			~factory_generator_cuda() = default;
 
 			virtual void initialize();
 

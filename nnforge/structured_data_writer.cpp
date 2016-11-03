@@ -18,14 +18,6 @@
 
 namespace nnforge
 {
-	structured_data_writer::structured_data_writer()
-	{
-	}
-
-	structured_data_writer::~structured_data_writer()
-	{
-	}
-
 	void structured_data_writer::raw_write(
 		const void * all_entry_data,
 		size_t data_length)

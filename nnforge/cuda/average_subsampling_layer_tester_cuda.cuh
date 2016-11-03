@@ -21,13 +21,13 @@
 #include <cuda_runtime.h>
 
 #include <boost/format.hpp>
+#include <memory>
 
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
 #include "int_fastdiv.h"
 
 #include "../average_subsampling_layer.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -248,7 +248,7 @@ namespace nnforge
 		protected:
 			virtual void tester_configured()
 			{
-				nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
+				std::shared_ptr<const average_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 
 				feature_map_subsampling_size = layer_derived->get_fm_subsampling_size(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 				entry_subsampling_size = layer_derived->entry_subsampling_size;

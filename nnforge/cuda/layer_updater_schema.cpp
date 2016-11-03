@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,19 +20,11 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		layer_updater_schema::layer_updater_schema()
-		{
-		}
-
-		layer_updater_schema::~layer_updater_schema()
-		{
-		}
-
-		nnforge_shared_ptr<layer_updater_schema> layer_updater_schema::create(
+		std::shared_ptr<layer_updater_schema> layer_updater_schema::create(
 			layer::const_ptr layer_schema,
 			cuda_running_configuration::const_ptr cuda_config) const
 		{
-			nnforge_shared_ptr<layer_updater_schema> res = create_specific();
+			std::shared_ptr<layer_updater_schema> res = create_specific();
 
 			res->layer_schema = layer_schema;
 			res->cuda_config = cuda_config;

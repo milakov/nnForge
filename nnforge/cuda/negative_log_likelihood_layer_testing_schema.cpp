@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		negative_log_likelihood_layer_testing_schema::negative_log_likelihood_layer_testing_schema()
-		{
-		}
-
-		negative_log_likelihood_layer_testing_schema::~negative_log_likelihood_layer_testing_schema()
-		{
-		}
-
 		std::string negative_log_likelihood_layer_testing_schema::get_type_name() const
 		{
 			return negative_log_likelihood_layer::layer_type_name;

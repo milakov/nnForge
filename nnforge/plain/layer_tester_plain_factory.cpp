@@ -43,5 +43,11 @@ namespace nnforge
 
 			return i->second;
 		}
+
+		layer_tester_plain_factory& layer_tester_plain_factory::get_singleton()
+		{
+			static layer_tester_plain_factory instance;
+			return instance;
+		}
 	}
 }

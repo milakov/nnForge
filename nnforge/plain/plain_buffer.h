@@ -17,7 +17,7 @@
 #pragma once
 
 #include <vector>
-#include "../nn_types.h"
+#include <memory>
 
 namespace nnforge
 {
@@ -26,8 +26,8 @@ namespace nnforge
 		class plain_buffer
 		{
 		public:
-			typedef nnforge_shared_ptr<plain_buffer> ptr;
-			typedef nnforge_shared_ptr<const plain_buffer> const_ptr;
+			typedef std::shared_ptr<plain_buffer> ptr;
+			typedef std::shared_ptr<const plain_buffer> const_ptr;
 
 			plain_buffer(size_t size);
 

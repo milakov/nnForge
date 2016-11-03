@@ -25,9 +25,9 @@ namespace nnforge
 		class reshape_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			reshape_layer_testing_schema();
+			reshape_layer_testing_schema() = default;
 
-			virtual ~reshape_layer_testing_schema();
+			virtual ~reshape_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

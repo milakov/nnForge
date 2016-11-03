@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		prefix_sum_layer_testing_schema::prefix_sum_layer_testing_schema()
-		{
-		}
-
-		prefix_sum_layer_testing_schema::~prefix_sum_layer_testing_schema()
-		{
-		}
-
 		std::string prefix_sum_layer_testing_schema::get_type_name() const
 		{
 			return prefix_sum_layer::layer_type_name;

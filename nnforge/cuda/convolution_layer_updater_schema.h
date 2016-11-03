@@ -25,9 +25,9 @@ namespace nnforge
 		class convolution_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			convolution_layer_updater_schema();
+			convolution_layer_updater_schema() = default;
 
-			virtual ~convolution_layer_updater_schema();
+			virtual ~convolution_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

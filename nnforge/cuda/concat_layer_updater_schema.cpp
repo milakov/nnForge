@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		concat_layer_updater_schema::concat_layer_updater_schema()
-		{
-		}
-
-		concat_layer_updater_schema::~concat_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr concat_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new concat_layer_updater_schema());

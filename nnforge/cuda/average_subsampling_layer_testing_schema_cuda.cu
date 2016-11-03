@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		average_subsampling_layer_testing_schema::average_subsampling_layer_testing_schema()
-		{
-		}
-
-		average_subsampling_layer_testing_schema::~average_subsampling_layer_testing_schema()
-		{
-		}
-
 		std::string average_subsampling_layer_testing_schema::get_type_name() const
 		{
 			return average_subsampling_layer::layer_type_name;

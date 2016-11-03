@@ -27,7 +27,7 @@ namespace nnforge
 			float learning_rate_decay_rate = 1.0F,
 			unsigned int start_decay_epoch = 0);
 
-		virtual ~exponential_learning_rate_decay_policy();
+		virtual ~exponential_learning_rate_decay_policy() = default;
 
 		virtual float get_learning_rate_decay(unsigned int epoch) const;
 

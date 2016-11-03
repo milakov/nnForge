@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		cross_entropy_layer_testing_schema::cross_entropy_layer_testing_schema()
-		{
-		}
-
-		cross_entropy_layer_testing_schema::~cross_entropy_layer_testing_schema()
-		{
-		}
-
 		std::string cross_entropy_layer_testing_schema::get_type_name() const
 		{
 			return cross_entropy_layer::layer_type_name;

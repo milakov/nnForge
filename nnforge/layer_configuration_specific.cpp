@@ -18,7 +18,6 @@
 #include "neural_network_exception.h"
 
 #include <boost/format.hpp>
-#include <boost/lambda/lambda.hpp>
 
 namespace nnforge
 {
@@ -68,7 +67,7 @@ namespace nnforge
 	unsigned int layer_configuration_specific::get_neuron_count_per_feature_map() const
 	{
 		unsigned int neuron_count = 1;
-		std::for_each(dimension_sizes.begin(), dimension_sizes.end(), neuron_count *= boost::lambda::_1);
+		std::for_each(dimension_sizes.begin(), dimension_sizes.end(), [&neuron_count] (unsigned int x) { neuron_count *= x; });
 
 		return neuron_count;
 	}

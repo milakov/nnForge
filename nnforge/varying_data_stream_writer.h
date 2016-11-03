@@ -16,22 +16,22 @@
 
 #pragma once
 
-#include "nn_types.h"
 #include "raw_data_writer.h"
 
 #include <vector>
 #include <ostream>
+#include <memory>
 
 namespace nnforge
 {
 	class varying_data_stream_writer : public raw_data_writer
 	{
 	public:
-		typedef nnforge_shared_ptr<varying_data_stream_writer> ptr;
+		typedef std::shared_ptr<varying_data_stream_writer> ptr;
 
 		// The constructor modifies output_stream to throw exceptions in case of failure
 		// The stream should be created with std::ios_base::binary flag
-		varying_data_stream_writer(nnforge_shared_ptr<std::ostream> output_stream);
+		varying_data_stream_writer(std::shared_ptr<std::ostream> output_stream);
 
 		virtual ~varying_data_stream_writer();
 
@@ -45,7 +45,7 @@ namespace nnforge
 			size_t data_length);
 
 	private:
-		nnforge_shared_ptr<std::ostream> out_stream;
+		std::shared_ptr<std::ostream> out_stream;
 
 		std::vector<unsigned long long> entry_offsets;
 		std::ostream::pos_type entry_count_pos;

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #include "negative_log_likelihood_layer_tester_plain.h"
 
 #include "../negative_log_likelihood_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -25,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		negative_log_likelihood_layer_tester_plain::negative_log_likelihood_layer_tester_plain()
-		{
-		}
-
-		negative_log_likelihood_layer_tester_plain::~negative_log_likelihood_layer_tester_plain()
-		{
-		}
-
 		std::string negative_log_likelihood_layer_tester_plain::get_type_name() const
 		{
 			return negative_log_likelihood_layer::layer_type_name;
@@ -62,7 +53,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const int input_feature_map_count = static_cast<int>(input_configuration_specific_list[0].feature_map_count);
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
-			nnforge_shared_ptr<const negative_log_likelihood_layer> layer_derived = nnforge_dynamic_pointer_cast<const negative_log_likelihood_layer>(layer_schema);
+			std::shared_ptr<const negative_log_likelihood_layer> layer_derived = std::dynamic_pointer_cast<const negative_log_likelihood_layer>(layer_schema);
 			const float scale = layer_derived->scale;
 			const int total_workload = entry_count * output_neuron_count;
 

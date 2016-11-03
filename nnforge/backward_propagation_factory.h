@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #pragma once
 
 #include "backward_propagation.h"
-#include "nn_types.h"
 #include "network_schema.h"
 #include "debug_state.h"
 #include "profile_state.h"
@@ -30,10 +29,10 @@ namespace nnforge
 	class backward_propagation_factory
 	{
 	public:
-		typedef nnforge_shared_ptr<backward_propagation_factory> ptr;
-		typedef nnforge_shared_ptr<const backward_propagation_factory> const_ptr;
+		typedef std::shared_ptr<backward_propagation_factory> ptr;
+		typedef std::shared_ptr<const backward_propagation_factory> const_ptr;
 
-		virtual ~backward_propagation_factory();
+		virtual ~backward_propagation_factory() = default;
 
 		virtual backward_propagation::ptr create(
 			const network_schema& schema,
@@ -44,6 +43,6 @@ namespace nnforge
 			profile_state::ptr profile) const = 0;
 
 	protected:
-		backward_propagation_factory();
+		backward_propagation_factory() = default;
 	};
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "nn_types.h"
 #include "network_schema.h"
 #include "network_data.h"
 #include "layer_configuration_specific.h"
@@ -32,6 +31,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <memory>
 #include <ostream>
 
 namespace nnforge
@@ -48,9 +48,9 @@ namespace nnforge
 		};
 
 	public:
-		typedef nnforge_shared_ptr<forward_propagation> ptr;
+		typedef std::shared_ptr<forward_propagation> ptr;
 
-		~forward_propagation();
+		~forward_propagation() = default;
 
 		void set_data(const network_data& data);
 
@@ -107,9 +107,9 @@ namespace nnforge
 	private:
 		void update_flops();
 
-		forward_propagation();
-		forward_propagation(const forward_propagation&);
-		forward_propagation& operator =(const forward_propagation&);
+		forward_propagation() = delete;
+		forward_propagation(const forward_propagation&) = delete;
+		forward_propagation& operator =(const forward_propagation&) = delete;
 	};
 
 	std::ostream& operator<< (std::ostream& out, const forward_propagation::stat& val);

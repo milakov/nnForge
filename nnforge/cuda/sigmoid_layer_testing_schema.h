@@ -25,9 +25,9 @@ namespace nnforge
 		class sigmoid_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			sigmoid_layer_testing_schema();
+			sigmoid_layer_testing_schema() = default;
 
-			virtual ~sigmoid_layer_testing_schema();
+			virtual ~sigmoid_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

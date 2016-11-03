@@ -17,7 +17,6 @@
 #include "max_subsampling_layer_updater_plain.h"
 
 #include "../max_subsampling_layer.h"
-#include "../nn_types.h"
 #include "../neural_network_exception.h"
 
 #include <array>
@@ -27,14 +26,6 @@ namespace nnforge
 	namespace plain
 	{
 		const int max_subsampling_layer_updater_plain::max_dimension_count = 4;
-
-		max_subsampling_layer_updater_plain::max_subsampling_layer_updater_plain()
-		{
-		}
-
-		max_subsampling_layer_updater_plain::~max_subsampling_layer_updater_plain()
-		{
-		}
 
 		std::string max_subsampling_layer_updater_plain::get_type_name() const
 		{
@@ -63,7 +54,7 @@ namespace nnforge
 			if (output_dimension_sizes.empty())
 				output_dimension_sizes.push_back(1);
 
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+			std::shared_ptr<const max_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 			if (layer_derived->tiling)
 				throw neural_network_exception("max_subsampling_layer_updater_plain is not able to run for max subsampling layer with tiling");
@@ -131,7 +122,7 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -202,7 +193,7 @@ namespace nnforge
 			const float * const out_err_it_global = *output_errors_buffer;
 			const unsigned int * const max_indexes_it_global = *temporary_per_entry_buffer;
 
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+			std::shared_ptr<const max_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 			const unsigned int entry_subsampling_size = layer_derived->entry_subsampling_size;
 
 			if (!add_update_to_destination)

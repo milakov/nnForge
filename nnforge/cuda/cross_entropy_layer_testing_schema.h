@@ -25,9 +25,9 @@ namespace nnforge
 		class cross_entropy_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			cross_entropy_layer_testing_schema();
+			cross_entropy_layer_testing_schema() = default;
 
-			virtual ~cross_entropy_layer_testing_schema();
+			virtual ~cross_entropy_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

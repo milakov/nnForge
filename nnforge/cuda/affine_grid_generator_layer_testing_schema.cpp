@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		affine_grid_generator_layer_testing_schema::affine_grid_generator_layer_testing_schema()
-		{
-		}
-
-		affine_grid_generator_layer_testing_schema::~affine_grid_generator_layer_testing_schema()
-		{
-		}
-
 		std::string affine_grid_generator_layer_testing_schema::get_type_name() const
 		{
 			return affine_grid_generator_layer::layer_type_name;

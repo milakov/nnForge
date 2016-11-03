@@ -23,6 +23,7 @@
 #include <iostream>
 #include <boost/algorithm/string.hpp>
 #include <numeric>
+#include <regex>
 
 #include "layer_factory.h"
 #include "neural_network_exception.h"
@@ -63,10 +64,6 @@ namespace nnforge
 
 	toolset::toolset(factory_generator::ptr master_factory)
 		: master_factory(master_factory)
-	{
-	}
-
-	toolset::~toolset()
 	{
 	}
 
@@ -272,12 +269,12 @@ namespace nnforge
 		boost::filesystem::path logfile_path = get_working_data_folder() / logfile_name;
 		if (log_mode == "redirect")
 		{
-			out_to_log_redirector = nnforge_shared_ptr<stream_redirector>(new stream_redirector(logfile_path));
+			out_to_log_redirector = std::shared_ptr<stream_redirector>(new stream_redirector(logfile_path));
 		}
 		else
 		{
 			std::cout << "Duplicating output log to " << logfile_path.string() << "..." << std::endl;
-			out_to_log_duplicator = nnforge_shared_ptr<stream_duplicator>(new stream_duplicator(logfile_path));
+			out_to_log_duplicator = std::shared_ptr<stream_duplicator>(new stream_duplicator(logfile_path));
 		}
 
 		{
@@ -531,7 +528,7 @@ namespace nnforge
 			std::set<std::string> exclude_layer_names;
 			for(std::vector<std::string>::const_iterator it = inference_force_data_layer_names.begin(); it != inference_force_data_layer_names.end(); ++it)
 			{
-				layer::ptr new_data_layer = single_layer_factory::get_const_instance().create_layer("data");
+				layer::ptr new_data_layer = layer_factory::get_singleton().create_layer("data");
 				new_data_layer->instance_name = *it;
 				new_layers.push_back(new_data_layer);
 				exclude_layer_names.insert(*it);
@@ -579,7 +576,7 @@ namespace nnforge
 
 				for(std::map<std::string, std::pair<layer_configuration_specific, neuron_value_set::ptr> >::iterator it2 = writer.layer_name_to_config_and_value_set_map.begin(); it2 != writer.layer_name_to_config_and_value_set_map.end(); ++it2)
 				{
-					nnforge_shared_ptr<std::vector<double> > average_list = it2->second.second->get_average();
+					std::shared_ptr<std::vector<double> > average_list = it2->second.second->get_average();
 					res_layer_map.insert(std::make_pair(it2->first, std::make_pair(it2->second.first, *average_list)));
 
 					if (inference_mode == "report_average_per_entry")
@@ -638,12 +635,12 @@ namespace nnforge
 				std::string file_name = (boost::format("%1%_%2%.dt") % dataset_name % it->first).str();
 				boost::filesystem::path file_path = get_working_data_folder() / file_name;
 				std::cout << "Writing " << file_path.string() << std::endl;
-				nnforge_shared_ptr<std::ostream> out(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary));
+				std::shared_ptr<std::ostream> out(new boost::filesystem::ofstream(file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary));
 				{
 					structured_data_stream_writer dw(out, it->second.first);
-					const std::vector<nnforge_shared_ptr<std::vector<float> > >& data = it->second.second->neuron_value_list;
+					const std::vector<std::shared_ptr<std::vector<float> > >& data = it->second.second->neuron_value_list;
 					unsigned int entry_id = 0;
-					for(std::vector<nnforge_shared_ptr<std::vector<float> > >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++entry_id)
+					for(std::vector<std::shared_ptr<std::vector<float> > >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++entry_id)
 					{
 						const std::vector<float>& dd = **data_it;
 						dw.write(entry_id, &dd[0]);
@@ -666,7 +663,7 @@ namespace nnforge
 		std::map<std::string, structured_data_reader::ptr> data_reader_map;
 		for(std::map<std::string, boost::filesystem::path>::const_iterator it = data_filenames.begin(); it != data_filenames.end(); ++it)
 		{
-			nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(it->second, std::ios_base::in | std::ios_base::binary));
+			std::shared_ptr<std::istream> in(new boost::filesystem::ifstream(it->second, std::ios_base::in | std::ios_base::binary));
 			structured_data_reader::ptr dr = apply_transformers(get_structured_reader(dataset_name, it->first, usage, in), get_data_transformer_list(dataset_name, it->first, usage));
 			data_reader_map.insert(std::make_pair(it->first, dr));
 		}
@@ -699,14 +696,14 @@ namespace nnforge
 
 		boost::filesystem::path trained_data_folder = get_working_data_folder() / get_ann_subfolder_name();
 
-		nnforge_regex expression(trained_ann_index_extractor_pattern);
-		nnforge_cmatch what;
+		std::regex expression(trained_ann_index_extractor_pattern);
+		std::cmatch what;
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(trained_data_folder); it != boost::filesystem::directory_iterator(); ++it)
 		{
 			boost::filesystem::path folder_path = it->path();
 			std::string folder_name = folder_path.filename().string();
 
-			if (nnforge_regex_search(folder_name.c_str(), what, expression))
+			if (std::regex_search(folder_name.c_str(), what, expression))
 			{
 				unsigned int ann_data_index = atol(std::string(what[1].first, what[1].second).c_str());
 				if ((inference_ann_data_index != -1) && (inference_ann_data_index != ann_data_index))
@@ -748,7 +745,7 @@ namespace nnforge
 		unsigned int starting_index = get_starting_index_for_batch_training();
 		for(std::vector<network_data_peek_entry>::const_iterator it = leading_tasks.begin(); it != leading_tasks.end(); ++it)
 			starting_index = std::max(starting_index, it->index + 1);
-		nnforge_shared_ptr<network_data_peeker> peeker = nnforge_shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index, leading_tasks));
+		std::shared_ptr<network_data_peeker> peeker = std::shared_ptr<network_data_peeker>(new network_data_peeker_random(ann_count, starting_index, leading_tasks));
 
 		complex_network_data_pusher progress;
 
@@ -805,8 +802,8 @@ namespace nnforge
 
 	unsigned int toolset::get_starting_index_for_batch_training() const
 	{
-		nnforge_regex expression(trained_ann_index_extractor_pattern);
-		nnforge_cmatch what;
+		std::regex expression(trained_ann_index_extractor_pattern);
+		std::cmatch what;
 
 		int max_index = -1;
 		boost::filesystem::path batch_folder = get_working_data_folder() / get_ann_subfolder_name();
@@ -815,7 +812,7 @@ namespace nnforge
 			boost::filesystem::path folder_path = it->path();
 			std::string folder_name = folder_path.filename().string();
 
-			if (nnforge_regex_search(folder_name.c_str(), what, expression))
+			if (std::regex_search(folder_name.c_str(), what, expression))
 			{
 				int index = atol(std::string(what[1].first, what[1].second).c_str());
 				max_index = std::max<int>(max_index, index); 
@@ -892,8 +889,8 @@ namespace nnforge
 		boost::filesystem::create_directories(snapshot_ann_folder_path);
 
 		std::map<unsigned int, unsigned int> res;
-		nnforge_regex expression(snapshot_ann_index_extractor_pattern);
-		nnforge_cmatch what;
+		std::regex expression(snapshot_ann_index_extractor_pattern);
+		std::cmatch what;
 
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(snapshot_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
@@ -902,7 +899,7 @@ namespace nnforge
 				boost::filesystem::path folder_path = it->path();
 				std::string folder_name = folder_path.filename().string();
 
-				if (nnforge_regex_search(folder_name.c_str(), what, expression))
+				if (std::regex_search(folder_name.c_str(), what, expression))
 				{
 					unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
 					if (exclusion_ann_list.find(index) == exclusion_ann_list.end())
@@ -927,8 +924,8 @@ namespace nnforge
 		boost::filesystem::create_directories(trained_ann_folder_path);
 
 		std::set<unsigned int> res;
-		nnforge_regex expression(trained_ann_index_extractor_pattern);
-		nnforge_cmatch what;
+		std::regex expression(trained_ann_index_extractor_pattern);
+		std::cmatch what;
 
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(trained_ann_folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
@@ -937,7 +934,7 @@ namespace nnforge
 				boost::filesystem::path folder_path = it->path();
 				std::string folder_name = folder_path.filename().string();
 
-				if (nnforge_regex_search(folder_name.c_str(), what, expression))
+				if (std::regex_search(folder_name.c_str(), what, expression))
 				{
 					unsigned int index = static_cast<unsigned int>(atol(std::string(what[1].first, what[1].second).c_str()));
 					res.insert(index);
@@ -1004,7 +1001,7 @@ namespace nnforge
 		int entry_count = -1;
 		for(std::map<std::string, boost::filesystem::path>::const_iterator it = data_filenames.begin(); it != data_filenames.end(); ++it)
 		{
-			nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(it->second, std::ios_base::in | std::ios_base::binary));
+			std::shared_ptr<std::istream> in(new boost::filesystem::ifstream(it->second, std::ios_base::in | std::ios_base::binary));
 			structured_data_stream_reader dr(in);
 			int new_entry_count = dr.get_entry_count();
 			if (new_entry_count < 0)
@@ -1031,7 +1028,7 @@ namespace nnforge
 			random_generator rnd = rnd::get_random_generator();
 			for(unsigned int i = static_cast<unsigned int>(entry_count) - 1; i > 0; --i)
 			{
-				nnforge_uniform_int_distribution<unsigned int> dist(0, i);
+				std::uniform_int_distribution<unsigned int> dist(0, i);
 				unsigned int index = dist(rnd);
 				std::swap(shuffled_indexes[i], shuffled_indexes[index]);
 			}
@@ -1044,8 +1041,8 @@ namespace nnforge
 			temp_file_path += ".tmp";
 			{
 				std::cout << "Shuffling from " << file_path.string() << " to " << temp_file_path.string() << std::endl;
-				nnforge_shared_ptr<std::istream> in(new boost::filesystem::ifstream(file_path, std::ios_base::in | std::ios_base::binary));
-				nnforge_shared_ptr<std::ostream> out(new boost::filesystem::ofstream(temp_file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary));
+				std::shared_ptr<std::istream> in(new boost::filesystem::ifstream(file_path, std::ios_base::in | std::ios_base::binary));
+				std::shared_ptr<std::ostream> out(new boost::filesystem::ofstream(temp_file_path, std::ios_base::out | std::ios_base::trunc | std::ios_base::binary));
 				{
 					raw_data_reader::ptr dr = get_raw_reader(shuffle_dataset_name, it->first, dataset_usage_shuffle_data, in);
 					raw_data_writer::ptr dw = dr->get_writer(out);
@@ -1066,7 +1063,7 @@ namespace nnforge
 		const std::string& dataset_name,
 		const std::string& layer_name,
 		dataset_usage usage,
-		nnforge_shared_ptr<std::istream> in) const
+		std::shared_ptr<std::istream> in) const
 	{
 		return get_structured_reader(dataset_name, layer_name, usage, in);
 	}
@@ -1075,7 +1072,7 @@ namespace nnforge
 		const std::string& dataset_name,
 		const std::string& layer_name,
 		dataset_usage usage,
-		nnforge_shared_ptr<std::istream> in) const
+		std::shared_ptr<std::istream> in) const
 	{
 		return structured_data_reader::ptr(new structured_data_stream_reader(in));
 	}
@@ -1085,8 +1082,8 @@ namespace nnforge
 		boost::filesystem::path folder_path = get_working_data_folder();
 
 		std::map<std::string, boost::filesystem::path> res;
-		nnforge_regex expression((boost::format(dataset_extractor_pattern) % dataset_name).str());
-		nnforge_cmatch what;
+		std::regex expression((boost::format(dataset_extractor_pattern) % dataset_name).str());
+		std::cmatch what;
 
 		for(boost::filesystem::directory_iterator it = boost::filesystem::directory_iterator(folder_path); it != boost::filesystem::directory_iterator(); ++it)
 		{
@@ -1095,7 +1092,7 @@ namespace nnforge
 				boost::filesystem::path file_path = it->path();
 				std::string file_name = file_path.filename().string();
 
-				if (nnforge_regex_search(file_name.c_str(), what, expression))
+				if (std::regex_search(file_name.c_str(), what, expression))
 				{
 					std::string data_name = std::string(what[1].first, what[1].second);
 					res.insert(std::make_pair(data_name, file_path));
@@ -1391,7 +1388,7 @@ namespace nnforge
 						candidate_weight_id_list.push_back(i + 1);
 					for(int i = 0; i < std::min(static_cast<int>(candidate_weight_id_list.size()), check_gradient_max_weights_per_set); ++i)
 					{
-						nnforge_uniform_int_distribution<int> dist(0, static_cast<int>(candidate_weight_id_list.size()) - 1 - i);
+						std::uniform_int_distribution<int> dist(0, static_cast<int>(candidate_weight_id_list.size()) - 1 - i);
 						int index = dist(weight_gen);
 						weight_id_list.push_back(candidate_weight_id_list[index]);
 						std::swap(candidate_weight_id_list[index], candidate_weight_id_list[candidate_weight_id_list.size() - 1 - i]);
@@ -1419,7 +1416,7 @@ namespace nnforge
 						0);
 					for(std::vector<std::string>::const_iterator it = training_error_source_layer_names.begin(); it != training_error_source_layer_names.end(); ++it)
 					{
-						nnforge_shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
+						std::shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
 						original_error += std::accumulate(averages->begin(), averages->end(), 0.0);
 					}
 					for(int weight_index = 0; weight_index < static_cast<int>(weight_id_list.size()); ++weight_index)
@@ -1449,7 +1446,7 @@ namespace nnforge
 							0);
 						for(std::vector<std::string>::const_iterator it = training_error_source_layer_names.begin(); it != training_error_source_layer_names.end(); ++it)
 						{
-							nnforge_shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
+							std::shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
 							minus_error += std::accumulate(averages->begin(), averages->end(), 0.0);
 						}
 					}
@@ -1472,7 +1469,7 @@ namespace nnforge
 							0);
 						for(std::vector<std::string>::const_iterator it = training_error_source_layer_names.begin(); it != training_error_source_layer_names.end(); ++it)
 						{
-							nnforge_shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
+							std::shared_ptr<std::vector<double> > averages = writer.layer_name_to_config_and_value_set_map.find(*it)->second.second->get_average();
 							plus_error += std::accumulate(averages->begin(), averages->end(), 0.0);
 						}
 					}

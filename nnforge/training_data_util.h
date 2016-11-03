@@ -34,7 +34,7 @@ namespace nnforge
 			int max_copy_elem_count = -1);
 
 	private:
-		training_data_util();
-		~training_data_util();
+		training_data_util() = delete;
+		~training_data_util() = delete;
 	};
 }

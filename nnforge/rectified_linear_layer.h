@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ namespace nnforge
 	class rectified_linear_layer : public layer
 	{
 	public:
-		rectified_linear_layer();
+		rectified_linear_layer() = default;
 
 		virtual layer::ptr clone() const;
 

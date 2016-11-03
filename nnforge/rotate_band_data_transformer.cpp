@@ -30,11 +30,7 @@ namespace nnforge
 		generator = rnd::get_random_generator();
 
 		for(std::vector<unsigned int>::const_iterator it = max_absolute_band_rotations.begin(); it != max_absolute_band_rotations.end(); ++it)
-			rotate_band_distributions.push_back(nnforge_uniform_int_distribution<int>(-static_cast<int>(*it), static_cast<int>(*it)));
-	}
-
-	rotate_band_data_transformer::~rotate_band_data_transformer()
-	{
+			rotate_band_distributions.push_back(std::uniform_int_distribution<int>(-static_cast<int>(*it), static_cast<int>(*it)));
 	}
 
 	void rotate_band_data_transformer::transform(
@@ -55,11 +51,11 @@ namespace nnforge
 		std::vector<unsigned int>::const_iterator it2 = dimension_sizes.begin();
 
 		{
-			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
+			std::lock_guard<std::mutex> lock(gen_stream_mutex);
 
-			for(std::vector<nnforge_uniform_int_distribution<int> >::iterator it = rotate_band_distributions.begin(); it != rotate_band_distributions.end(); ++it, ++it2)
+			for(std::vector<std::uniform_int_distribution<int> >::iterator it = rotate_band_distributions.begin(); it != rotate_band_distributions.end(); ++it, ++it2)
 			{
-				nnforge_uniform_int_distribution<int>& rotate_band_distribution = *it;
+				std::uniform_int_distribution<int>& rotate_band_distribution = *it;
 				int rotate_band = rotate_band_distribution.min();
 				if (rotate_band_distribution.max() > rotate_band_distribution.min())
 					rotate_band = rotate_band_distribution(generator);

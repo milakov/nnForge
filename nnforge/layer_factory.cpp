@@ -63,4 +63,10 @@ namespace nnforge
 
 		return it->second;
 	}
+
+	layer_factory& layer_factory::get_singleton()
+	{
+		static layer_factory instance;
+		return instance;
+	}
 }

@@ -21,8 +21,6 @@
 #include "util_cuda.h"
 #include "neural_network_cuda_exception.h"
 
-#include "../nn_types.h"
-
 namespace nnforge
 {
 	namespace cuda
@@ -129,14 +127,6 @@ namespace nnforge
 					}
 				}
 			}
-		}
-
-		entry_convolution_layer_updater_cuda::entry_convolution_layer_updater_cuda()
-		{
-		}
-
-		entry_convolution_layer_updater_cuda::~entry_convolution_layer_updater_cuda()
-		{
 		}
 
 		void entry_convolution_layer_updater_cuda::enqueue_forward_propagation(

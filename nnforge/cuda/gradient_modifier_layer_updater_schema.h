@@ -25,9 +25,9 @@ namespace nnforge
 		class gradient_modifier_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			gradient_modifier_layer_updater_schema();
+			gradient_modifier_layer_updater_schema() = default;
 
-			virtual ~gradient_modifier_layer_updater_schema();
+			virtual ~gradient_modifier_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

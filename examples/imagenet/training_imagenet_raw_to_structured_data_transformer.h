@@ -19,7 +19,7 @@
 #include <nnforge/raw_to_structured_data_transformer.h>
 #include <nnforge/rnd.h>
 
-#include <boost/thread/thread.hpp>
+#include <mutex>
 
 class training_imagenet_raw_to_structured_data_transformer : public nnforge::raw_to_structured_data_transformer
 {
@@ -44,8 +44,8 @@ protected:
 	unsigned int target_image_width;
 	unsigned int target_image_height;
 
-	boost::mutex gen_mutex;
+	std::mutex gen_mutex;
 	nnforge::random_generator gen;
-	nnforge_uniform_real_distribution<float> dist_relative_target_area;
-	nnforge_uniform_real_distribution<float> dist_log_aspect_ratio;
+	std::uniform_real_distribution<float> dist_relative_target_area;
+	std::uniform_real_distribution<float> dist_log_aspect_ratio;
 };

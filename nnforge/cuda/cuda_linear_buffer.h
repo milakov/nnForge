@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <cuda_runtime.h>
-
 #include "cuda_memobject.h"
-#include "../nn_types.h"
+
+#include <memory>
+#include <cuda_runtime.h>
 
 namespace nnforge
 {
@@ -28,7 +28,7 @@ namespace nnforge
 		class cuda_linear_buffer : public cuda_memobject
 		{
 		public:
-			virtual ~cuda_linear_buffer();
+			virtual ~cuda_linear_buffer() = default;
 
 			operator void *();
 
@@ -75,13 +75,13 @@ namespace nnforge
 			operator const int4 *() const;
 
 		protected:
-			cuda_linear_buffer();
+			cuda_linear_buffer() = default;
 
 			virtual void * get_buf() = 0;
 			virtual const void * get_buf() const = 0;
 		};
 
-		typedef nnforge_shared_ptr<cuda_linear_buffer> cuda_linear_buffer_smart_ptr;
-		typedef nnforge_shared_ptr<const cuda_linear_buffer> const_cuda_linear_buffer_smart_ptr;
+		typedef std::shared_ptr<cuda_linear_buffer> cuda_linear_buffer_smart_ptr;
+		typedef std::shared_ptr<const cuda_linear_buffer> const_cuda_linear_buffer_smart_ptr;
 	}
 }

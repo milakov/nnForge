@@ -25,9 +25,9 @@ namespace nnforge
 		class linear_sampler_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			linear_sampler_layer_updater_cuda();
+			linear_sampler_layer_updater_cuda() = default;
 
-			virtual ~linear_sampler_layer_updater_cuda();
+			virtual ~linear_sampler_layer_updater_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

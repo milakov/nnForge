@@ -26,14 +26,6 @@ namespace nnforge
 	{
 		const int sparse_convolution_layer_updater_plain::max_dimension_count = 4;
 
-		sparse_convolution_layer_updater_plain::sparse_convolution_layer_updater_plain()
-		{
-		}
-
-		sparse_convolution_layer_updater_plain::~sparse_convolution_layer_updater_plain()
-		{
-		}
-
 		std::string sparse_convolution_layer_updater_plain::get_type_name() const
 		{
 			return sparse_convolution_layer::layer_type_name;
@@ -60,7 +52,7 @@ namespace nnforge
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			const float * const in_it_global = *input_buffers[0];
 			float * const out_it_global = *output_buffer;
-			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+			std::shared_ptr<const sparse_convolution_layer> layer_derived = std::dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			const bool bias = layer_derived->bias;
 
@@ -128,8 +120,8 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
-				nnforge_array<int, max_dimension_count> current_input_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
+				std::array<int, max_dimension_count> current_input_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -226,7 +218,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+			std::shared_ptr<const sparse_convolution_layer> layer_derived = std::dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			std::vector<unsigned int> window_sizes_extended = layer_derived->window_sizes;
 			window_sizes_extended.resize(max_dimension_count, 1);
@@ -304,8 +296,8 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
-				nnforge_array<int, max_dimension_count> current_input_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
+				std::array<int, max_dimension_count> current_input_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -400,7 +392,7 @@ namespace nnforge
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
 			const float * const in_it_global = *input_neurons_buffers[0];
 			const float * const out_err_it_global = *output_errors_buffer;
-			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+			std::shared_ptr<const sparse_convolution_layer> layer_derived = std::dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			const bool bias = layer_derived->bias;
 
@@ -486,8 +478,8 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
-				nnforge_array<int, max_dimension_count> current_input_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
+				std::array<int, max_dimension_count> current_input_position;
 				std::vector<float> weights_local(const_window_elem_count, 0.0F);
 
 				#pragma omp for schedule(guided)

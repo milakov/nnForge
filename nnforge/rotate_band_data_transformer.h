@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include "data_transformer.h"
 #include "rnd.h"
 
-#include <boost/thread/thread.hpp>
+#include <mutex>
 
 namespace nnforge
 {
@@ -28,7 +28,7 @@ namespace nnforge
 	public:
 		rotate_band_data_transformer(const std::vector<unsigned int>& max_absolute_band_rotations);
 
-		virtual ~rotate_band_data_transformer();
+		virtual ~rotate_band_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -38,8 +38,8 @@ namespace nnforge
 			
 	protected:
 		random_generator generator;
-		boost::mutex gen_stream_mutex;
+		std::mutex gen_stream_mutex;
 
-		std::vector<nnforge_uniform_int_distribution<int> > rotate_band_distributions;
+		std::vector<std::uniform_int_distribution<int> > rotate_band_distributions;
 	};
 }

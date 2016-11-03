@@ -25,9 +25,9 @@ namespace nnforge
 		class rectified_linear_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			rectified_linear_layer_updater_schema();
+			rectified_linear_layer_updater_schema() = default;
 
-			virtual ~rectified_linear_layer_updater_schema();
+			virtual ~rectified_linear_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

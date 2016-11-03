@@ -20,7 +20,6 @@
 #include "proto/nnforge.pb.h"
 
 #include <algorithm>
-#include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
 #include <sstream>
 
@@ -148,7 +147,7 @@ namespace nnforge
 			{
 				unsigned int neuron_count = input_configuration_specific_list[0].get_neuron_count();
 				unsigned int per_item_flops = feature_map_upsampling_size;
-				std::for_each(upsampling_sizes.begin(), upsampling_sizes.end(), per_item_flops *= boost::lambda::_1);
+				std::for_each(upsampling_sizes.begin(), upsampling_sizes.end(), [&per_item_flops] (unsigned int x) { per_item_flops *= x; });
 				return static_cast<float>(neuron_count) * static_cast<float>(per_item_flops);
 			}
 		default:

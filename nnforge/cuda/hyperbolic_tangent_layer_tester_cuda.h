@@ -25,9 +25,9 @@ namespace nnforge
 		class hyperbolic_tangent_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			hyperbolic_tangent_layer_tester_cuda();
+			hyperbolic_tangent_layer_tester_cuda() = default;
 
-			virtual ~hyperbolic_tangent_layer_tester_cuda();
+			virtual ~hyperbolic_tangent_layer_tester_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

@@ -17,7 +17,6 @@
 #include "cdf_max_layer_updater_plain.h"
 
 #include "../cdf_max_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -25,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		cdf_max_layer_updater_plain::cdf_max_layer_updater_plain()
-		{
-		}
-
-		cdf_max_layer_updater_plain::~cdf_max_layer_updater_plain()
-		{
-		}
-
 		std::string cdf_max_layer_updater_plain::get_type_name() const
 		{
 			return cdf_max_layer::layer_type_name;
@@ -56,7 +47,7 @@ namespace nnforge
 			const float * const in_it_global = *input_buffers[0];
 			float * const out_it_global = *output_buffer;
 			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
-			nnforge_shared_ptr<const cdf_max_layer> layer_derived = nnforge_dynamic_pointer_cast<const cdf_max_layer>(layer_schema);
+			std::shared_ptr<const cdf_max_layer> layer_derived = std::dynamic_pointer_cast<const cdf_max_layer>(layer_schema);
 			const unsigned int entry_subsampling_size = layer_derived->entry_subsampling_size;
 			const bool is_min = layer_derived->is_min;
 			const int total_workload = entry_count;
@@ -118,7 +109,7 @@ namespace nnforge
 			const float * const in_neurons_it_global = *input_neurons_buffers[0];
 			const float * const out_neurons_it_global = *output_neurons_buffer;
 			const unsigned int neuron_count = output_configuration_specific.get_neuron_count();
-			nnforge_shared_ptr<const cdf_max_layer> layer_derived = nnforge_dynamic_pointer_cast<const cdf_max_layer>(layer_schema);
+			std::shared_ptr<const cdf_max_layer> layer_derived = std::dynamic_pointer_cast<const cdf_max_layer>(layer_schema);
 			const unsigned int entry_subsampling_size = layer_derived->entry_subsampling_size;
 			const bool is_min = layer_derived->is_min;
 			const int total_workload = entry_count;

@@ -36,10 +36,6 @@
 
 namespace nnforge
 {
-	network_schema::network_schema()
-	{
-	}
-
 	network_schema::network_schema(const std::vector<layer::const_ptr>& layer_list)
 	{
 		for(std::vector<layer::const_ptr>::const_iterator it = layer_list.begin(); it != layer_list.end(); ++it)
@@ -85,7 +81,7 @@ namespace nnforge
 		for(int i = 0; i < schema.layer_size(); ++i)
 		{
 			const nnforge::protobuf::Layer& src_layer = schema.layer(i);
-			layer::ptr new_layer = single_layer_factory::get_const_instance().create_layer(src_layer.type());
+			layer::ptr new_layer = layer_factory::get_singleton().create_layer(src_layer.type());
 			new_layer->instance_name = src_layer.name();
 			for(int j = 0; j < src_layer.input_layer_name_size(); ++j)
 				new_layer->input_layer_instance_names.push_back(src_layer.input_layer_name(j));
@@ -281,7 +277,7 @@ namespace nnforge
 						boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
 					layer_with_dependent_count.push_back(std::make_pair(*it, dependent_vertices.size()));
 				}
-				std::sort(layer_with_dependent_count.begin(), layer_with_dependent_count.end(), compare_entry);
+				std::sort(layer_with_dependent_count.begin(), layer_with_dependent_count.end(), [] (std::pair<schema_graph::vertex_descriptor, size_t> i, std::pair<schema_graph::vertex_descriptor, size_t> j) { return (i.second > j.second); } );
 				std::set<schema_graph::vertex_descriptor> covered_vertices;
 				for(std::vector<std::pair<schema_graph::vertex_descriptor, size_t> >::const_iterator it = layer_with_dependent_count.begin(); it != layer_with_dependent_count.end(); ++it)
 				{
@@ -307,11 +303,6 @@ namespace nnforge
 		}
 
 		return res;
-	}
-
-	bool network_schema::compare_entry(std::pair<schema_graph::vertex_descriptor, size_t> i, std::pair<schema_graph::vertex_descriptor, size_t> j)
-	{
-		return (i.second > j.second);
 	}
 
 	network_action_schema::ptr network_schema::get_actions_for_backward_propagation(
@@ -366,7 +357,7 @@ namespace nnforge
 							boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, layers)));
 						layer_with_dependent_count.push_back(std::make_pair(*it, dependent_vertices.size()));
 					}
-					std::sort(layer_with_dependent_count.begin(), layer_with_dependent_count.end(), compare_entry);
+					std::sort(layer_with_dependent_count.begin(), layer_with_dependent_count.end(), [] (std::pair<schema_graph::vertex_descriptor, size_t> i, std::pair<schema_graph::vertex_descriptor, size_t> j) { return (i.second > j.second); } );
 					std::set<schema_graph::vertex_descriptor> covered_vertices;
 					for(std::vector<std::pair<schema_graph::vertex_descriptor, size_t> >::const_iterator it = layer_with_dependent_count.begin(); it != layer_with_dependent_count.end(); ++it)
 					{
@@ -727,8 +718,8 @@ namespace nnforge
 		
 		out << " shape=" << ((g[v].l->get_type_name() == data_layer::layer_type_name) ? "invhouse" : "box") << "";
 		
-		unsigned int layer_type_id = single_layer_factory::get_mutable_instance().get_layer_type_id(g[v].l->get_type_name());
-		out << " style=filled fillcolor=\"" << single_color_palette::get_const_instance().get_color_name(layer_type_id) << "\"";
+		unsigned int layer_type_id = layer_factory::get_singleton().get_layer_type_id(g[v].l->get_type_name());
+		out << " style=filled fillcolor=\"" << color_palette::get_singleton().get_color_name(layer_type_id) << "\"";
 
 		out << " ]";
 	}

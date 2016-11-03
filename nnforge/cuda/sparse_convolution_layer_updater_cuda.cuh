@@ -21,6 +21,7 @@
 #include <cuda_runtime.h>
 
 #include <boost/format.hpp>
+#include <memory>
 
 #include "util_cuda.h"
 #include "cuda_texture.h"
@@ -30,7 +31,6 @@
 
 #include "../sparse_convolution_layer.h"
 #include "../neural_network_exception.h"
-#include "../nn_types.h"
 
 #include <cudnn.h>
 
@@ -1105,7 +1105,7 @@ namespace nnforge
 		protected:
 			virtual void updater_configured()
 			{
-				nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+				std::shared_ptr<const sparse_convolution_layer> layer_derived = std::dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 				bias = layer_derived->bias;
 

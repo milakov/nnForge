@@ -17,22 +17,21 @@
 #pragma once
 
 #include <boost/filesystem.hpp>
-#include <boost/thread/thread.hpp>
-
-#include "nn_types.h"
+#include <mutex>
+#include <memory>
 
 namespace nnforge
 {
 	class profile_state
 	{
 	public:
-		typedef nnforge_shared_ptr<profile_state> ptr;
+		typedef std::shared_ptr<profile_state> ptr;
 
 		profile_state(
 			bool profile_mode,
 			const boost::filesystem::path& profile_folder);
 
-		~profile_state();
+		~profile_state() = default;
 
 		bool is_profile() const;
 
@@ -47,12 +46,12 @@ namespace nnforge
 		boost::filesystem::path profile_folder;
 
 	private:
-		boost::mutex index_mutex;
+		std::mutex index_mutex;
 		unsigned int index;
 
 	private:
-		profile_state();
-		profile_state(const profile_state&);
-		profile_state& operator =(const profile_state&);
+		profile_state() = delete;
+		profile_state(const profile_state&) = delete;
+		profile_state& operator =(const profile_state&) = delete;
 	};
 }

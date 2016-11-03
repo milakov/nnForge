@@ -25,9 +25,9 @@ namespace nnforge
 		class cdf_max_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			cdf_max_layer_tester_cuda();
+			cdf_max_layer_tester_cuda() = default;
 
-			virtual ~cdf_max_layer_tester_cuda();
+			virtual ~cdf_max_layer_tester_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

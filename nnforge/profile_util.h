@@ -49,10 +49,8 @@ namespace nnforge
 			float seconds;
 		};
 
-		static bool compare_entry(const entry& i, const entry& j);
-
 	private:
-		profile_util();
-		~profile_util();
+		profile_util() = delete;
+		~profile_util() = delete;
 	};
 }

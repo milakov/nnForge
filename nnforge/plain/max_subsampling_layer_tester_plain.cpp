@@ -17,7 +17,6 @@
 #include "max_subsampling_layer_tester_plain.h"
 
 #include "../max_subsampling_layer.h"
-#include "../nn_types.h"
 #include "../neural_network_exception.h"
 
 #include <array>
@@ -27,14 +26,6 @@ namespace nnforge
 	namespace plain
 	{
 		const int max_subsampling_layer_tester_plain::max_dimension_count = 4;
-
-		max_subsampling_layer_tester_plain::max_subsampling_layer_tester_plain()
-		{
-		}
-
-		max_subsampling_layer_tester_plain::~max_subsampling_layer_tester_plain()
-		{
-		}
 
 		std::string max_subsampling_layer_tester_plain::get_type_name() const
 		{
@@ -54,7 +45,7 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+			std::shared_ptr<const max_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 			if (layer_derived->tiling)
 				test_tiling(
@@ -85,7 +76,7 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+			std::shared_ptr<const max_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 			const float * const in_it_global = *input_buffer;
 			float * const out_it_global = *output_buffer;
@@ -132,7 +123,7 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -192,7 +183,7 @@ namespace nnforge
 			if (output_dimension_sizes.empty())
 				output_dimension_sizes.push_back(1);
 
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+			std::shared_ptr<const max_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 			for(std::vector<bool>::const_iterator it = layer_derived->round_ups.begin(); it != layer_derived->round_ups.end(); ++it)
 				if (*it)
@@ -257,7 +248,7 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)

@@ -32,12 +32,8 @@ namespace nnforge
 	{
 		generator = rnd::get_random_generator();
 
-		contrast_distribution = nnforge_uniform_real_distribution<float>(1.0F / max_contrast_factor, max_contrast_factor + (apply_contrast_distribution ? 0.0F: 1.0F));
-		brightness_shift_distribution = nnforge_uniform_real_distribution<float>(-max_absolute_brightness_shift, max_absolute_brightness_shift + (apply_brightness_shift_distribution ? 0.0F : 1.0F));
-	}
-
-	intensity_2d_data_transformer::~intensity_2d_data_transformer()
-	{
+		contrast_distribution = std::uniform_real_distribution<float>(1.0F / max_contrast_factor, max_contrast_factor + (apply_contrast_distribution ? 0.0F: 1.0F));
+		brightness_shift_distribution = std::uniform_real_distribution<float>(-max_absolute_brightness_shift, max_absolute_brightness_shift + (apply_brightness_shift_distribution ? 0.0F : 1.0F));
 	}
 
 	void intensity_2d_data_transformer::transform(
@@ -53,7 +49,7 @@ namespace nnforge
 		float brightness_shift = brightness_shift_distribution.min();
 
 		{
-			boost::lock_guard<boost::mutex> lock(gen_stream_mutex);
+			std::lock_guard<std::mutex> lock(gen_stream_mutex);
 
 			if (apply_contrast_distribution)
 				contrast = contrast_distribution(generator);

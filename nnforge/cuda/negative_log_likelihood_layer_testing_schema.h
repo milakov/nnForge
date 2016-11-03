@@ -25,9 +25,9 @@ namespace nnforge
 		class negative_log_likelihood_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			negative_log_likelihood_layer_testing_schema();
+			negative_log_likelihood_layer_testing_schema() = default;
 
-			virtual ~negative_log_likelihood_layer_testing_schema();
+			virtual ~negative_log_likelihood_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

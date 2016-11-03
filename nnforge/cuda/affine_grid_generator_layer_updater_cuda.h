@@ -25,9 +25,9 @@ namespace nnforge
 		class affine_grid_generator_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			affine_grid_generator_layer_updater_cuda();
+			affine_grid_generator_layer_updater_cuda() = default;
 
-			virtual ~affine_grid_generator_layer_updater_cuda();
+			virtual ~affine_grid_generator_layer_updater_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

@@ -27,7 +27,7 @@ namespace nnforge
 	class network_trainer_sgd : public network_trainer
 	{
 	public:
-		typedef nnforge_shared_ptr<network_trainer_sgd> ptr;
+		typedef std::shared_ptr<network_trainer_sgd> ptr;
 
 		network_trainer_sgd(
 			network_schema::ptr schema,
@@ -36,7 +36,7 @@ namespace nnforge
 			const std::vector<std::string>& exclude_data_update_layer_names,
 			backward_propagation::ptr backprop);
 
-		virtual ~network_trainer_sgd();
+		virtual ~network_trainer_sgd() = default;
 
 	protected:
 		// The method should add testing result to the training history of each element

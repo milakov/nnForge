@@ -23,7 +23,7 @@
 
 namespace nnforge
 {
-	varying_data_stream_writer::varying_data_stream_writer(nnforge_shared_ptr<std::ostream> output_stream)
+	varying_data_stream_writer::varying_data_stream_writer(std::shared_ptr<std::ostream> output_stream)
 		: out_stream(output_stream), entry_offsets(1, 0)
 	{
 		out_stream->exceptions(std::ostream::failbit | std::ostream::badbit);

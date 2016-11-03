@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,14 +25,6 @@ namespace nnforge
 		, transformer(transformer)
 		, transformer_sample_count(transformer->get_sample_count())
 		, original_config(original_reader->get_configuration())
-	{
-	}
-
-	transformed_structured_data_reader::transformed_structured_data_reader()
-	{
-	}
-
-	transformed_structured_data_reader::~transformed_structured_data_reader()
 	{
 	}
 
@@ -71,7 +63,7 @@ namespace nnforge
 		throw std::runtime_error("raw_read not implemented for transformed_structured_data_reader");
 	}
 
-	raw_data_writer::ptr transformed_structured_data_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const
+	raw_data_writer::ptr transformed_structured_data_reader::get_writer(std::shared_ptr<std::ostream> out) const
 	{
 		throw std::runtime_error("get_writer not implemented for transformed_structured_data_reader");
 	}

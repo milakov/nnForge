@@ -21,18 +21,18 @@
 
 #include <map>
 #include <limits>
-#include <boost/thread/thread.hpp>
+#include <mutex>
 
 namespace nnforge
 {
 	class stat_data_bunch_writer : public structured_data_bunch_writer
 	{
 	public:
-		typedef nnforge_shared_ptr<stat_data_bunch_writer> ptr;
+		typedef std::shared_ptr<stat_data_bunch_writer> ptr;
 
 		stat_data_bunch_writer();
 
-		virtual ~stat_data_bunch_writer();
+		virtual ~stat_data_bunch_writer() = default;
 
 		virtual void set_config_map(const std::map<std::string, layer_configuration_specific> config_map);
 
@@ -60,7 +60,7 @@ namespace nnforge
 			float max_val;
 		};
 
-		boost::mutex update_stat_mutex;
+		std::mutex update_stat_mutex;
 		std::map<std::string, std::vector<running_stat> > layer_name_to_running_stat_list_map;
 		std::map<std::string, unsigned int> layer_name_to_neuron_count_per_feature_map_map;
 		unsigned int entry_count;

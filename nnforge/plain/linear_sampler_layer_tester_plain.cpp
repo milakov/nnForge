@@ -17,7 +17,6 @@
 #include "linear_sampler_layer_tester_plain.h"
 
 #include "../linear_sampler_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -25,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		linear_sampler_layer_tester_plain::linear_sampler_layer_tester_plain()
-		{
-		}
-
-		linear_sampler_layer_tester_plain::~linear_sampler_layer_tester_plain()
-		{
-		}
-
 		std::string linear_sampler_layer_tester_plain::get_type_name() const
 		{
 			return linear_sampler_layer::layer_type_name;

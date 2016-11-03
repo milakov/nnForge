@@ -19,16 +19,17 @@
 #include "forward_propagation_factory.h"
 #include "backward_propagation_factory.h"
 #include "config_options.h"
-#include "nn_types.h"
+
+#include <memory>
 
 namespace nnforge
 {
 	class factory_generator
 	{
 	public:
-		typedef nnforge_shared_ptr<factory_generator> ptr;
+		typedef std::shared_ptr<factory_generator> ptr;
 
-		virtual ~factory_generator();
+		virtual ~factory_generator() = default;
 
 		virtual void initialize() = 0;
 
@@ -51,6 +52,6 @@ namespace nnforge
 		virtual std::vector<int_option> get_int_options();
 
 	protected:
-		factory_generator();
+		factory_generator() = default;
 	};
 }

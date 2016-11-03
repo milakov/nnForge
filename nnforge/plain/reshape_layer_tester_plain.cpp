@@ -24,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		reshape_layer_tester_plain::reshape_layer_tester_plain()
-		{
-		}
-
-		reshape_layer_tester_plain::~reshape_layer_tester_plain()
-		{
-		}
-
 		std::string reshape_layer_tester_plain::get_type_name() const
 		{
 			return reshape_layer::layer_type_name;

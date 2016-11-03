@@ -19,7 +19,6 @@
 #include <cuda_runtime.h>
 
 #include "../linear_sampler_layer.h"
-#include "../nn_types.h"
 
 #include "util_cuda.h"
 
@@ -92,14 +91,6 @@ namespace nnforge
 					current_output += output_elem_count_per_feature_map;
 				}
 			}
-		}
-
-		linear_sampler_layer_tester_cuda::linear_sampler_layer_tester_cuda()
-		{
-		}
-
-		linear_sampler_layer_tester_cuda::~linear_sampler_layer_tester_cuda()
-		{
 		}
 
 		void linear_sampler_layer_tester_cuda::enqueue_forward_propagation(

@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		cdf_to_pdf_layer_testing_schema::cdf_to_pdf_layer_testing_schema()
-		{
-		}
-
-		cdf_to_pdf_layer_testing_schema::~cdf_to_pdf_layer_testing_schema()
-		{
-		}
-
 		std::string cdf_to_pdf_layer_testing_schema::get_type_name() const
 		{
 			return cdf_to_pdf_layer::layer_type_name;

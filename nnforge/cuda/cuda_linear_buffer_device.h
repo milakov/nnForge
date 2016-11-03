@@ -17,7 +17,8 @@
 #pragma once
 
 #include "cuda_linear_buffer.h"
-#include "../nn_types.h"
+
+#include <memory>
 
 namespace nnforge
 {
@@ -26,8 +27,8 @@ namespace nnforge
 		class cuda_linear_buffer_device : public cuda_linear_buffer
 		{
 		public:
-			typedef nnforge_shared_ptr<cuda_linear_buffer_device> ptr;
-			typedef nnforge_shared_ptr<const cuda_linear_buffer_device> const_ptr;
+			typedef std::shared_ptr<cuda_linear_buffer_device> ptr;
+			typedef std::shared_ptr<const cuda_linear_buffer_device> const_ptr;
 
 			cuda_linear_buffer_device(size_t size);
 

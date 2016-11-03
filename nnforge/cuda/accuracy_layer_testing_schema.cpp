@@ -26,14 +26,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		accuracy_layer_testing_schema::accuracy_layer_testing_schema()
-		{
-		}
-
-		accuracy_layer_testing_schema::~accuracy_layer_testing_schema()
-		{
-		}
-
 		std::string accuracy_layer_testing_schema::get_type_name() const
 		{
 			return accuracy_layer::layer_type_name;

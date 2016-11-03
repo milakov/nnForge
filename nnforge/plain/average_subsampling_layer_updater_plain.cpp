@@ -17,7 +17,6 @@
 #include "average_subsampling_layer_updater_plain.h"
 
 #include "../average_subsampling_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -26,14 +25,6 @@ namespace nnforge
 	namespace plain
 	{
 		const int average_subsampling_layer_updater_plain::max_dimension_count = 4;
-
-		average_subsampling_layer_updater_plain::average_subsampling_layer_updater_plain()
-		{
-		}
-
-		average_subsampling_layer_updater_plain::~average_subsampling_layer_updater_plain()
-		{
-		}
 
 		std::string average_subsampling_layer_updater_plain::get_type_name() const
 		{
@@ -67,7 +58,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
+			std::shared_ptr<const average_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 			std::vector<unsigned int> subsampling_sizes;
 			for(unsigned int i = 0; i < static_cast<unsigned int>(layer_derived->subsampling_sizes.size()); ++i)
 				subsampling_sizes.push_back(layer_derived->get_subsampling_size(i, input_dimension_sizes[i], output_dimension_sizes[i]));
@@ -119,7 +110,7 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
@@ -188,7 +179,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const average_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
+			std::shared_ptr<const average_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const average_subsampling_layer>(layer_schema);
 			std::vector<unsigned int> subsampling_sizes;
 			for(unsigned int i = 0; i < static_cast<unsigned int>(layer_derived->subsampling_sizes.size()); ++i)
 				subsampling_sizes.push_back(layer_derived->get_subsampling_size(i, input_dimension_sizes[i], output_dimension_sizes[i]));
@@ -262,7 +253,7 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)

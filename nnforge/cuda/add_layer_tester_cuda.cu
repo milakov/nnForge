@@ -44,14 +44,6 @@ namespace nnforge
 			}
 		}
 
-		add_layer_tester_cuda::add_layer_tester_cuda()
-		{
-		}
-
-		add_layer_tester_cuda::~add_layer_tester_cuda()
-		{
-		}
-
 		void add_layer_tester_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -97,7 +89,7 @@ namespace nnforge
 
 		void add_layer_tester_cuda::tester_configured()
 		{
-			nnforge_shared_ptr<const add_layer> layer_derived = nnforge_dynamic_pointer_cast<const add_layer>(layer_schema);
+			std::shared_ptr<const add_layer> layer_derived = std::dynamic_pointer_cast<const add_layer>(layer_schema);
 
 			alpha = layer_derived->alpha;
 		}

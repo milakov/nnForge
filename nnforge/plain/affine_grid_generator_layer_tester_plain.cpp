@@ -17,7 +17,6 @@
 #include "affine_grid_generator_layer_tester_plain.h"
 
 #include "../affine_grid_generator_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -25,14 +24,6 @@ namespace nnforge
 {
 	namespace plain
 	{
-		affine_grid_generator_layer_tester_plain::affine_grid_generator_layer_tester_plain()
-		{
-		}
-
-		affine_grid_generator_layer_tester_plain::~affine_grid_generator_layer_tester_plain()
-		{
-		}
-
 		std::string affine_grid_generator_layer_tester_plain::get_type_name() const
 		{
 			return affine_grid_generator_layer::layer_type_name;
@@ -56,7 +47,7 @@ namespace nnforge
 			const unsigned int input_neuron_count = input_configuration_specific_list[0].get_neuron_count();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const affine_grid_generator_layer> layer_derived = nnforge_dynamic_pointer_cast<const affine_grid_generator_layer>(layer_schema);
+			std::shared_ptr<const affine_grid_generator_layer> layer_derived = std::dynamic_pointer_cast<const affine_grid_generator_layer>(layer_schema);
 			const unsigned int output_width = layer_derived->output_sizes[0];
 			const unsigned int output_height = layer_derived->output_sizes[1];
 			const bool adjust_for_zero_init = layer_derived->adjust_for_zero_init;

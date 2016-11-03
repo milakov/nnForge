@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "nn_types.h"
+#include <memory>
 
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
@@ -30,7 +30,7 @@ namespace nnforge
 	class threadpool_job_runner
 	{
 	public:
-		typedef nnforge_shared_ptr<threadpool_job_runner> ptr;
+		typedef std::shared_ptr<threadpool_job_runner> ptr;
 
 		threadpool_job_runner(unsigned int thread_count);
 

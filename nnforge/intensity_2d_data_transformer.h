@@ -18,9 +18,9 @@
 
 #include "data_transformer.h"
 #include "rnd.h"
-#include "nn_types.h"
 
-#include <boost/thread/thread.hpp>
+#include <mutex>
+#include <random>
 
 namespace nnforge
 {
@@ -31,7 +31,7 @@ namespace nnforge
 			float max_contrast_factor, // >=1
 			float max_absolute_brightness_shift); // in [0,1]
 
-		virtual ~intensity_2d_data_transformer();
+		virtual ~intensity_2d_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -41,12 +41,12 @@ namespace nnforge
 			
 	protected:
 		random_generator generator;
-		boost::mutex gen_stream_mutex;
+		std::mutex gen_stream_mutex;
 
 		bool apply_contrast_distribution;
-		nnforge_uniform_real_distribution<float> contrast_distribution;
+		std::uniform_real_distribution<float> contrast_distribution;
 
 		bool apply_brightness_shift_distribution;
-		nnforge_uniform_real_distribution<float> brightness_shift_distribution;
+		std::uniform_real_distribution<float> brightness_shift_distribution;
 	};
 }

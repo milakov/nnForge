@@ -27,9 +27,9 @@ namespace nnforge
 		class cdf_to_pdf_layer_tester_cuda : public layer_tester_cuda
 		{
 		public:
-			cdf_to_pdf_layer_tester_cuda();
+			cdf_to_pdf_layer_tester_cuda() = default;
 
-			virtual ~cdf_to_pdf_layer_tester_cuda();
+			virtual ~cdf_to_pdf_layer_tester_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,

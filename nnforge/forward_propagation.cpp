@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include "profile_util.h"
 
 #include <boost/format.hpp>
-#include <boost/chrono.hpp>
+#include <chrono>
 #include <boost/filesystem/fstream.hpp>
 
 namespace nnforge
@@ -64,10 +64,6 @@ namespace nnforge
 		std::vector<layer::const_ptr> data_layers = this->schema->get_data_layers();
 		for(std::vector<layer::const_ptr>::const_iterator it = data_layers.begin(); it != data_layers.end(); ++it)
 			data_layer_names.insert((*it)->instance_name);
-	}
-
-	forward_propagation::~forward_propagation()
-	{
 	}
 
 	bool forward_propagation::is_schema_with_weights() const
@@ -144,7 +140,7 @@ namespace nnforge
 	{
 		forward_propagation::stat res;
 
-		boost::chrono::steady_clock::time_point start = boost::chrono::high_resolution_clock::now();
+		std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 		set_input_configuration_specific(reader.get_config_map());
 		structured_data_bunch_reader::ptr narrow_reader = reader.get_narrow_reader(data_layer_names);
 		res.flops_per_entry = flops;
@@ -155,7 +151,7 @@ namespace nnforge
 		writer.set_config_map(output_config_map);
 		std::map<layer_name_with_action, float> action_seconds;
 		actual_run(narrow_reader ? *narrow_reader : reader, writer, res.entry_processed_count, action_seconds);
-		boost::chrono::duration<float> sec = boost::chrono::high_resolution_clock::now() - start;
+		std::chrono::duration<float> sec = std::chrono::high_resolution_clock::now() - start;
 		res.total_seconds = sec.count();
 
 		if (profile->is_profile() && !action_seconds.empty())

@@ -210,7 +210,6 @@
     <ClCompile Include="cuda_linear_buffer.cpp" />
     <ClCompile Include="cuda_linear_buffer_device.cpp" />
     <ClCompile Include="cuda_linear_buffer_host.cpp" />
-    <ClCompile Include="cuda_memobject.cpp" />
     <ClCompile Include="cuda_running_configuration.cpp" />
     <ClCompile Include="cuda_stream.cpp" />
     <ClCompile Include="cuda_texture.cpp" />
@@ -390,7 +389,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>NNFORGE_CPP11COMPILER;ENABLE_CUDA_PROFILING;_SCL_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ENABLE_CUDA_PROFILING;_SCL_SECURE_NO_WARNINGS</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

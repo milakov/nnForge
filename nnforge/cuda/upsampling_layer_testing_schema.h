@@ -25,9 +25,9 @@ namespace nnforge
 		class upsampling_layer_testing_schema : public layer_testing_schema
 		{
 		public:
-			upsampling_layer_testing_schema();
+			upsampling_layer_testing_schema() = default;
 
-			virtual ~upsampling_layer_testing_schema();
+			virtual ~upsampling_layer_testing_schema() = default;
 
 			virtual std::string get_type_name() const;
 

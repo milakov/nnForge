@@ -71,14 +71,6 @@ namespace nnforge
 			}
 		}
 
-		cdf_to_pdf_layer_updater_cuda::cdf_to_pdf_layer_updater_cuda()
-		{
-		}
-
-		cdf_to_pdf_layer_updater_cuda::~cdf_to_pdf_layer_updater_cuda()
-		{
-		}
-
 		void cdf_to_pdf_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -154,7 +146,7 @@ namespace nnforge
 
 		void cdf_to_pdf_layer_updater_cuda::updater_configured()
 		{
-			nnforge_shared_ptr<const cdf_to_pdf_layer> layer_derived = nnforge_dynamic_pointer_cast<const cdf_to_pdf_layer>(layer_schema);
+			std::shared_ptr<const cdf_to_pdf_layer> layer_derived = std::dynamic_pointer_cast<const cdf_to_pdf_layer>(layer_schema);
 
 			feature_map_segment_length = layer_derived->feature_map_segment_length;
 			clamp_min = layer_derived->clamp_min;

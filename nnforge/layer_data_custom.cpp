@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,10 +20,6 @@
 
 namespace nnforge
 {
-	layer_data_custom::layer_data_custom()
-	{
-	}
-
 	void layer_data_custom::write(std::ostream& binary_stream_to_write_to) const
 	{
 		unsigned int weight_vector_count = static_cast<unsigned int>(size());

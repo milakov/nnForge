@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 
 namespace nnforge
 {
-	varying_data_stream_reader::varying_data_stream_reader(nnforge_shared_ptr<std::istream> input_stream)
+	varying_data_stream_reader::varying_data_stream_reader(std::shared_ptr<std::istream> input_stream)
 		: in_stream(input_stream)
 	{
 		in_stream->exceptions(std::ostream::eofbit | std::ostream::failbit | std::ostream::badbit);
@@ -45,10 +45,6 @@ namespace nnforge
 		in_stream->read(reinterpret_cast<char*>(&(*entry_offsets.begin())), sizeof(unsigned long long) * entry_offsets.size());
 	}
 
-	varying_data_stream_reader::~varying_data_stream_reader()
-	{
-	}
-
 	bool varying_data_stream_reader::raw_read(
 		unsigned int entry_id,
 		std::vector<unsigned char>& all_elems)
@@ -59,7 +55,7 @@ namespace nnforge
 		unsigned long long total_entry_size = entry_offsets[entry_id + 1] - entry_offsets[entry_id];
 		all_elems.resize(total_entry_size);
 		{
-			boost::lock_guard<boost::mutex> lock(read_data_from_stream_mutex);
+			std::lock_guard<std::mutex> lock(read_data_from_stream_mutex);
 			in_stream->seekg(reset_pos + (std::istream::off_type)(entry_offsets[entry_id]), std::ios::beg);
 			in_stream->read(reinterpret_cast<char*>(&(*all_elems.begin())), total_entry_size);
 		}
@@ -72,7 +68,7 @@ namespace nnforge
 		return static_cast<int>(entry_offsets.size() - 1);
 	}
 
-	raw_data_writer::ptr varying_data_stream_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const
+	raw_data_writer::ptr varying_data_stream_reader::get_writer(std::shared_ptr<std::ostream> out) const
 	{
 		return raw_data_writer::ptr(new varying_data_stream_writer(out));
 	}

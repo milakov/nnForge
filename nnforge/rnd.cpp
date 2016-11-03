@@ -1,8 +1,6 @@
 #include "rnd.h"
 
-#include <boost/chrono/system_clocks.hpp>
-#include <ctime>
-#include <limits.h>
+#include <chrono>
 
 namespace nnforge
 {
@@ -18,13 +16,7 @@ namespace nnforge
 
 	unsigned int rnd::get_time_dependent_seed()
 	{
-		unsigned int seed = static_cast<unsigned int>(std::time(0));
-
-#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
-		boost::chrono::steady_clock::time_point tp = boost::chrono::high_resolution_clock::now();
-		unsigned int add_on = static_cast<unsigned int>(tp.time_since_epoch().count());
-		seed += add_on;
-#endif
+		unsigned int seed = static_cast<unsigned int>(std::chrono::high_resolution_clock::now().time_since_epoch().count());
 
 		return seed;
 	}

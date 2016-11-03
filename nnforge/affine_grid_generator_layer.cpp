@@ -17,12 +17,10 @@
 #include "affine_grid_generator_layer.h"
 
 #include "neural_network_exception.h"
-#include "nn_types.h"
 #include "proto/nnforge.pb.h"
 
 #include <algorithm>
 #include <numeric>
-#include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
 #include <sstream>
 

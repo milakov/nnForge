@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,10 +35,6 @@ namespace nnforge
 	{
 		if (output_sizes.size() != left_padding.size())
 			throw neural_network_exception((boost::format("embed_data_transformer is created with different output_sizes and padding dimensions: %1% and %2%") % output_sizes.size() % left_padding.size()).str());
-	}
-
-	embed_data_transformer::~embed_data_transformer()
-	{
 	}
 
 	void embed_data_transformer::transform(

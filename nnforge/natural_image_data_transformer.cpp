@@ -38,15 +38,11 @@ namespace nnforge
 		, lighting_3rd_eigen_alpha_distribution(0.0F, (lighting > 0.0F ? lighting : 1.0F) * 0.0045F)
 	{
 		if (apply_brightness_distribution)
-			brightness_distribution = nnforge_uniform_real_distribution<float>(nnforge_uniform_real_distribution<float>(1.0F - brightness, 1.0F + brightness));
+			brightness_distribution = std::uniform_real_distribution<float>(std::uniform_real_distribution<float>(1.0F - brightness, 1.0F + brightness));
 		if (apply_contrast_distribution)
-			contrast_distribution = nnforge_uniform_real_distribution<float>(nnforge_uniform_real_distribution<float>(1.0F - contrast, 1.0F + contrast));
+			contrast_distribution = std::uniform_real_distribution<float>(std::uniform_real_distribution<float>(1.0F - contrast, 1.0F + contrast));
 		if (apply_saturation_distribution)
-			saturation_distribution = nnforge_uniform_real_distribution<float>(nnforge_uniform_real_distribution<float>(1.0F - saturation, 1.0F + saturation));
-	}
-
-	natural_image_data_transformer::~natural_image_data_transformer()
-	{
+			saturation_distribution = std::uniform_real_distribution<float>(std::uniform_real_distribution<float>(1.0F - saturation, 1.0F + saturation));
 	}
 
 	void natural_image_data_transformer::transform(
@@ -66,7 +62,7 @@ namespace nnforge
 		float alpha_lighting_2nd_eigen;
 		float alpha_lighting_3rd_eigen;
 		{
-			boost::lock_guard<boost::mutex> lock(gen_mutex);
+			std::lock_guard<std::mutex> lock(gen_mutex);
 
 			alpha_brightness = 1.0F;
 			if (apply_brightness_distribution)
@@ -88,7 +84,7 @@ namespace nnforge
 				augmentations.push_back(augmentation_saturation);
 			for(int i = static_cast<int>(augmentations.size()) - 1; i > 0; --i)
 			{
-				nnforge_uniform_int_distribution<int> dist(0, i);
+				std::uniform_int_distribution<int> dist(0, i);
 				int elem_id = dist(generator);
 				std::swap(augmentations[elem_id], augmentations[i]);
 			}

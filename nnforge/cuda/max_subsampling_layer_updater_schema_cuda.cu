@@ -27,14 +27,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		max_subsampling_layer_updater_schema::max_subsampling_layer_updater_schema()
-		{
-		}
-
-		max_subsampling_layer_updater_schema::~max_subsampling_layer_updater_schema()
-		{
-		}
-
 		layer_updater_schema::ptr max_subsampling_layer_updater_schema::create_specific() const
 		{
 			return layer_updater_schema::ptr(new max_subsampling_layer_updater_schema());
@@ -51,7 +43,7 @@ namespace nnforge
 		{
 			layer_updater_cuda::ptr res;
 
-			nnforge_shared_ptr<const max_subsampling_layer> layer_derived = nnforge_dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
+			std::shared_ptr<const max_subsampling_layer> layer_derived = std::dynamic_pointer_cast<const max_subsampling_layer>(layer_schema);
 
 			if (layer_derived->tiling)
 				throw neural_network_exception("There is no CUDA updater for max subsampling layer with tiling");

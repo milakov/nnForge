@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 
 #include "data_transformer.h"
 #include "feature_map_data_stat.h"
-#include "nn_types.h"
 
+#include <memory>
 #include <vector>
 
 namespace nnforge
@@ -27,13 +27,13 @@ namespace nnforge
 	class normalize_data_transformer : public data_transformer
 	{
 	public:
-		typedef nnforge_shared_ptr<normalize_data_transformer> ptr;
+		typedef std::shared_ptr<normalize_data_transformer> ptr;
 
-		normalize_data_transformer();
+		normalize_data_transformer() = default;
 
 		normalize_data_transformer(const std::vector<feature_map_data_stat>& feature_map_data_stat_list);
 
-		virtual ~normalize_data_transformer();
+		virtual ~normalize_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
@@ -49,20 +49,5 @@ namespace nnforge
 
 	public:
 		std::vector<std::pair<float, float> > mul_add_list;
-
-	private:
-		struct normalize_helper_struct
-		{
-			normalize_helper_struct(float mult, float add)
-				: mult(mult)
-				, add(add)
-			{
-			}
-
-			float operator()(float x) {return x * mult + add;}
-
-			float mult;
-			float add;
-		};
 	};
 }

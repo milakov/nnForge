@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,19 +17,19 @@
 #pragma once
 
 #include "layer_configuration_specific.h"
-#include "nn_types.h"
 
 #include <map>
 #include <set>
+#include <memory>
 
 namespace nnforge
 {
 	class structured_data_bunch_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_data_bunch_reader> ptr;
+		typedef std::shared_ptr<structured_data_bunch_reader> ptr;
 
-		virtual ~structured_data_bunch_reader();
+		virtual ~structured_data_bunch_reader() = default;
 
 		virtual std::map<std::string, layer_configuration_specific> get_config_map() const = 0;
 
@@ -47,10 +47,10 @@ namespace nnforge
 		virtual int get_entry_count() const;
 
 	protected:
-		structured_data_bunch_reader();
+		structured_data_bunch_reader() = default;
 
 	private:
-		structured_data_bunch_reader(const structured_data_bunch_reader&);
-		structured_data_bunch_reader& operator =(const structured_data_bunch_reader&);
+		structured_data_bunch_reader(const structured_data_bunch_reader&) = delete;
+		structured_data_bunch_reader& operator =(const structured_data_bunch_reader&) = delete;
 	};
 }

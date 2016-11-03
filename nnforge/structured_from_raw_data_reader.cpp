@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,14 +24,6 @@ namespace nnforge
 		: raw_reader(raw_reader)
 		, transformer(transformer)
 		, transformer_sample_count(transformer->get_sample_count())
-	{
-	}
-
-	structured_from_raw_data_reader::structured_from_raw_data_reader()
-	{
-	}
-
-	structured_from_raw_data_reader::~structured_from_raw_data_reader()
 	{
 	}
 
@@ -67,7 +59,7 @@ namespace nnforge
 		return raw_reader->get_entry_count() * transformer_sample_count;
 	}
 
-	raw_data_writer::ptr structured_from_raw_data_reader::get_writer(nnforge_shared_ptr<std::ostream> out) const
+	raw_data_writer::ptr structured_from_raw_data_reader::get_writer(std::shared_ptr<std::ostream> out) const
 	{
 		return raw_reader->get_writer(out);
 	}

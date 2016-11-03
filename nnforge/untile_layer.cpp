@@ -20,7 +20,6 @@
 #include "proto/nnforge.pb.h"
 
 #include <algorithm>
-#include <boost/lambda/lambda.hpp>
 #include <boost/format.hpp>
 #include <sstream>
 
@@ -158,7 +157,7 @@ namespace nnforge
 		std::vector<tiling_factor> tiling_factor_list = get_tiling_factor_list();
 
 		tiling_factor res = 1;
-		std::for_each(tiling_factor_list.begin(), tiling_factor_list.end(), res *= boost::lambda::_1);
+		std::for_each(tiling_factor_list.begin(), tiling_factor_list.end(), [&res] (tiling_factor x) { res *= x; });
 
 		return res;
 	}

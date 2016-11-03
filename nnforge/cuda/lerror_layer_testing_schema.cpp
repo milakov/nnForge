@@ -23,14 +23,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		lerror_layer_testing_schema::lerror_layer_testing_schema()
-		{
-		}
-
-		lerror_layer_testing_schema::~lerror_layer_testing_schema()
-		{
-		}
-
 		std::string lerror_layer_testing_schema::get_type_name() const
 		{
 			return lerror_layer::layer_type_name;

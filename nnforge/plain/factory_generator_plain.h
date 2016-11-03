@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ namespace nnforge
 				float plain_max_global_memory_usage,
 				int plain_openmp_thread_count);
 
-			factory_generator_plain();
+			factory_generator_plain() = default;
 
-			~factory_generator_plain();
+			~factory_generator_plain() = default;
 
 			virtual void initialize();
 

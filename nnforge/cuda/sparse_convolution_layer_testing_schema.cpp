@@ -29,14 +29,6 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		sparse_convolution_layer_testing_schema::sparse_convolution_layer_testing_schema()
-		{
-		}
-
-		sparse_convolution_layer_testing_schema::~sparse_convolution_layer_testing_schema()
-		{
-		}
-
 		std::string sparse_convolution_layer_testing_schema::get_type_name() const
 		{
 			return sparse_convolution_layer::layer_type_name;
@@ -51,7 +43,7 @@ namespace nnforge
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			nnforge_shared_ptr<const sparse_convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
+			std::shared_ptr<const sparse_convolution_layer> layer_derived = std::dynamic_pointer_cast<const sparse_convolution_layer>(layer_schema);
 
 			bool zero_padding = (layer_derived->left_zero_padding == std::vector<unsigned int>(layer_derived->left_zero_padding.size(), 0))
 				&& (layer_derived->right_zero_padding == std::vector<unsigned int>(layer_derived->right_zero_padding.size(), 0));

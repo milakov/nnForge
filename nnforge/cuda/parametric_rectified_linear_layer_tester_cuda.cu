@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "util_cuda.h"
 
 #include "../parametric_rectified_linear_layer.h"
-#include "../nn_types.h"
 
 namespace nnforge
 {
@@ -46,14 +45,6 @@ namespace nnforge
 				float output_val = input_val * (input_val >= 0.0F ? 1.0F : a);
 				output[offset] = output_val;
 			}
-		}
-
-		parametric_rectified_linear_layer_tester_cuda::parametric_rectified_linear_layer_tester_cuda()
-		{
-		}
-
-		parametric_rectified_linear_layer_tester_cuda::~parametric_rectified_linear_layer_tester_cuda()
-		{
 		}
 
 		void parametric_rectified_linear_layer_tester_cuda::enqueue_forward_propagation(

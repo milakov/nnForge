@@ -25,9 +25,9 @@ namespace nnforge
 		class cdf_to_pdf_layer_updater_plain : public layer_updater_plain
 		{
 		public:
-			cdf_to_pdf_layer_updater_plain();
+			cdf_to_pdf_layer_updater_plain() = default;
 
-			virtual ~cdf_to_pdf_layer_updater_plain();
+			virtual ~cdf_to_pdf_layer_updater_plain() = default;
 
 			virtual std::string get_type_name() const;
 

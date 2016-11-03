@@ -18,23 +18,23 @@
 
 #include "structured_data_bunch_reader.h"
 #include "structured_data_stream_reader.h"
-#include "nn_types.h"
 
 #include <string>
+#include <memory>
 
 namespace nnforge
 {
 	class structured_data_bunch_stream_reader : public structured_data_bunch_reader
 	{
 	public:
-		typedef nnforge_shared_ptr<structured_data_bunch_stream_reader> ptr;
+		typedef std::shared_ptr<structured_data_bunch_stream_reader> ptr;
 
 		structured_data_bunch_stream_reader(
 			const std::map<std::string, structured_data_reader::ptr>& data_reader_map,
 			unsigned int multiple_epoch_count,
 			unsigned int shuffle_block_size);
 
-		virtual ~structured_data_bunch_stream_reader();
+		virtual ~structured_data_bunch_stream_reader() = default;
 
 		virtual std::map<std::string, layer_configuration_specific> get_config_map() const;
 

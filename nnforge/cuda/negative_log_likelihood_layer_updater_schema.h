@@ -25,9 +25,9 @@ namespace nnforge
 		class negative_log_likelihood_layer_updater_schema : public layer_updater_schema
 		{
 		public:
-			negative_log_likelihood_layer_updater_schema();
+			negative_log_likelihood_layer_updater_schema() = default;
 
-			virtual ~negative_log_likelihood_layer_updater_schema();
+			virtual ~negative_log_likelihood_layer_updater_schema() = default;
 
 			virtual std::string get_type_name() const;
 

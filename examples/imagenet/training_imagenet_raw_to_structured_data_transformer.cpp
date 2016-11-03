@@ -51,7 +51,7 @@ void training_imagenet_raw_to_structured_data_transformer::transform(
 	unsigned int y = (original_image.rows - source_crop_image_height) / 2;
 
 	{
-		boost::lock_guard<boost::mutex> lock(gen_mutex);
+		std::lock_guard<std::mutex> lock(gen_mutex);
 		for(int attempt = 0; attempt < 10; ++attempt)
 		{
 			float local_area = static_cast<float>(original_image.rows * original_image.cols);
@@ -68,8 +68,8 @@ void training_imagenet_raw_to_structured_data_transformer::transform(
 			{
 				source_crop_image_width = new_source_crop_image_width;
 				source_crop_image_height = new_source_crop_image_height;
-				nnforge_uniform_int_distribution<unsigned int> x_dist(0, original_image.cols - source_crop_image_width);
-				nnforge_uniform_int_distribution<unsigned int> y_dist(0, original_image.rows - source_crop_image_height);
+				std::uniform_int_distribution<unsigned int> x_dist(0, original_image.cols - source_crop_image_width);
+				std::uniform_int_distribution<unsigned int> y_dist(0, original_image.rows - source_crop_image_height);
 				x = x_dist.min();
 				if (x_dist.max() > x_dist.min())
 					x = x_dist(gen);

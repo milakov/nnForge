@@ -17,7 +17,6 @@
 #include "convolution_layer_tester_plain.h"
 
 #include "../convolution_layer.h"
-#include "../nn_types.h"
 
 #include <array>
 
@@ -26,14 +25,6 @@ namespace nnforge
 	namespace plain
 	{
 		const int convolution_layer_tester_plain::max_dimension_count = 4;
-
-		convolution_layer_tester_plain::convolution_layer_tester_plain()
-		{
-		}
-
-		convolution_layer_tester_plain::~convolution_layer_tester_plain()
-		{
-		}
 
 		std::string convolution_layer_tester_plain::get_type_name() const
 		{
@@ -59,7 +50,7 @@ namespace nnforge
 			const unsigned int input_neuron_count_per_feature_map = input_configuration_specific_list[0].get_neuron_count_per_feature_map();
 			const unsigned int output_neuron_count = output_configuration_specific.get_neuron_count();
 			const unsigned int output_neuron_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
-			nnforge_shared_ptr<const convolution_layer> layer_derived = nnforge_dynamic_pointer_cast<const convolution_layer>(layer_schema);
+			std::shared_ptr<const convolution_layer> layer_derived = std::dynamic_pointer_cast<const convolution_layer>(layer_schema);
 
 			const bool bias = layer_derived->bias;
 
@@ -123,8 +114,8 @@ namespace nnforge
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
-				nnforge_array<unsigned int, max_dimension_count> current_output_position;
-				nnforge_array<int, max_dimension_count> current_input_position;
+				std::array<unsigned int, max_dimension_count> current_output_position;
+				std::array<int, max_dimension_count> current_input_position;
 
 				#pragma omp for schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
