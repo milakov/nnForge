@@ -749,6 +749,11 @@ namespace nnforge
 
 		complex_network_data_pusher progress;
 
+		progress.push_back(network_data_pusher::ptr(new report_progress_network_data_pusher()));
+
+		std::vector<network_data_pusher::ptr> train_modifiers_before_snapshot = get_train_modifiers_before_snapshot(get_schema(schema_usage_train));
+		progress.insert(progress.end(), train_modifiers_before_snapshot.begin(), train_modifiers_before_snapshot.end());
+
 		if (dump_snapshot)
 		{
 			progress.push_back(network_data_pusher::ptr(new save_snapshot_network_data_pusher(batch_snapshot_folder)));
@@ -758,8 +763,6 @@ namespace nnforge
 		{
 			progress.push_back(network_data_pusher::ptr(new clean_snapshots_network_data_pusher(batch_snapshot_folder, keep_snapshots_frequency)));
 		}
-
-		progress.push_back(network_data_pusher::ptr(new report_progress_network_data_pusher()));
 
 		std::vector<network_data_pusher::ptr> validators_for_training = get_validators_for_training(get_schema(schema_usage_validate_when_train));
 		progress.insert(progress.end(), validators_for_training.begin(), validators_for_training.end());
@@ -793,6 +796,11 @@ namespace nnforge
 		}
 
 		return res;
+	}
+
+	std::vector<network_data_pusher::ptr> toolset::get_train_modifiers_before_snapshot(network_schema::const_ptr schema)
+	{
+		return std::vector<network_data_pusher::ptr>();
 	}
 
 	bool toolset::is_training_with_validation() const

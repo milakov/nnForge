@@ -101,6 +101,8 @@ namespace nnforge
 
 		virtual std::vector<network_data_pusher::ptr> get_validators_for_training(network_schema::const_ptr schema);
 
+		virtual std::vector<network_data_pusher::ptr> get_train_modifiers_before_snapshot(network_schema::const_ptr schema);
+
 		virtual bool is_training_with_validation() const;
 
 		virtual void prepare_training_data();

@@ -77,6 +77,19 @@ namespace nnforge
 
 		static const std::string layer_type_name;
 
+		static void fill_connection_matrix(
+			std::vector<bool>& connection_matrix,
+			random_generator& generator,
+			unsigned int output_feature_map_count,
+			unsigned int input_feature_map_count,
+			unsigned int feature_map_connection_count);
+
+		static void fill_data_custom(
+			layer_data_custom& data_custom,
+			const std::vector<bool>& connection_matrix,
+			unsigned int output_feature_map_count,
+			unsigned int input_feature_map_count);
+
 	protected:
 		virtual data_config get_data_config() const;
 
