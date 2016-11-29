@@ -16,30 +16,35 @@
 
 #pragma once
 
-#include "layer_updater_schema.h"
+#include <memory>
+
+#include "cuda_stream.h"
+#include "cuda_linear_buffer_device.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		class rgb_to_yuv_convert_layer_updater_schema : public layer_updater_schema
+		class cuda_communicator
 		{
 		public:
-			rgb_to_yuv_convert_layer_updater_schema() = default;
+			typedef std::shared_ptr<cuda_communicator> ptr;
+			typedef std::shared_ptr<const cuda_communicator> const_ptr;
 
-			virtual ~rgb_to_yuv_convert_layer_updater_schema() = default;
+			virtual ~cuda_communicator() = default;
 
-			virtual std::string get_type_name() const;
-
-			virtual std::vector<cuda_linear_buffer_device::const_ptr> get_schema_buffers() const;
+			virtual void enqueue_reduce_all(
+				const char * name,
+				int device_pos,
+				cuda_linear_buffer_device::ptr data,
+				cuda_stream::ptr stream) = 0;
 
 		protected:
-			virtual layer_updater_schema::ptr create_specific() const;
+			cuda_communicator() = default;
 
-			virtual layer_updater_cuda::ptr create_updater_specific(
-				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-				const layer_configuration_specific& output_configuration_specific,
-				const cuda_running_configuration& cuda_config) const;
+		private:
+			cuda_communicator(const cuda_communicator&) = delete;
+			cuda_communicator& operator =(const cuda_communicator&) = delete;
 		};
 	}
 }

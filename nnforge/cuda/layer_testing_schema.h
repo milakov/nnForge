@@ -41,13 +41,12 @@ namespace nnforge
 
 			virtual ~layer_testing_schema() = default;
 
-			std::shared_ptr<layer_testing_schema> create(
-				layer::const_ptr layer_schema,
-				cuda_running_configuration::const_ptr cuda_config) const;
+			std::shared_ptr<layer_testing_schema> create(layer::const_ptr layer_schema) const;
 
 			layer_tester_cuda::ptr create_tester(
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-				const layer_configuration_specific& output_configuration_specific) const;
+				const layer_configuration_specific& output_configuration_specific,
+				cuda_running_configuration::const_ptr cuda_config) const;
 
 			virtual std::string get_type_name() const = 0;
 
@@ -59,12 +58,12 @@ namespace nnforge
 
 			virtual layer_tester_cuda::ptr create_tester_specific(
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-				const layer_configuration_specific& output_configuration_specific) const = 0;
+				const layer_configuration_specific& output_configuration_specific,
+				const cuda_running_configuration& cuda_config) const = 0;
 
 			layer_testing_schema() = default;
 
 			layer::const_ptr layer_schema;
-			cuda_running_configuration::const_ptr cuda_config;
 
 		private:
 			layer_testing_schema(const layer_testing_schema&) = delete;

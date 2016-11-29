@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../forward_propagation_factory.h"
-#include "cuda_running_configuration.h"
+#include "cuda_multi_running_configuration.h"
 
 namespace nnforge
 {
@@ -26,7 +26,7 @@ namespace nnforge
 		class forward_propagation_cuda_factory : public forward_propagation_factory
 		{
 		public:
-			forward_propagation_cuda_factory(cuda_running_configuration::const_ptr cuda_config);
+			forward_propagation_cuda_factory(cuda_multi_running_configuration::const_ptr cuda_multi_config);
 
 			virtual ~forward_propagation_cuda_factory() = default;
 
@@ -37,7 +37,7 @@ namespace nnforge
 				profile_state::ptr profile) const;
 
 		protected:
-			cuda_running_configuration::const_ptr cuda_config;
+			cuda_multi_running_configuration::const_ptr cuda_multi_config;
 		};
 	}
 }

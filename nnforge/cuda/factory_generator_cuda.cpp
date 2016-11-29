@@ -20,6 +20,8 @@
 #include "backward_propagation_cuda_factory.h"
 
 #include <iostream>
+#include <sstream>
+#include <boost/algorithm/string.hpp>
 
 namespace nnforge
 {
@@ -45,8 +47,16 @@ namespace nnforge
 
 		void factory_generator_cuda::initialize()
 		{
-			cuda_config = cuda_running_configuration::const_ptr(new cuda_running_configuration(
-				cuda_device_id,
+			std::vector<unsigned int> cuda_device_id_list;
+			{
+				std::vector<std::string> strs;
+				boost::split(strs, cuda_device_id_list_str, boost::is_any_of(","));
+				for(const auto& elem: strs)
+					cuda_device_id_list.push_back(atol(elem.c_str()));
+			}
+
+			cuda_multi_config = cuda_multi_running_configuration::const_ptr(new cuda_multi_running_configuration(
+				cuda_device_id_list,
 				cuda_max_global_memory_usage_ratio,
 				cuda_reserved_thread_count,
 				cuda_dont_share_buffers,
@@ -57,12 +67,12 @@ namespace nnforge
 
 		forward_propagation_factory::ptr factory_generator_cuda::create_forward_propagation_factory() const
 		{
-			return forward_propagation_factory::ptr(new forward_propagation_cuda_factory(cuda_config));
+			return forward_propagation_factory::ptr(new forward_propagation_cuda_factory(cuda_multi_config));
 		}
 
 		backward_propagation_factory::ptr factory_generator_cuda::create_backward_propagation_factory() const
 		{
-			return backward_propagation_factory::ptr(new backward_propagation_cuda_factory(cuda_config));
+			return backward_propagation_factory::ptr(new backward_propagation_cuda_factory(cuda_multi_config));
 		}
 
 		std::vector<float_option> factory_generator_cuda::get_float_options()
@@ -79,7 +89,6 @@ namespace nnforge
 		{
 			std::vector<int_option> res;
 
-			res.push_back(int_option("cuda_device_id,D", &cuda_device_id, 0, "CUDA device ID"));
 			res.push_back(int_option("cuda_reserved_thread_count", &cuda_reserved_thread_count, 1, "The number of hw threads not used for input data processing"));
 			res.push_back(int_option("cuda_optimize_action_graph_assumed_chunk_size", &cuda_optimize_action_graph_assumed_chunk_size, 32, "Assumed chunk size when optimizing action graph"));
 
@@ -96,9 +105,26 @@ namespace nnforge
 			return res;
 		}
 
+		std::vector<string_option> factory_generator_cuda::get_string_options()
+		{
+			std::vector<string_option> res;
+
+			std::stringstream default_device_id_list_str;
+			auto default_device_id_list = cuda_multi_running_configuration::get_default_device_id_list();
+			for(size_t i = 0; i < default_device_id_list.size(); ++i)
+			{
+				if(i != 0)
+					default_device_id_list_str << ",";
+				default_device_id_list_str << default_device_id_list[i];
+			}
+			res.push_back(string_option("cuda_device_id,D", &cuda_device_id_list_str, default_device_id_list_str.str().c_str(), "Comma-separated list of CUDA device IDs"));
+
+			return res;
+		}
+
 		void factory_generator_cuda::info() const
 		{
-			std::cout << *cuda_config;
+			std::cout << *cuda_multi_config;
 		}
 	}
 }

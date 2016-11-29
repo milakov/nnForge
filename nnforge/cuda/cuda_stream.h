@@ -30,6 +30,8 @@ namespace nnforge
 
 			cuda_stream();
 
+			cuda_stream(int priority);
+
 			virtual ~cuda_stream();
 
 			operator cudaStream_t ();

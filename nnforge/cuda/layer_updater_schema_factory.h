@@ -34,9 +34,7 @@ namespace nnforge
 
 			bool unregister_layer_updater_schema(const std::string& layer_type_name);
 
-			layer_updater_schema::ptr create_updater_schema_layer(
-				layer::const_ptr layer,
-				cuda_running_configuration::const_ptr cuda_config) const;
+			layer_updater_schema::ptr create_updater_schema_layer(layer::const_ptr layer) const;
 
 			static layer_updater_schema_factory& get_singleton();
 

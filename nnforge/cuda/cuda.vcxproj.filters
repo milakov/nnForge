@@ -572,6 +572,15 @@
     <ClInclude Include="sparse_1x1_layer_tester_cuda.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
+    <ClInclude Include="cuda_multi_running_configuration.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="cuda_communicator.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="host_staged_cuda_communicator.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -864,6 +873,12 @@
     </ClCompile>
     <ClCompile Include="sparse_1x1_layer_tester_cuda.cpp">
       <Filter>Source Files\layer_testers</Filter>
+    </ClCompile>
+    <ClCompile Include="cuda_multi_running_configuration.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="host_staged_cuda_communicator.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -41,14 +41,13 @@ namespace nnforge
 
 			virtual ~layer_updater_schema() = default;
 
-			std::shared_ptr<layer_updater_schema> create(
-				layer::const_ptr layer_schema,
-				cuda_running_configuration::const_ptr cuda_config) const;
+			std::shared_ptr<layer_updater_schema> create(layer::const_ptr layer_schema) const;
 
 			layer_updater_cuda::ptr create_updater(
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 				const layer_configuration_specific& output_configuration_specific,
-				const std::set<layer_action>& actions) const;
+				const std::set<layer_action>& actions,
+				cuda_running_configuration::const_ptr cuda_config) const;
 
 			virtual std::string get_type_name() const = 0;
 
@@ -60,12 +59,12 @@ namespace nnforge
 
 			virtual layer_updater_cuda::ptr create_updater_specific(
 				const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-				const layer_configuration_specific& output_configuration_specific) const = 0;
+				const layer_configuration_specific& output_configuration_specific,
+				const cuda_running_configuration& cuda_config) const = 0;
 
 			layer_updater_schema() = default;
 
 			layer::const_ptr layer_schema;
-			cuda_running_configuration::const_ptr cuda_config;
 
 		private:
 			layer_updater_schema(const layer_updater_schema&) = delete;

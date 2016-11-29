@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../factory_generator.h"
-#include "cuda_running_configuration.h"
+#include "cuda_multi_running_configuration.h"
 
 namespace nnforge
 {
@@ -53,6 +53,8 @@ namespace nnforge
 
 			virtual std::vector<bool_option> get_bool_options();
 
+			virtual std::vector<string_option> get_string_options();
+
 		protected:
 			int cuda_device_id;
 			float cuda_max_global_memory_usage_ratio;
@@ -61,8 +63,9 @@ namespace nnforge
 			bool cuda_single_command_stream;
 			int cuda_optimize_action_graph_assumed_chunk_size;
 			float cuda_fixed_working_buffers_ratio;
+			std::string cuda_device_id_list_str;
 
-			cuda_running_configuration::const_ptr cuda_config;
+			cuda_multi_running_configuration::const_ptr cuda_multi_config;
 		};
 	}
 }

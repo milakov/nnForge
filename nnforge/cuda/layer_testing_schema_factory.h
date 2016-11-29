@@ -34,9 +34,7 @@ namespace nnforge
 
 			bool unregister_layer_testing_schema(const std::string& layer_type_name);
 
-			layer_testing_schema::ptr create_testing_schema_layer(
-				layer::const_ptr layer,
-				cuda_running_configuration::const_ptr cuda_config) const;
+			layer_testing_schema::ptr create_testing_schema_layer(layer::const_ptr layer) const;
 
 			static layer_testing_schema_factory& get_singleton();
 

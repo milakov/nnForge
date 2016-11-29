@@ -22,25 +22,24 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		layer_testing_schema::ptr layer_testing_schema::create(
-			layer::const_ptr layer_schema,
-			cuda_running_configuration::const_ptr cuda_config) const
+		layer_testing_schema::ptr layer_testing_schema::create(layer::const_ptr layer_schema) const
 		{
 			layer_testing_schema::ptr res = create_specific();
 
 			res->layer_schema = layer_schema;
-			res->cuda_config = cuda_config;
 
 			return res;
 		}
 
 		layer_tester_cuda::ptr layer_testing_schema::create_tester(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-			const layer_configuration_specific& output_configuration_specific) const
+			const layer_configuration_specific& output_configuration_specific,
+			cuda_running_configuration::const_ptr cuda_config) const
 		{
 			layer_tester_cuda::ptr res = create_tester_specific(
 				input_configuration_specific_list,
-				output_configuration_specific);
+				output_configuration_specific,
+				*cuda_config);
 
 			res->configure(
 				input_configuration_specific_list,

@@ -57,6 +57,8 @@
     <ClInclude Include="cross_entropy_layer_testing_schema.h" />
     <ClInclude Include="cross_entropy_layer_updater_cuda.h" />
     <ClInclude Include="cross_entropy_layer_updater_schema.h" />
+    <ClInclude Include="cuda_communicator.h" />
+    <ClInclude Include="cuda_multi_running_configuration.h" />
     <ClInclude Include="cudnn_util.h" />
     <ClInclude Include="dropout_layer_tester_cuda.h" />
     <ClInclude Include="dropout_layer_testing_schema.h" />
@@ -72,6 +74,7 @@
     <ClInclude Include="gradient_modifier_layer_updater_cuda.h" />
     <ClInclude Include="gradient_modifier_layer_updater_schema.h" />
     <ClInclude Include="cdf_to_pdf_layer_tester_cuda.h" />
+    <ClInclude Include="host_staged_cuda_communicator.h" />
     <ClInclude Include="int_fastdiv.h" />
     <ClInclude Include="linear_sampler_layer_testing_schema.h" />
     <ClInclude Include="linear_sampler_layer_tester_cuda.h" />
@@ -210,6 +213,7 @@
     <ClCompile Include="cuda_linear_buffer.cpp" />
     <ClCompile Include="cuda_linear_buffer_device.cpp" />
     <ClCompile Include="cuda_linear_buffer_host.cpp" />
+    <ClCompile Include="cuda_multi_running_configuration.cpp" />
     <ClCompile Include="cuda_running_configuration.cpp" />
     <ClCompile Include="cuda_stream.cpp" />
     <ClCompile Include="cuda_texture.cpp" />
@@ -227,6 +231,7 @@
     <ClCompile Include="gradient_modifier_layer_testing_schema.cpp" />
     <ClCompile Include="gradient_modifier_layer_updater_cuda.cpp" />
     <ClCompile Include="gradient_modifier_layer_updater_schema.cpp" />
+    <ClCompile Include="host_staged_cuda_communicator.cpp" />
     <ClCompile Include="hyperbolic_tangent_layer_testing_schema.cpp" />
     <ClCompile Include="hyperbolic_tangent_layer_updater_schema.cpp" />
     <ClCompile Include="layer_tester_cuda.cpp" />

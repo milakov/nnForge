@@ -35,7 +35,8 @@ namespace nnforge
 
 		layer_updater_cuda::ptr linear_sampler_layer_updater_schema::create_updater_specific(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-			const layer_configuration_specific& output_configuration_specific) const
+			const layer_configuration_specific& output_configuration_specific,
+			const cuda_running_configuration& cuda_config) const
 		{
 			return layer_updater_cuda::ptr(new linear_sampler_layer_updater_cuda());
 		}

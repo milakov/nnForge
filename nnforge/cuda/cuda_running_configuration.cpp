@@ -20,7 +20,6 @@
 #include <boost/format.hpp>
 #include <limits>
 #include <iostream>
-#include <thread>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -41,18 +40,14 @@ namespace nnforge
 		cuda_running_configuration::cuda_running_configuration(
 			int device_id,
 			float max_global_memory_usage_ratio,
-			unsigned int reserved_thread_count,
-			bool dont_share_buffers,
-			bool single_command_stream,
-			unsigned int optimize_action_graph_assumed_chunk_size,
-			float cuda_fixed_working_buffers_ratio)
+			float cuda_fixed_working_buffers_ratio,
+			int device_pos,
+			cuda_communicator::ptr communicator)
 			: device_id(device_id)
 			, max_global_memory_usage_ratio(max_global_memory_usage_ratio)
-			, reserved_thread_count(reserved_thread_count)
-			, dont_share_buffers(dont_share_buffers)
-			, single_command_stream(single_command_stream)
-			, optimize_action_graph_assumed_chunk_size(optimize_action_graph_assumed_chunk_size)
 			, cuda_fixed_working_buffers_ratio(cuda_fixed_working_buffers_ratio)
+			, device_pos(device_pos)
+			, communicator(communicator)
 			, cublas_handle(0)
 			, cusparse_handle(0)
 			, cudnn_handle(0)
@@ -63,6 +58,7 @@ namespace nnforge
 
 		cuda_running_configuration::~cuda_running_configuration()
 		{
+			set_device();
 			if (cublas_handle)
 				cublasDestroy(cublas_handle);
 			if (cusparse_handle)
@@ -76,16 +72,9 @@ namespace nnforge
 
 		void cuda_running_configuration::update_parameters()
 		{
-			cuda_safe_call(cudaDriverGetVersion(&driver_version));
-			cuda_safe_call(cudaRuntimeGetVersion(&runtime_version));
+			set_device();
 
-			int device_count;
-		    cuda_safe_call(cudaGetDeviceCount(&device_count));
-			if (device_count <= 0)
-				throw neural_network_exception("No CUDA capable devices are found");
-
-			if (device_id >= device_count)
-				throw neural_network_exception((boost::format("Device ID %1% specified while %2% devices are available") % device_id % device_count).str());
+			cuda_safe_call(cudaSetDeviceFlags(cudaDeviceScheduleYield | cudaDeviceMapHost));
 
 			cudaDeviceProp device_prop;
 			cuda_safe_call(cudaGetDeviceProperties(&device_prop, device_id));
@@ -114,12 +103,12 @@ namespace nnforge
 			tcc_mode = (device_prop.tccDriver != 0);
 		#endif
 
+			cuda_safe_call(cudaDeviceGetStreamPriorityRange(&least_stream_priority, &greatest_stream_priority));
+
 			if (compute_capability_major < 3)
 			{
 				throw neural_network_exception((boost::format("Insufficient compute capability %1%.%2% for device #%3% \"%4%\". Kepler and above architectures supported only.") % compute_capability_major % compute_capability_minor % device_id % device_name).str());
 			}
-
-			cuda_safe_call(cudaSetDevice(device_id));
 
 			cublas_safe_call(cublasCreate(&cublas_handle));
 
@@ -129,9 +118,6 @@ namespace nnforge
 
 			curand_safe_call(curandCreateGenerator(&curand_gen, CURAND_RNG_PSEUDO_MRG32K3A));
 			curand_safe_call(curandSetPseudoRandomGeneratorSeed(curand_gen, rnd::get_time_dependent_seed()));
-
-			unsigned int core_count = std::thread::hardware_concurrency();
-			job_runner = threadpool_job_runner::ptr(new threadpool_job_runner(core_count > reserved_thread_count ? core_count - reserved_thread_count : 1));
 		}
 
 		void cuda_running_configuration::set_device() const
@@ -150,14 +136,11 @@ namespace nnforge
 
 		std::ostream& operator<< (std::ostream& out, const cuda_running_configuration& running_configuration)
 		{
-			out << "--- CUDA versions ---" << std::endl;
-			out << "Driver version = " << running_configuration.driver_version / 1000 << "." << (running_configuration.driver_version % 100) / 10 << std::endl;
-			out << "Runtime version = " << running_configuration.runtime_version / 1000 << "." << (running_configuration.runtime_version % 100) / 10 << std::endl;
+			running_configuration.set_device();
 
-			out << "--- Device ---" << std::endl;
+			out << "--- Device " << running_configuration.device_name << " ---" << std::endl;
 
 			out << "Device Id = " << running_configuration.device_id << std::endl;
-			out << "Device name = " << running_configuration.device_name << std::endl;
 			out << "Compute capability = " << running_configuration.compute_capability_major << "." << running_configuration.compute_capability_minor << std::endl;
 			out << "Clock rate = " << (running_configuration.clock_rate / 1000) << " MHz" << std::endl;
 			out << "Memory clock rate = " << (running_configuration.memory_clock_rate / 1000) << " MHz" << std::endl;
@@ -185,17 +168,10 @@ namespace nnforge
 				out << "Driver mode = " << (running_configuration.tcc_mode ? "TCC" : "WDDM") << std::endl;
 			#endif
 			out << "Estimated GFLOPS = " << static_cast<int>(running_configuration.get_flops() / 1.0e+9F) << std::endl;
-
-			out << "--- Settings ---" << std::endl;
+			out << "Stream priorities " << ((running_configuration.greatest_stream_priority != running_configuration.least_stream_priority) ? "present" : "absent") << std::endl;
 
 			out << "Max global memory usage ratio = " << running_configuration.max_global_memory_usage_ratio << std::endl;
 			out << "Fixed working buffers ratio = " << running_configuration.cuda_fixed_working_buffers_ratio << std::endl;
-			out << "Threads reserved for CUDA sync (others will be used for on-the-fly data processing by job runner) = " << running_configuration.reserved_thread_count << std::endl;
-			out << "Don't share buffers = " << running_configuration.dont_share_buffers << std::endl;
-			out << "Use single command stream = " << running_configuration.single_command_stream << std::endl;
-			out << "Assumed chunk size when optimizing action graph = " << running_configuration.optimize_action_graph_assumed_chunk_size << std::endl;
-
-			out << "--- Status ---" << std::endl;
 
 			size_t free_memory;
 			size_t total_memory;
@@ -203,7 +179,6 @@ namespace nnforge
 
 			out << "Free memory = " << free_memory / (1024 * 1024) << " MiB" << std::endl;
 			out << "Total memory = " << total_memory / (1024 * 1024) << " MiB" << std::endl;
-			out << "Job runner thread count = " << running_configuration.get_job_runner()->thread_count << std::endl;
 
 			return out;
 		}
@@ -248,21 +223,6 @@ namespace nnforge
 		curandGenerator_t cuda_running_configuration::get_curand_generator() const
 		{
 			return curand_gen;
-		}
-
-		threadpool_job_runner::ptr cuda_running_configuration::get_job_runner() const
-		{
-			return job_runner;
-		}
-
-		bool cuda_running_configuration::is_dont_share_buffers() const
-		{
-			return dont_share_buffers;
-		}
-
-		bool cuda_running_configuration::is_single_command_stream() const
-		{
-			return single_command_stream;
 		}
 
 		int cuda_running_configuration::get_core_count_per_sm() const
@@ -530,6 +490,18 @@ namespace nnforge
 				return false;
 
 			return false;
+		}
+
+		void cuda_running_configuration::enqueue_reduce_all(
+			const char * name,
+			cuda_linear_buffer_device::ptr data,
+			cuda_stream::ptr stream)
+		{
+			communicator->enqueue_reduce_all(
+				name,
+				device_pos,
+				data,
+				stream);
 		}
 	}
 }

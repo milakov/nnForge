@@ -22,8 +22,8 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		forward_propagation_cuda_factory::forward_propagation_cuda_factory(cuda_running_configuration::const_ptr cuda_config)
-			: cuda_config(cuda_config)
+		forward_propagation_cuda_factory::forward_propagation_cuda_factory(cuda_multi_running_configuration::const_ptr cuda_multi_config)
+			: cuda_multi_config(cuda_multi_config)
 		{
 		}
 
@@ -33,7 +33,7 @@ namespace nnforge
 			debug_state::ptr debug,
 			profile_state::ptr profile) const
 		{
-			return forward_propagation::ptr(new forward_propagation_cuda(schema, output_layer_names, debug, profile, cuda_config));
+			return forward_propagation::ptr(new forward_propagation_cuda(schema, output_layer_names, debug, profile, cuda_multi_config));
 		}
 	}
 }

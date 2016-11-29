@@ -33,18 +33,14 @@ namespace nnforge
 			return sample_layer_updater_schema_map.erase(layer_name) == 1;
 		}
 
-		layer_updater_schema::ptr layer_updater_schema_factory::create_updater_schema_layer(
-			layer::const_ptr layer,
-			cuda_running_configuration::const_ptr cuda_config) const
+		layer_updater_schema::ptr layer_updater_schema_factory::create_updater_schema_layer(layer::const_ptr layer) const
 		{
 			sample_map::const_iterator i = sample_layer_updater_schema_map.find(layer->get_type_name());
 
 			if (i == sample_layer_updater_schema_map.end())
 				throw neural_network_exception((boost::format("No CUDA layer updater schema is registered with type name %1%") % layer->get_type_name()).str());
 
-			return i->second->create(
-				layer,
-				cuda_config);
+			return i->second->create(layer);
 		}
 
 		layer_updater_schema_factory& layer_updater_schema_factory::get_singleton()

@@ -26,8 +26,7 @@
 #include <memory>
 
 #include "buffer_cuda_size_configuration.h"
-#include "../threadpool_job_runner.h"
-
+#include "cuda_communicator.h"
 #include "cudnn_util.h"
 
 namespace nnforge
@@ -53,19 +52,17 @@ namespace nnforge
 			cuda_running_configuration(
 				int device_id,
 				float max_global_memory_usage_ratio,
-				unsigned int reserved_thread_count,
-				bool dont_share_buffers,
-				bool single_command_stream,
-				unsigned int optimize_action_graph_assumed_chunk_size,
-				float cuda_fixed_working_buffers_ratio);
+				float cuda_fixed_working_buffers_ratio,
+				int device_pos,
+				cuda_communicator::ptr communicator);
 
 			~cuda_running_configuration();
+
+			size_t get_max_fixed_working_buffers_size() const;
 
 			unsigned int get_max_entry_count(
 				const buffer_cuda_size_configuration& buffers_config,
 				float ratio = 1.0F) const;
-
-			size_t get_max_fixed_working_buffers_size() const;
 
 			cublasHandle_t get_cublas_handle() const;
 
@@ -83,12 +80,6 @@ namespace nnforge
 			}
 
 			void set_device() const;
-
-			threadpool_job_runner::ptr get_job_runner() const;
-
-			bool is_dont_share_buffers() const;
-
-			bool is_single_command_stream() const;
 
 			float get_flops() const;
 
@@ -127,17 +118,17 @@ namespace nnforge
 				void * workspace,
 				size_t workspace_size) const;
 
+			void enqueue_reduce_all(
+				const char * name,
+				cuda_linear_buffer_device::ptr data,
+				cuda_stream::ptr stream);
+
 		public:
 			int device_id;
 			float max_global_memory_usage_ratio;
-			unsigned int reserved_thread_count;
-			bool dont_share_buffers;
-			bool single_command_stream;
-			unsigned int optimize_action_graph_assumed_chunk_size;
 			float cuda_fixed_working_buffers_ratio;
-
-			int driver_version;
-			int runtime_version;
+			int device_pos;
+			cuda_communicator::ptr communicator;
 
 			std::string device_name;
 			int compute_capability_major;
@@ -158,6 +149,8 @@ namespace nnforge
 			int texture_alignment; // in bytes
 			int pci_bus_id;
 			int pci_device_id;
+			int least_stream_priority;
+			int greatest_stream_priority;
 
 		#ifdef _WIN32
 			bool tcc_mode;
@@ -177,8 +170,6 @@ namespace nnforge
 			cusparseHandle_t cusparse_handle;
 			cudnnHandle_t cudnn_handle;
 			curandGenerator_t curand_gen;
-
-			threadpool_job_runner::ptr job_runner;
 
 			mutable std::map<key_convolution_param, std::pair<bool, cudnnConvolutionFwdAlgo_t> > forward_param_to_best_algo_map;
 			mutable std::map<key_convolution_param, std::pair<bool, cudnnConvolutionBwdFilterAlgo_t> > backward_weights_param_to_best_algo_map;

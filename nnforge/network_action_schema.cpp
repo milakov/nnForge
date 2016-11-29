@@ -174,14 +174,18 @@ namespace nnforge
 		return res;
 	}
 
-	std::vector<std::vector<layer_name_with_action> > network_action_schema::get_action_stream_set() const
+	std::vector<std::vector<layer_name_with_action> > network_action_schema::get_action_stream_set(const std::vector<std::vector<layer_name_with_action>>& initial_value) const
 	{
-		std::vector<std::vector<layer_name_with_action> > res;
+		std::vector<std::vector<layer_name_with_action>> res(initial_value);
 
 		std::vector<action_schema_graph::vertex_descriptor> vertex_list_in_execution_order;
 		boost::topological_sort(actions, std::back_inserter(vertex_list_in_execution_order));
 
 		std::set<layer_name_with_action> covered_layer_name_with_actions;
+		for(const auto& elem: initial_value)
+			for(const auto& elem2: elem)
+				covered_layer_name_with_actions.insert(elem2);
+
 		for(std::vector<action_schema_graph::vertex_descriptor>::const_reverse_iterator it = vertex_list_in_execution_order.rbegin(); it != vertex_list_in_execution_order.rend(); ++it)
 		{
 			layer::const_ptr current_layer = actions[*it].l;
@@ -645,6 +649,19 @@ namespace nnforge
 		}
 	}
 
+	std::vector<layer_name_with_action> network_action_schema::get_actions_in_execution_order(
+		const std::map<std::string, layer_configuration_specific>& layer_config_map,
+		const std::map<std::string, unsigned int>& tiling_factor_map) const
+	{
+		std::vector<layer_name_with_action> res;
+
+		auto list = get_vertex_with_start_and_duration_list(layer_config_map, tiling_factor_map);
+		for(const auto& elem: list)
+			res.push_back(layer_name_with_action(actions[elem.first].l->instance_name, actions[elem.first].action));
+
+		return res;
+	}
+
 	std::vector<std::pair<network_action_schema::action_schema_graph::vertex_descriptor, std::pair<double, float> > > network_action_schema::get_vertex_with_start_and_duration_list(
 		const std::map<std::string, layer_configuration_specific>& layer_config_map,
 		const std::map<std::string, unsigned int>& tiling_factor_map) const
@@ -687,7 +704,7 @@ namespace nnforge
 			std::stable_sort(vertex_distance_list.begin(), vertex_distance_list.end(), [] (
 				const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t1,
 				const std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> >& t2) { return (t1.second.first < t2.second.first); } );
-			// vertex_distance_list is now vertecices in execution order AND with non-decreasing distance to reach each of them
+			// vertex_distance_list is now vertices in execution order AND with non-decreasing distance to reach each of them
 		}
 
 		return vertex_distance_list;
@@ -696,13 +713,26 @@ namespace nnforge
 	void network_action_schema::add_dependencies_for_distant_otherwise_inependent_actions(
 		const std::map<std::string, layer_configuration_specific>& layer_config_map,
 		const std::map<std::string, unsigned int>& tiling_factor_map,
-		float saturation_flops)
+		float saturation_flops,
+		const std::vector<layer_name_with_action>& action_list_with_no_new_dependencies_to_add_to,
+		const std::vector<layer_name_with_action>& action_list_with_no_new_dependencies_to_add_from)
 	{
-		std::vector<std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> > > vertex_with_start_and_duration_list = get_vertex_with_start_and_duration_list(layer_config_map, tiling_factor_map);
+		auto vertex_with_start_and_duration_list = get_vertex_with_start_and_duration_list(layer_config_map, tiling_factor_map);
 
-		for(std::vector<std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> > >::const_iterator it = vertex_with_start_and_duration_list.begin(); it != vertex_with_start_and_duration_list.end(); ++it)
+		std::set<action_schema_graph::vertex_descriptor> action_list_with_no_new_dependencies_to_add_to_vertices;
+		for(const auto& elem: action_list_with_no_new_dependencies_to_add_to)
+			action_list_with_no_new_dependencies_to_add_to_vertices.insert(layer_instance_name_with_action_to_vertex_decriptor_map[elem]);
+
+		std::set<action_schema_graph::vertex_descriptor> action_list_with_no_new_dependencies_to_add_from_vertices;
+		for(const auto& elem: action_list_with_no_new_dependencies_to_add_from)
+			action_list_with_no_new_dependencies_to_add_from_vertices.insert(layer_instance_name_with_action_to_vertex_decriptor_map[elem]);
+
+		for(auto it = vertex_with_start_and_duration_list.begin(); it != vertex_with_start_and_duration_list.end(); ++it)
 		{
-			std::vector<std::pair<action_schema_graph::vertex_descriptor, std::pair<double, float> > >::const_iterator candidate_it = it + 1;
+			if (action_list_with_no_new_dependencies_to_add_to_vertices.find(it->first) != action_list_with_no_new_dependencies_to_add_to_vertices.end())
+				continue;
+
+			auto candidate_it = it + 1;
 			double min_start = it->second.first + static_cast<double>(it->second.second) + static_cast<double>(saturation_flops);
 			while ((candidate_it != vertex_with_start_and_duration_list.end()) && (candidate_it->second.first < min_start))
 				++candidate_it;
@@ -725,7 +755,8 @@ namespace nnforge
 				edge_addded = false;
 				while (candidate_it != vertex_with_start_and_duration_list.end())
 				{
-					if (dependent_vertices.find(candidate_it->first) == dependent_vertices.end())
+					if (action_list_with_no_new_dependencies_to_add_from_vertices.find(candidate_it->first) == action_list_with_no_new_dependencies_to_add_from_vertices.end()
+						&& (dependent_vertices.find(candidate_it->first) == dependent_vertices.end()))
 					{
 						// To reduce the number of dependencies we better remove all the from candidate, where target is prior to current 
 						{
@@ -737,7 +768,7 @@ namespace nnforge
 								it->first,
 								vis,
 								boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
-							for(std::set<action_schema_graph::vertex_descriptor>::const_iterator dep_it = dependent_vertices.begin(); dep_it != dependent_vertices.end(); ++dep_it)
+							for(auto dep_it = dependent_vertices.begin(); dep_it != dependent_vertices.end(); ++dep_it)
 							{
 								if (boost::edge(candidate_it->first, *dep_it, actions).second)
 									boost::remove_edge(candidate_it->first, *dep_it, actions);
@@ -754,7 +785,7 @@ namespace nnforge
 								candidate_it->first,
 								vis,
 								boost::make_iterator_property_map(color_map.begin(), boost::get(boost::vertex_index, actions)));
-							for(std::set<action_schema_graph::vertex_descriptor>::const_iterator dep_it = dependent_vertices.begin(); dep_it != dependent_vertices.end(); ++dep_it)
+							for(auto dep_it = dependent_vertices.begin(); dep_it != dependent_vertices.end(); ++dep_it)
 							{
 								if (boost::edge(*dep_it, it->first, actions).second)
 									boost::remove_edge(*dep_it, it->first, actions);

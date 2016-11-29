@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2016 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,7 +35,8 @@ namespace nnforge
 
 		layer_updater_cuda::ptr gradient_modifier_layer_updater_schema::create_updater_specific(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
-			const layer_configuration_specific& output_configuration_specific) const
+			const layer_configuration_specific& output_configuration_specific,
+			const cuda_running_configuration& cuda_config) const
 		{
 			return layer_updater_cuda::ptr(new gradient_modifier_layer_updater_cuda());
 		}

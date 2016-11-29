@@ -72,7 +72,9 @@ namespace nnforge
 		void add_dependencies_for_distant_otherwise_inependent_actions(
 			const std::map<std::string, layer_configuration_specific>& layer_config_map,
 			const std::map<std::string, unsigned int>& tiling_factor_map,
-			float saturation_flops);
+			float saturation_flops,
+			const std::vector<layer_name_with_action>& action_list_with_no_new_dependencies_to_add_to = std::vector<layer_name_with_action>(),
+			const std::vector<layer_name_with_action>& action_list_with_no_new_dependencies_to_add_from = std::vector<layer_name_with_action>());
 
 		float get_flops(
 			const std::map<std::string, layer_configuration_specific>& layer_config_map,
@@ -87,11 +89,15 @@ namespace nnforge
 		// The function returns all actions in the correct execution order
 		std::vector<layer_name_with_action> get_actions_in_execution_order() const;
 
+		std::vector<layer_name_with_action> get_actions_in_execution_order(
+			const std::map<std::string, layer_configuration_specific>& layer_config_map,
+			const std::map<std::string, unsigned int>& tiling_factor_map) const;
+
 		// The function returns all actions in the correct execution order
 		std::vector<layer_name_with_action> get_actions() const;
 
 		// The function returns sets of actions, each set corresponds to one stream
-		std::vector<std::vector<layer_name_with_action> > get_action_stream_set() const;
+		std::vector<std::vector<layer_name_with_action> > get_action_stream_set(const std::vector<std::vector<layer_name_with_action>>& initial_value = std::vector<std::vector<layer_name_with_action>>()) const;
 
 		// The function returns sets of buffers, buffers in the same set may share the same storage
 		// buffers contains all the buffers which should be distributed across sets

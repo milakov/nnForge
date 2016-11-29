@@ -28,6 +28,12 @@ namespace nnforge
 			cuda_safe_call(cudaStreamCreate(&stream));
 		}
 
+		cuda_stream::cuda_stream(int priority)
+			: stream(0)
+		{
+			cuda_safe_call(cudaStreamCreateWithPriority(&stream, cudaStreamDefault, priority));
+		}
+
 		cuda_stream::~cuda_stream()
 		{
 			if (stream)

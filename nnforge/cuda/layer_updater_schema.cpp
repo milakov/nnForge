@@ -20,14 +20,11 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		std::shared_ptr<layer_updater_schema> layer_updater_schema::create(
-			layer::const_ptr layer_schema,
-			cuda_running_configuration::const_ptr cuda_config) const
+		std::shared_ptr<layer_updater_schema> layer_updater_schema::create(layer::const_ptr layer_schema) const
 		{
 			std::shared_ptr<layer_updater_schema> res = create_specific();
 
 			res->layer_schema = layer_schema;
-			res->cuda_config = cuda_config;
 
 			return res;
 		}
@@ -40,11 +37,13 @@ namespace nnforge
 		layer_updater_cuda::ptr layer_updater_schema::create_updater(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
-			const std::set<layer_action>& actions) const
+			const std::set<layer_action>& actions,
+			cuda_running_configuration::const_ptr cuda_config) const
 		{
 			layer_updater_cuda::ptr res = create_updater_specific(
 				input_configuration_specific_list,
-				output_configuration_specific);
+				output_configuration_specific,
+				*cuda_config);
 
 			res->configure(
 				input_configuration_specific_list,

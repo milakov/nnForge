@@ -331,6 +331,7 @@ namespace nnforge
 		}
 
 		extern __shared__ float arr_sh[];
+		template<bool update_accum_flag>
 		__global__ void apply_gradient_kernel(
 			float * __restrict data,
 			float * __restrict gradient,
@@ -355,33 +356,37 @@ namespace nnforge
 				upd_acc = fabs(upd);
 			}
 
-			int thread_id = threadIdx.x;
-			int lane_id = thread_id & 31;
-			#pragma unroll
-			for(int tx = 16; tx > 0; tx >>= 1)
+			if (update_accum_flag)
 			{
-				upd_acc += __shfl_down(upd_acc, tx);
-			}
+				int thread_id = threadIdx.x;
+				int lane_id = thread_id & 31;
+				#pragma unroll
+				for(int tx = 16; tx > 0; tx >>= 1)
+				{
+					upd_acc += __shfl_down(upd_acc, tx);
+				}
 
-			if (blockDim.x > 32)
-			{
-				if (lane_id == 0)
-					arr_sh[thread_id >> 5] = upd_acc;
-				__syncthreads();
-			}
+				if (blockDim.x > 32)
+				{
+					if (lane_id == 0)
+						arr_sh[thread_id >> 5] = upd_acc;
+					__syncthreads();
+				}
 
-			if (thread_id == 0)
-			{
-				for(int i = 1; i < (blockDim.x >> 5); ++i)
-					upd_acc += arr_sh[i];
-				double upd_acc_d = (double)upd_acc;
+				if (thread_id == 0)
+				{
+					for(int i = 1; i < (blockDim.x >> 5); ++i)
+						upd_acc += arr_sh[i];
+					double upd_acc_d = (double)upd_acc;
 
-				int accum_bucket_id = block_id & update_accum_mask;
+					int accum_bucket_id = block_id & update_accum_mask;
 
-				atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
+					atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
+				}
 			}
 		}
 
+		template<bool update_accum_flag>
 		__global__ void apply_gradient_with_vanilla_momentum_kernel(
 			float * __restrict data,
 			float * __restrict gradient,
@@ -410,33 +415,37 @@ namespace nnforge
 				upd_acc = fabs(upd);
 			}
 
-			int thread_id = threadIdx.x;
-			int lane_id = thread_id & 31;
-			#pragma unroll
-			for(int tx = 16; tx > 0; tx >>= 1)
+			if (update_accum_flag)
 			{
-				upd_acc += __shfl_down(upd_acc, tx);
-			}
+				int thread_id = threadIdx.x;
+				int lane_id = thread_id & 31;
+				#pragma unroll
+				for(int tx = 16; tx > 0; tx >>= 1)
+				{
+					upd_acc += __shfl_down(upd_acc, tx);
+				}
 
-			if (blockDim.x > 32)
-			{
-				if (lane_id == 0)
-					arr_sh[thread_id >> 5] = upd_acc;
-				__syncthreads();
-			}
+				if (blockDim.x > 32)
+				{
+					if (lane_id == 0)
+						arr_sh[thread_id >> 5] = upd_acc;
+					__syncthreads();
+				}
 
-			if (thread_id == 0)
-			{
-				for(int i = 1; i < (blockDim.x >> 5); ++i)
-					upd_acc += arr_sh[i];
-				double upd_acc_d = (double)upd_acc;
+				if (thread_id == 0)
+				{
+					for(int i = 1; i < (blockDim.x >> 5); ++i)
+						upd_acc += arr_sh[i];
+					double upd_acc_d = (double)upd_acc;
 
-				int accum_bucket_id = block_id & update_accum_mask;
+					int accum_bucket_id = block_id & update_accum_mask;
 
-				atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
+					atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
+				}
 			}
 		}
 
+		template<bool update_accum_flag>
 		__global__ void apply_gradient_with_nesterov_momentum_kernel(
 			float * __restrict data,
 			float * __restrict gradient,
@@ -467,33 +476,37 @@ namespace nnforge
 				upd_acc = fabs(upd);
 			}
 
-			int thread_id = threadIdx.x;
-			int lane_id = thread_id & 31;
-			#pragma unroll
-			for(int tx = 16; tx > 0; tx >>= 1)
+			if (update_accum_flag)
 			{
-				upd_acc += __shfl_down(upd_acc, tx);
-			}
+				int thread_id = threadIdx.x;
+				int lane_id = thread_id & 31;
+				#pragma unroll
+				for(int tx = 16; tx > 0; tx >>= 1)
+				{
+					upd_acc += __shfl_down(upd_acc, tx);
+				}
 
-			if (blockDim.x > 32)
-			{
-				if (lane_id == 0)
-					arr_sh[thread_id >> 5] = upd_acc;
-				__syncthreads();
-			}
+				if (blockDim.x > 32)
+				{
+					if (lane_id == 0)
+						arr_sh[thread_id >> 5] = upd_acc;
+					__syncthreads();
+				}
 
-			if (thread_id == 0)
-			{
-				for(int i = 1; i < (blockDim.x >> 5); ++i)
-					upd_acc += arr_sh[i];
-				double upd_acc_d = (double)upd_acc;
+				if (thread_id == 0)
+				{
+					for(int i = 1; i < (blockDim.x >> 5); ++i)
+						upd_acc += arr_sh[i];
+					double upd_acc_d = (double)upd_acc;
 
-				int accum_bucket_id = block_id & update_accum_mask;
+					int accum_bucket_id = block_id & update_accum_mask;
 
-				atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
+					atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
+				}
 			}
 		}
 
+		template<bool update_accum_flag>
 		__global__ void apply_gradient_with_adam_momentum_kernel(
 			float * __restrict data,
 			float * __restrict gradient,
@@ -534,30 +547,33 @@ namespace nnforge
 				upd_acc = fabs(upd);
 			}
 
-			int thread_id = threadIdx.x;
-			int lane_id = thread_id & 31;
-			#pragma unroll
-			for(int tx = 16; tx > 0; tx >>= 1)
+			if (update_accum_flag)
 			{
-				upd_acc += __shfl_down(upd_acc, tx);
-			}
+				int thread_id = threadIdx.x;
+				int lane_id = thread_id & 31;
+				#pragma unroll
+				for(int tx = 16; tx > 0; tx >>= 1)
+				{
+					upd_acc += __shfl_down(upd_acc, tx);
+				}
 
-			if (blockDim.x > 32)
-			{
-				if (lane_id == 0)
-					arr_sh[thread_id >> 5] = upd_acc;
-				__syncthreads();
-			}
+				if (blockDim.x > 32)
+				{
+					if (lane_id == 0)
+						arr_sh[thread_id >> 5] = upd_acc;
+					__syncthreads();
+				}
 
-			if (thread_id == 0)
-			{
-				for(int i = 1; i < (blockDim.x >> 5); ++i)
-					upd_acc += arr_sh[i];
-				double upd_acc_d = (double)upd_acc;
+				if (thread_id == 0)
+				{
+					for(int i = 1; i < (blockDim.x >> 5); ++i)
+						upd_acc += arr_sh[i];
+					double upd_acc_d = (double)upd_acc;
 
-				int accum_bucket_id = block_id & update_accum_mask;
+					int accum_bucket_id = block_id & update_accum_mask;
 
-				atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
+					atomicAddD(update_accum + accum_bucket_id, upd_acc_d);
+				}
 			}
 		}
 
@@ -865,14 +881,14 @@ namespace nnforge
 				src_dim2,
 				src_dim3);
 			if (add_to_destination)
-				transpose23_kernel<true><<<kernel_dims.first, kernel_dims.second>>>(
+				transpose23_kernel<true><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(
 					src,
 					dst,
 					src_dim1,
 					src_dim2,
 					src_dim3);
 			else
-				transpose23_kernel<false><<<kernel_dims.first, kernel_dims.second>>>(
+				transpose23_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(
 					src,
 					dst,
 					src_dim1,
@@ -998,17 +1014,30 @@ namespace nnforge
 				1,
 				1,
 				32);
-			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
-			int smem_size = threadblock_size * sizeof(float);
-			apply_gradient_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
-				data,
-				gradient,
-				update_accum,
-				learning_rate,
-				normalizer,
-				weight_decay,
-				elem_count,
-				update_accum_mask);
+			if (update_accum)
+			{
+				int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+				int smem_size = threadblock_size * sizeof(float);
+				apply_gradient_kernel<true><<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
+					data,
+					gradient,
+					update_accum,
+					learning_rate,
+					normalizer,
+					weight_decay,
+					elem_count,
+					update_accum_mask);
+			}
+			else
+				apply_gradient_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(
+					data,
+					gradient,
+					update_accum,
+					learning_rate,
+					normalizer,
+					weight_decay,
+					elem_count,
+					update_accum_mask);
 		}
 
 		void cuda_util::apply_gradient_with_vanilla_momentum(
@@ -1031,19 +1060,34 @@ namespace nnforge
 				1,
 				1,
 				32);
-			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
-			int smem_size = threadblock_size * sizeof(float);
-			apply_gradient_with_vanilla_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
-				data,
-				gradient,
-				prev_upd,
-				update_accum,
-				learning_rate,
-				normalizer,
-				weight_decay,
-				momentum,
-				elem_count,
-				update_accum_mask);
+			if (update_accum)
+			{
+				int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+				int smem_size = threadblock_size * sizeof(float);
+				apply_gradient_with_vanilla_momentum_kernel<true><<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
+					data,
+					gradient,
+					prev_upd,
+					update_accum,
+					learning_rate,
+					normalizer,
+					weight_decay,
+					momentum,
+					elem_count,
+					update_accum_mask);
+			}
+			else
+				apply_gradient_with_vanilla_momentum_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(
+					data,
+					gradient,
+					prev_upd,
+					update_accum,
+					learning_rate,
+					normalizer,
+					weight_decay,
+					momentum,
+					elem_count,
+					update_accum_mask);
 		}
 
 		void cuda_util::apply_gradient_with_nesterov_momentum(
@@ -1066,20 +1110,36 @@ namespace nnforge
 				1,
 				1,
 				32);
-			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
-			int smem_size = threadblock_size * sizeof(float);
-			apply_gradient_with_nesterov_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
-				data,
-				gradient,
-				prev_upd,
-				update_accum,
-				learning_rate,
-				normalizer,
-				weight_decay,
-				momentum,
-				momentum + 1.0F,
-				elem_count,
-				update_accum_mask);
+			if (update_accum)
+			{
+				int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+				int smem_size = threadblock_size * sizeof(float);
+				apply_gradient_with_nesterov_momentum_kernel<true><<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
+					data,
+					gradient,
+					prev_upd,
+					update_accum,
+					learning_rate,
+					normalizer,
+					weight_decay,
+					momentum,
+					momentum + 1.0F,
+					elem_count,
+					update_accum_mask);
+			}
+			else
+				apply_gradient_with_nesterov_momentum_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(
+					data,
+					gradient,
+					prev_upd,
+					update_accum,
+					learning_rate,
+					normalizer,
+					weight_decay,
+					momentum,
+					momentum + 1.0F,
+					elem_count,
+					update_accum_mask);
 		}
 
 		void cuda_util::apply_gradient_with_adam_momentum(
@@ -1107,24 +1167,44 @@ namespace nnforge
 				1,
 				1,
 				32);
-			int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
-			int smem_size = threadblock_size * sizeof(float);
-			apply_gradient_with_adam_momentum_kernel<<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
-				data,
-				gradient,
-				prev_upd,
-				prev_upd2,
-				update_accum,
-				learning_rate,
-				normalizer,
-				weight_decay,
-				momentum,
-				momentum2,
-				1.0F / (1.0F - powf(momentum, static_cast<float>(iteration_id))),
-				1.0F / (1.0F - powf(momentum2, static_cast<float>(iteration_id))),
-				1.0e-8F,
-				elem_count,
-				update_accum_mask);
+			if (update_accum)
+			{
+				int threadblock_size = kernel_dims.second.x * kernel_dims.second.y * kernel_dims.second.z;
+				int smem_size = threadblock_size * sizeof(float);
+				apply_gradient_with_adam_momentum_kernel<true><<<kernel_dims.first, kernel_dims.second, smem_size, cuda_stream>>>(
+					data,
+					gradient,
+					prev_upd,
+					prev_upd2,
+					update_accum,
+					learning_rate,
+					normalizer,
+					weight_decay,
+					momentum,
+					momentum2,
+					1.0F / (1.0F - powf(momentum, static_cast<float>(iteration_id))),
+					1.0F / (1.0F - powf(momentum2, static_cast<float>(iteration_id))),
+					1.0e-8F,
+					elem_count,
+					update_accum_mask);
+			}
+			else
+				apply_gradient_with_adam_momentum_kernel<false><<<kernel_dims.first, kernel_dims.second, 0, cuda_stream>>>(
+					data,
+					gradient,
+					prev_upd,
+					prev_upd2,
+					update_accum,
+					learning_rate,
+					normalizer,
+					weight_decay,
+					momentum,
+					momentum2,
+					1.0F / (1.0F - powf(momentum, static_cast<float>(iteration_id))),
+					1.0F / (1.0F - powf(momentum2, static_cast<float>(iteration_id))),
+					1.0e-8F,
+					elem_count,
+					update_accum_mask);
 		}
 
 		void cuda_util::dump_list(
