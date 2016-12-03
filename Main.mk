@@ -10,29 +10,19 @@ LDFLAGS+=-L$(NNFORGE_PATH)/lib
 endif
 
 ifeq ($(USE_BOOST),yes)
+ifneq ($(BOOST_PATH),)
 GENERIC_CXXFLAGS+=-I$(BOOST_PATH)/include
-LDFLAGS+=-L$(BOOST_PATH)/lib $(BOOST_LIBS)
+LDFLAGS+=-L$(BOOST_PATH)/lib
+endif
+LDFLAGS+=$(BOOST_LIBS)
 endif
 
 ifeq ($(USE_PROTOBUF),yes)
+ifneq ($(PROTOBUF_PATH),)
 GENERIC_CXXFLAGS+=-I$(PROTOBUF_PATH)/include
-LDFLAGS+=-L$(PROTOBUF_PATH)/lib $(PROTOBUF_LIBS)
+LDFLAGS+=-L$(PROTOBUF_PATH)/lib
 endif
-
-ifeq ($(USE_NETCDF),yes)
-ifneq ($(NETCDF_PATH),)
-GENERIC_CXXFLAGS+=-I$(NETCDF_PATH)/include
-LDFLAGS+=-L$(NETCDF_PATH)/lib
-endif
-LDFLAGS+=$(NETCDF_LIBS)
-endif
-
-ifeq ($(USE_MATIO),yes)
-ifneq ($(MATIO_PATH),)
-GENERIC_CXXFLAGS+=-I$(MATIO_PATH)/include
-LDFLAGS+=-L$(MATIO_PATH)/lib
-endif
-LDFLAGS+=$(MATIO_LIBS)
+LDFLAGS+=$(PROTOBUF_LIBS)
 endif
 
 ifeq ($(USE_CUDA),yes)
@@ -41,8 +31,11 @@ LDFLAGS+=-L$(CUDA_PATH)/lib64 -L$(CUDA_PATH)/lib -L$(CUDNN_PATH)/lib64 $(CUDA_LI
 endif
 
 ifeq ($(USE_OPENCV),yes)
+ifneq ($(OPENCV_PATH),)
 GENERIC_CXXFLAGS+=-I$(OPENCV_PATH)/include
-LDFLAGS+=-L$(OPENCV_PATH)/lib $(OPENCV_LIBS)
+LDFLAGS+=-L$(OPENCV_PATH)/lib
+endif
+LDFLAGS+=$(OPENCV_LIBS)
 endif
 
 ifeq ($(USE_OPENMP),yes)

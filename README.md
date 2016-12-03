@@ -12,11 +12,9 @@ Build
 -----
 
 1. Check Settings.mk file, you might need to make some changes to it:
-	* Define paths to [Boost](http://www.boost.org/), [OpenCV](http://opencv.org/), and [Protobuf](https://developers.google.com/protocol-buffers/) installations nnForge depends on.
-	* Set NETCDF_INSTALLED to _no_ if you don't have [NetCDF](http://www.unidata.ucar.edu/software/netcdf/) installed
-	* Set MATIO_INSTALLED to _no_ if you don't have [MatIO](http://sourceforge.net/projects/matio/) installed
+	* Define paths to [Boost](http://www.boost.org/), [OpenCV](http://opencv.org/), and [Protobuf](https://developers.google.com/protocol-buffers/) installations nnForge depends on if you have them installed in non-default locations.
 	* Enable or disable CUDA backend - you will need to disable it if you don't have [CUDA toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN](https://developer.nvidia.com/cuDNN) v4 installed.
-2. Run "./make_all.sh". This should build the library and the examples. All the arguments are passed to make, thus you might speed up the build process by specifying -j argument with the number of parallel jobs. The build process might take about 15 minutes on a modern desktop.
+2. Run "./make_all.sh". This should build the library and the examples. All the arguments are passed to make, thus you might speed up the build process by specifying -j argument with the number of parallel jobs. The build process might take about 5 minutes on a modern desktop.
 3. Library files are in lib/ directory once build process successfuly finishes.
 4. Examples provided in examples/ directory are built into bin/. Configuration files needed to run those apps are put there as well.
 

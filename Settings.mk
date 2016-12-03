@@ -1,21 +1,17 @@
 BUILD_MODE?=release
 ENABLE_CUDA_BACKEND?=yes
 ENABLE_CUDA_PROFILING?=no
-PROTOBUF_PATH?=/usr
-BOOST_PATH?=/usr
-OPENCV_PATH?=/usr
-NETCDF_INSTALLED?=yes
-NETCDF_PATH?=
-MATIO_INSTALLED?=yes
-MATIO_PATH?=
+PROTOBUF_PATH?=
+BOOST_PATH?=
+OPENCV_PATH?=
 CUDNN_PATH?=/usr/local/cuDNN
 CUDA_PATH?=/usr/local/cuda
 NVCC?=nvcc
 PROTOC?=protoc
 CUDA_FLAGS_ARCH?=-gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=\"sm_50,compute_50\"
 NNFORGE_PATH?=../..
-NNFORGE_INPUT_DATA_PATH?=/home/max/nnforge/input_data
-NNFORGE_WORKING_DATA_PATH?=/home/max/nnforge/working_data
+NNFORGE_INPUT_DATA_PATH?=~/nnforge/input_data
+NNFORGE_WORKING_DATA_PATH?=~/nnforge/working_data
 
 PROTOBUF_LIBS?=-lprotobuf
 BOOST_LIBS?=-lboost_thread -lboost_regex -lboost_chrono -lboost_filesystem -lboost_program_options -lboost_random -lboost_system -lboost_date_time
