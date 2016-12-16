@@ -85,6 +85,7 @@
     <ClInclude Include="lerror_layer_testing_schema.h" />
     <ClInclude Include="lerror_layer_updater_cuda.h" />
     <ClInclude Include="lerror_layer_updater_schema.h" />
+    <ClInclude Include="nccl_cuda_communicator.h" />
     <ClInclude Include="negative_log_likelihood_layer_tester_cuda.h" />
     <ClInclude Include="negative_log_likelihood_layer_testing_schema.h" />
     <ClInclude Include="negative_log_likelihood_layer_updater_cuda.h" />
@@ -248,6 +249,7 @@
     <ClCompile Include="maxout_layer_updater_schema.cpp" />
     <ClCompile Include="lerror_layer_testing_schema.cpp" />
     <ClCompile Include="lerror_layer_updater_schema.cpp" />
+    <ClCompile Include="nccl_cuda_communicator.cpp" />
     <ClCompile Include="negative_log_likelihood_layer_testing_schema.cpp" />
     <ClCompile Include="negative_log_likelihood_layer_updater_schema.cpp" />
     <ClCompile Include="forward_propagation_cuda_factory.cpp" />

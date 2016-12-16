@@ -1,11 +1,13 @@
 BUILD_MODE?=release
 ENABLE_CUDA_BACKEND?=yes
 ENABLE_CUDA_PROFILING?=no
+NNFORGE_USE_NCCL?=no
 PROTOBUF_PATH?=
 BOOST_PATH?=
 OPENCV_PATH?=
 CUDNN_PATH?=/usr/local/cuDNN
 CUDA_PATH?=/usr/local/cuda
+NCCL_PATH?=/usr/local/nccl
 NVCC?=nvcc
 PROTOC?=protoc
 CUDA_FLAGS_ARCH?=-gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=\"sm_50,compute_50\"

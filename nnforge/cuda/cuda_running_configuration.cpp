@@ -67,7 +67,6 @@ namespace nnforge
 				cudnnDestroy(cudnn_handle);
 			if (curand_gen)
 				curandDestroyGenerator(curand_gen);
-			cudaDeviceReset();
 		}
 
 		void cuda_running_configuration::update_parameters()

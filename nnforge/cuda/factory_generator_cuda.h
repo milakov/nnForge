@@ -27,13 +27,14 @@ namespace nnforge
 		{
 		public:
 			factory_generator_cuda(
-				int cuda_device_id,
+				const std::string& cuda_device_id_list_str,
 				float cuda_max_global_memory_usage_ratio,
 				unsigned int cuda_reserved_thread_count,
 				bool cuda_dont_share_buffers,
 				bool cuda_single_command_stream,
 				unsigned int cuda_optimize_action_graph_assumed_chunk_size,
-				float cuda_fixed_working_buffers_ratio);
+				float cuda_fixed_working_buffers_ratio,
+				const std::string& communicator_type);
 
 			factory_generator_cuda() = default;
 
@@ -56,7 +57,6 @@ namespace nnforge
 			virtual std::vector<string_option> get_string_options();
 
 		protected:
-			int cuda_device_id;
 			float cuda_max_global_memory_usage_ratio;
 			int cuda_reserved_thread_count;
 			bool cuda_dont_share_buffers;
@@ -64,6 +64,7 @@ namespace nnforge
 			int cuda_optimize_action_graph_assumed_chunk_size;
 			float cuda_fixed_working_buffers_ratio;
 			std::string cuda_device_id_list_str;
+			std::string communicator_type;
 
 			cuda_multi_running_configuration::const_ptr cuda_multi_config;
 		};

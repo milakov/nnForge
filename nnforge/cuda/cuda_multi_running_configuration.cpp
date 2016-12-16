@@ -24,6 +24,7 @@
 
 #include "neural_network_cuda_exception.h"
 #include "host_staged_cuda_communicator.h"
+#include "nccl_cuda_communicator.h"
 
 namespace nnforge
 {
@@ -36,7 +37,8 @@ namespace nnforge
 			bool dont_share_buffers,
 			bool single_command_stream,
 			unsigned int optimize_action_graph_assumed_chunk_size,
-			float cuda_fixed_working_buffers_ratio)
+			float cuda_fixed_working_buffers_ratio,
+			const std::string& communicator_type)
 			: reserved_thread_count(reserved_thread_count)
 			, dont_share_buffers(dont_share_buffers)
 			, single_command_stream(single_command_stream)
@@ -44,7 +46,13 @@ namespace nnforge
 		{
 			update_parameters();
 
-			cuda_communicator::ptr communicator(new host_staged_cuda_communicator(static_cast<int>(device_id_list.size())));
+			cuda_communicator::ptr communicator;
+			if (communicator_type == "host_staged")
+				communicator = cuda_communicator::ptr(new host_staged_cuda_communicator(static_cast<int>(device_id_list.size())));
+			else if (communicator_type == "nccl")
+				communicator = cuda_communicator::ptr(new nccl_cuda_communicator(static_cast<int>(device_id_list.size())));
+			else
+				throw neural_network_exception((boost::format("Unknown communicator type specified: %1%") % communicator_type).str());
 
 			for(int device_pos = 0; device_pos < device_id_list.size(); ++device_pos)
 			{

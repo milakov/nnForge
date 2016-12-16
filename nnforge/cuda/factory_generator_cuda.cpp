@@ -28,20 +28,22 @@ namespace nnforge
 	namespace cuda
 	{
 		factory_generator_cuda::factory_generator_cuda(
-			int cuda_device_id,
+			const std::string& cuda_device_id_list_str,
 			float cuda_max_global_memory_usage_ratio,
 			unsigned int cuda_reserved_thread_count,
 			bool cuda_dont_share_buffers,
 			bool cuda_single_command_stream,
 			unsigned int cuda_optimize_action_graph_assumed_chunk_size,
-			float cuda_fixed_working_buffers_ratio)
-			: cuda_device_id(cuda_device_id)
+			float cuda_fixed_working_buffers_ratio,
+			const std::string& communicator_type)
+			: cuda_device_id_list_str(cuda_device_id_list_str)
 			, cuda_max_global_memory_usage_ratio(cuda_max_global_memory_usage_ratio)
 			, cuda_reserved_thread_count(cuda_reserved_thread_count)
 			, cuda_dont_share_buffers(cuda_dont_share_buffers)
 			, cuda_single_command_stream(cuda_single_command_stream)
 			, cuda_optimize_action_graph_assumed_chunk_size(cuda_optimize_action_graph_assumed_chunk_size)
 			, cuda_fixed_working_buffers_ratio(cuda_fixed_working_buffers_ratio)
+			, communicator_type(communicator_type)
 		{
 		}
 
@@ -62,7 +64,8 @@ namespace nnforge
 				cuda_dont_share_buffers,
 				cuda_single_command_stream,
 				cuda_optimize_action_graph_assumed_chunk_size,
-				cuda_fixed_working_buffers_ratio));
+				cuda_fixed_working_buffers_ratio,
+				communicator_type));
 		}
 
 		forward_propagation_factory::ptr factory_generator_cuda::create_forward_propagation_factory() const
@@ -118,6 +121,12 @@ namespace nnforge
 				default_device_id_list_str << default_device_id_list[i];
 			}
 			res.push_back(string_option("cuda_device_id,D", &cuda_device_id_list_str, default_device_id_list_str.str().c_str(), "Comma-separated list of CUDA device IDs"));
+
+#ifdef NNFORGE_USE_NCCL
+			res.push_back(string_option("cuda_communicator_type", &communicator_type, "host_staged", "Type of the communicator for multi-gpu transfers (host_staged, nccl)"));
+#else
+			res.push_back(string_option("cuda_communicator_type", &communicator_type, "host_staged", "Type of the communicator for multi-gpu transfers (host_staged)"));
+#endif
 
 			return res;
 		}

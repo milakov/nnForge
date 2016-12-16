@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <ostream>
+#include <string>
 
 #include "cuda_running_configuration.h"
 #include "../threadpool_job_runner.h"
@@ -40,7 +41,8 @@ namespace nnforge
 				bool dont_share_buffers,
 				bool single_command_stream,
 				unsigned int optimize_action_graph_assumed_chunk_size,
-				float cuda_fixed_working_buffers_ratio);
+				float cuda_fixed_working_buffers_ratio,
+				const std::string& communicator_type);
 
 			~cuda_multi_running_configuration() = default;
 
