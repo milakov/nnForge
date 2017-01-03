@@ -2143,6 +2143,19 @@ namespace nnforge
 			}
 			unsigned int max_chunk_size = std::accumulate(balanced_max_entry_count_list.begin(), balanced_max_entry_count_list.end(), 0);
 
+			if (debug->is_debug() && (config_count > 1))
+			{
+				std::stringstream debug_str;
+				debug_str << "backward prop cuda balanced packet sizes: ";
+				for(int i = 0; i < config_count; ++i)
+				{
+					if (i > 0)
+						debug_str << ", ";
+					debug_str << balanced_max_entry_count_list[i];
+				}
+				debug->output_message(debug_str.str().c_str());
+			}
+
 			std::vector<unsigned int> chunk_sizes;
 			unsigned int chunk_count;
 			if (max_chunk_size >= batch_size)
