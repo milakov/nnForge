@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2013 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,17 +17,27 @@
 #include "neural_network_exception.h"
 
 #include <boost/format.hpp>
+#include <cassert>
+#include <iostream>
 
 namespace nnforge
 {
 	neural_network_exception::neural_network_exception(const char * message)
 		: std::runtime_error(message)
 	{
+#ifndef NDEBUG
+		std::cerr << std::runtime_error::what();
+#endif
+		assert(0);
 	}
 
 	neural_network_exception::neural_network_exception(const std::string& message)
 		: std::runtime_error(message)
 	{
+#ifndef NDEBUG
+		std::cerr << std::runtime_error::what();
+#endif
+		assert(0);
 	}
 
 	neural_network_exception::neural_network_exception(
@@ -36,5 +46,9 @@ namespace nnforge
 		int line_number)
 		: std::runtime_error((boost::format("%1% in %2%:%3%") % message % filename % line_number).str())
 	{
+#ifndef NDEBUG
+		std::cerr << std::runtime_error::what();
+#endif
+		assert(0);
 	}
 }
