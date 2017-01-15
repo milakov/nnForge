@@ -26,7 +26,7 @@ namespace nnforge
 		: std::runtime_error(message)
 	{
 #ifndef NDEBUG
-		std::cerr << std::runtime_error::what();
+		std::cerr << std::runtime_error::what() << std::endl;
 #endif
 		assert(0);
 	}
@@ -35,7 +35,7 @@ namespace nnforge
 		: std::runtime_error(message)
 	{
 #ifndef NDEBUG
-		std::cerr << std::runtime_error::what();
+		std::cerr << std::runtime_error::what() << std::endl;
 #endif
 		assert(0);
 	}
@@ -47,7 +47,7 @@ namespace nnforge
 		: std::runtime_error((boost::format("%1% in %2%:%3%") % message % filename % line_number).str())
 	{
 #ifndef NDEBUG
-		std::cerr << std::runtime_error::what();
+		std::cerr << std::runtime_error::what() << std::endl;
 #endif
 		assert(0);
 	}
