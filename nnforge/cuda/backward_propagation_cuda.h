@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -60,7 +60,8 @@ namespace nnforge
 				unsigned int epoch_id,
 				std::map<std::string, std::vector<float> >& average_absolute_updates,
 				unsigned int& entries_processed,
-				std::map<layer_name_with_action, float>& action_seconds);
+				std::map<layer_name_with_action, float>& action_seconds,
+				float& idle_seconds);
 
 			// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 			// The layer_config_map is guaranteed to be compatible with schema
@@ -157,6 +158,7 @@ namespace nnforge
 				std::map<layer_name_with_action, double> action_seconds;
 
 				unsigned int gradient_applied_count;
+				double idle_seconds;
 
 				std::string error_message;
 

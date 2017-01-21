@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 #include <thread>
 #include <functional>
 #include <numeric>
+#include <chrono>
 
 namespace nnforge
 {
@@ -72,7 +73,8 @@ namespace nnforge
 			structured_data_bunch_reader& reader,
 			structured_data_bunch_writer& writer,
 			unsigned int& entries_processed,
-			std::map<layer_name_with_action, float>& action_seconds)
+			std::map<layer_name_with_action, float>& action_seconds,
+			float& idle_seconds)
 		{
 			std::vector<unsigned int> current_max_entry_count_list = max_entry_count_list;
 			int reader_entry_count = reader.get_entry_count();
@@ -330,9 +332,11 @@ namespace nnforge
 			entries_processed = entry_processed_count;
 
 			action_seconds.clear();
+			idle_seconds = 0.0F;
 			float mult = 1.0F / static_cast<float>(config_count);
 			for(auto& p: params_list)
 			{
+				idle_seconds += static_cast<float>(p->idle_seconds) * mult;
 				for(auto dt: p->action_seconds)
 				{
 					auto it = action_seconds.find(dt.first);
@@ -387,8 +391,11 @@ namespace nnforge
 					if (interrupt_thread)
 						break;
 
+					std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 					while (!params.run_kernels_task_ready)
 						params.run_kernels_pending_condition.wait(lock);
+					std::chrono::duration<double> idle_sec = std::chrono::high_resolution_clock::now() - start;
+					params.idle_seconds += idle_sec.count();
 
 					params.run_kernels_task_ready = false;
 
@@ -545,6 +552,7 @@ namespace nnforge
 			unsigned int current_max_entry_count)
 			: dedicated_buffers(dedicated_buffers)
 			, current_max_entry_count(current_max_entry_count)
+			, idle_seconds(0)
 			, run_kernels_task_ready(false)
 			, device_pos(device_pos)
 		{

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <chrono>
 
 #include "../neural_network_exception.h"
 
@@ -86,7 +87,8 @@ namespace nnforge
 			structured_data_bunch_reader& reader,
 			structured_data_bunch_writer& writer,
 			unsigned int& entries_processed,
-			std::map<layer_name_with_action, float>& action_seconds)
+			std::map<layer_name_with_action, float>& action_seconds,
+			float& idle_seconds)
 		{
 			unsigned int current_max_entry_count = max_entry_count;
 			int reader_entry_count = reader.get_entry_count();
@@ -108,10 +110,12 @@ namespace nnforge
 				layer_buffers.push_back(plain_buffer::ptr(new plain_buffer(*it * current_max_entry_count)));
 
 			unsigned int entry_processed_count = 0;
+			double total_idel_sec = 0.0;
 
 			while(true)
 			{
 				int entry_read_count = 0;
+				std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 				#pragma omp parallel default(shared) num_threads(plain_config->openmp_thread_count) reduction(+:entry_read_count)
 				{
 					#pragma omp for schedule(dynamic)
@@ -124,6 +128,9 @@ namespace nnforge
 							++entry_read_count;
 					}
 				}
+				std::chrono::duration<double> idle_sec = std::chrono::high_resolution_clock::now() - start;
+				total_idel_sec += idle_sec.count();
+
 				if (entry_read_count == 0)
 					break;
 
@@ -194,6 +201,7 @@ namespace nnforge
 
 			entries_processed = entry_processed_count;
 			action_seconds.clear();
+			idle_seconds = static_cast<float>(total_idel_sec);
 		}
 
 		void forward_propagation_plain::layer_config_map_modified()

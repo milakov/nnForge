@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 #include <numeric>
 #include <thread>
 #include <functional>
+#include <chrono>
 
 namespace nnforge
 {
@@ -107,7 +108,8 @@ namespace nnforge
 			unsigned int epoch_id,
 			std::map<std::string, std::vector<float> >& average_absolute_updates,
 			unsigned int& entries_processed,
-			std::map<layer_name_with_action, float>& action_seconds)
+			std::map<layer_name_with_action, float>& action_seconds,
+			float& idle_seconds)
 		{
 			std::vector<std::map<std::string, std::vector<cuda_linear_buffer_device::ptr>>> net_data_list = get_data(data.data_list);
 			std::vector<std::map<std::string, std::vector<cuda_linear_buffer_device::ptr>>> gradient_list = get_zero_gradient(net_data_list[0]);
@@ -510,10 +512,12 @@ namespace nnforge
 				net_data_list[0],
 				params_list[0]->gradient_applied_count);
 
-			action_seconds.clear();
 			float mult = 1.0F / static_cast<float>(config_count);
+			idle_seconds = 0.0F;
+			action_seconds.clear();
 			for(auto& p: params_list)
 			{
+				idle_seconds += static_cast<float>(p->idle_seconds) * mult;
 				for(auto dt: p->action_seconds)
 				{
 					auto it = action_seconds.find(dt.first);
@@ -544,8 +548,11 @@ namespace nnforge
 					if (interrupt_thread)
 						break;
 
+					std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
 					while (!params.run_kernels_task_ready)
 						params.run_kernels_pending_condition.wait(lock);
+					std::chrono::duration<double> idle_sec = std::chrono::high_resolution_clock::now() - start;
+					params.idle_seconds += idle_sec.count();
 
 					params.run_kernels_task_ready = false;
 
@@ -1121,6 +1128,7 @@ namespace nnforge
 			, max_chunk_size(max_chunk_size)
 			, base_iteration_count(base_iteration_count)
 			, gradient_applied_count(0)
+			, idle_seconds(0)
 			, run_kernels_task_ready(false)
 			, device_pos(device_pos)
 			, gradient_normalizer(0.0F)

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ namespace nnforge
 				structured_data_bunch_reader& reader,
 				structured_data_bunch_writer& writer,
 				unsigned int& entries_processed,
-				std::map<layer_name_with_action, float>& action_seconds);
+				std::map<layer_name_with_action, float>& action_seconds,
+				float& idle_seconds);
 
 			// The method is called when client calls set_input_configuration_specific and the configuration is modified.
 			// The layer_config_map is guaranteed to be compatible with schema

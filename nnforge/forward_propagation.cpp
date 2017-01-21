@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -150,9 +150,11 @@ namespace nnforge
 			output_config_map[*it] = layer_config_map[*it];
 		writer.set_config_map(output_config_map);
 		std::map<layer_name_with_action, float> action_seconds;
-		actual_run(narrow_reader ? *narrow_reader : reader, writer, res.entry_processed_count, action_seconds);
+		float idle_seconds;
+		actual_run(narrow_reader ? *narrow_reader : reader, writer, res.entry_processed_count, action_seconds, idle_seconds);
 		std::chrono::duration<float> sec = std::chrono::high_resolution_clock::now() - start;
 		res.total_seconds = sec.count();
+		res.idle_seconds = idle_seconds;
 
 		if (profile->is_profile() && !action_seconds.empty())
 		{
@@ -181,8 +183,9 @@ namespace nnforge
 
 	std::ostream& operator<< (std::ostream& out, const forward_propagation::stat& val)
 	{
+		float idle_overhead = val.idle_seconds / val.total_seconds;
 		float gflops = val.flops_per_entry * static_cast<float>(val.entry_processed_count) / val.total_seconds * 1.0e-9F;
-		out << (boost::format("%|1$.2f| seconds, %2% entries, %|3$.2e| flops per entry, %|4$.1f| GFLOPS") % val.total_seconds % val.entry_processed_count % val.flops_per_entry % gflops).str();
+		out << (boost::format("%|1$.2f| seconds, idle %|2$.1f|%%, %3% entries, %|4$.2e| flops per entry, %|5$.1f| GFLOPS") % val.total_seconds % (idle_overhead * 100.0F) % val.entry_processed_count % val.flops_per_entry % gflops).str();
 		return out;
 	}
 }
