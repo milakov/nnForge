@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -89,11 +89,11 @@ namespace nnforge
 		// The function returns all actions in the correct execution order
 		std::vector<layer_name_with_action> get_actions_in_execution_order() const;
 
+		// The function returns all actions in the correct execution order
 		std::vector<layer_name_with_action> get_actions_in_execution_order(
 			const std::map<std::string, layer_configuration_specific>& layer_config_map,
 			const std::map<std::string, unsigned int>& tiling_factor_map) const;
 
-		// The function returns all actions in the correct execution order
 		std::vector<layer_name_with_action> get_actions() const;
 
 		// The function returns sets of actions, each set corresponds to one stream
@@ -109,6 +109,8 @@ namespace nnforge
 			const std::vector<std::vector<std::pair<layer_name_with_action, buffer_lifetime> > >& should_be_placed_into_the_same_buffers) const;
 
 		void drop_actions_not_required_to_do(const std::set<layer_name_with_action>& target_action_set);
+
+		void drop_action_and_reroute_dependencies(const layer_name_with_action& layer_and_action_to_drop);
 
 	private:
 		struct vertex_info

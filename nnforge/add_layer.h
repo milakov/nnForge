@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,6 +41,8 @@ namespace nnforge
 		virtual void read_proto(const void * layer_proto);
 
 		virtual std::vector<std::string> get_parameter_strings() const;
+
+		virtual bool is_backward_data_identity(int backprop_index) const;
 
 		static const std::string layer_type_name;
 

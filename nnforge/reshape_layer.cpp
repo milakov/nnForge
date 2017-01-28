@@ -249,4 +249,9 @@ namespace nnforge
 
 		return res;
 	}
+
+	bool reshape_layer::is_backward_data_identity(int backprop_index) const
+	{
+		return true;
+	}
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -168,6 +168,11 @@ namespace nnforge
 	}
 
 	bool layer::has_fused_backward_data_and_weights() const
+	{
+		return false;
+	}
+
+	bool layer::is_backward_data_identity(int backprop_index) const
 	{
 		return false;
 	}

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -309,11 +309,13 @@ namespace nnforge
 		const std::vector<std::string>& output_layer_names,
 		const std::vector<std::string>& error_source_layer_names,
 		const std::vector<std::string>& exclude_data_update_layer_names,
-		std::vector<std::vector<layer_name_with_action> >& same_output_action_sets) const
+		std::vector<std::vector<layer_name_with_action> >& same_output_action_sets,
+		std::map<std::string, std::vector<layer_name_with_action>>& gradient_to_producing_actions_map) const
 	{
 		network_action_schema::ptr res(new network_action_schema());
 
 		same_output_action_sets.clear();
+		gradient_to_producing_actions_map.clear();
 
 		std::set<layer_name_with_action> target_action_set;
 		{
@@ -551,6 +553,40 @@ namespace nnforge
 
 			if (tt.empty())
 				same_output_action_sets.erase(same_output_action_sets.begin() + i);
+		}
+
+		std::set<layer_name_with_action> actions_with_fused_outputs;
+		for(const auto& tt: same_output_action_sets)
+			for(const auto& tt2: tt)
+				actions_with_fused_outputs.insert(tt2);
+
+		std::vector<layer_name_with_action> actions = res->get_actions_in_execution_order();
+		for(auto it = actions.begin(); it != actions.end(); ++it)
+		{
+			if (it->get_action().get_action_type() == layer_action::backward_data)
+			{
+				layer::const_ptr l = get_layer(it->get_name());
+				const std::string& previous_layer_name = l->input_layer_instance_names[it->get_action().get_backprop_index()];
+				if (l->is_backward_data_identity(it->get_action().get_backprop_index()) && (actions_with_fused_outputs.find(*it) == actions_with_fused_outputs.end()))
+				{
+					res->drop_action_and_reroute_dependencies(*it);
+					auto it2 = gradient_to_producing_actions_map.find(l->instance_name);
+					if (it2 != gradient_to_producing_actions_map.end())
+						for(const auto& la: it2->second)
+							gradient_to_producing_actions_map.insert(std::make_pair(previous_layer_name, std::vector<layer_name_with_action>())).first->second.push_back(la);
+				}
+				else
+					gradient_to_producing_actions_map.insert(std::make_pair(previous_layer_name, std::vector<layer_name_with_action>())).first->second.push_back(*it);
+			}
+			else if (it->get_action().get_action_type() == layer_action::backward_data_and_weights)
+			{
+				layer::const_ptr l = get_layer(it->get_name());
+				for(std::vector<std::string>::const_iterator it2 = l->input_layer_instance_names.begin(); it2 != l->input_layer_instance_names.end(); ++it2)
+				{
+					const std::string& previous_layer_name = *it2;
+					gradient_to_producing_actions_map.insert(std::make_pair(previous_layer_name, std::vector<layer_name_with_action>())).first->second.push_back(*it);
+				}
+			}
 		}
 
 		return res;

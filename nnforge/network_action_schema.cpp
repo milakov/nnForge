@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -103,6 +103,43 @@ namespace nnforge
 		action_schema_graph::vertex_descriptor destination_vertex = get_vertex_descriptor(destination_layer_and_action);
 		if (!boost::edge(source_vertex, destination_vertex, actions).second)
 			boost::add_edge(source_vertex, destination_vertex, actions);
+	}
+
+	void network_action_schema::drop_action_and_reroute_dependencies(const layer_name_with_action& layer_and_action_to_drop)
+	{
+		action_schema_graph::vertex_descriptor v = get_vertex_descriptor(layer_and_action_to_drop);
+
+		std::vector<action_schema_graph::vertex_descriptor> dst_vertices;
+		{
+			action_schema_graph::out_edge_iterator out_begin, out_end;
+			for(boost::tie(out_begin, out_end) = boost::out_edges(v, actions); out_begin != out_end; ++out_begin)
+				dst_vertices.push_back(boost::target(*out_begin, actions));
+		}
+
+		std::vector<action_schema_graph::vertex_descriptor> src_vertices;
+		{
+			action_schema_graph::in_edge_iterator in_begin, in_end;
+			for(boost::tie(in_begin, in_end) = boost::in_edges(v, actions); in_begin != in_end; ++in_begin)
+				src_vertices.push_back(boost::source(*in_begin, actions));
+		}
+
+		for(auto source_vertex: src_vertices)
+			for(auto destination_vertex: dst_vertices)
+				if (!boost::edge(source_vertex, destination_vertex, actions).second)
+					boost::add_edge(source_vertex, destination_vertex, actions);
+
+		boost::clear_vertex(v, actions);
+		boost::remove_vertex(v, actions);
+
+		layer_instance_name_with_action_to_vertex_decriptor_map.clear();
+		name_to_layer_map.clear();
+		for(std::pair<action_schema_graph::vertex_iterator, action_schema_graph::vertex_iterator> vp = boost::vertices(actions); vp.first != vp.second; ++vp.first)
+		{
+			layer::const_ptr l = actions[*vp.first].l;
+			layer_action action = actions[*vp.first].action;
+			name_to_layer_map.insert(std::make_pair(l->instance_name, l));
+			layer_instance_name_with_action_to_vertex_decriptor_map.insert(std::make_pair(layer_name_with_action(l->instance_name, action), *vp.first));
+		}
 	}
 
 	network_action_schema::action_schema_graph::vertex_descriptor network_action_schema::get_vertex_descriptor(const layer_name_with_action& layer_and_action) const

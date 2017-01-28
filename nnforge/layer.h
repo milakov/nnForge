@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -104,6 +104,9 @@ namespace nnforge
 		virtual std::vector<std::string> get_parameter_strings() const;
 
 		virtual bool has_fused_backward_data_and_weights() const;
+
+		// Return true in case backwad data actions is just identity, that is gradient is 1
+		virtual bool is_backward_data_identity(int backprop_index) const;
 
 	public:
 		std::string instance_name;

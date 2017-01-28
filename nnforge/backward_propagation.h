@@ -118,6 +118,7 @@ namespace nnforge
 		std::map<layer_name_with_action, float> action_flops_per_entry;
 		float flops;
 		std::set<std::string> data_layer_names;
+		std::map<std::string, std::vector<layer_name_with_action>> gradient_to_producing_actions_map;
 
 	private:
 		void update_flops();

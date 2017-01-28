@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -68,7 +68,8 @@ namespace nnforge
 			const std::vector<std::string>& output_layer_names,
 			const std::vector<std::string>& error_source_layer_names,
 			const std::vector<std::string>& exclude_data_update_layer_names,
-			std::vector<std::vector<layer_name_with_action> >& same_output_action_sets) const;
+			std::vector<std::vector<layer_name_with_action> >& same_output_action_sets,
+			std::map<std::string, std::vector<layer_name_with_action>>& gradient_to_producing_actions_map) const;
 
 		// The function returns all the layers
 		std::vector<layer::const_ptr> get_layers() const;

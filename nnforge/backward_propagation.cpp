@@ -57,7 +57,8 @@ namespace nnforge
 			output_layer_names,
 			error_source_layer_names,
 			exclude_data_update_layer_names,
-			same_output_action_sets);
+			same_output_action_sets,
+			gradient_to_producing_actions_map);
 		for(std::vector<std::vector<layer_name_with_action> >::const_iterator it = same_output_action_sets.begin(); it != same_output_action_sets.end(); ++it)
 		{
 			const std::vector<layer_name_with_action>& same_output_actions = *it;
