@@ -41,13 +41,14 @@ namespace nnforge
 			const layer_configuration_specific& original_config,
 			unsigned int sample_id);
 			
-	private:
-		void smooth(
+		static void smooth(
 			cv::Mat1f disp,
 			int ksize,
 			float sigma,
 			float alpha,
-			bool is_x);
+			bool is_x,
+			float disp_base_pos = 0.0F,
+			float disp_step = 1.0F);
 
 	protected:
 		float alpha;

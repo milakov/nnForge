@@ -87,7 +87,9 @@ namespace nnforge
 		int ksize,
 		float sigma,
 		float alpha,
-		bool is_x)
+		bool is_x,
+		float disp_base_pos,
+		float disp_step)
 	{
 		cv::GaussianBlur(disp, disp, cv::Size(ksize, ksize), sigma, sigma, cv::BORDER_REFLECT_101);
 		float sum_of_squared = 0.0F;
@@ -103,7 +105,7 @@ namespace nnforge
 			sum_of_squared += sum_of_squared_local;
 		}
 		float disp_norm = sqrtf(sum_of_squared);
-		float mult = alpha / disp_norm;
+		float mult = alpha * disp_step / disp_norm;
 
 		if (is_x)
 		{
@@ -112,7 +114,7 @@ namespace nnforge
 				float * row_ptr = disp.ptr<float>(row_id);
 				for(int column_id = 0; column_id < disp.cols; ++column_id)
 				{
-					float column_id_f = static_cast<float>(column_id);
+					float column_id_f = static_cast<float>(column_id) * disp_step + disp_base_pos;
 					row_ptr[column_id] = row_ptr[column_id] * mult + column_id_f;
 				}
 			}
@@ -121,7 +123,7 @@ namespace nnforge
 		{
 			for(int row_id = 0; row_id < disp.rows; ++row_id)
 			{
-				float row_id_f = static_cast<float>(row_id);
+				float row_id_f = static_cast<float>(row_id) * disp_step + disp_base_pos;
 				float * row_ptr = disp.ptr<float>(row_id);
 				for(int column_id = 0; column_id < disp.cols; ++column_id)
 				{
