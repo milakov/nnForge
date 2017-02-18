@@ -21,7 +21,6 @@
 
 #include <map>
 #include <limits>
-#include <mutex>
 
 namespace nnforge
 {
@@ -47,20 +46,21 @@ namespace nnforge
 		{
 		public:
 			running_stat()
-				: sum(0.0)
-				, sum_squared(0.0)
+				: mean(0.0)
+				, m2(0.0)
+				, n(0.0)
 				, min_val(std::numeric_limits<float>::max())
 				, max_val(-std::numeric_limits<float>::max())
 			{
 			}
 
-			double sum;
-			double sum_squared;
+			double mean;
+			double m2;
+			double n;
 			float min_val;
 			float max_val;
 		};
 
-		std::mutex update_stat_mutex;
 		std::map<std::string, std::vector<running_stat> > layer_name_to_running_stat_list_map;
 		std::map<std::string, unsigned int> layer_name_to_neuron_count_per_feature_map_map;
 		unsigned int entry_count;

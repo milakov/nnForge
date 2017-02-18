@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -53,24 +53,22 @@ namespace nnforge
 			unsigned int feature_map_count = static_cast<unsigned int>(running_stats.size());
 			for(unsigned int feature_map_id = 0; feature_map_id < feature_map_count; ++feature_map_id)
 			{
-				running_stat current_running_stat;
+				running_stat& current_running_stat = running_stats[feature_map_id];
 				for(unsigned int i = 0; i < neuron_count_per_feature_map; ++i)
 				{
 					float val = *data;
 					current_running_stat.min_val = std::min(current_running_stat.min_val, val);
 					current_running_stat.max_val = std::max(current_running_stat.max_val, val);
-					current_running_stat.sum += static_cast<double>(val);
-					current_running_stat.sum_squared += static_cast<double>(val * val);
+
+					// numerically accurate single pass algorithm, see https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Online_algorithm
+					current_running_stat.n += 1.0;
+					double val_d = static_cast<double>(val);
+					double delta = val_d - current_running_stat.mean;
+					current_running_stat.mean += delta / current_running_stat.n;
+					double delta2 = val_d - current_running_stat.mean;
+					current_running_stat.m2 += delta * delta2;
 
 					++data;
-				}
-
-				{
-					std::lock_guard<std::mutex> lock(update_stat_mutex);
-					running_stats[feature_map_id].max_val = std::max(running_stats[feature_map_id].max_val, current_running_stat.max_val);
-					running_stats[feature_map_id].min_val = std::min(running_stats[feature_map_id].min_val, current_running_stat.min_val);
-					running_stats[feature_map_id].sum += current_running_stat.sum;
-					running_stats[feature_map_id].sum_squared += current_running_stat.sum_squared;
 				}
 			}
 		}
@@ -95,10 +93,8 @@ namespace nnforge
 				feature_map_data_stat new_stat;
 
 				const running_stat& current_running_stat = *it2;
-				double avg = current_running_stat.sum * mult;
-				new_stat.average = static_cast<float>(avg);
-				double avg_sq = current_running_stat.sum_squared * mult;
-				new_stat.std_dev = sqrtf(static_cast<float>(avg_sq - avg * avg));
+				new_stat.average = static_cast<float>(current_running_stat.mean);
+				new_stat.std_dev = sqrtf(static_cast<float>(current_running_stat.m2 / current_running_stat.n));
 				new_stat.min = current_running_stat.min_val;
 				new_stat.max = current_running_stat.max_val;
 
