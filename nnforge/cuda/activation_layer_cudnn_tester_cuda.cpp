@@ -60,7 +60,7 @@ namespace nnforge
 
 			float alpha = 1.0F;
 			float beta = 0.0F;
-			cudnn_safe_call(cudnnActivationForward_v4(
+			cudnn_safe_call(cudnnActivationForward(
 				cuda_config->get_cudnn_handle(),
 				activation_desc,
 				&alpha,
