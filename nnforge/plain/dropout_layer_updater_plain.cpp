@@ -58,16 +58,35 @@ namespace nnforge
 			const float keep_rate = 1.0F - dropout_rate;
 			const float mult = 1.0F / keep_rate;
 
-			const int total_workload = output_configuration_specific.get_neuron_count() * entry_count;
-
 			std::uniform_real_distribution<float> dist(0.0F, 1.0F);
 
+			const int total_workload = (layer_derived->per_feature_map ? output_configuration_specific.feature_map_count : output_configuration_specific.get_neuron_count()) * entry_count;
 			for(int i = 0; i < total_workload; ++i)
 				keep_elem_ptr[i] = (dist(gen) <= keep_rate ? (unsigned char)1 : (unsigned char)0);
 
-			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr)
+			if (layer_derived->per_feature_map)
 			{
-				#pragma omp for schedule(guided)
+				const int elem_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
+				#pragma omp parallel for default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr) schedule(guided)
+				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
+				{
+					int base_elem_id = workload_id * elem_count_per_feature_map;
+					float * out_it = out_it_global + base_elem_id;
+					if (keep_elem_ptr[workload_id])
+					{
+						const float * in_it = in_it_global + base_elem_id;
+						for(int elem_id = 0; elem_id < elem_count_per_feature_map; ++elem_id)
+							*(out_it + elem_id) = *(in_it + elem_id) * mult;
+					}
+					else
+					{
+						std::fill_n(out_it, elem_count_per_feature_map, 0.0F);
+					}
+				}
+			}
+			else
+			{
+				#pragma omp parallel for default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr) schedule(guided)
 				for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 				{
 					int elem_id = workload_id;
@@ -104,13 +123,29 @@ namespace nnforge
 			const float keep_rate = 1.0F - dropout_rate;
 			const float mult = 1.0F / keep_rate;
 
-			const int total_workload = output_configuration_specific.get_neuron_count() * entry_count;
+			const int total_workload = (layer_derived->per_feature_map ? output_configuration_specific.feature_map_count : output_configuration_specific.get_neuron_count()) * entry_count;
 
 			if (add_update_to_destination)
 			{
-				#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr)
+				if (layer_derived->per_feature_map)
 				{
-					#pragma omp for schedule(guided)
+					const int elem_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
+					#pragma omp parallel for default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr) schedule(guided)
+					for(int workload_id = 0; workload_id < total_workload; ++workload_id)
+					{
+						int base_elem_id = workload_id * elem_count_per_feature_map;
+						float * in_err_it = in_err_it_global + base_elem_id;
+						if (keep_elem_ptr[workload_id])
+						{
+							const float * out_err_it = out_err_it_global + base_elem_id;
+							for(int elem_id = 0; elem_id < elem_count_per_feature_map; ++elem_id)
+								*(in_err_it + elem_id) += *(out_err_it + elem_id) * mult;
+						}
+					}
+				}
+				else
+				{
+					#pragma omp parallel for default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr) schedule(guided)
 					for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 					{
 						int elem_id = workload_id;
@@ -120,9 +155,29 @@ namespace nnforge
 			}
 			else
 			{
-				#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr)
+				if (layer_derived->per_feature_map)
 				{
-					#pragma omp for schedule(guided)
+					const int elem_count_per_feature_map = output_configuration_specific.get_neuron_count_per_feature_map();
+					#pragma omp parallel for default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr) schedule(guided)
+					for(int workload_id = 0; workload_id < total_workload; ++workload_id)
+					{
+						int base_elem_id = workload_id * elem_count_per_feature_map;
+						float * in_err_it = in_err_it_global + base_elem_id;
+						if (keep_elem_ptr[workload_id])
+						{
+							const float * out_err_it = out_err_it_global + base_elem_id;
+							for(int elem_id = 0; elem_id < elem_count_per_feature_map; ++elem_id)
+								*(in_err_it + elem_id) = *(out_err_it + elem_id) * mult;
+						}
+						else
+						{
+							std::fill_n(in_err_it, elem_count_per_feature_map, 0.0F);
+						}
+					}
+				}
+				else
+				{
+					#pragma omp parallel for default(none) num_threads(plain_config->openmp_thread_count) shared(keep_elem_ptr) schedule(guided)
 					for(int workload_id = 0; workload_id < total_workload; ++workload_id)
 					{
 						int elem_id = workload_id;
@@ -173,7 +228,8 @@ namespace nnforge
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return output_configuration_specific.get_neuron_count() * sizeof(unsigned char);
+			std::shared_ptr<const dropout_layer> layer_derived = std::dynamic_pointer_cast<const dropout_layer>(layer_schema);
+			return (layer_derived->per_feature_map ? output_configuration_specific.feature_map_count : output_configuration_specific.get_neuron_count()) * sizeof(unsigned char);
 		}
 	}
 }

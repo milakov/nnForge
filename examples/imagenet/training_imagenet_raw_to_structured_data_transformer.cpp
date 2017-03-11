@@ -19,17 +19,26 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <nnforge/elastic_deformation_2d_data_transformer.h>
+
 training_imagenet_raw_to_structured_data_transformer::training_imagenet_raw_to_structured_data_transformer(
 	float min_relative_target_area,
 	float max_relative_target_area,
 	unsigned int target_image_width,
 	unsigned int target_image_height,
-	float max_aspect_ratio_change)
+	float max_aspect_ratio_change,
+	float min_elastic_deformation_intensity,
+	float max_elastic_deformation_intensity,
+	float min_elastic_deformation_smoothness,
+	float max_elastic_deformation_smoothness)
 	: target_image_width(target_image_width)
 	, target_image_height(target_image_height)
 	, gen(nnforge::rnd::get_random_generator())
 	, dist_relative_target_area(min_relative_target_area, max_relative_target_area)
 	, dist_log_aspect_ratio(-logf(max_aspect_ratio_change), logf(max_aspect_ratio_change))
+	, dist_alpha(min_elastic_deformation_intensity * static_cast<float>(std::min(target_image_width, target_image_height)), max_elastic_deformation_intensity * static_cast<float>(std::min(target_image_width, target_image_height)))
+	, dist_sigma(min_elastic_deformation_smoothness * static_cast<float>(std::min(target_image_width, target_image_height)), max_elastic_deformation_smoothness * static_cast<float>(std::min(target_image_width, target_image_height)))
+	, displacement_distribution(std::uniform_real_distribution<float>(-1.0F, 1.0F))
 {
 }
 
@@ -50,9 +59,21 @@ void training_imagenet_raw_to_structured_data_transformer::transform(
 	unsigned int x = (original_image.cols - source_crop_image_width) / 2;
 	unsigned int y = (original_image.rows - source_crop_image_height) / 2;
 
+	float alpha;
+	float sigma;
+	int ksize;
 	{
 		std::lock_guard<std::mutex> lock(gen_mutex);
-		for(int attempt = 0; attempt < 10; ++attempt)
+
+		alpha = dist_alpha.min();
+		if (dist_alpha.max() > dist_alpha.min())
+			alpha = dist_alpha(gen);
+		sigma = dist_sigma.min();
+		if (dist_sigma.max() > dist_sigma.min())
+			sigma = dist_sigma(gen);
+		ksize = static_cast<int>((sigma - 0.8F) * 3.0F + 1.0F) * 2 + 1;
+
+		for(int attempt = 0; attempt < 100; ++attempt)
 		{
 			float local_area = static_cast<float>(original_image.rows * original_image.cols);
 			float relative_target_area = dist_relative_target_area.min();
@@ -82,9 +103,88 @@ void training_imagenet_raw_to_structured_data_transformer::transform(
 		}
 	}
 
-	cv::Mat3b source_image_crop = original_image.rowRange(y, y + source_crop_image_height).colRange(x, x + source_crop_image_width);
 	cv::Mat3b target_image(target_image_height, target_image_width);
-	cv::resize(source_image_crop, target_image, target_image.size(), 0.0, 0.0, cv::INTER_CUBIC);
+	if (alpha > 0.0F)
+	{
+		cv::Mat1f x_disp(target_image_height, target_image_width);
+		cv::Mat1f y_disp(target_image_height, target_image_width);
+		{
+			std::lock_guard<std::mutex> lock(gen_mutex);
+
+			for(int row_id = 0; row_id < x_disp.rows; ++row_id)
+			{
+				float * row_ptr = x_disp.ptr<float>(row_id);
+				for(int column_id = 0; column_id < x_disp.cols; ++column_id)
+					row_ptr[column_id] = displacement_distribution(gen);
+			}
+
+			for(int row_id = 0; row_id < y_disp.rows; ++row_id)
+			{
+				float * row_ptr = y_disp.ptr<float>(row_id);
+				for(int column_id = 0; column_id < y_disp.cols; ++column_id)
+					row_ptr[column_id] = displacement_distribution(gen);
+			}
+		}
+
+		{
+			nnforge::elastic_deformation_2d_data_transformer::smooth(x_disp, ksize, sigma, alpha, true, static_cast<float>(x), static_cast<float>(source_crop_image_width) / static_cast<float>(target_image_width));
+			auto minmax_it = std::minmax_element(x_disp.begin(), x_disp.end());
+			float min_value = *minmax_it.first;
+			float max_value = *minmax_it.second;
+			float peak_val = static_cast<float>(original_image.cols - 1);
+			if ((min_value < 0.0F) || (max_value > peak_val))
+			{
+				float size = max_value - min_value;
+				float mult = 1.0F;
+				if (size > peak_val)
+				{
+					mult = peak_val / size;
+					min_value *= mult;
+					max_value *= mult;
+				}
+				float add = 0.0F;
+				if (min_value < 0.0F)
+					add = -min_value;
+				if (max_value > peak_val)
+					add = peak_val - max_value;
+
+				std::for_each(x_disp.begin(), x_disp.end(), [mult, add] (float& x) { x = x * mult + add; });
+			}
+		}
+
+		{
+			nnforge::elastic_deformation_2d_data_transformer::smooth(y_disp, ksize, sigma, alpha, false, static_cast<float>(y), static_cast<float>(source_crop_image_height) / static_cast<float>(target_image_height));
+			auto minmax_it = std::minmax_element(y_disp.begin(), y_disp.end());
+			float min_value = *minmax_it.first;
+			float max_value = *minmax_it.second;
+			float peak_val = static_cast<float>(original_image.rows - 1);
+			if ((min_value < 0.0F) || (max_value > peak_val))
+			{
+				float size = max_value - min_value;
+				float mult = 1.0F;
+				if (size > peak_val)
+				{
+					mult = peak_val / size;
+					min_value *= mult;
+					max_value *= mult;
+				}
+				float add = 0.0F;
+				if (min_value < 0.0F)
+					add = -min_value;
+				if (max_value > peak_val)
+					add = peak_val - max_value;
+
+				std::for_each(y_disp.begin(), y_disp.end(), [mult, add] (float& x) { x = x * mult + add; });
+			}
+		}
+
+		cv::remap(original_image, target_image, x_disp, y_disp, cv::INTER_CUBIC, cv::BORDER_CONSTANT, cv::Scalar(127.0F, 127.0F, 127.0F));
+	}
+	else
+	{
+		cv::Mat3b source_image_crop = original_image.rowRange(y, y + source_crop_image_height).colRange(x, x + source_crop_image_width);
+		cv::resize(source_image_crop, target_image, target_image.size(), 0.0, 0.0, cv::INTER_CUBIC);
+	}
 
 	float * r_dst_it = structured_data;
 	float * g_dst_it = structured_data + (target_image_width * target_image_height);

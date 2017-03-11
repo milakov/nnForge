@@ -29,7 +29,11 @@ public:
 		float max_relative_target_area,
 		unsigned int target_image_width,
 		unsigned int target_image_height,
-		float max_aspect_ratio_change);
+		float max_aspect_ratio_change,
+		float min_elastic_deformation_intensity,
+		float max_elastic_deformation_intensity,
+		float min_elastic_deformation_smoothness,
+		float max_elastic_deformation_smoothness);
 
 	virtual ~training_imagenet_raw_to_structured_data_transformer();
 
@@ -48,4 +52,7 @@ protected:
 	nnforge::random_generator gen;
 	std::uniform_real_distribution<float> dist_relative_target_area;
 	std::uniform_real_distribution<float> dist_log_aspect_ratio;
+	std::uniform_real_distribution<float> displacement_distribution;
+	std::uniform_real_distribution<float> dist_alpha;
+	std::uniform_real_distribution<float> dist_sigma;
 };

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ namespace nnforge
 			float dropout_rate;
 			float keep_rate;
 			float mult;
+			bool per_feature_map;
 		};
 	}
 }

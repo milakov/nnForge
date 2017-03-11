@@ -314,6 +314,10 @@ std::vector<nnforge::float_option> imagenet_toolset::get_float_options()
 	res.push_back(nnforge::float_option("max_contrast_shift", &max_contrast_shift, 0.4F, "The maximum change in contrast when training"));
 	res.push_back(nnforge::float_option("max_saturation_shift", &max_saturation_shift, 0.4F, "The maximum change in saturation when training"));
 	res.push_back(nnforge::float_option("max_lighting_shift", &max_lighting_shift, 0.1F, "The maximum change in lighting (PCA-based) when training"));
+	res.push_back(nnforge::float_option("min_elastic_deformation_intensity", &min_elastic_deformation_intensity, 0.0F/*2.0F*/, "The minimum degree of image elastic distortion during training"));
+	res.push_back(nnforge::float_option("max_elastic_deformation_intensity", &max_elastic_deformation_intensity, 0.0F/*5.0F*/, "The maximum degree of image elastic distortion during training"));
+	res.push_back(nnforge::float_option("min_elastic_deformation_smoothness", &min_elastic_deformation_smoothness, 0.1F, "The degree of smoothness when applying elastic distortions to the image"));
+	res.push_back(nnforge::float_option("max_elastic_deformation_smoothness", &max_elastic_deformation_smoothness, 0.25F, "The degree of smoothness when applying elastic distortions to the image"));
 
 	return res;
 }
@@ -355,7 +359,11 @@ nnforge::structured_data_reader::ptr imagenet_toolset::get_structured_reader(
 					max_relative_target_area,
 					training_target_image_width,
 					training_target_image_height,
-					max_aspect_ratio_change));
+					max_aspect_ratio_change,
+					min_elastic_deformation_intensity,
+					max_elastic_deformation_intensity,
+					min_elastic_deformation_smoothness,
+					max_elastic_deformation_smoothness));
 			}
 		}
 		else if (dataset_name == "validating")

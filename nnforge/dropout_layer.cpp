@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,13 +20,17 @@
 #include "proto/nnforge.pb.h"
 
 #include <boost/format.hpp>
+#include <sstream>
 
 namespace nnforge
 {
 	const std::string dropout_layer::layer_type_name = "Dropout";
 
-	dropout_layer::dropout_layer(float dropout_rate)
+	dropout_layer::dropout_layer(
+		float dropout_rate,
+		bool is_per_feature_map)
 		: dropout_rate(dropout_rate)
+		, per_feature_map(per_feature_map)
 	{
 		check();
 	}
@@ -69,20 +73,16 @@ namespace nnforge
 			protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
 			protobuf::DropoutParam * param = layer_proto_typed->mutable_dropout_param();
 			param->set_dropout_rate(dropout_rate);
+			if (per_feature_map)
+				param->set_per_feature_map(per_feature_map);
 		}
 	}
 
 	void dropout_layer::read_proto(const void * layer_proto)
 	{
 		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
-		if (!layer_proto_typed->has_dropout_param())
-		{
-			dropout_rate = 0.5F;
-		}
-		else
-		{
-			dropout_rate = layer_proto_typed->dropout_param().dropout_rate();
-		}
+		dropout_rate = layer_proto_typed->dropout_param().dropout_rate();
+		per_feature_map = layer_proto_typed->dropout_param().per_feature_map();
 
 		check();
 	}
@@ -91,7 +91,11 @@ namespace nnforge
 	{
 		std::vector<std::string> res;
 
-		res.push_back((boost::format("dropout rate %|1$.3f|") % dropout_rate).str());
+		std::stringstream ss;
+		ss << (boost::format("dropout rate %|1$.3f|") % dropout_rate).str();
+		if (per_feature_map)
+			ss << ", per fm";
+		res.push_back(ss.str());
 
 		return res;
 	}

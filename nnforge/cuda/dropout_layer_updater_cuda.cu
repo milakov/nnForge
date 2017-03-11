@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -45,6 +45,54 @@ namespace nnforge
 			}
 		}
 
+		#define FEATURE_MAP_BLOCK_SIZE 4
+		__global__ void dropout_per_feature_map_upd_kernel(
+			const float * __restrict input,
+			float * __restrict output,
+			const float * __restrict uniform_random, // (0.0,1.0]
+			float mult,
+			float keep_rate,
+			int elem_count_per_feature_map,
+			int feature_map_count,
+			int entry_count)
+		{
+			int local_elem_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int base_feature_map_id = (blockIdx.y * blockDim.y + threadIdx.y) * FEATURE_MAP_BLOCK_SIZE;
+			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
+			if ((local_elem_id < elem_count_per_feature_map) && (base_feature_map_id < feature_map_count) && (entry_id < entry_count))
+			{
+				int base_offset = (entry_id * feature_map_count + base_feature_map_id) * elem_count_per_feature_map + local_elem_id;
+				const float * base_input = input + base_offset;
+				const float * base_uniform_random = uniform_random + (entry_id * feature_map_count + base_feature_map_id);
+				float val[FEATURE_MAP_BLOCK_SIZE];
+				float rnd[FEATURE_MAP_BLOCK_SIZE];
+				val[0] = *base_input;
+				rnd[0] = *base_uniform_random;
+				#pragma unroll
+				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+				{
+					if (i < feature_map_count - base_feature_map_id)
+					{
+						val[i] = base_input[i * elem_count_per_feature_map];
+						rnd[i] = base_uniform_random[i];
+					}
+				}
+
+				#pragma unroll
+				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+					val[i] *= (rnd[i] <= keep_rate ? mult : 0.0F);
+
+				float * base_output = output + base_offset;
+				*base_output = val[0];
+				#pragma unroll
+				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+				{
+					if (i < feature_map_count - base_feature_map_id)
+						base_output[i * elem_count_per_feature_map] = val[i];
+				}
+			}
+		}
+
 		__global__ void dropout_backprop_upd_kernel(
 			float4 * __restrict input_errors,
 			const float4 * __restrict output_errors,
@@ -79,6 +127,67 @@ namespace nnforge
 			}
 		}
 
+		__global__ void dropout_backprop_per_feature_map_upd_kernel(
+			float * __restrict input_errors,
+			const float * __restrict output_errors,
+			const float * __restrict uniform_random, // (0.0,1.0]
+			float mult,
+			float keep_rate,
+			bool add_update_to_destination,
+			int elem_count_per_feature_map,
+			int feature_map_count,
+			int entry_count)
+		{
+			int local_elem_id = blockIdx.x * blockDim.x + threadIdx.x;
+			int base_feature_map_id = (blockIdx.y * blockDim.y + threadIdx.y) * FEATURE_MAP_BLOCK_SIZE;
+			int entry_id = blockIdx.z * blockDim.z + threadIdx.z;
+			if ((local_elem_id < elem_count_per_feature_map) && (base_feature_map_id < feature_map_count) && (entry_id < entry_count))
+			{
+				int base_offset = (entry_id * feature_map_count + base_feature_map_id) * elem_count_per_feature_map + local_elem_id;
+				const float * base_output_errors = output_errors + base_offset;
+				const float * base_uniform_random = uniform_random + (entry_id * feature_map_count + base_feature_map_id);
+				float val[FEATURE_MAP_BLOCK_SIZE];
+				float rnd[FEATURE_MAP_BLOCK_SIZE];
+				val[0] = *base_output_errors;
+				rnd[0] = *base_uniform_random;
+				#pragma unroll
+				for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+				{
+					if (i < feature_map_count - base_feature_map_id)
+					{
+						val[i] = base_output_errors[i * elem_count_per_feature_map];
+						rnd[i] = base_uniform_random[i];
+					}
+				}
+
+				#pragma unroll
+				for(int i = 0; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+					val[i] *= (rnd[i] <= keep_rate ? mult : 0.0F);
+
+				float * base_input_errors = input_errors + base_offset;
+				if (add_update_to_destination)
+				{
+					*base_input_errors += val[0];
+					#pragma unroll
+					for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+					{
+						if (i < feature_map_count - base_feature_map_id)
+							base_input_errors[i * elem_count_per_feature_map] += val[i];
+					}
+				}
+				else
+				{
+					*base_input_errors = val[0];
+					#pragma unroll
+					for(int i = 1; i < FEATURE_MAP_BLOCK_SIZE; ++i)
+					{
+						if (i < feature_map_count - base_feature_map_id)
+							base_input_errors[i * elem_count_per_feature_map] = val[i];
+					}
+				}
+			}
+		}
+
 		void dropout_layer_updater_cuda::enqueue_forward_propagation(
 			cudaStream_t stream_id,
 			cuda_linear_buffer_device::ptr output_buffer,
@@ -93,21 +202,45 @@ namespace nnforge
 			cuda_linear_buffer_device::ptr temporary_per_entry_buffer,
 			unsigned int entry_count)
 		{
-			int elem_count = (output_elem_count_per_entry * entry_count + 3) / 4;
-			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
-				*cuda_config,
-				elem_count);
+			if (per_feature_map)
+			{
+				curand_safe_call(curandSetStream(cuda_config->get_curand_generator(), stream_id));
+				curand_safe_call(curandGenerateUniform(cuda_config->get_curand_generator(), *temporary_per_entry_buffer, output_configuration_specific.feature_map_count * entry_count));
 
-			curand_safe_call(curandSetStream(cuda_config->get_curand_generator(), stream_id));
-			curand_safe_call(curandGenerateUniform(cuda_config->get_curand_generator(), *temporary_per_entry_buffer, elem_count * 4));
+				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+					*cuda_config,
+					output_elem_count_per_feature_map,
+					(output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE,
+					entry_count);
 
-			dropout_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-				*input_buffers[0],
-				*output_buffer,
-				*temporary_per_entry_buffer,
-				mult,
-				keep_rate,
-				elem_count);
+				dropout_per_feature_map_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_buffers[0],
+					*output_buffer,
+					*temporary_per_entry_buffer,
+					mult,
+					keep_rate,
+					output_elem_count_per_feature_map,
+					output_configuration_specific.feature_map_count,
+					entry_count);
+			}
+			else
+			{
+				int elem_count = (output_elem_count_per_entry * entry_count + 3) / 4;
+				curand_safe_call(curandSetStream(cuda_config->get_curand_generator(), stream_id));
+				curand_safe_call(curandGenerateUniform(cuda_config->get_curand_generator(), *temporary_per_entry_buffer, elem_count * 4));
+
+				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+					*cuda_config,
+					elem_count);
+
+				dropout_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_buffers[0],
+					*output_buffer,
+					*temporary_per_entry_buffer,
+					mult,
+					keep_rate,
+					elem_count);
+			}
 		}
 
 		void dropout_layer_updater_cuda::enqueue_backward_data_propagation(
@@ -128,18 +261,40 @@ namespace nnforge
 			bool add_update_to_destination,
 			unsigned int entry_count)
 		{
-			int elem_count = (output_elem_count_per_entry * entry_count + 3) / 4;
-			std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
-				*cuda_config,
-				elem_count);
-			dropout_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
-				*input_errors_buffer,
-				*output_errors_buffer,
-				*temporary_per_entry_buffer,
-				mult,
-				keep_rate,
-				add_update_to_destination,
-				elem_count);
+			if (per_feature_map)
+			{
+				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+					*cuda_config,
+					output_elem_count_per_feature_map,
+					(output_configuration_specific.feature_map_count + FEATURE_MAP_BLOCK_SIZE - 1) / FEATURE_MAP_BLOCK_SIZE,
+					entry_count);
+
+				dropout_backprop_per_feature_map_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_errors_buffer,
+					*output_errors_buffer,
+					*temporary_per_entry_buffer,
+					mult,
+					keep_rate,
+					add_update_to_destination,
+					output_elem_count_per_feature_map,
+					output_configuration_specific.feature_map_count,
+					entry_count);
+			}
+			else
+			{
+				int elem_count = (output_elem_count_per_entry * entry_count + 3) / 4;
+				std::pair<dim3, dim3> kernel_dims = cuda_util::get_grid_and_threadblock_sizes_sequential_access(
+					*cuda_config,
+					elem_count);
+				dropout_backprop_upd_kernel<<<kernel_dims.first, kernel_dims.second, 0, stream_id>>>(
+					*input_errors_buffer,
+					*output_errors_buffer,
+					*temporary_per_entry_buffer,
+					mult,
+					keep_rate,
+					add_update_to_destination,
+					elem_count);
+			}
 		}
 
 		void dropout_layer_updater_cuda::updater_configured()
@@ -148,6 +303,7 @@ namespace nnforge
 			dropout_rate = layer_derived->dropout_rate;
 			keep_rate = 1.0F - dropout_rate;
 			mult = 1.0F / keep_rate;
+			per_feature_map = layer_derived->per_feature_map;
 		}
 
 		int dropout_layer_updater_cuda::get_input_index_layer_can_write(const layer_action& action) const
@@ -172,7 +328,7 @@ namespace nnforge
 
 		size_t dropout_layer_updater_cuda::get_temporary_per_entry_buffer_size() const
 		{
-			return output_elem_count_per_entry * sizeof(float);
+			return (per_feature_map ? output_configuration_specific.feature_map_count : output_elem_count_per_entry) * sizeof(float);
 		}
 	}
 }

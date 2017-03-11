@@ -152,7 +152,12 @@ private:
 	float max_contrast_shift;
 	float max_saturation_shift;
 	float max_lighting_shift;
+	float min_elastic_deformation_intensity;
+	float max_elastic_deformation_intensity;
+	float min_elastic_deformation_smoothness;
+	float max_elastic_deformation_smoothness;
 	int sparse_feature_map_ratio;
+	float connection_shuffle_ratio;
 
 	static const unsigned int resnet_blocks[4];
 };
