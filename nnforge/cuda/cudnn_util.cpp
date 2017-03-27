@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ namespace nnforge
 			for(int i = 0; i < windows_sizes.size(); ++i)
 				filter_dimensions[i + 2] = windows_sizes[windows_sizes.size() - 1 - i];
 
-			cudnn_safe_call(cudnnSetFilterNdDescriptor_v4(
+			cudnn_safe_call(cudnnSetFilterNdDescriptor(
 				filter_desc,
 				CUDNN_DATA_FLOAT,
 				CUDNN_TENSOR_NCHW,
