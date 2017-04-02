@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -129,6 +129,7 @@ namespace nnforge
 
 			window_sizes = layer_derived->window_sizes;
 			strides = layer_derived->strides;
+			dilation = layer_derived->dilation;
 			bias = layer_derived->bias;
 
 			std::vector<unsigned int> zero_padding = layer_derived->left_zero_padding;
@@ -152,12 +153,13 @@ namespace nnforge
 			cudnn_util::set_convolution_descriptor(
 				convolution_desc,
 				zero_padding,
-				layer_derived->strides);
+				strides,
+				dilation);
 		}
 
 		std::pair<size_t, bool> convolution_layer_tester_cuda::get_temporary_working_fixed_buffer_size() const
 		{
-			bool is_over_sol_algos_available = cudnn_util::is_over_sol_algos_available(window_sizes, strides);
+			bool is_over_sol_algos_available = cudnn_util::is_over_sol_algos_available(window_sizes, strides, dilation);
 			unsigned int working_buffer_elem_count = std::max(input_configuration_specific_list[0].feature_map_count, output_configuration_specific.feature_map_count);
 			for(int i = 0; i < window_sizes.size(); ++i)
 				working_buffer_elem_count *= window_sizes[i];
