@@ -44,6 +44,7 @@ message ConvolutionalParam {
 		optional uint32 left_padding = 2 [default = 0];
 		optional uint32 right_padding = 3 [default = 0];
 		optional uint32 stride = 4 [default = 1];
+		optional uint32 dilation = 5 [default = 1];
 	}
 	required uint32 input_feature_map_count = 1;
 	required uint32 output_feature_map_count = 2;

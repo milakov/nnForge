@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +36,8 @@ namespace nnforge
 		const std::vector<unsigned int>& left_zero_padding,
 		const std::vector<unsigned int>& right_zero_padding,
 		const std::vector<unsigned int>& strides,
-		bool bias)
+		bool bias,
+		const std::vector<unsigned int>& dilation)
 		: window_sizes(window_sizes),
 		input_feature_map_count(input_feature_map_count),
 		output_feature_map_count(output_feature_map_count)
@@ -64,6 +65,11 @@ namespace nnforge
 		else
 			this->strides = strides;
 
+		if (dilation.empty())
+			this->dilation.resize(window_sizes.size(), 1);
+		else
+			this->dilation = dilation;
+
 		check();
 	}
 
@@ -84,6 +90,10 @@ namespace nnforge
 		for(unsigned int i = 0; i < strides.size(); i++)
 			if (strides[i] == 0)
 				throw neural_network_exception((boost::format("stride dimension (%1%) is 0") % i).str());
+
+		for(unsigned int i = 0; i < dilation.size(); i++)
+			if (dilation[i] == 0)
+				throw neural_network_exception((boost::format("dilation dimension (%1%) is 0") % i).str());
 	}
 
 	std::string convolution_layer::get_type_name() const
@@ -109,11 +119,12 @@ namespace nnforge
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
 		{
 			unsigned int total_input_dimension_size = input_configuration_specific_list[0].dimension_sizes[i] + left_zero_padding[i] + right_zero_padding[i];
+			unsigned int effective_winodw_size = (window_sizes[i] - 1) * dilation[i] + 1;
 
-			if (total_input_dimension_size < window_sizes[i])
-				throw neural_network_exception((boost::format("Too small total dimension size (with padding) (%1%) of dimension (%2%) is smaller than layer window size (%3%)") % total_input_dimension_size % i % window_sizes[i]).str());
+			if (total_input_dimension_size < effective_winodw_size)
+				throw neural_network_exception((boost::format("Total dimension size (with padding) (%1%) of dimension (%2%) is smaller than layer effective window size (%3%)") % total_input_dimension_size % i % effective_winodw_size).str());
 
-			res.dimension_sizes.push_back((total_input_dimension_size - window_sizes[i]) / strides[i] + 1);
+			res.dimension_sizes.push_back((total_input_dimension_size - effective_winodw_size) / strides[i] + 1);
 		}
 
 		return res;
@@ -133,7 +144,10 @@ namespace nnforge
 		input_configuration_specific = layer_configuration_specific(input_feature_map_count);
 
 		for(unsigned int i = 0; i < window_sizes.size(); ++i)
-			input_configuration_specific.dimension_sizes.push_back((output_configuration_specific.dimension_sizes[i] - 1) * strides[i] + window_sizes[i] - left_zero_padding[i] - right_zero_padding[i]);
+		{
+			unsigned int effective_winodw_size = (window_sizes[i] - 1) * dilation[i] + 1;
+			input_configuration_specific.dimension_sizes.push_back((output_configuration_specific.dimension_sizes[i] - 1) * strides[i] + effective_winodw_size - left_zero_padding[i] - right_zero_padding[i]);
+		}
 
 		return true;
 	}
@@ -158,6 +172,8 @@ namespace nnforge
 				dim_param->set_right_padding(right_zero_padding[i]);
 			if (strides[i] > 1)
 				dim_param->set_stride(strides[i]);
+			if (dilation[i] > 1)
+				dim_param->set_dilation(dilation[i]);
 		}
 	}
 
@@ -177,6 +193,7 @@ namespace nnforge
 		left_zero_padding.resize(param.dimension_param_size());
 		right_zero_padding.resize(param.dimension_param_size());
 		strides.resize(param.dimension_param_size());
+		dilation.resize(param.dimension_param_size());
 
 		for(int i = 0; i < param.dimension_param_size(); ++i)
 		{
@@ -184,6 +201,7 @@ namespace nnforge
 			left_zero_padding[i] = param.dimension_param(i).left_padding();
 			right_zero_padding[i] = param.dimension_param(i).right_padding();
 			strides[i] = param.dimension_param(i).stride();
+			dilation[i] = param.dimension_param(i).dilation();
 		}
 
 		check();
@@ -370,6 +388,27 @@ namespace nnforge
 				ss << strides[i];
 			}
 		}
+
+		bool empty_dilation = true;
+		for(int i = 0; i < strides.size(); ++i)
+		{
+			if (dilation[i] != 1)
+			{
+				empty_dilation = false;
+				break;
+			}
+		}
+		if (!empty_dilation)
+		{
+			ss << ", dilation ";
+			for(int i = 0; i < dilation.size(); ++i)
+			{
+				if (i != 0)
+					ss << "x";
+				ss << dilation[i];
+			}
+		}
+
 		if (!bias)
 			ss << ", w/out bias";
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -62,6 +62,10 @@ namespace nnforge
 			strides_extended.resize(max_dimension_count, 1);
 			const std::vector<unsigned int>& strides = strides_extended;
 
+			std::vector<unsigned int> dilation_extended = layer_derived->dilation;
+			dilation_extended.resize(max_dimension_count, 1);
+			const std::vector<unsigned int>& dilation = dilation_extended;
+
 			std::vector<unsigned int> left_zero_padding_extended = layer_derived->left_zero_padding;
 			left_zero_padding_extended.resize(max_dimension_count, 0);
 			const std::vector<unsigned int>& left_zero_padding = left_zero_padding_extended;
@@ -93,14 +97,14 @@ namespace nnforge
 				int offset = 0;
 				for(unsigned int j = 0; j < dimension_count; ++j)
 				{
-					offset += static_cast<int>(input_slices[j]);
+					offset += static_cast<int>(input_slices[j] * dilation[j]);
 					if ((++current_local_input_position[j]) < window_sizes[j])
 					{
 						offset_list[i] = offset_list[i-1] + offset;
 						break;
 					}
 					current_local_input_position[j] = 0;
-					offset -= static_cast<int>(window_sizes[j] * input_slices[j]);
+					offset -= static_cast<int>(window_sizes[j] * input_slices[j] * dilation[j]);
 				}
 			}
 
@@ -111,6 +115,7 @@ namespace nnforge
 			const std::vector<unsigned int>::const_iterator input_slices_it = input_slices.begin();
 			const std::vector<unsigned int>::const_iterator offset_list_it = offset_list.begin();
 			const std::vector<unsigned int>::const_iterator strides_it = strides.begin();
+			const std::vector<unsigned int>::const_iterator dilation_it = dilation.begin();
 
 			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
@@ -147,17 +152,21 @@ namespace nnforge
 							int in_it_offset = in_it_offset2 + (input_feature_map_id * input_neuron_count_per_feature_map);
 
 							int ind = 0;
-							for(int w = current_input_position[3]; w < current_input_position[3] + static_cast<int>(window_sizes[3]); ++w)
+							for(int w_local = 0; w_local < static_cast<int>(window_sizes[3]); ++w_local)
 							{
+								int w = w_local * dilation_it[3] + current_input_position[3];
 								bool fit3 = ((unsigned int)w < (unsigned int)input_dimension_sizes[3]);
-								for(int z = current_input_position[2]; z < current_input_position[2] + static_cast<int>(window_sizes[2]); ++z)
+								for(int z_local = 0; z_local < static_cast<int>(window_sizes[2]); ++z_local)
 								{
+									int z = z_local * dilation_it[2] + current_input_position[2];
 									bool fit2 = fit3 && ((unsigned int)z < (unsigned int)input_dimension_sizes[2]);
-									for(int y = current_input_position[1]; y < current_input_position[1] + static_cast<int>(window_sizes[1]); ++y)
+									for(int y_local = 0; y_local < static_cast<int>(window_sizes[1]); ++y_local)
 									{
+										int y = y_local * dilation_it[1] + current_input_position[1];
 										bool fit1 = fit2 && ((unsigned int)y < (unsigned int)input_dimension_sizes[1]);
-										for(int x = current_input_position[0]; x < current_input_position[0] + static_cast<int>(window_sizes[0]); ++x)
+										for(int x_local = 0; x_local < static_cast<int>(window_sizes[0]); ++x_local)
 										{
+											int x = x_local * dilation_it[0] + current_input_position[0];
 											bool fit0 = fit1 && ((unsigned int)x < (unsigned int)input_dimension_sizes[0]);
 											if (fit0)
 												sum += (*(in_it_base + (in_it_offset + *(offset_list_it + ind)))) * (*weights_it);

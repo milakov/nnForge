@@ -48,7 +48,7 @@ namespace nnforge
 			cudnnDataType_t data_type;
 			std::vector<int> padding;
 			std::vector<int> strides;
-			std::vector<int> upscale;
+			std::vector<int> dilation;
 		};
 
 		bool operator<(const convolution_params&x, const convolution_params&y);
@@ -77,7 +77,8 @@ namespace nnforge
 			static void set_convolution_descriptor(
 				cudnnConvolutionDescriptor_t convolution_desc,
 				const std::vector<unsigned int>& zero_padding,
-				const std::vector<unsigned int>& strides);
+				const std::vector<unsigned int>& strides,
+				const std::vector<unsigned int>& dilation);
 
 			static convolution_params get_convolution_params(cudnnConvolutionDescriptor_t convolution_desc);
 
@@ -91,7 +92,8 @@ namespace nnforge
 
 			static bool is_over_sol_algos_available(
 				const std::vector<unsigned int>& window_sizes,
-				const std::vector<unsigned int>& strides);
+				const std::vector<unsigned int>& strides,
+				const std::vector<unsigned int>& dilation);
 
 		private:
 			cudnn_util() = delete;

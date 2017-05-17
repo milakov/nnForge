@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ namespace nnforge
 
 			std::vector<unsigned int> window_sizes;
 			std::vector<unsigned int> strides;
+			std::vector<unsigned int> dilation;
 			bool bias;
 
 			cudnnTensorDescriptor_t input_data_desc;

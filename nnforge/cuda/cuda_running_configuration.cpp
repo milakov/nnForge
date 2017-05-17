@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2014 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -255,7 +255,6 @@ namespace nnforge
 			void * workspace,
 			size_t workspace_size) const
 		{
-#if (CUDNN_MAJOR >= 5)
 			key_convolution_param param;
 			param.input_tensor_params = cudnn_util::get_tensor_params(input_desc);
 			param.output_tensor_params = cudnn_util::get_tensor_params(output_desc);
@@ -302,7 +301,7 @@ namespace nnforge
 					forward_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(false, cudnnConvolutionFwdAlgo_t())));
 				}
 			}
-#endif
+
 			{
 				cudnnConvolutionFwdAlgo_t algo;
 				cudnn_safe_call(cudnnGetConvolutionForwardAlgorithm(
@@ -329,7 +328,6 @@ namespace nnforge
 			void * workspace,
 			size_t workspace_size) const
 		{
-#if (CUDNN_MAJOR >= 5)
 			key_convolution_param param;
 			param.input_tensor_params = cudnn_util::get_tensor_params(input_desc);
 			param.output_tensor_params = cudnn_util::get_tensor_params(output_desc);
@@ -376,7 +374,7 @@ namespace nnforge
 					backward_weights_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(false, cudnnConvolutionBwdFilterAlgo_t())));
 				}
 			}
-#endif
+
 			{
 				cudnnConvolutionBwdFilterAlgo_t algo;
 				cudnn_safe_call(cudnnGetConvolutionBackwardFilterAlgorithm(
@@ -403,7 +401,6 @@ namespace nnforge
 			void * workspace,
 			size_t workspace_size) const
 		{
-#if (CUDNN_MAJOR >= 5)
 			key_convolution_param param;
 			param.input_tensor_params = cudnn_util::get_tensor_params(input_desc);
 			param.output_tensor_params = cudnn_util::get_tensor_params(output_desc);
@@ -450,7 +447,7 @@ namespace nnforge
 					backward_data_param_to_best_algo_map.insert(std::make_pair(param, std::make_pair(false, cudnnConvolutionBwdDataAlgo_t())));
 				}
 			}
-#endif
+
 			{
 				cudnnConvolutionBwdDataAlgo_t algo;
 				cudnn_safe_call(cudnnGetConvolutionBackwardDataAlgorithm(

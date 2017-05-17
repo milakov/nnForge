@@ -79,17 +79,18 @@ namespace nnforge
 		void cudnn_util::set_convolution_descriptor(
 			cudnnConvolutionDescriptor_t convolution_desc,
 			const std::vector<unsigned int>& zero_padding,
-			const std::vector<unsigned int>& strides)
+			const std::vector<unsigned int>& strides,
+			const std::vector<unsigned int>& dilation)
 		{
 			std::vector<int> conv_padding(zero_padding.rbegin(), zero_padding.rend());
 			std::vector<int> filter_stride(strides.rbegin(), strides.rend());
-			std::vector<int> upscale(zero_padding.size(), 1);
+			std::vector<int> conv_dilation(dilation.rbegin(), dilation.rend());
 			cudnn_safe_call(cudnnSetConvolutionNdDescriptor(
 				convolution_desc,
 				static_cast<int>(zero_padding.size()),
 				&conv_padding[0],
 				&filter_stride[0],
-				&upscale[0],
+				&conv_dilation[0],
 				CUDNN_CROSS_CORRELATION,
 				CUDNN_DATA_FLOAT));
 		}
@@ -116,7 +117,8 @@ namespace nnforge
 
 		bool cudnn_util::is_over_sol_algos_available(
 			const std::vector<unsigned int>& window_sizes,
-			const std::vector<unsigned int>& strides)
+			const std::vector<unsigned int>& strides,
+			const std::vector<unsigned int>& dilation)
 		{
 			bool unit_stride = true;
 			for(int i = 0; i < strides.size(); ++i)
@@ -124,8 +126,11 @@ namespace nnforge
 			bool non_unit_window_size = false;
 			for(int i = 0; i < window_sizes.size(); ++i)
 				non_unit_window_size = non_unit_window_size || (window_sizes[i] > 1);
+			bool unit_dilation = true;
+			for(int i = 0; i < dilation.size(); ++i)
+				unit_dilation = unit_dilation && (dilation[i] == 1);
 
-			return (unit_stride && non_unit_window_size);
+			return (unit_stride && non_unit_window_size && unit_dilation);
 		}
 
 		tensor_params cudnn_util::get_tensor_params(cudnnTensorDescriptor_t tensor_desc)
@@ -169,7 +174,7 @@ namespace nnforge
 			convolution_params res;
 			res.padding.resize(5);
 			res.strides.resize(res.padding.size());
-			res.upscale.resize(res.padding.size());
+			res.dilation.resize(res.padding.size());
 			int actual_dims;
 			cudnn_safe_call(cudnnGetConvolutionNdDescriptor(
 				convolution_desc,
@@ -177,12 +182,12 @@ namespace nnforge
 				&actual_dims,
 				&res.padding[0],
 				&res.strides[0],
-				&res.upscale[0],
+				&res.dilation[0],
 				&res.mode,
 				&res.data_type));
 			res.padding.resize(actual_dims);
 			res.strides.resize(actual_dims);
-			res.upscale.resize(actual_dims);
+			res.dilation.resize(actual_dims);
 
 			return res;
 		}
@@ -254,11 +259,11 @@ namespace nnforge
 					return false;
 			}
 
-			for(int i = 0; i < std::min(x.upscale.size(), y.upscale.size()); ++i)
+			for(int i = 0; i < std::min(x.dilation.size(), y.dilation.size()); ++i)
 			{
-				if (x.upscale[i] < y.upscale[i])
+				if (x.dilation[i] < y.dilation[i])
 					return true;
-				else if (y.upscale[i] < x.upscale[i])
+				else if (y.dilation[i] < x.dilation[i])
 					return false;
 			}
 

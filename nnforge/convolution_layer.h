@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ namespace nnforge
 			const std::vector<unsigned int>& left_zero_padding = std::vector<unsigned int>(),
 			const std::vector<unsigned int>& right_zero_padding = std::vector<unsigned int>(),
 			const std::vector<unsigned int>& strides = std::vector<unsigned int>(),
-			bool bias = true);
+			bool bias = true,
+			const std::vector<unsigned int>& dilation = std::vector<unsigned int>());
 
 		virtual layer::ptr clone() const;
 
@@ -84,6 +85,7 @@ namespace nnforge
 		std::vector<unsigned int> left_zero_padding;
 		std::vector<unsigned int> right_zero_padding;
 		std::vector<unsigned int> strides;
+		std::vector<unsigned int> dilation;
 		bool bias;
 	};
 }
