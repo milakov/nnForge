@@ -2161,7 +2161,7 @@ namespace nnforge
 				{
 					chunk_count = (batch_size + max_chunk_size - 1) / max_chunk_size;
 					unsigned int chunk_size = (batch_size + chunk_count - 1) / chunk_count;
-					chunk_size = std::min(balanced_max_entry_count_first, (chunk_size + config_count - 1) / config_count * config_count);
+					chunk_size = std::min(chunk_size, (chunk_size + config_count - 1) / config_count * config_count);
 					chunk_count = (batch_size + chunk_size - 1) / chunk_size;
 					chunk_sizes.resize(chunk_count);
 					std::fill_n(chunk_sizes.begin(), chunk_count - 1, chunk_size);
