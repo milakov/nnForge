@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ namespace nnforge
 			float * __restrict gradient_mean,
 			const float * __restrict target_mean,
 			const float * __restrict current_mean,
-			float * __restrict gradient_invvar,
-			const float * __restrict target_invvar,
-			const float * __restrict current_invvar,
+			float * __restrict gradient_invstddev,
+			const float * __restrict target_invstddev,
+			const float * __restrict current_invstddev,
 			float mult,
 			int elem_count)
 		{
@@ -39,7 +39,7 @@ namespace nnforge
 			if (elem_id < elem_count)
 			{
 				gradient_mean[elem_id] += mult * (target_mean[elem_id] - current_mean[elem_id]);
-				gradient_invvar[elem_id] += mult * (target_invvar[elem_id] - current_invvar[elem_id]);
+				gradient_invstddev[elem_id] += mult * (target_invstddev[elem_id] - current_invstddev[elem_id]);
 			}
 		}
 

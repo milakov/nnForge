@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ namespace nnforge
 			const float * __restrict gamma,
 			const float * __restrict beta,
 			const float * __restrict mean,
-			const float * __restrict inverse_sigma,
+			const float * __restrict inverse_stddev,
 			int elem_count_per_feature_map,
 			int feature_map_count,
 			int entry_count,
@@ -43,7 +43,7 @@ namespace nnforge
 			if ((elem_id < elem_count_per_feature_map) && (feature_map_id < feature_map_count) && (entry_id < entry_count))
 			{
 				bool second_item_valid = (entry_id + 1 < entry_count);
-				float mult = gamma[feature_map_id] * inverse_sigma[feature_map_id];
+				float mult = gamma[feature_map_id] * inverse_stddev[feature_map_id];
 				float add = beta[feature_map_id] - mult * mean[feature_map_id];
 				int offset1 = (entry_id * feature_map_count + feature_map_id) * elem_count_per_feature_map + elem_id;
 				int offset2 = offset1 + elem_count_per_entry;
