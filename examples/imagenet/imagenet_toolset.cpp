@@ -411,9 +411,9 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 {
 	std::vector<nnforge::data_transformer::ptr> res;
 
-	if (usage != dataset_usage_check_gradient)
+	if (layer_name == "images")
 	{
-		if (layer_name == "images")
+		if (usage != dataset_usage_check_gradient)
 		{
 			if ((dataset_name == "training") && (usage != dataset_usage_create_normalizer) && (usage != dataset_usage_update_bn_weights))
 			{
@@ -449,8 +449,8 @@ std::vector<nnforge::data_transformer::ptr> imagenet_toolset::get_data_transform
 						true)));
 				}
 			}
-			res.push_back(get_normalize_data_transformer(layer_name));
 		}
+		res.push_back(get_normalize_data_transformer(layer_name));
 	}
 
 	return res;
