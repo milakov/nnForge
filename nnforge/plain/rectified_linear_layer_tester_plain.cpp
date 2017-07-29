@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -40,13 +40,19 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			unsigned int entry_count) const
 		{
+			std::shared_ptr<const rectified_linear_layer> layer_derived = std::dynamic_pointer_cast<const rectified_linear_layer>(layer_schema);
+
 			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
 			float * const out_it = *output_buffer;
 			const float * const in_it = *input_buffers[0];
+			const float negative_slope = layer_derived->negative_slope;
 
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 			for(int i = 0; i < elem_count; ++i)
-				*(out_it + i) = std::max<float>(*(in_it + i), 0.0F);
+			{
+				float input_val = *(in_it + i);
+				*(out_it + i) = input_val >= 0.0F ? input_val : input_val * negative_slope;
+			}
 		}
 
 		int rectified_linear_layer_tester_plain::get_input_index_layer_can_write(

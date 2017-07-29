@@ -70,6 +70,12 @@ namespace nnforge
 			virtual bool is_backward_data_dependent_on_temporary_per_entry_buffer(unsigned int action_input_index) const;
 
 			virtual size_t get_temporary_per_entry_buffer_size() const;
+
+		protected:
+			virtual void updater_configured();
+
+		private:
+			float negative_slope;
 		};
 	}
 }

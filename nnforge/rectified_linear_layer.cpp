@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,9 +16,18 @@
 
 #include "rectified_linear_layer.h"
 
+#include "proto/nnforge.pb.h"
+
+#include <sstream>
+
 namespace nnforge
 {
 	const std::string rectified_linear_layer::layer_type_name = "ReLU";
+
+	rectified_linear_layer::rectified_linear_layer(float negative_slope)
+		: negative_slope(negative_slope)
+	{
+	}
 
 	std::string rectified_linear_layer::get_type_name() const
 	{
@@ -43,5 +52,38 @@ namespace nnforge
 		default:
 			return 0.0F;
 		}
+	}
+
+	void rectified_linear_layer::write_proto(void * layer_proto) const
+	{
+		if (negative_slope != 0.0F)
+		{
+			protobuf::Layer * layer_proto_typed = reinterpret_cast<protobuf::Layer *>(layer_proto);
+			protobuf::ReLUParam * param = layer_proto_typed->mutable_relu_param();
+			param->set_negative_slope(negative_slope);
+		}
+	}
+
+	void rectified_linear_layer::read_proto(const void * layer_proto)
+	{
+		negative_slope = 0.0F;
+
+		const protobuf::Layer * layer_proto_typed = reinterpret_cast<const protobuf::Layer *>(layer_proto);
+		if (layer_proto_typed->has_relu_param())
+			negative_slope = layer_proto_typed->relu_param().negative_slope();
+	}
+
+	std::vector<std::string> rectified_linear_layer::get_parameter_strings() const
+	{
+		std::vector<std::string> res;
+
+		if (negative_slope != 0.0F)
+		{
+			std::stringstream ss;
+			ss << "Leaky " << negative_slope;
+			res.push_back(ss.str());
+		}
+
+		return res;
 	}
 }

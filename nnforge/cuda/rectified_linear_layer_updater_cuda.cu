@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #include "rectified_linear_layer_updater_cuda.h"
 
 #include "util_cuda.h"
+#include "../rectified_linear_layer.h"
 
 namespace nnforge
 {
@@ -26,6 +27,7 @@ namespace nnforge
 			const float4 * __restrict input,
 			float4 * __restrict output,
 			uint4 * __restrict bits_buffer,
+			float negative_slope,
 			int elem_count)
 		{
 			int elem_id = blockDim.x * blockIdx.x + threadIdx.x;
@@ -33,17 +35,21 @@ namespace nnforge
 			{
 				float4 val = input[elem_id];
 				uint4 bits;
-				bits.x = __ballot(val.x > 0.0F ? 1 : 0);
-				bits.y = __ballot(val.y > 0.0F ? 1 : 0);
-				bits.z = __ballot(val.z > 0.0F ? 1 : 0);
-				bits.w = __ballot(val.w > 0.0F ? 1 : 0);
+				bits.x = __ballot(val.x < 0.0F ? 0 : 1);
+				bits.y = __ballot(val.y < 0.0F ? 0 : 1);
+				bits.z = __ballot(val.z < 0.0F ? 0 : 1);
+				bits.w = __ballot(val.w < 0.0F ? 0 : 1);
 				int lane_id = elem_id & 31;
 				if (lane_id == 0)
 					bits_buffer[elem_id >> 5] = bits;
-				val.x = max(val.x, 0.0F);
-				val.y = max(val.y, 0.0F);
-				val.z = max(val.z, 0.0F);
-				val.w = max(val.w, 0.0F);
+				if (val.x < 0.0F) 
+					val.x *= negative_slope;
+				if (val.y < 0.0F) 
+					val.y *= negative_slope;
+				if (val.z < 0.0F) 
+					val.z *= negative_slope;
+				if (val.w < 0.0F) 
+					val.w *= negative_slope;
 				output[elem_id] = val;
 			}
 		}
@@ -52,6 +58,7 @@ namespace nnforge
 			float4 * __restrict input_errors,
 			const float4 * __restrict output_errors,
 			const uint4 * __restrict bits_buffer,
+			float negative_slope,
 			bool add_update_to_destination,
 			int elem_count)
 		{
@@ -63,13 +70,13 @@ namespace nnforge
 				int lane_id = elem_id & 31;
 				unsigned int mask = (1 << lane_id);
 				if ((bits.x & mask) == 0)
-					val.x = 0.0F;
+					val.x *= negative_slope;
 				if ((bits.y & mask) == 0)
-					val.y = 0.0F;
+					val.y *= negative_slope;
 				if ((bits.z & mask) == 0)
-					val.z = 0.0F;
+					val.z *= negative_slope;
 				if ((bits.w & mask) == 0)
-					val.w = 0.0F;
+					val.w *= negative_slope;
 				if (add_update_to_destination)
 				{
 					float4 prv = input_errors[elem_id];
@@ -108,6 +115,7 @@ namespace nnforge
 				*input_buffers[0],
 				*output_buffer,
 				*temporary_per_entry_buffer,
+				negative_slope,
 				elem_count);
 		}
 
@@ -140,6 +148,7 @@ namespace nnforge
 				*input_errors_buffer,
 				*output_errors_buffer,
 				*temporary_per_entry_buffer,
+				negative_slope,
 				add_update_to_destination,
 				elem_count);
 		}
@@ -167,6 +176,13 @@ namespace nnforge
 		size_t rectified_linear_layer_updater_cuda::get_temporary_per_entry_buffer_size() const
 		{
 			return ((output_elem_count_per_entry + 128 - 1) / 128) * sizeof(uint4);
+		}
+
+		void rectified_linear_layer_updater_cuda::updater_configured()
+		{
+			std::shared_ptr<const rectified_linear_layer> layer_derived = std::dynamic_pointer_cast<const rectified_linear_layer>(layer_schema);
+
+			negative_slope = layer_derived->negative_slope;
 		}
 	}
 }

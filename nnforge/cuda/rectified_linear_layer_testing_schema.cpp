@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #include "rectified_linear_layer_testing_schema.h"
 
 #include "../rectified_linear_layer.h"
-#include "activation_layer_cudnn_tester_cuda.h"
+#include "rectified_linear_layer_tester_cuda.h"
 
 namespace nnforge
 {
@@ -38,7 +38,7 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			const cuda_running_configuration& cuda_config) const
 		{
-			return layer_tester_cuda::ptr(new activation_layer_cudnn_tester_cuda(CUDNN_ACTIVATION_RELU));
+			return layer_tester_cuda::ptr(new rectified_linear_layer_tester_cuda);
 		}
 	}
 }

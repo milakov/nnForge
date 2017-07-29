@@ -101,6 +101,7 @@
     <ClInclude Include="prefix_sum_layer_testing_schema.h" />
     <ClInclude Include="prefix_sum_layer_updater_cuda.h" />
     <ClInclude Include="prefix_sum_layer_updater_schema.h" />
+    <ClInclude Include="rectified_linear_layer_tester_cuda.h" />
     <ClInclude Include="rectified_linear_layer_updater_cuda.h" />
     <ClInclude Include="reshape_layer_tester_cuda.h" />
     <ClInclude Include="reshape_layer_testing_schema.h" />
@@ -315,6 +316,7 @@
     <CudaCompile Include="parametric_rectified_linear_layer_updater_cuda.cu" />
     <CudaCompile Include="prefix_sum_layer_tester_cuda.cu" />
     <CudaCompile Include="prefix_sum_layer_updater_cuda.cu" />
+    <CudaCompile Include="rectified_linear_layer_tester_cuda.cu" />
     <CudaCompile Include="rectified_linear_layer_updater_cuda.cu" />
     <CudaCompile Include="sparse_convolution_layer_testing_schema_helper_cuda.cu">
       <CodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">compute_30,sm_30;compute_35,sm_35</CodeGeneration>

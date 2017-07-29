@@ -35,6 +35,7 @@ message Layer {
 	optional AddParam add_param = 27;
 	optional BatchNormParam batch_norm_param = 28;
 	optional AffineGridGeneratorParam affine_grid_generator_param = 29;
+	optional ReLUParam relu_param = 30;
 	optional CustomParam custom_param = 1000;
 }
 
@@ -259,6 +260,10 @@ message AffineGridGeneratorParam {
 	optional bool adjust_for_zero_init = 1 [default = true];
 	repeated AffineGridGeneratorDimensionParam dimension_param = 2;
 	optional float weight_scale = 3;
+}
+
+message ReLUParam {
+	optional float negative_slope = 1 [default = 0.0];
 }
 
 message CustomParam {

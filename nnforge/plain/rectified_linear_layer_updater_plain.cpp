@@ -42,13 +42,19 @@ namespace nnforge
 			const std::set<layer_action>& actions,
 			unsigned int entry_count) const
 		{
+			std::shared_ptr<const rectified_linear_layer> layer_derived = std::dynamic_pointer_cast<const rectified_linear_layer>(layer_schema);
+
 			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
 			float * const out_it = *output_buffer;
 			const float * const in_it = *input_buffers[0];
+			const float negative_slope = layer_derived->negative_slope;
 
 			#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 			for(int i = 0; i < elem_count; ++i)
-				*(out_it + i) = std::max<float>(*(in_it + i), 0.0F);
+			{
+				float input_val = *(in_it + i);
+				*(out_it + i) = input_val >= 0.0F ? input_val : input_val * negative_slope;
+			}
 		}
 
 		void rectified_linear_layer_updater_plain::run_backward_data_propagation(
@@ -70,19 +76,22 @@ namespace nnforge
 			const std::set<layer_action>& actions,
 			unsigned int entry_count) const
 		{
+			std::shared_ptr<const rectified_linear_layer> layer_derived = std::dynamic_pointer_cast<const rectified_linear_layer>(layer_schema);
+
 			const int elem_count = static_cast<int>(entry_count * output_configuration_specific.get_neuron_count());
-			const float * const out_it = *output_neurons_buffer;
+			const float * const in_it = *input_neurons_buffers[0];
 			float * const in_err_it = *input_errors_buffer;
 			const float * const out_err_it = *output_errors_buffer;
+			const float negative_slope = layer_derived->negative_slope;
 
 			if (add_update_to_destination)
 			{
 				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 				for(int i = 0; i < elem_count; ++i)
 				{
-					float out_val = *(out_it + i);
+					float in_val = *(in_it + i);
 					float out_err = *(out_err_it+ i);
-					*(in_err_it + i) += (out_val == 0.0F) ? 0.0F : out_err;
+					*(in_err_it + i) += (in_val >= 0.0F) ? out_err : out_err * negative_slope;
 				}
 			}
 			else
@@ -90,9 +99,9 @@ namespace nnforge
 				#pragma omp parallel for default(none) schedule(guided) num_threads(plain_config->openmp_thread_count)
 				for(int i = 0; i < elem_count; ++i)
 				{
-					float out_val = *(out_it + i);
+					float in_val = *(in_it + i);
 					float out_err = *(out_err_it+ i);
-					*(in_err_it + i) = (out_val == 0.0F) ? 0.0F : out_err;
+					*(in_err_it + i) = (in_val >= 0.0F) ? out_err : out_err * negative_slope;
 				}
 			}
 		}
@@ -117,7 +126,7 @@ namespace nnforge
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return false;
+			return true;
 		}
 
 		bool rectified_linear_layer_updater_plain::is_backward_data_dependent_on_output_buffer(
@@ -128,7 +137,7 @@ namespace nnforge
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific) const
 		{
-			return true;
+			return false;
 		}
 	}
 }
