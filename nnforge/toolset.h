@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -216,6 +216,7 @@ namespace nnforge
 		std::string step_learning_rate_epochs_and_rates;
 		float weight_decay;
 		int batch_size;
+		int max_chunk_size;
 		std::string momentum_type_str;
 		float momentum_val;
 		float momentum_val2;

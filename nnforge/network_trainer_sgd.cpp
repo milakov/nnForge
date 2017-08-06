@@ -52,6 +52,7 @@ namespace nnforge
 			task.momentum_data2,
 			lr_and_comment.first,
 			batch_size,
+			max_chunk_size,
 			weight_decay,
 			momentum,
 			task.get_current_epoch());

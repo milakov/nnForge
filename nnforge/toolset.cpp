@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -411,6 +411,7 @@ namespace nnforge
 		res.push_back(int_option("training_epoch_count,E", &training_epoch_count, 50, "Epochs to train"));
 		res.push_back(int_option("learning_rate_decay_start_epoch", &learning_rate_decay_start_epoch, 0, "Exponential learning rate decay starts at this epoch"));
 		res.push_back(int_option("batch_size,B", &batch_size, 1, "Training mini-batch size"));
+		res.push_back(int_option("max_chunk_size", &max_chunk_size, 0, "Maximum chunk size per GPU, 0 indicates no limitation"));
 		res.push_back(int_option("ann_count,N", &ann_count, 1, "Amount of networks to train"));
 		res.push_back(int_option("inference_ann_data_index", &inference_ann_data_index, -1, "Index of the dataset to be used for inference"));
 		res.push_back(int_option("batch_offset", &batch_offset, 0, "Shift initial ANN index when batch training"));
@@ -987,6 +988,7 @@ namespace nnforge
 		res->lr_policy = lr_policy;
 		res->weight_decay = weight_decay;
 		res->batch_size = batch_size;
+		res->max_chunk_size = max_chunk_size;
 		res->momentum = training_momentum(momentum_type_str, momentum_val, momentum_val2);
 
 		return res;
@@ -1419,6 +1421,7 @@ namespace nnforge
 						network_data::ptr(),
 						learning_rates,
 						batch_size,
+						max_chunk_size,
 						0.0F,
 						training_momentum(training_momentum::no_momentum),
 						0);
@@ -1449,6 +1452,7 @@ namespace nnforge
 							network_data::ptr(),
 							learning_rates,
 							batch_size,
+							max_chunk_size,
 							0.0F,
 							training_momentum(training_momentum::no_momentum),
 							0);
@@ -1472,6 +1476,7 @@ namespace nnforge
 							network_data::ptr(),
 							learning_rates,
 							batch_size,
+							max_chunk_size,
 							0.0F,
 							training_momentum(training_momentum::no_momentum),
 							0);

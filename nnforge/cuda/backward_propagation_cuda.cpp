@@ -85,6 +85,7 @@ namespace nnforge
 			network_data::ptr momentum_data2,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
+			unsigned int max_chunk_size,
 			float weight_decay,
 			training_momentum momentum,
 			unsigned int epoch_id,
@@ -183,7 +184,7 @@ namespace nnforge
 				max_entry_count_list[i] = cuda_multi_config->cuda_config_list[i]->get_max_entry_count(buffer_configuration);
 			}
 
-			std::vector<std::vector<unsigned int>> entry_read_counts_list = get_entry_read_counts_list(max_entry_count_list, batch_size);
+			std::vector<std::vector<unsigned int>> entry_read_counts_list = get_entry_read_counts_list(max_entry_count_list, batch_size, max_chunk_size);
 
 			std::vector<unsigned int> max_chunk_size_list(config_count, 0);
 			for(const auto& elem: entry_read_counts_list)
@@ -2103,8 +2104,10 @@ namespace nnforge
 
 		std::vector<std::vector<unsigned int>> backward_propagation_cuda::get_entry_read_counts_list(
 			const std::vector<unsigned int>& max_entry_count_list,
-			unsigned int batch_size) const
+			unsigned int batch_size,
+			unsigned int max_chunk_size) const
 		{
+			std::vector<unsigned int> current_max_entry_count_list(max_entry_count_list);
 			if (debug->is_debug())
 			{
 				std::stringstream debug_str;
@@ -2113,19 +2116,24 @@ namespace nnforge
 				{
 					if (i > 0)
 						debug_str << ", ";
-					debug_str << max_entry_count_list[i];
+					debug_str << current_max_entry_count_list[i];
+					if ((max_chunk_size > 0) && (current_max_entry_count_list[i] > max_chunk_size))
+					{
+						current_max_entry_count_list[i] = max_chunk_size;
+						debug_str << " (clamped to " << max_chunk_size << ")";
+					}
 				}
 				debug->output_message(debug_str.str().c_str());
 			}
 
-			if (std::any_of(max_entry_count_list.begin(), max_entry_count_list.end(), [] (unsigned int x) { return (x == 0); } ))
+			if (std::any_of(current_max_entry_count_list.begin(), current_max_entry_count_list.end(), [] (unsigned int x) { return (x == 0); } ))
 				throw neural_network_exception("Insufficient memory to do forward-backward prop for even one sample");
 
 			float fastest_time;
 			int fastest_device;
 			for(int i = 0; i < config_count; ++i)
 			{
-				float current_time = static_cast<float>(max_entry_count_list[i]) / cuda_multi_config->cuda_config_list[i]->get_flops();
+				float current_time = static_cast<float>(current_max_entry_count_list[i]) / cuda_multi_config->cuda_config_list[i]->get_flops();
 				if ((i == 0) || (current_time < fastest_time))
 				{
 					fastest_time = current_time;
@@ -2134,12 +2142,12 @@ namespace nnforge
 			}
 
 			std::vector<unsigned int> balanced_max_entry_count_list(config_count);
-			for(int i = 0; i < max_entry_count_list.size(); ++i)
+			for(int i = 0; i < current_max_entry_count_list.size(); ++i)
 			{
 				auto cuda_config = cuda_multi_config->cuda_config_list[i];
 				balanced_max_entry_count_list[i] = static_cast<unsigned int>(cuda_config->get_flops() * fastest_time + 0.5F);
 			}
-			unsigned int max_chunk_size = std::accumulate(balanced_max_entry_count_list.begin(), balanced_max_entry_count_list.end(), 0);
+			unsigned int cumulative_max_chunk_size = std::accumulate(balanced_max_entry_count_list.begin(), balanced_max_entry_count_list.end(), 0);
 
 			if (debug->is_debug() && (config_count > 1))
 			{
@@ -2156,7 +2164,7 @@ namespace nnforge
 
 			std::vector<unsigned int> chunk_sizes;
 			unsigned int chunk_count;
-			if (max_chunk_size >= batch_size)
+			if (cumulative_max_chunk_size >= batch_size)
 			{
 				chunk_count = 1;
 				chunk_sizes.push_back(batch_size);
@@ -2168,7 +2176,7 @@ namespace nnforge
 
 				if (balanced_max_entry_count_all_equal && (config_count > 1))
 				{
-					chunk_count = (batch_size + max_chunk_size - 1) / max_chunk_size;
+					chunk_count = (batch_size + cumulative_max_chunk_size - 1) / cumulative_max_chunk_size;
 					unsigned int chunk_size = (batch_size + chunk_count - 1) / chunk_count;
 					chunk_size = std::min(chunk_size, (chunk_size + config_count - 1) / config_count * config_count);
 					chunk_count = (batch_size + chunk_size - 1) / chunk_size;
@@ -2178,7 +2186,7 @@ namespace nnforge
 				}
 				else
 				{
-					chunk_count = (batch_size + max_chunk_size - 1) / max_chunk_size;
+					chunk_count = (batch_size + cumulative_max_chunk_size - 1) / cumulative_max_chunk_size;
 					unsigned int chunk_min_size = batch_size / chunk_count;
 					unsigned int plus1_chunk_count = batch_size % chunk_count;
 					chunk_sizes.resize(chunk_count);
@@ -2204,7 +2212,7 @@ namespace nnforge
 			for(unsigned int chunk_id = 0; chunk_id < chunk_count; ++chunk_id)
 			{
 				std::vector<unsigned int>& entry_read_counts = res[chunk_id];
-				float mult = static_cast<float>(chunk_sizes[chunk_id]) / static_cast<float>(max_chunk_size);
+				float mult = static_cast<float>(chunk_sizes[chunk_id]) / static_cast<float>(cumulative_max_chunk_size);
 				for(int i = 0; i < config_count; ++i)
 					entry_read_counts[i] = static_cast<unsigned int>(static_cast<float>(balanced_max_entry_count_list[i]) * mult + 0.5F);
 				unsigned int new_chunk_size = std::accumulate(entry_read_counts.begin(), entry_read_counts.end(), 0);

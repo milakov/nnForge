@@ -65,6 +65,7 @@ namespace nnforge
 			network_data::ptr momentum_data2,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
+			unsigned int max_chunk_size,
 			float weight_decay,
 			training_momentum momentum,
 			unsigned int epoch_id);
@@ -88,6 +89,7 @@ namespace nnforge
 			network_data::ptr momentum_data2,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
+			unsigned int max_chunk_size,
 			float weight_decay,
 			training_momentum momentum,
 			unsigned int epoch_id,

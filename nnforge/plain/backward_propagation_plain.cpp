@@ -86,6 +86,7 @@ namespace nnforge
 			network_data::ptr momentum_data2,
 			const std::map<std::string, std::vector<float> >& learning_rates,
 			unsigned int batch_size,
+			unsigned int max_chunk_size,
 			float weight_decay,
 			training_momentum momentum,
 			unsigned int epoch_id,
@@ -142,6 +143,11 @@ namespace nnforge
 			{
 				std::stringstream debug_str;
 				debug_str << "backward prop plain max packet size: " << max_entry_count;
+				if ((max_chunk_size > 0) && (max_entry_count > max_chunk_size))
+				{
+					max_entry_count = max_chunk_size;
+					debug_str << " (clamped to " << max_chunk_size << ")";
+				}
 				debug->output_message(debug_str.str().c_str());
 			}
 
@@ -173,11 +179,11 @@ namespace nnforge
 					debug->output_message(debug_str.str().c_str());
 				}
 			}
-			unsigned int max_chunk_size = *std::max_element(entry_read_count_list.begin(), entry_read_count_list.end());
+			unsigned int current_max_chunk_size = *std::max_element(entry_read_count_list.begin(), entry_read_count_list.end());
 
 			std::map<std::string, plain_buffer::ptr> dedicated_buffers;
 			for(std::map<std::string, size_t>::const_iterator it = dedicated_per_entry_data_name_to_size_map.begin(); it != dedicated_per_entry_data_name_to_size_map.end(); ++it)
-				dedicated_buffers.insert(std::make_pair(it->first, plain_buffer::ptr(new plain_buffer(it->second * max_chunk_size))));
+				dedicated_buffers.insert(std::make_pair(it->first, plain_buffer::ptr(new plain_buffer(it->second * current_max_chunk_size))));
 
 			plain_buffer::ptr temporary_working_fixed_buffer;
 			if (temporary_working_fixed_size > 0)
@@ -185,7 +191,7 @@ namespace nnforge
 
 			std::vector<plain_buffer::ptr> layer_buffers;
 			for(std::vector<size_t>::const_iterator it = layer_buffer_set_per_entry_size_list.begin(); it != layer_buffer_set_per_entry_size_list.end(); ++it)
-				layer_buffers.push_back(plain_buffer::ptr(new plain_buffer(*it * max_chunk_size)));
+				layer_buffers.push_back(plain_buffer::ptr(new plain_buffer(*it * current_max_chunk_size)));
 
 			unsigned int base_iteration_count = 0;
 			if (momentum.type == training_momentum::adam_momentum)

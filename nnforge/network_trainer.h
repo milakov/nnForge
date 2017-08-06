@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ namespace nnforge
 
 		unsigned int epoch_count;
 		unsigned int batch_size;
+		unsigned int max_chunk_size;
 		float learning_rate;
 		learning_rate_decay_policy::const_ptr lr_policy;
 		float weight_decay;

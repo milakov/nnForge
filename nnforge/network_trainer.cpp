@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2015 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ namespace nnforge
 		, learning_rate(0.02F)
 		, lr_policy(new exponential_learning_rate_decay_policy())
 		, batch_size(1)
+		, max_chunk_size(0)
 	{
 	}
 
