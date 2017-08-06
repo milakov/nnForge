@@ -81,9 +81,14 @@ namespace nnforge
 
 				float alpha = 1.0F;
 				float beta = 0.0F;
+				#if CUDNN_MAJOR < 7
+				const cudnnBatchNormMode_t mode = CUDNN_BATCHNORM_SPATIAL;
+				#else
+				const cudnnBatchNormMode_t mode = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
+				#endif
 				cudnn_safe_call(cudnnBatchNormalizationForwardTraining(
 					cuda_config->get_cudnn_handle(),
-					CUDNN_BATCHNORM_SPATIAL,
+					mode,
 					&alpha,
 					&beta,
 					data_desc,
@@ -132,9 +137,14 @@ namespace nnforge
 				float beta_data = add_update_to_destination ? 1.0F : 0.0F;
 				float alpha_weights = 1.0F;
 				float beta_weights = 1.0F;
+				#if CUDNN_MAJOR < 7
+				const cudnnBatchNormMode_t mode = CUDNN_BATCHNORM_SPATIAL;
+				#else
+				const cudnnBatchNormMode_t mode = CUDNN_BATCHNORM_SPATIAL_PERSISTENT;
+				#endif
 				cudnn_safe_call(cudnnBatchNormalizationBackward(
 					cuda_config->get_cudnn_handle(),
-					CUDNN_BATCHNORM_SPATIAL,
+					mode,
 					&alpha_data,
 					&beta_data,
 					&alpha_weights,

@@ -21,6 +21,7 @@
 #include "neural_network_cuda_exception.h"
 #include "cuda_profiling.h"
 #include "util_cuda.h"
+#include "neural_network_cudnn_exception.h"
 
 #include "../data_layer.h"
 #include "../neural_network_exception.h"
@@ -1019,6 +1020,14 @@ namespace nnforge
 
 					// Wait for all kernels to finish
 					cuda_safe_call(cudaStreamSynchronize(*command_streams_list[params.device_pos][output_data_ready_stream_set_id_list[params.device_pos]]));
+
+					#if CUDNN_MAJOR >= 7
+					{
+						cudnnStatus_t sts;
+						cudnn_safe_call(cudnnQueryRuntimeError(cuda_multi_config->cuda_config_list[params.device_pos]->get_cudnn_handle(), &sts, CUDNN_ERRQUERY_RAWCODE, nullptr));
+						cudnn_safe_call(sts);
+					}
+					#endif
 		
 					dump_data = false;
 

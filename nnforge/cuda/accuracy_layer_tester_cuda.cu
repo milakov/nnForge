@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,8 +77,14 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
+					#if __CUDACC_VER_MAJOR__ < 9
 					float new_val = __shfl_down(max_val, tx);
 					int feature_map_id = __shfl_down(max_val_feature_map_id, tx);
+					#else
+					float new_val = __shfl_down_sync(0xFFFFFFFF, max_val, tx);
+					int feature_map_id = __shfl_down_sync(0xFFFFFFFF, max_val_feature_map_id, tx);
+					#endif
+
 					if ((new_val > max_val) || ((new_val == max_val) && (feature_map_id < max_val_feature_map_id)))
 					{
 						max_val = new_val;
@@ -108,8 +114,14 @@ namespace nnforge
 						#pragma unroll
 						for(int tx = 4; tx > 0; tx >>= 1)
 						{
+							#if __CUDACC_VER_MAJOR__ < 9
 							float new_val = __shfl_down(max_val, tx);
 							int feature_map_id = __shfl_down(max_val_feature_map_id, tx);
+							#else
+							float new_val = __shfl_down_sync(0xFFFFFFFF, max_val, tx);
+							int feature_map_id = __shfl_down_sync(0xFFFFFFFF, max_val_feature_map_id, tx);
+							#endif
+
 							if ((new_val > max_val) || ((new_val == max_val) && (feature_map_id < max_val_feature_map_id)))
 							{
 								max_val = new_val;
@@ -133,8 +145,14 @@ namespace nnforge
 				{
 					if (thread_id == 0)
 						max_val = predicted[(entry_id * input_feature_map_count + max_val_feature_map_id) * elem_count_per_feature_map + neuron_id];
+
+					#if __CUDACC_VER_MAJOR__ < 9
 					max_val_feature_map_id = __shfl(max_val_feature_map_id, 0);
 					max_val = __shfl(max_val, 0);
+					#else
+					max_val_feature_map_id = __shfl_sync(0xFFFFFFFF, max_val_feature_map_id, 0);
+					max_val = __shfl_sync(0xFFFFFFFF, max_val, 0);
+					#endif
 				}
 
 				// max_val and max_val_feature_map_id set for all threads
@@ -154,7 +172,11 @@ namespace nnforge
 
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
+					#if __CUDACC_VER_MAJOR__ < 9
 					sum += __shfl_down(sum, tx);
+					#else
+					sum += __shfl_down_sync(0xFFFFFFFF, sum, tx);
+					#endif
 
 				if (warp_count > 1)
 				{
@@ -170,7 +192,11 @@ namespace nnforge
 							sum = cnt_sh[thread_id];
 						#pragma unroll
 						for(int tx = 4; tx > 0; tx >>= 1)
+							#if __CUDACC_VER_MAJOR__ < 9
 							sum += __shfl_down(sum, tx);
+							#else
+							sum += __shfl_down_sync(0xFFFFFFFF, sum, tx);
+							#endif
 					}
 				}
 			}

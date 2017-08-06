@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -363,7 +363,11 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
+					#if __CUDACC_VER_MAJOR__ < 9
 					upd_acc += __shfl_down(upd_acc, tx);
+					#else
+					upd_acc += __shfl_down_sync(0xFFFFFFFF, upd_acc, tx);
+					#endif
 				}
 
 				if (blockDim.x > 32)
@@ -422,7 +426,11 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
+					#if __CUDACC_VER_MAJOR__ < 9
 					upd_acc += __shfl_down(upd_acc, tx);
+					#else
+					upd_acc += __shfl_down_sync(0xFFFFFFFF, upd_acc, tx);
+					#endif
 				}
 
 				if (blockDim.x > 32)
@@ -483,7 +491,11 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
+					#if __CUDACC_VER_MAJOR__ < 9
 					upd_acc += __shfl_down(upd_acc, tx);
+					#else
+					upd_acc += __shfl_down_sync(0xFFFFFFFF, upd_acc, tx);
+					#endif
 				}
 
 				if (blockDim.x > 32)
@@ -554,7 +566,11 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
+					#if __CUDACC_VER_MAJOR__ < 9
 					upd_acc += __shfl_down(upd_acc, tx);
+					#else
+					upd_acc += __shfl_down_sync(0xFFFFFFFF, upd_acc, tx);
+					#endif
 				}
 
 				if (blockDim.x > 32)

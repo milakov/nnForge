@@ -10,7 +10,7 @@ CUDA_PATH?=/usr/local/cuda
 NCCL_PATH?=/usr/local/nccl
 NVCC?=nvcc
 PROTOC?=protoc
-CUDA_FLAGS_ARCH?=-gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+CUDA_FLAGS_ARCH?=-gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_50,code=sm_50 -gencode=arch=compute_60,code=\"sm_60,compute_60\"
 NNFORGE_PATH?=../..
 NNFORGE_INPUT_DATA_PATH?=~/nnforge/input_data
 NNFORGE_WORKING_DATA_PATH?=~/nnforge/working_data

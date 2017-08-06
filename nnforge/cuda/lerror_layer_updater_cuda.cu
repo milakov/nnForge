@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -74,7 +74,11 @@ namespace nnforge
 				int lane_id = thread_id & 31;
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
+					#if __CUDACC_VER_MAJOR__ < 9
 					err += __shfl_down(err, tx);
+					#else
+					err += __shfl_down_sync(0xFFFFFFFF, err, tx);
+					#endif
 
 				int warp_count = threadblock_size >> 5;
 				if (warp_count > 1)
@@ -91,7 +95,11 @@ namespace nnforge
 							err = arr_sh[thread_id];
 						#pragma unroll
 						for(int tx = 4; tx > 0; tx >>= 1)
+							#if __CUDACC_VER_MAJOR__ < 9
 							err += __shfl_down(err, tx);
+							#else
+							err += __shfl_down_sync(0xFFFFFFFF, err, tx);
+							#endif
 					}
 				}
 			}
