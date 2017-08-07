@@ -228,7 +228,7 @@ namespace nnforge
 		{
 			if (compute_capability_major <= 3)
 				return 192;
-			else if ((compute_capability_major == 6) && (compute_capability_minor == 0))
+			else if (((compute_capability_major == 6) && (compute_capability_minor == 0)) || (compute_capability_major >= 7))
 				return 64;
 			else
 				return 128;
