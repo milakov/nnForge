@@ -365,11 +365,11 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
-					#if __CUDACC_VER_MAJOR__ < 9
+#if __CUDACC_VER_MAJOR__ < 9
 					upd_acc += __shfl_down(upd_acc, tx);
-					#else
+#else
 					upd_acc += __shfl_down_sync(0xFFFFFFFF, upd_acc, tx);
-					#endif
+#endif
 				}
 
 				if (blockDim.x > 32)
@@ -428,11 +428,11 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
-					#if __CUDACC_VER_MAJOR__ < 9
+#if __CUDACC_VER_MAJOR__ < 9
 					upd_acc += __shfl_down(upd_acc, tx);
-					#else
+#else
 					upd_acc += __shfl_down_sync(0xFFFFFFFF, upd_acc, tx);
-					#endif
+#endif
 				}
 
 				if (blockDim.x > 32)
@@ -493,11 +493,11 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
-					#if __CUDACC_VER_MAJOR__ < 9
+#if __CUDACC_VER_MAJOR__ < 9
 					upd_acc += __shfl_down(upd_acc, tx);
-					#else
+#else
 					upd_acc += __shfl_down_sync(0xFFFFFFFF, upd_acc, tx);
-					#endif
+#endif
 				}
 
 				if (blockDim.x > 32)
@@ -568,11 +568,11 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
-					#if __CUDACC_VER_MAJOR__ < 9
+#if __CUDACC_VER_MAJOR__ < 9
 					upd_acc += __shfl_down(upd_acc, tx);
-					#else
+#else
 					upd_acc += __shfl_down_sync(0xFFFFFFFF, upd_acc, tx);
-					#endif
+#endif
 				}
 
 				if (blockDim.x > 32)
