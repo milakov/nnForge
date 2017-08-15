@@ -110,11 +110,13 @@ namespace nnforge
 			{
 				#pragma unroll
 				for(int i = 0; i < OUTPUT_ELEM_COUNT_BLOCK_SIZE; ++i)
-					#if __CUDACC_VER_MAJOR__ < 9
+#ifdef __CUDACC_VER_MAJOR__
+#if __CUDACC_VER_MAJOR__ < 9
 					sums[i] += __shfl_xor(sums[i], tx);
-					#else
+#else
 					sums[i] += __shfl_xor_sync(0xFFFFFFFF, sums[i], tx);
-					#endif
+#endif
+#endif
 			}
 
 			if (lane_id == 0)

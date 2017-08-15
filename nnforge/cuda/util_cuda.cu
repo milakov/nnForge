@@ -33,6 +33,7 @@ namespace nnforge
 	{
 		__forceinline__ __device__ double atomicAddD(double* address, double val)
 		{
+#ifdef __CUDA_ARCH__
 #if (__CUDA_ARCH__ >= 600)
 				return atomicAdd(address, val);
 #else
@@ -43,6 +44,7 @@ namespace nnforge
 					old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
 				} while (assumed != old);
 				return __longlong_as_double(old);
+#endif
 #endif
 		}
 

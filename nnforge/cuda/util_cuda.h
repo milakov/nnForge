@@ -27,28 +27,34 @@
 
 static __forceinline__ __device__ float __load_nc(const float * ptr)
 {
+#ifdef __CUDA_ARCH__
 #if __CUDA_ARCH__ >= 320
 	return __ldg(ptr);
 #else
 	return *ptr;
+#endif
 #endif
 }
 
 static __forceinline__ __device__ int __load_nc(const int * ptr)
 {
+#ifdef __CUDA_ARCH__
 #if __CUDA_ARCH__ >= 320
 	return __ldg(ptr);
 #else
 	return *ptr;
 #endif
+#endif
 }
 
 static __forceinline__ __device__ float2 __load_nc(const float2 * ptr)
 {
+#ifdef __CUDA_ARCH__
 #if __CUDA_ARCH__ >= 320
 	return __ldg(ptr);
 #else
 	return *ptr;
+#endif
 #endif
 }
 

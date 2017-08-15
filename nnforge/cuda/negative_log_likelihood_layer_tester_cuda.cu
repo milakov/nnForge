@@ -63,12 +63,14 @@ namespace nnforge
 				int lane_id = thread_id & 31;
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
-					#if __CUDACC_VER_MAJOR__ < 9
+#ifdef __CUDACC_VER_MAJOR__
+#if __CUDACC_VER_MAJOR__ < 9
 					err += __shfl_down(err, tx);
-					#else
+#else
 					err += __shfl_down_sync(0xFFFFFFFF, err, tx);
-					#endif
-
+#endif
+#endif
+					
 				int warp_count = threadblock_size >> 5;
 				if (warp_count > 1)
 				{

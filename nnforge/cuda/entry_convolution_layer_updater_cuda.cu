@@ -62,11 +62,13 @@ namespace nnforge
 
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
-					#if __CUDACC_VER_MAJOR__ < 9
+#ifdef __CUDACC_VER_MAJOR__
+#if __CUDACC_VER_MAJOR__ < 9
 					sum += __shfl_down(sum, tx);
-					#else
+#else
 					sum += __shfl_down_sync(0xFFFFFFFF, sum, tx);
-					#endif
+#endif
+#endif
 
 				if (lane_id == 0)
 					output[entry_id * output_neuron_count + feature_map_id * neuron_count_per_feature_map + neuron_id] = sum;
@@ -110,13 +112,15 @@ namespace nnforge
 				#pragma unroll
 				for(int tx = 16; tx > 0; tx >>= 1)
 				{
-					#if __CUDACC_VER_MAJOR__ < 9
+#ifdef __CUDACC_VER_MAJOR__
+#if __CUDACC_VER_MAJOR__ < 9
 					sum1 += __shfl_down(sum1, tx);
 					sum2 += __shfl_down(sum2, tx);
-					#else
+#else
 					sum1 += __shfl_down_sync(0xFFFFFFFF, sum1, tx);
 					sum2 += __shfl_down_sync(0xFFFFFFFF, sum2, tx);
-					#endif
+#endif
+#endif
 				}
 
 				if (lane_id == 0)
