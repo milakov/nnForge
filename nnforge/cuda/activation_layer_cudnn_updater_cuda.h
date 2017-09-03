@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2017 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +27,10 @@ namespace nnforge
 		class activation_layer_cudnn_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			activation_layer_cudnn_updater_cuda(cudnnActivationMode_t af);
+			activation_layer_cudnn_updater_cuda(
+				cudnnActivationMode_t af,
+				bool backward_data_dependent_on_input_buffer = true,
+				bool backward_data_dependent_on_output_buffer = true);
 
 			virtual ~activation_layer_cudnn_updater_cuda();
 
@@ -72,6 +75,9 @@ namespace nnforge
 		protected:
 			cudnnActivationDescriptor_t activation_desc;
 			cudnnTensorDescriptor_t input_data_desc;
+
+			bool backward_data_dependent_on_input_buffer;
+			bool backward_data_dependent_on_output_buffer;
 		};
 	}
 }

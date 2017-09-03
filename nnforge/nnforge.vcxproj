@@ -38,6 +38,7 @@
     <ClInclude Include="embed_data_transformer.h" />
     <ClInclude Include="entry_convolution_layer.h" />
     <ClInclude Include="exponential_learning_rate_decay_policy.h" />
+    <ClInclude Include="exponential_linear_layer.h" />
     <ClInclude Include="forward_propagation.h" />
     <ClInclude Include="forward_propagation_factory.h" />
     <ClInclude Include="gradient_modifier_layer.h" />
@@ -167,6 +168,7 @@
     <ClCompile Include="embed_data_transformer.cpp" />
     <ClCompile Include="entry_convolution_layer.cpp" />
     <ClCompile Include="exponential_learning_rate_decay_policy.cpp" />
+    <ClCompile Include="exponential_linear_layer.cpp" />
     <ClCompile Include="forward_propagation.cpp" />
     <ClCompile Include="forward_propagation_factory.cpp" />
     <ClCompile Include="gradient_modifier_layer.cpp" />

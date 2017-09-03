@@ -503,6 +503,9 @@
     <ClInclude Include="clean_snapshots_network_data_pusher.h">
       <Filter>Header Files\training\pushers</Filter>
     </ClInclude>
+    <ClInclude Include="exponential_linear_layer.h">
+      <Filter>Header Files\layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -852,6 +855,9 @@
     </ClCompile>
     <ClCompile Include="clean_snapshots_network_data_pusher.cpp">
       <Filter>Source Files\training\pushers</Filter>
+    </ClCompile>
+    <ClCompile Include="exponential_linear_layer.cpp">
+      <Filter>Source Files\layers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -38,6 +38,8 @@
     <ClInclude Include="dropout_layer_updater_plain.h" />
     <ClInclude Include="entry_convolution_layer_tester_plain.h" />
     <ClInclude Include="entry_convolution_layer_updater_plain.h" />
+    <ClInclude Include="exponential_linear_layer_tester_plain.h" />
+    <ClInclude Include="exponential_linear_layer_updater_plain.h" />
     <ClInclude Include="factory_generator_plain.h" />
     <ClInclude Include="forward_propagation_plain.h" />
     <ClInclude Include="gradient_modifier_layer_tester_plain.h" />
@@ -112,6 +114,8 @@
     <ClCompile Include="dropout_layer_updater_plain.cpp" />
     <ClCompile Include="entry_convolution_layer_tester_plain.cpp" />
     <ClCompile Include="entry_convolution_layer_updater_plain.cpp" />
+    <ClCompile Include="exponential_linear_layer_tester_plain.cpp" />
+    <ClCompile Include="exponential_linear_layer_updater_plain.cpp" />
     <ClCompile Include="factory_generator_plain.cpp" />
     <ClCompile Include="forward_propagation_plain.cpp" />
     <ClCompile Include="gradient_modifier_layer_tester_plain.cpp" />

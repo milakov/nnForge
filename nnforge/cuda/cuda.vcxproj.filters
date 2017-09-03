@@ -587,6 +587,12 @@
     <ClInclude Include="rectified_linear_layer_tester_cuda.h">
       <Filter>Header Files\layer_testers</Filter>
     </ClInclude>
+    <ClInclude Include="exponential_linear_layer_testing_schema.h">
+      <Filter>Header Files\testing_schemas</Filter>
+    </ClInclude>
+    <ClInclude Include="exponential_linear_layer_updater_schema.h">
+      <Filter>Header Files\updater_schemas</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="buffer_cuda_size_configuration.cpp">
@@ -888,6 +894,12 @@
     </ClCompile>
     <ClCompile Include="nccl_cuda_communicator.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="exponential_linear_layer_testing_schema.cpp">
+      <Filter>Source Files\testing_schemas</Filter>
+    </ClCompile>
+    <ClCompile Include="exponential_linear_layer_updater_schema.cpp">
+      <Filter>Source Files\updater_schemas</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

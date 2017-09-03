@@ -50,6 +50,7 @@
 #include "batch_norm_layer_testing_schema.h"
 #include "affine_grid_generator_layer_testing_schema.h"
 #include "linear_sampler_layer_testing_schema.h"
+#include "exponential_linear_layer_testing_schema.h"
 
 #include "layer_updater_schema_factory.h"
 #include "rectified_linear_layer_updater_schema.h"
@@ -82,6 +83,7 @@
 #include "batch_norm_layer_updater_schema.h"
 #include "affine_grid_generator_layer_updater_schema.h"
 #include "linear_sampler_layer_updater_schema.h"
+#include "exponential_linear_layer_updater_schema.h"
 
 namespace nnforge
 {
@@ -122,6 +124,7 @@ namespace nnforge
 			layer_testing_schema_factory::get_singleton().register_layer_testing_schema(layer_testing_schema::ptr(new batch_norm_layer_testing_schema()));
 			layer_testing_schema_factory::get_singleton().register_layer_testing_schema(layer_testing_schema::ptr(new affine_grid_generator_layer_testing_schema()));
 			layer_testing_schema_factory::get_singleton().register_layer_testing_schema(layer_testing_schema::ptr(new linear_sampler_layer_testing_schema()));
+			layer_testing_schema_factory::get_singleton().register_layer_testing_schema(layer_testing_schema::ptr(new exponential_linear_layer_testing_schema()));
 
 			layer_updater_schema_factory::get_singleton().register_layer_updater_schema(layer_updater_schema::ptr(new rectified_linear_layer_updater_schema()));
 			layer_updater_schema_factory::get_singleton().register_layer_updater_schema(layer_updater_schema::ptr(new sigmoid_layer_updater_schema()));
@@ -153,6 +156,7 @@ namespace nnforge
 			layer_updater_schema_factory::get_singleton().register_layer_updater_schema(layer_updater_schema::ptr(new batch_norm_layer_updater_schema()));
 			layer_updater_schema_factory::get_singleton().register_layer_updater_schema(layer_updater_schema::ptr(new affine_grid_generator_layer_updater_schema()));
 			layer_updater_schema_factory::get_singleton().register_layer_updater_schema(layer_updater_schema::ptr(new linear_sampler_layer_updater_schema()));
+			layer_updater_schema_factory::get_singleton().register_layer_updater_schema(layer_updater_schema::ptr(new exponential_linear_layer_updater_schema()));
 		}
 	}
 }

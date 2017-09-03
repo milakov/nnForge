@@ -14,31 +14,31 @@
  *  limitations under the License.
  */
 
-#include "sigmoid_layer_updater_schema.h"
+#include "exponential_linear_layer_testing_schema.h"
 
-#include "../sigmoid_layer.h"
-#include "activation_layer_cudnn_updater_cuda.h"
+#include "../exponential_linear_layer.h"
+#include "activation_layer_cudnn_tester_cuda.h"
 
 namespace nnforge
 {
 	namespace cuda
 	{
-		layer_updater_schema::ptr sigmoid_layer_updater_schema::create_specific() const
+		std::string exponential_linear_layer_testing_schema::get_type_name() const
 		{
-			return layer_updater_schema::ptr(new sigmoid_layer_updater_schema());
+			return exponential_linear_layer::layer_type_name;
 		}
 
-		std::string sigmoid_layer_updater_schema::get_type_name() const
+		layer_testing_schema::ptr exponential_linear_layer_testing_schema::create_specific() const
 		{
-			return sigmoid_layer::layer_type_name;
+			return layer_testing_schema::ptr(new exponential_linear_layer_testing_schema());
 		}
 
-		layer_updater_cuda::ptr sigmoid_layer_updater_schema::create_updater_specific(
+		layer_tester_cuda::ptr exponential_linear_layer_testing_schema::create_tester_specific(
 			const std::vector<layer_configuration_specific>& input_configuration_specific_list,
 			const layer_configuration_specific& output_configuration_specific,
 			const cuda_running_configuration& cuda_config) const
 		{
-			return layer_updater_cuda::ptr(new activation_layer_cudnn_updater_cuda(CUDNN_ACTIVATION_SIGMOID, false, true));
+			return layer_tester_cuda::ptr(new activation_layer_cudnn_tester_cuda(CUDNN_ACTIVATION_ELU));
 		}
 	}
 }

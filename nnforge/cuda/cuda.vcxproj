@@ -68,6 +68,8 @@
     <ClInclude Include="entry_convolution_layer_testing_schema.h" />
     <ClInclude Include="entry_convolution_layer_updater_cuda.h" />
     <ClInclude Include="entry_convolution_layer_updater_schema.h" />
+    <ClInclude Include="exponential_linear_layer_testing_schema.h" />
+    <ClInclude Include="exponential_linear_layer_updater_schema.h" />
     <ClInclude Include="forward_propagation_cuda.h" />
     <ClInclude Include="gradient_modifier_layer_tester_cuda.h" />
     <ClInclude Include="gradient_modifier_layer_testing_schema.h" />
@@ -225,6 +227,8 @@
     <ClCompile Include="dropout_layer_updater_schema.cpp" />
     <ClCompile Include="entry_convolution_layer_testing_schema.cpp" />
     <ClCompile Include="entry_convolution_layer_updater_schema.cpp" />
+    <ClCompile Include="exponential_linear_layer_testing_schema.cpp" />
+    <ClCompile Include="exponential_linear_layer_updater_schema.cpp" />
     <ClCompile Include="factory_generator_cuda.cpp" />
     <ClCompile Include="forward_propagation_cuda.cpp" />
     <ClCompile Include="fully_connected_layer_tester_cuda.cpp" />

@@ -50,6 +50,7 @@
 #include "batch_norm_layer.h"
 #include "affine_grid_generator_layer.h"
 #include "linear_sampler_layer.h"
+#include "exponential_linear_layer.h"
 
 #include "rnd.h"
 

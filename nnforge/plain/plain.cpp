@@ -51,6 +51,7 @@
 #include "batch_norm_layer_tester_plain.h"
 #include "affine_grid_generator_layer_tester_plain.h"
 #include "linear_sampler_layer_tester_plain.h"
+#include "exponential_linear_layer_tester_plain.h"
 
 #include "layer_updater_plain_factory.h"
 
@@ -82,6 +83,7 @@
 #include "entry_convolution_layer_updater_plain.h"
 #include "affine_grid_generator_layer_updater_plain.h"
 #include "linear_sampler_layer_updater_plain.h"
+#include "exponential_linear_layer_updater_plain.h"
 
 namespace nnforge
 {
@@ -121,6 +123,7 @@ namespace nnforge
 			layer_tester_plain_factory::get_singleton().register_layer_tester_plain(layer_tester_plain::ptr(new entry_convolution_layer_tester_plain()));
 			layer_tester_plain_factory::get_singleton().register_layer_tester_plain(layer_tester_plain::ptr(new batch_norm_layer_tester_plain()));
 			layer_tester_plain_factory::get_singleton().register_layer_tester_plain(layer_tester_plain::ptr(new affine_grid_generator_layer_tester_plain()));
+			layer_tester_plain_factory::get_singleton().register_layer_tester_plain(layer_tester_plain::ptr(new exponential_linear_layer_tester_plain()));
 
 			layer_updater_plain_factory::get_singleton().register_layer_updater_plain(layer_updater_plain::ptr(new hyperbolic_tangent_layer_updater_plain()));
 			layer_updater_plain_factory::get_singleton().register_layer_updater_plain(layer_updater_plain::ptr(new sigmoid_layer_updater_plain()));
@@ -150,6 +153,7 @@ namespace nnforge
 			layer_updater_plain_factory::get_singleton().register_layer_updater_plain(layer_updater_plain::ptr(new entry_convolution_layer_updater_plain()));
 			layer_updater_plain_factory::get_singleton().register_layer_updater_plain(layer_updater_plain::ptr(new affine_grid_generator_layer_updater_plain()));
 			layer_updater_plain_factory::get_singleton().register_layer_updater_plain(layer_updater_plain::ptr(new linear_sampler_layer_updater_plain()));
+			layer_updater_plain_factory::get_singleton().register_layer_updater_plain(layer_updater_plain::ptr(new exponential_linear_layer_updater_plain()));
 		}
 	}
 }
