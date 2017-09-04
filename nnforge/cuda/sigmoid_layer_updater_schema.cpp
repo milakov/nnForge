@@ -38,7 +38,7 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			const cuda_running_configuration& cuda_config) const
 		{
-			return layer_updater_cuda::ptr(new activation_layer_cudnn_updater_cuda(CUDNN_ACTIVATION_SIGMOID, false, true));
+			return layer_updater_cuda::ptr(new activation_layer_cudnn_updater_cuda(CUDNN_ACTIVATION_SIGMOID));
 		}
 	}
 }

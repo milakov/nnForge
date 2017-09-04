@@ -18,18 +18,16 @@
 
 #include "layer_updater_cuda.h"
 
-#include <cudnn.h>
-
 namespace nnforge
 {
 	namespace cuda
 	{
-		class activation_layer_cudnn_updater_cuda : public layer_updater_cuda
+		class exponential_linear_layer_updater_cuda : public layer_updater_cuda
 		{
 		public:
-			activation_layer_cudnn_updater_cuda(cudnnActivationMode_t af);
+			exponential_linear_layer_updater_cuda() = default;
 
-			virtual ~activation_layer_cudnn_updater_cuda();
+			virtual ~exponential_linear_layer_updater_cuda() = default;
 
 			virtual void enqueue_forward_propagation(
 				cudaStream_t stream_id,
@@ -68,10 +66,6 @@ namespace nnforge
 			virtual bool is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const;
 
 			virtual bool is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const;
-
-		protected:
-			cudnnActivationDescriptor_t activation_desc;
-			cudnnTensorDescriptor_t input_data_desc;
 		};
 	}
 }

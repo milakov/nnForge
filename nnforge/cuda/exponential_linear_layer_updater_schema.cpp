@@ -17,7 +17,7 @@
 #include "exponential_linear_layer_updater_schema.h"
 
 #include "../exponential_linear_layer.h"
-#include "activation_layer_cudnn_updater_cuda.h"
+#include "exponential_linear_layer_updater_cuda.h"
 
 namespace nnforge
 {
@@ -38,7 +38,7 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			const cuda_running_configuration& cuda_config) const
 		{
-			return layer_updater_cuda::ptr(new activation_layer_cudnn_updater_cuda(CUDNN_ACTIVATION_ELU, false, true));
+			return layer_updater_cuda::ptr(new exponential_linear_layer_updater_cuda());
 		}
 	}
 }

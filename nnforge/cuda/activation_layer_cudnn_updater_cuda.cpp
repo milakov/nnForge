@@ -24,14 +24,9 @@ namespace nnforge
 {
 	namespace cuda
 	{
-		activation_layer_cudnn_updater_cuda::activation_layer_cudnn_updater_cuda(
-			cudnnActivationMode_t af,
-			bool backward_data_dependent_on_input_buffer,
-			bool backward_data_dependent_on_output_buffer)
+		activation_layer_cudnn_updater_cuda::activation_layer_cudnn_updater_cuda(cudnnActivationMode_t af)
 			: input_data_desc(0)
 			, activation_desc(0)
-			, backward_data_dependent_on_input_buffer(backward_data_dependent_on_input_buffer)
-			, backward_data_dependent_on_output_buffer(backward_data_dependent_on_output_buffer)
 		{
 			cudnn_safe_call(cudnnCreateTensorDescriptor(&input_data_desc));
 			cudnn_safe_call(cudnnCreateActivationDescriptor(&activation_desc));
@@ -111,11 +106,11 @@ namespace nnforge
 				activation_desc,
 				&alpha,
 				input_data_desc,
-				backward_data_dependent_on_output_buffer ? *output_neurons_buffer : (const float *)nullptr,
+				*output_neurons_buffer,
 				input_data_desc,
 				*output_errors_buffer,
 				input_data_desc,
-				backward_data_dependent_on_input_buffer ? *input_neurons_buffers[0] : (const float *)nullptr,
+				*input_neurons_buffers[0],
 				&beta,
 				input_data_desc,
 				*input_errors_buffer));
@@ -128,12 +123,12 @@ namespace nnforge
 
 		bool activation_layer_cudnn_updater_cuda::is_backward_data_dependent_on_input_buffer(unsigned int action_input_index, unsigned int data_input_index) const
 		{
-			return backward_data_dependent_on_input_buffer;
+			return true;
 		}
 
 		bool activation_layer_cudnn_updater_cuda::is_backward_data_dependent_on_output_buffer(unsigned int action_input_index) const
 		{
-			return backward_data_dependent_on_output_buffer;
+			return true;
 		}
 	}
 }

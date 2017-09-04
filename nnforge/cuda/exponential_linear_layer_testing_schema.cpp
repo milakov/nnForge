@@ -17,7 +17,7 @@
 #include "exponential_linear_layer_testing_schema.h"
 
 #include "../exponential_linear_layer.h"
-#include "activation_layer_cudnn_tester_cuda.h"
+#include "exponential_linear_layer_tester_cuda.h"
 
 namespace nnforge
 {
@@ -38,7 +38,7 @@ namespace nnforge
 			const layer_configuration_specific& output_configuration_specific,
 			const cuda_running_configuration& cuda_config) const
 		{
-			return layer_tester_cuda::ptr(new activation_layer_cudnn_tester_cuda(CUDNN_ACTIVATION_ELU));
+			return layer_tester_cuda::ptr(new exponential_linear_layer_tester_cuda());
 		}
 	}
 }
