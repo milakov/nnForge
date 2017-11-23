@@ -452,7 +452,7 @@ namespace nnforge
 			const std::vector<unsigned int>::const_iterator dilation_it = dilation.begin();
 			const int const_updater_count = entry_count;
 
-			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
+			#pragma omp parallel default(shared) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
 				std::array<unsigned int, max_dimension_count> current_output_position;
 				std::array<int, max_dimension_count> current_input_position;

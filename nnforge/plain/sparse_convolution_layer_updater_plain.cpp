@@ -476,7 +476,7 @@ namespace nnforge
 			const std::vector<unsigned int>::const_iterator strides_it = strides.begin();
 			const std::vector<std::pair<int, int> >::const_iterator out_fm_in_fm_it = out_fm_in_fm_list.begin();
 
-			#pragma omp parallel default(none) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
+			#pragma omp parallel default(shared) num_threads(plain_config->openmp_thread_count) shared(window_sizes,left_zero_padding,right_zero_padding,input_dimension_sizes)
 			{
 				std::array<unsigned int, max_dimension_count> current_output_position;
 				std::array<int, max_dimension_count> current_input_position;
