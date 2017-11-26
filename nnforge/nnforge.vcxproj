@@ -69,6 +69,7 @@
     <ClInclude Include="structured_data_bunch_stream_reader.h" />
     <ClInclude Include="structured_data_bunch_writer.h" />
     <ClInclude Include="structured_data_constant_reader.h" />
+    <ClInclude Include="structured_data_subset_reader.h" />
     <ClInclude Include="structured_data_writer.h" />
     <ClInclude Include="structured_from_raw_data_reader.h" />
     <ClInclude Include="threadpool_job_runner.h" />
@@ -192,6 +193,7 @@
     <ClCompile Include="structured_data_bunch_reader.cpp" />
     <ClCompile Include="structured_data_bunch_stream_reader.cpp" />
     <ClCompile Include="structured_data_constant_reader.cpp" />
+    <ClCompile Include="structured_data_subset_reader.cpp" />
     <ClCompile Include="structured_data_writer.cpp" />
     <ClCompile Include="structured_from_raw_data_reader.cpp" />
     <ClCompile Include="threadpool_job_runner.cpp" />
@@ -287,10 +289,14 @@
     <ProjectGuid>{435CF80F-3A53-4B85-8569-3C477F3CEEFC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>nnforge</RootNamespace>
-    <SccProjectName>Svn</SccProjectName>
-    <SccAuxPath>Svn</SccAuxPath>
-    <SccLocalPath>Svn</SccLocalPath>
-    <SccProvider>SubversionScc</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

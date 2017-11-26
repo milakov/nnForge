@@ -60,6 +60,7 @@
 #include "structured_from_raw_data_reader.h"
 #include "structured_data_bunch_mix_reader.h"
 #include "neuron_value_set_data_bunch_reader.h"
+#include "structured_data_subset_reader.h"
 
 #include "data_transformer_util.h"
 

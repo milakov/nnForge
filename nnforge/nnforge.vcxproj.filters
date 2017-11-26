@@ -506,6 +506,9 @@
     <ClInclude Include="exponential_linear_layer.h">
       <Filter>Header Files\layers</Filter>
     </ClInclude>
+    <ClInclude Include="structured_data_subset_reader.h">
+      <Filter>Header Files\training_data</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="rnd.cpp">
@@ -858,6 +861,9 @@
     </ClCompile>
     <ClCompile Include="exponential_linear_layer.cpp">
       <Filter>Source Files\layers</Filter>
+    </ClCompile>
+    <ClCompile Include="structured_data_subset_reader.cpp">
+      <Filter>Source Files\training_data</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
