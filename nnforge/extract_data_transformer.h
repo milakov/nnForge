@@ -29,7 +29,7 @@ namespace nnforge
 			const std::vector<unsigned int>& input_window_sizes,
 			const std::vector<unsigned int>& output_window_sizes);
 
-		virtual ~extract_data_transformer();
+		virtual ~extract_data_transformer() = default;
 
 		virtual void transform(
 			const float * data,
