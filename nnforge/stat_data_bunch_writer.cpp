@@ -17,6 +17,7 @@
 #include "stat_data_bunch_writer.h"
 
 #include <algorithm>
+#include <math.h>
 
 namespace nnforge
 {
