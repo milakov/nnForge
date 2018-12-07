@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2017 Maxim Milakov
+ *  Copyright 2011-2018 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -304,7 +304,7 @@ namespace nnforge
 		}
 		else if (learning_rate_policy == "step")
 		{
-			lr_policy = learning_rate_decay_policy::ptr(new step_learning_rate_decay_policy(step_learning_rate_epochs_and_rates));
+			lr_policy = learning_rate_decay_policy::ptr(new step_learning_rate_decay_policy(step_learning_rate_epochs_and_rates, step_learning_rate_warmup_epochs));
 		}
 		else
 			throw neural_network_exception((boost::format("Invalid learning_rate_policy: %1%") % learning_rate_policy).str());
@@ -424,6 +424,7 @@ namespace nnforge
 		res.push_back(int_option("shuffle_block_size", &shuffle_block_size, 0, "The size of contiguous blocks when shuffling training data, 0 indicates no shuffling"));
 		res.push_back(int_option("check_gradient_max_weights_per_set", &check_gradient_max_weights_per_set, 20, "The maximum amount of weights to check in the set"));
 		res.push_back(int_option("keep_snapshots_frequency", &keep_snapshots_frequency, 10, "Keep every Nth snapshot"));
+		res.push_back(int_option("step_learning_rate_warmup_epochs", &step_learning_rate_warmup_epochs, 0, "How many epochs from the beginning LR goes up to target one"));
 
 		return res;
 	}

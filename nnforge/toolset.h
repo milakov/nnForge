@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2017 Maxim Milakov
+ *  Copyright 2011-2018 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -214,6 +214,7 @@ namespace nnforge
 		float learning_rate_decay_rate;
 		int learning_rate_decay_start_epoch;
 		std::string step_learning_rate_epochs_and_rates;
+		int step_learning_rate_warmup_epochs;
 		float weight_decay;
 		int batch_size;
 		int max_chunk_size;

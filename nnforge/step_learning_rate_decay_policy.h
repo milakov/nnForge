@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2018 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ namespace nnforge
 	class step_learning_rate_decay_policy : public learning_rate_decay_policy
 	{
 	public:
-		step_learning_rate_decay_policy(const std::string& semicolon_separated_list);
+		step_learning_rate_decay_policy(
+			const std::string& semicolon_separated_list,
+			int step_learning_rate_warmup_epochs);
 
 		virtual ~step_learning_rate_decay_policy() = default;
 
@@ -39,5 +41,6 @@ namespace nnforge
 		};
 
 		std::vector<decay_rate_entry> decay_rate_entry_list;
+		int step_learning_rate_warmup_epochs;
 	};
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2011-2016 Maxim Milakov
+ *  Copyright 2011-2018 Maxim Milakov
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,8 +24,12 @@
 
 namespace nnforge
 {
-	step_learning_rate_decay_policy::step_learning_rate_decay_policy(const std::string& semicolon_separated_list)
+	step_learning_rate_decay_policy::step_learning_rate_decay_policy(
+		const std::string& semicolon_separated_list,
+		int step_learning_rate_warmup_epochs)
 	{
+		this->step_learning_rate_warmup_epochs = step_learning_rate_warmup_epochs;
+
 		std::vector<std::string> strs;
 		if (!semicolon_separated_list.empty())
 			boost::split(strs, semicolon_separated_list, boost::is_any_of(":"));
@@ -51,6 +55,10 @@ namespace nnforge
 				current_decay = decay_rate_entry_list[i].decay_rate;
 			else
 				break;
+		}
+		if (epoch < step_learning_rate_warmup_epochs - 1)
+		{
+			current_decay *= static_cast<float>(epoch + 1) / static_cast<float>(step_learning_rate_warmup_epochs);
 		}
 		return current_decay;
 	}
